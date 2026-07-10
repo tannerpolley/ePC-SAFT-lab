@@ -3,7 +3,6 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CHECKER_PATH = REPO_ROOT / "analyses" / "paper_validation" / "scripts" / "check_figure_contract.py"
 spec = importlib.util.spec_from_file_location("paper_validation_figure_contract", CHECKER_PATH)

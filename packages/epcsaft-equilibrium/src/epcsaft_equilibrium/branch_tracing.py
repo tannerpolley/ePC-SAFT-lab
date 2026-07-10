@@ -9,8 +9,8 @@ from typing import Any
 
 from .equilibrium import Equilibrium
 
-SUPPORTED_BOUNDARY_ROUTES = frozenset({"bubble_pressure", "dew_pressure", "bubble_temperature", "dew_temperature"})
-SUPPORTED_FIXED_VARIABLES = frozenset({"T_K", "P_bar"})
+SUPPORTED_BOUNDARY_ROUTES = frozenset({"bubble_pressure", "dew_pressure"})
+SUPPORTED_FIXED_VARIABLES = frozenset({"T_K"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,8 +160,35 @@ def trace_boundary_route(
     points: list[BranchTracePoint] = []
     anchor_order = sorted(anchors, key=lambda anchor: (not anchor.required, float(anchor.coordinate)))
     anchor_continuation_state: Mapping[str, Any] | None = None
+    anchor_continuation_coordinate: float | None = None
 
     for anchor in anchor_order:
+        target_coordinate = float(anchor.coordinate)
+        if anchor_continuation_coordinate is not None:
+            for bridge_coordinate in _continuation_bridge_coordinates(
+                anchor_continuation_coordinate,
+                target_coordinate,
+                options.max_coordinate_gap,
+            ):
+                bridge_point = _solve_trace_point(
+                    solve_point,
+                    BranchSolveRequest(
+                        route=options.route,
+                        component_index=options.component_index,
+                        fixed_variable=options.fixed_variable,
+                        fixed_value=options.fixed_value,
+                        coordinate=bridge_coordinate,
+                        continuation_state=anchor_continuation_state,
+                    ),
+                    options,
+                    blockers,
+                )
+                points.append(bridge_point)
+                if bridge_point.accepted and bridge_point.continuation_state_returned:
+                    anchor_continuation_state = _continuation_primal_state(
+                        bridge_point.continuation_state_returned
+                    )
+                    anchor_continuation_coordinate = bridge_point.solved_coordinate
         point = _solve_trace_point(
             solve_point,
             BranchSolveRequest(
@@ -169,7 +196,7 @@ def trace_boundary_route(
                 component_index=options.component_index,
                 fixed_variable=options.fixed_variable,
                 fixed_value=options.fixed_value,
-                coordinate=float(anchor.coordinate),
+                coordinate=target_coordinate,
                 continuation_state=anchor_continuation_state,
                 source_anchor_id=str(anchor.anchor_id),
             ),
@@ -178,7 +205,8 @@ def trace_boundary_route(
         )
         points.append(point)
         if point.accepted and point.continuation_state_returned:
-            anchor_continuation_state = point.continuation_state_returned
+            anchor_continuation_state = _continuation_primal_state(point.continuation_state_returned)
+            anchor_continuation_coordinate = point.solved_coordinate
 
     for _iteration in range(options.max_refinement_iterations):
         accepted = _accepted_sorted_points(points)
@@ -201,7 +229,9 @@ def trace_boundary_route(
                 blockers.add("segment_endpoint_missing")
                 continue
             midpoint = (left.solved_coordinate + right.solved_coordinate) / 2.0
-            continuation_state = left.continuation_state_returned or right.continuation_state_returned
+            continuation_state = _continuation_primal_state(
+                left.continuation_state_returned or right.continuation_state_returned
+            )
             point = _solve_trace_point(
                 solve_point,
                 BranchSolveRequest(
@@ -269,6 +299,28 @@ def _point_rejection_reason(point: BranchTracePoint, options: BranchTraceOptions
     return ""
 
 
+def _continuation_primal_state(state: Mapping[str, Any] | None) -> Mapping[str, Any] | None:
+    if state is None:
+        return None
+    if "variables" not in state:
+        raise ValueError("branch continuation state must contain primal variables")
+    raw_variables = state["variables"]
+    if not isinstance(raw_variables, Sequence) or isinstance(raw_variables, (str, bytes)):
+        raise ValueError("branch continuation primal variables must be a sequence")
+    variables = [float(value) for value in raw_variables]
+    if not variables or any(not math.isfinite(value) for value in variables):
+        raise ValueError("branch continuation primal variables must be finite and non-empty")
+    return {"variables": variables}
+
+
+def _continuation_bridge_coordinates(start: float, target: float, max_gap: float) -> list[float]:
+    segment_count = max(1, math.ceil(abs(target - start) / max_gap))
+    return [
+        start + (target - start) * index / segment_count
+        for index in range(1, segment_count)
+    ]
+
+
 def _accepted_sorted_points(points: Sequence[BranchTracePoint]) -> list[BranchTracePoint]:
     accepted = [point for point in points if point.accepted]
     accepted.sort(key=lambda point: point.solved_coordinate)
@@ -287,7 +339,7 @@ def _segments_from_points(points: Sequence[BranchTracePoint], options: BranchTra
     segments: list[BranchTraceSegment] = []
     for left, right in zip(points[:-1], points[1:]):
         coordinate_gap = right.solved_coordinate - left.solved_coordinate
-        value_gap = _trace_value(right, options) - _trace_value(left, options)
+        value_gap = _trace_value(right) - _trace_value(left)
         accepted = coordinate_gap <= options.max_coordinate_gap
         reason = "" if accepted else "coordinate_gap_exceeds_threshold"
         segments.append(
@@ -304,10 +356,8 @@ def _segments_from_points(points: Sequence[BranchTracePoint], options: BranchTra
     return tuple(segments)
 
 
-def _trace_value(point: BranchTracePoint, options: BranchTraceOptions) -> float:
-    if options.fixed_variable == "T_K":
-        return point.pressure_bar
-    return point.temperature_k
+def _trace_value(point: BranchTracePoint) -> float:
+    return point.pressure_bar
 
 
 def _point_by_id(points: Sequence[BranchTracePoint], point_id: str) -> BranchTracePoint | None:
@@ -359,8 +409,6 @@ def solve_equilibrium_boundary_point(
     constructor_kwargs: dict[str, Any] = {"route": request.route}
     if request.fixed_variable == "T_K":
         constructor_kwargs["T"] = request.fixed_value
-    elif request.fixed_variable == "P_bar":
-        constructor_kwargs["P"] = request.fixed_value * 1.0e5
     else:
         raise ValueError(f"unsupported fixed variable: {request.fixed_variable}")
 

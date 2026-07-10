@@ -13,8 +13,8 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.dev.native_runtime_env import apply_to_current_process
 from scripts.data.paper_validation_parameters import paper_validation_parameter_path
+from scripts.dev.native_runtime_env import apply_to_current_process
 
 ANALYSIS_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2022_ascani"
 SOURCE_CSV = REPO_ROOT / "data" / "reference" / "multiphase" / "case2_model_comparison.csv"

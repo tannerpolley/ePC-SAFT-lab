@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import numpy as np
-
 from epcsaft import Mixture
 from epcsaft.model.parameters import ParameterSet
 from epcsaft.state.native_adapter import ePCSAFTMixture

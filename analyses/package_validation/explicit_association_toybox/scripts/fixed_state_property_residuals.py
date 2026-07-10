@@ -5,6 +5,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 import numpy as np
+
 from .closure_models import EXACT_MASS_ACTION_BASELINE, PICARD7_CLOSURE
 from .paper_systems import load_provider_property_cases
 from .toy_property_eos import evaluate_toy_property_coupling

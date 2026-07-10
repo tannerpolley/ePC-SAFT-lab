@@ -73,7 +73,7 @@ than the literature until exact package evidence admits each route.
 | Package | Intended role | Current native backend |
 | --- | --- | --- |
 | `packages/epcsaft` | parameters, model options, EOS state, properties, exact derivatives, provider SDK | C++/pybind11/CppAD |
-| `packages/epcsaft-equilibrium` | selector-owned bubble, dew, flash, LLE, multiphase and reaction-equilibrium workflows | C++/pybind11/Ipopt |
+| `packages/epcsaft-equilibrium` | selector-owned derived VLE workflows plus internal neutral-LLE, multiphase, electrolyte and reaction diagnostics | C++/pybind11/Ipopt |
 | `packages/epcsaft-regression` | pure, binary and electrolyte parameter fitting | C++/pybind11/Ceres/CppAD |
 
 ### Scale and maintainability pressure
@@ -119,6 +119,22 @@ same branching into more files is not sufficient.
    norm about `2.6` and stationarity about `73.79`, against required limits of
    `1e-8` and `1e-6`. The final continuation point is rejected, yet the route is
    public/production and its analysis metadata says `complete`.
+6. The public `neutral_lle` route can report `production_accepted` and
+   `phase_set_certified` while its HELD Stage-II upper bound is infinite, no
+   candidate is selected for replay and Stage III records that it did not
+   consume replay metadata. The mandatory strict checker is red. Solver and
+   local postsolve success therefore bypass the advertised stability ladder.
+7. Native-proof freshness is metadata-only. Checkers stamp the working tree's
+   current commit beside any loadable extension path without comparing the
+   loaded binary to the native source content. The generated activation mirror
+   likewise imports an existing extension, so a changed activation header and
+   a stale binary can agree with each other and remain green.
+8. The attempted neutral-LLE fail-open repair exposed a deeper contract error:
+   its claimed HELD Stage-II dual loop scans one finite candidate set once,
+   hard-codes one major iteration and derives both bounds from sampled TPD
+   values. That is a useful internal candidate audit, but it is not a global
+   master/subproblem cutting-plane certificate and cannot authorize production
+   phase-set completion.
 
 ### P0: scientific inputs can be invented silently
 
@@ -241,10 +257,15 @@ Required outcomes:
 5. Reactive speciation is removed from public production claims and the
    standalone-CE analysis records the live failure until the complete proof
    passes. Component tests remain available as development evidence.
-6. `electrolyte_lle` and `neutral_multiphase_nonassoc` are also removed from
-   public production exposure until their solves and results enter through the
-   native selector. The immediate truthful surface is the four selector-backed
-   families: bubble/dew, neutral TP flash, neutral LLE and single-component VLE.
+6. `neutral_lle`, `electrolyte_lle`, `neutral_multiphase_nonassoc` and neutral
+   TP flash are removed from public production exposure until selector
+   ownership, independent literature evidence and the advertised global
+   stability proof all exist. Bubble/dew temperature routes are closed because
+   their retained workbook checks are inverse-consistency component evidence,
+   not independent literature proof. The immediate truthful surface is two
+   families and three routes: bubble pressure, dew pressure and nonassociating
+   methane/ethane/propane single-component VLE within the retained NIST
+   temperature domains.
 7. Public equilibrium solve behavior enters through one selector-owned lane.
 8. Result construction and acceptance delegate to the canonical result
    builder. Route-specific code supplies thermodynamic quantities, not an
@@ -372,6 +393,9 @@ Every production capability record must provide:
 
 Production-family sets are derived from records satisfying the complete
 contract. They are not maintained as an independent hand-written list.
+Strict native checkers must also compare a build-embedded native-source
+identity with the current owning source set. A current commit label or module
+path by itself is not freshness evidence.
 
 ## Cross-Cutting Engineering Rules
 

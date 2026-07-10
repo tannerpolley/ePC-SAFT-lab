@@ -149,7 +149,10 @@ def test_generated_markdown_names_public_api_backend_and_dependencies() -> None:
     markdown = sync_algorithm_registry.render_markdown(entries, math_map)
 
     assert "Equilibrium(mixture, route='bubble_pressure'" in markdown
-    assert "Equilibrium(mixture, route='flash', ...).solve()" in markdown
+    assert (
+        "Public API: None; Equilibrium(mixture, route='flash', ...) is rejected "
+        "before native dispatch"
+    ) in markdown
     assert "Regression(mixture, ...).fit_pure_neutral(...)" in markdown
     assert "Native C++ Ipopt equilibrium NLP" in markdown
     assert "Dependency: Ipopt" in markdown

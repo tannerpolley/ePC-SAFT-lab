@@ -26,7 +26,6 @@ apply_to_current_process()
 import epcsaft
 import epcsaft_equilibrium
 
-
 FIGURE_ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DIR = FIGURE_ROOT / "results"
 REFERENCE_SOURCE = (

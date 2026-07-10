@@ -7,45 +7,92 @@ if(NOT EXISTS "${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/module.cpp")
     message(FATAL_ERROR "Provider native SDK could not locate epcsaft provider native sources at ${EPCSAFT_PROVIDER_NATIVE_ROOT}.")
 endif()
 
-set(EPCSAFT_PROVIDER_NATIVE_SOURCES
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/model/parameter_setup.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/activity.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/chemical_potential.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/compressibility.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/density.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/fugacity.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/parameters/pure_neutral.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/implicit_association/sensitivities.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/helmholtz.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/parameters/phase_parameters.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/association_corrections.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/local_helmholtz_derivatives.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/pressure_derivatives.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/state_sensitivities.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/property_derivatives.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/thermodynamic_properties.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/state.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/association.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/born.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/dispersion.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/hard_chain.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/ion.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/autodiff/cppad_smoke_checks.cpp"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/autodiff/implicit_sensitivity.cpp"
+function(
+    _epcsaft_provider_sdk_manifest_paths
+    manifest_json
+    manifest_key
+    package_root
+    output_variable
 )
-if(DEFINED EPCSAFT_CPPAD_SOURCE_FILE AND EPCSAFT_CPPAD_SOURCE_FILE)
-    list(APPEND EPCSAFT_PROVIDER_NATIVE_SOURCES "${EPCSAFT_CPPAD_SOURCE_FILE}")
-endif()
+    string(JSON entry_count ERROR_VARIABLE json_error LENGTH "${manifest_json}" "${manifest_key}")
+    if(json_error)
+        message(FATAL_ERROR "Provider native source manifest is missing '${manifest_key}': ${json_error}")
+    endif()
+    if(entry_count LESS 1)
+        message(FATAL_ERROR "Provider native source manifest '${manifest_key}' must not be empty.")
+    endif()
 
-set(EPCSAFT_PROVIDER_NATIVE_INCLUDE_DIRS
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/autodiff"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/model"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/runtime"
+    math(EXPR last_entry "${entry_count} - 1")
+    set(absolute_paths "")
+    set(relative_paths "")
+    foreach(entry_index RANGE 0 ${last_entry})
+        string(JSON relative_path GET "${manifest_json}" "${manifest_key}" ${entry_index})
+        if(relative_path STREQUAL "" OR IS_ABSOLUTE "${relative_path}" OR relative_path MATCHES "(^|/)\\.\\.(/|$)")
+            message(FATAL_ERROR "Provider native source manifest path must be a nonempty package-relative path: ${relative_path}")
+        endif()
+        set(absolute_path "${package_root}/${relative_path}")
+        if(NOT EXISTS "${absolute_path}")
+            message(FATAL_ERROR "Provider native source manifest entry does not exist: ${absolute_path}")
+        endif()
+        if(manifest_key STREQUAL "sources")
+            if(IS_DIRECTORY "${absolute_path}")
+                message(FATAL_ERROR "Provider native source manifest 'sources' entries must be existing files: ${absolute_path}")
+            endif()
+        endif()
+        if(manifest_key STREQUAL "include_dirs")
+            if(NOT IS_DIRECTORY "${absolute_path}")
+                message(FATAL_ERROR "Provider native source manifest 'include_dirs' entries must be existing directories: ${absolute_path}")
+            endif()
+        endif()
+        list(APPEND relative_paths "${relative_path}")
+        list(APPEND absolute_paths "${absolute_path}")
+    endforeach()
+    list(LENGTH relative_paths relative_path_count)
+    list(REMOVE_DUPLICATES relative_paths)
+    list(LENGTH relative_paths unique_relative_path_count)
+    if(NOT relative_path_count EQUAL unique_relative_path_count)
+        message(FATAL_ERROR "Provider native source manifest '${manifest_key}' entries must be unique.")
+    endif()
+    set(${output_variable} "${absolute_paths}" PARENT_SCOPE)
+endfunction()
+
+function(
+    epcsaft_provider_sdk_load_source_manifest
+    provider_package_root
+    sources_output
+    include_dirs_output
 )
+    set(manifest_path "${provider_package_root}/native_sdk/provider_native_sdk_v1/provider_sources.json")
+    if(NOT EXISTS "${manifest_path}")
+        message(FATAL_ERROR "Provider native source manifest does not exist: ${manifest_path}")
+    endif()
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${manifest_path}")
+    file(READ "${manifest_path}" manifest_json)
+    string(JSON contract_id ERROR_VARIABLE contract_error GET "${manifest_json}" contract_id)
+    if(contract_error OR NOT contract_id STREQUAL "provider_native_sdk_v1")
+        message(FATAL_ERROR "Provider native source manifest requires contract_id 'provider_native_sdk_v1': ${contract_error}")
+    endif()
+
+    _epcsaft_provider_sdk_manifest_paths(
+        "${manifest_json}" sources "${provider_package_root}" provider_sources
+    )
+    _epcsaft_provider_sdk_manifest_paths(
+        "${manifest_json}" include_dirs "${provider_package_root}" provider_include_dirs
+    )
+
+    set(${sources_output} "${provider_sources}" PARENT_SCOPE)
+    set(${include_dirs_output} "${provider_include_dirs}" PARENT_SCOPE)
+endfunction()
+
+epcsaft_provider_sdk_load_source_manifest(
+    "${EPCSAFT_PROVIDER_SDK_PACKAGE_ROOT}"
+    EPCSAFT_PROVIDER_NATIVE_SOURCES
+    EPCSAFT_PROVIDER_NATIVE_INCLUDE_DIRS
+)
+set(EPCSAFT_PROVIDER_NATIVE_TARGET_SOURCES ${EPCSAFT_PROVIDER_NATIVE_SOURCES})
+if(DEFINED EPCSAFT_CPPAD_SOURCE_FILE AND EPCSAFT_CPPAD_SOURCE_FILE)
+    list(APPEND EPCSAFT_PROVIDER_NATIVE_TARGET_SOURCES "${EPCSAFT_CPPAD_SOURCE_FILE}")
+endif()
 
 function(epcsaft_provider_sdk_add_provider_native target_name)
     if(TARGET "${target_name}")
@@ -55,7 +102,7 @@ function(epcsaft_provider_sdk_add_provider_native target_name)
         message(FATAL_ERROR "EPCSAFT_EIGEN_INCLUDE must point at the Eigen include root before adding ${target_name}.")
     endif()
 
-    add_library("${target_name}" OBJECT ${EPCSAFT_PROVIDER_NATIVE_SOURCES})
+    add_library("${target_name}" OBJECT ${EPCSAFT_PROVIDER_NATIVE_TARGET_SOURCES})
     target_include_directories("${target_name}"
         PUBLIC
             ${EPCSAFT_PROVIDER_NATIVE_INCLUDE_DIRS}

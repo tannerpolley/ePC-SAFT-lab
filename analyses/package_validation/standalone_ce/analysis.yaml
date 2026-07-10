@@ -1,15 +1,15 @@
 id: standalone_ce_validation_ladder
 title: Standalone homogeneous chemical equilibrium validation ladder
-status: complete
-summary: Retained CE-only validation ladder for analytic, charged, Ascani, unassisted MEA, Cantera, and Pope evidence families.
+status: active_validation
+summary: Active CE-only repair validation with retained analytic, charged, Ascani, MEA, Cantera, and Pope evidence families.
 source_plan: docs/superpowers/plans/2026-06-29-m4-ce-generic-pope-homotopy-continuation-plan.md
 issue: 329
 scope:
   equilibrium: standalone_chemical_equilibrium
   phase_scope: homogeneous_single_phase
-  public_routes:
-    - reactive_speciation
+  public_routes: []
   closed_surfaces:
+    - reactive_speciation
     - reactive_lle
     - reactive_electrolyte_lle
     - cpe
@@ -50,4 +50,18 @@ retained_artifacts:
     kind: retained_ce_continuation_trace_summary
   - path: analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/mea_ce_shuffled_subset_audit.csv
     kind: retained_ce_shuffled_no_oracle_audit
-claim_boundary: No reactive LLE, reactive electrolyte LLE, or CPE capability is proven by this standalone CE ladder.
+re_admission:
+  required_status: complete
+  limits:
+    balance_inf_norm_max: 1.0e-8
+    reaction_stationarity_inf_norm_max: 1.0e-6
+current_evidence:
+  status: failing
+  temperature_C: 40.0
+  loading_mol_co2_per_mol_mea: 0.4
+  accepted: false
+  failure_class: balance_failure
+  balance_inf_norm: 2.5999999998789356
+  reaction_stationarity_inf_norm: 73.79118023038392
+  captured_by: uv run --no-sync python analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_data.py
+claim_boundary: Standalone CE remains internal validation work; reactive speciation, reactive LLE, reactive electrolyte LLE, and CPE are closed.

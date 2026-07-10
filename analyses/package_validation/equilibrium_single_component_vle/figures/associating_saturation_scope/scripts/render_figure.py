@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
 FIGURE_ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DIR = FIGURE_ROOT / "results"
 PLOT_ID = "associating_saturation_scope"

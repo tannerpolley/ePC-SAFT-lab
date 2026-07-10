@@ -78,6 +78,30 @@ def _module_state(module_name: str) -> dict[str, str]:
     }
 
 
+def _equilibrium_native_identity_state(module_state: dict[str, str]) -> tuple[str, str]:
+    if not _native_module_available(module_state):
+        return "<missing>", module_state["error"]
+    try:
+        from scripts.validation import native_freshness
+
+        native = importlib.import_module("epcsaft_equilibrium._native_core")
+        receipt = native_freshness.build_equilibrium_native_receipt(
+            native_module=native,
+            checker_command=[
+                "uv",
+                "run",
+                "--no-sync",
+                "python",
+                "scripts/dev/doctor.py",
+                "--require-equilibrium-native",
+            ],
+        )
+        native_freshness.require_equilibrium_native_fresh(receipt)
+    except Exception as exc:
+        return "stale", f"{type(exc).__name__}: {exc}"
+    return "current", "<none>"
+
+
 def _missing_core_symbols() -> tuple[str, ...]:
     try:
         import epcsaft._core as core
@@ -353,6 +377,9 @@ def main(argv: list[str] | None = None) -> int:
     package_path, package_error = _module_path("epcsaft")
     core_path, core_error = _module_path("epcsaft._core")
     equilibrium_native_state = _module_state("epcsaft_equilibrium._native_core")
+    equilibrium_identity_status, equilibrium_identity_error = _equilibrium_native_identity_state(
+        equilibrium_native_state
+    )
     regression_native_state = _module_state("epcsaft_regression._native_core")
     provider_sdk, provider_sdk_error = _provider_sdk_state()
     provider_sdk_missing_paths = _provider_sdk_missing_paths(provider_sdk)
@@ -404,6 +431,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"provider_sdk_provider_only_core: {provider_sdk.get('provider_only_core', '<missing>')}")
     print(f"epcsaft_equilibrium_native_core: {equilibrium_native_state['path']}")
     print(f"epcsaft_equilibrium_native_core_error: {equilibrium_native_state['error']}")
+    print(f"epcsaft_equilibrium_native_source_identity_freshness: {equilibrium_identity_status}")
+    print(f"epcsaft_equilibrium_native_source_identity_error: {equilibrium_identity_error}")
     print(
         "epcsaft_equilibrium_native_artifact_freshness: "
         f"{_artifact_freshness(Path(equilibrium_native_state['path']) if equilibrium_native_state['path'] != '<missing>' else None, REPO_ROOT / 'packages' / 'epcsaft-equilibrium' / 'src' / 'epcsaft_equilibrium' / 'native', REPO_ROOT / 'packages' / 'epcsaft-equilibrium' / 'CMakeLists.txt')}"
@@ -465,6 +494,10 @@ def main(argv: list[str] | None = None) -> int:
         print("install_state: missing-equilibrium-native")
         print("next_command: uv run python scripts/dev/build_epcsaft.py --profile equilibrium")
         return 1
+    if args.require_equilibrium_native and equilibrium_identity_status != "current":
+        print("install_state: stale-equilibrium-native")
+        print("next_command: uv run python scripts/dev/build_epcsaft.py --profile equilibrium")
+        return 1
     if args.require_regression_native and not _native_module_available(regression_native_state):
         print("install_state: missing-regression-native")
         print("next_command: uv run python scripts/dev/build_epcsaft.py --profile regression")
@@ -472,6 +505,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.require_extension_native and not _extension_native_modules_available():
         print("install_state: missing-extension-native")
         print("next_command: uv run python scripts/dev/build_epcsaft.py")
+        return 1
+    if args.require_extension_native and equilibrium_identity_status != "current":
+        print("install_state: stale-equilibrium-native")
+        print("next_command: uv run python scripts/dev/build_epcsaft.py --profile equilibrium")
         return 1
     if args.require_ipopt and not _ipopt_available():
         print("install_state: missing-ipopt")

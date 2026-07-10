@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import numpy as np
-
 from epcsaft.state.native_adapter import ePCSAFTMixture
 
 
@@ -52,6 +51,34 @@ def _ionic_state() -> tuple[object, list[str], float, float, float, np.ndarray]:
         ),
         "l_ij": np.zeros((3, 3)),
         "k_hb": np.zeros((3, 3)),
+        "elec_model": {
+            "rel_perm": {"rule": "linear", "differential_mode": "auto"},
+            "hc_model": {"dadx_differential_mode": "auto"},
+            "disp_model": {"dadx_differential_mode": "auto"},
+            "assoc_model": {"dadx_differential_mode": "auto"},
+            "DH_model": {
+                "d_ion_mode": "t_dep_1",
+                "bjeruum_treatment": False,
+                "mu_DH_model": {
+                    "differential_mode": "auto",
+                    "comp_dep_rel_perm": True,
+                    "include_sum_term": True,
+                },
+            },
+            "include_born_model": True,
+            "born_model": {
+                "d_Born_mode": "t_indep",
+                "solvation_shell_model": True,
+                "dielectric_saturation": True,
+                "bulk_mode": "mix",
+                "mu_born_model": {
+                    "differential_mode": "auto",
+                    "comp_dep_rel_perm": True,
+                    "include_sum_term": True,
+                    "comp_dep_delta_d": True,
+                },
+            },
+        },
     }
     mix = ePCSAFTMixture.from_params(params, species=species)
     composition = np.array([0.9998, 1.0e-4, 1.0e-4])

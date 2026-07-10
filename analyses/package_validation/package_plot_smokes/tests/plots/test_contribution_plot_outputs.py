@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from tests.helpers.runtime_cases import _ionic_state
-from tests.helpers.runtime_cases import _neutral_state
-from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import append_payload_rows
-from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import save_contribution_closure_plot
-from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import save_contribution_term_breakdown_plot
+from tests.helpers.runtime_cases import _ionic_state, _neutral_state
+
+from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import (
+    append_payload_rows,
+    save_contribution_closure_plot,
+    save_contribution_term_breakdown_plot,
+)
 
 
 def _contribution_rows(state) -> list[dict[str, object]]:

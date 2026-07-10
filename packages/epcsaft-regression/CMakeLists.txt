@@ -110,6 +110,20 @@ else()
     set(CMAKE_SKIP_INSTALL_RULES ON)
     FetchContent_MakeAvailable(ceres_solver)
     set(CMAKE_SKIP_INSTALL_RULES "${EPCSAFT_PREVIOUS_CMAKE_SKIP_INSTALL_RULES}")
+    get_target_property(
+        EPCSAFT_CERES_INTERFACE_INCLUDE_DIRS
+        ceres
+        INTERFACE_INCLUDE_DIRECTORIES
+    )
+    if(NOT EPCSAFT_CERES_INTERFACE_INCLUDE_DIRS)
+        message(FATAL_ERROR "Fetched Ceres target must expose interface include directories.")
+    endif()
+    set_property(
+        TARGET ceres
+        APPEND
+        PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+        ${EPCSAFT_CERES_INTERFACE_INCLUDE_DIRS}
+    )
     if(TARGET ceres_internal AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_compile_options(ceres_internal PRIVATE -include cstdint)
     endif()

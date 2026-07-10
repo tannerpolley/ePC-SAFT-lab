@@ -1,4 +1,4 @@
 scope,series,component,branch,source_point_count,model_point_count,rmse_density_kg_m3,rmse_temperature_K,rmse_temperature_C,rmse_pressure_bar,rmse_composition,max_density_error_kg_m3,max_temperature_error_K,max_temperature_error_C,max_pressure_error_bar,max_composition_error,normalized_plot_score,branch_coverage_score,derivative_status,pass,score_basis
-figure,,,,33,50,0.0,0.0,0.0,0.34500992699684535,0.0,0.0,0.0,0.0,0.8267746593203551,0.0,8.95236231311544,1.0,verified_exact,True,pressure-coordinate RMSE against calibrated Gross 2002 Figure 2 retained P-x/y source points
-series,bubble_line,,,18,27,0.0,0.0,0.0,0.3258589173666765,0.0,0.0,0.0,0.0,0.8267746593203551,0.0,9.068974521809496,1.0,verified_exact,True,
-series,dew_line,,,15,23,0.0,0.0,0.0,0.36667319040959595,0.0,0.0,0.0,0.0,0.6956526686688136,0.0,8.95236231311544,1.0,verified_exact,True,
+figure,,,,14,45,0.0,0.0,0.0,0.36924715543383246,0.0,0.0,0.0,0.0,0.8613971207410245,0.0,8.755679683182793,1.0,verified_exact,True,pressure-coordinate RMSE against Leu and Robinson 1992 Table I literature P-x/y points retained for Gross 2002 Figure 2
+series,bubble_line,,,7,24,0.0,0.0,0.0,0.28812518956792776,0.0,0.0,0.0,0.0,0.5188771109532659,0.0,9.176785172663063,1.0,verified_exact,True,
+series,dew_line,,,7,21,0.0,0.0,0.0,0.43551211088602276,0.0,0.0,0.0,0.0,0.8613971207410245,0.0,8.755679683182793,1.0,verified_exact,True,

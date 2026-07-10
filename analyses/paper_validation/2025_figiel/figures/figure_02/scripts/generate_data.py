@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import sys
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:

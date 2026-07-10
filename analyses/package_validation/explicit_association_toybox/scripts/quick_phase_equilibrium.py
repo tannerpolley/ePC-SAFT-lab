@@ -3,9 +3,9 @@ from __future__ import annotations
 import argparse
 import csv
 import math
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Sequence
 
 import numpy as np
 
@@ -376,7 +376,7 @@ def _select_temperature_spread(
             selected.extend(ordered)
             continue
         indexes = np.linspace(0, len(ordered) - 1, max_rows_per_component)
-        selected.extend(ordered[int(round(index))] for index in indexes)
+        selected.extend(ordered[round(index)] for index in indexes)
     return sorted(selected, key=lambda item: (str(item["component"]).lower(), float(item["T_K"])))
 
 

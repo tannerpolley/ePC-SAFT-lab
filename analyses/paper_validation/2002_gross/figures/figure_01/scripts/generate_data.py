@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import math
 import sys
@@ -25,12 +26,12 @@ apply_to_current_process()
 import matplotlib
 
 matplotlib.use("Agg")
+import epcsaft
 import matplotlib.pyplot as plt
 import numpy as np
-
-import epcsaft
-import epcsaft_equilibrium
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft_equilibrium._native import extension_native_core
+from epcsaft_equilibrium.workflows import _run_associating_single_component_vle_validation
 
 FIGURE_ID = "figure_01"
 MODEL_POINTS_PER_BRANCH = 31
@@ -41,6 +42,7 @@ RESULTS_DIR = FIGURE_DIR / "results"
 SHARED_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "shared"
 PARAMETER_CSV = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "parameters" / "pure" / "any_solvent.csv"
 MANIFEST_PATH = SHARED_DIR / "gross_2002_full_replication_manifest.json"
+ASSOCIATION_MANIFEST_PATH = SHARED_DIR / "gross_2002_association_acceptance_manifest.json"
 PURE_COMPONENT_REFERENCE_DIR = REPO_ROOT / "data" / "reference" / "pure_component"
 REFERENCE_SATURATION_DENSITY_CSVS = {
     "methanol": PURE_COMPONENT_REFERENCE_DIR / "saturation_density" / "methanol" / "saturation_density.csv",
@@ -74,7 +76,7 @@ NEAR_CRITICAL_EXCLUSIONS = [
     {
         "component": "methanol",
         "temperature_window_K": "485-512",
-        "reason": "single_component_vle postsolve phase-distance gate rejects phase coalescence near the visible critical tip",
+        "reason": "internal associating saturation validation rejects phase coalescence near the visible critical tip",
     }
 ]
 
@@ -137,6 +139,10 @@ def _write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) ->
 def _read_csv(path: Path) -> list[dict[str, str]]:
     with path.open(encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _read_reference_rows(paths: dict[str, Path]) -> list[dict[str, Any]]:
@@ -219,6 +225,9 @@ def _copy_reference_inputs() -> None:
     if not SOURCE_IMAGE.is_file():
         raise RuntimeError(f"Retained source image missing: {_relative(SOURCE_IMAGE)}")
     source_rows = _read_reference_rows(REFERENCE_SATURATION_DENSITY_CSVS)
+    source_fingerprint = _sha256(SOURCE_IMAGE)
+    for row in source_rows:
+        row["source_fingerprint"] = source_fingerprint
     association_rows = _read_reference_rows(REFERENCE_ASSOCIATION_AAD_CSVS)
     _write_csv(
         SOURCE_CSV,
@@ -237,6 +246,7 @@ def _copy_reference_inputs() -> None:
             "notes",
             "source_method",
             "source_document",
+            "source_fingerprint",
         ],
     )
     _write_csv(
@@ -266,7 +276,7 @@ def _load_parameters() -> dict[str, dict[str, str]]:
     return rows
 
 
-def _mixture(component: str, parameters: dict[str, dict[str, str]]) -> epcsaft.Mixture:
+def _mixture(component: str, parameters: dict[str, dict[str, str]]) -> ePCSAFTMixture:
     row = parameters[component]
     payload = {
         "MW": np.asarray([float(row["MW"])]),
@@ -277,13 +287,37 @@ def _mixture(component: str, parameters: dict[str, dict[str, str]]) -> epcsaft.M
         "vol_a": np.asarray([float(row["vol_a"])]),
         "assoc_scheme": [row["assoc_scheme"]],
     }
-    return epcsaft.Mixture(
-        epcsaft.ParameterSet.from_dict(
-            payload,
-            species=[component],
-            metadata={"source": row["source"], "figure": "Gross 2002 Figure 1"},
-        )
+    parameter_set = epcsaft.ParameterSet.from_dict(
+        payload,
+        species=[component],
+        metadata={
+            "source_backed": True,
+            "source": row["source"],
+            "paper": "Gross and Sadowski 2002",
+            "table": "Table 1",
+            "figure": "Figure 1",
+                "source_path": _relative(PARAMETER_CSV),
+                "source_fingerprint": _sha256(SOURCE_IMAGE),
+        },
     )
+    model_options = epcsaft.ModelOptions(
+        born_model=epcsaft.BornModelOptions(enabled=False),
+    )
+    normalized = epcsaft.Mixture(
+        parameter_set,
+        model_options=model_options,
+    ).native.parameters
+    normalized.update(model_options.to_runtime_options(parameter_set))
+    normalized.update(
+        {
+            "MW": np.asarray([float(row["MW"])]),
+            "z": np.asarray([float(row["z"])]),
+            "dielc": np.asarray([float(row["dielc"])]),
+            "d_born": np.asarray([float(row["d_born"])]),
+            "f_solv": np.asarray([float(row["f_solv"])]),
+        }
+    )
+    return ePCSAFTMixture.from_params(normalized, species=[component])
 
 
 def _source_rows() -> list[dict[str, Any]]:
@@ -335,6 +369,17 @@ def _source_curve_counts(source_rows: list[dict[str, Any]]) -> dict[str, int]:
     return dict(counts)
 
 
+def _required_bool(value: Any, field: str) -> bool:
+    if isinstance(value, bool):
+        return value
+    token = str(value).strip().lower()
+    if token == "true":
+        return True
+    if token == "false":
+        return False
+    raise RuntimeError(f"Figure 1 model evidence field {field} must contain a boolean value.")
+
+
 def _solve_model_rows(source_rows: list[dict[str, Any]], parameters: dict[str, dict[str, str]]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     mixtures = {component: _mixture(component, parameters) for component in ("methanol", "1-pentanol", "1-nonanol")}
@@ -342,15 +387,37 @@ def _solve_model_rows(source_rows: list[dict[str, Any]], parameters: dict[str, d
         component = source_row["component"]
         branch = source_row["branch"]
         temperature_K = float(source_row["temperature_K"])
-        result = epcsaft_equilibrium.Equilibrium(
+        result = _run_associating_single_component_vle_validation(
             mixtures[component],
-            route="single_component_vle",
-            T=temperature_K,
-        ).solve(solver_options={"max_iterations": 220, "tolerance": 1.0e-8, "ipopt_print_level": 0})
-        diagnostics = result.diagnostics
+            temperature_K=temperature_K,
+            solver_options={"max_iterations": 220, "tolerance": 1.0e-8, "ipopt_print_level": 0},
+        )
+        diagnostics = result
         if diagnostics.get("hessian_approximation") != "exact" or diagnostics.get("exact_hessian_available") is not True:
             raise RuntimeError(f"{component} {temperature_K} K solve did not report the exact Hessian route.")
-        density_mol_m3 = result.vapor_density if branch == "vapor" else result.liquid_density
+        physical_evidence = diagnostics.get("physical_evidence", {})
+        phase_rows = {
+            str(phase.get("label", "")): phase
+            for phase in physical_evidence.get("phases", [])
+            if isinstance(phase, dict)
+        }
+        if set(phase_rows) != {"liquid", "vapor"}:
+            raise RuntimeError(f"{component} {temperature_K} K solve did not return liquid/vapor evidence records.")
+        association = diagnostics.get("association_derivative_receipt", {})
+        association_phases = association.get("phases", [])
+        if len(association_phases) != 2:
+            raise RuntimeError(f"{component} {temperature_K} K solve did not return two association phase receipts.")
+        max_mass_action_residual = max(
+            float(phase["recomputed_mass_action_residual_norm"])
+            for phase in association_phases
+        )
+        mass_action_tolerance = min(
+            float(phase["mass_action_residual_tolerance"])
+            for phase in association_phases
+        )
+        minimum_site_fraction = min(float(phase["site_fraction_minimum"]) for phase in association_phases)
+        maximum_site_fraction = max(float(phase["site_fraction_maximum"]) for phase in association_phases)
+        density_mol_m3 = float(phase_rows[branch]["density"])
         density_kg_m3 = density_mol_m3 * float(parameters[component]["MW"])
         source_reference_density = float(source_row["density_kg_m3"])
         rows.append(
@@ -360,7 +427,7 @@ def _solve_model_rows(source_rows: list[dict[str, Any]], parameters: dict[str, d
                 "temperature_K": temperature_K,
                 "density_kg_m3": density_kg_m3,
                 "density_mol_m3": density_mol_m3,
-                "saturation_pressure_Pa": result.P_sat,
+                "saturation_pressure_Pa": float(diagnostics["solved_pressure_Pa"]),
                 "source_reference_density_kg_m3": source_reference_density,
                 "density_error_kg_m3": density_kg_m3 - source_reference_density,
                 "route_status": diagnostics.get("route_status", ""),
@@ -371,12 +438,80 @@ def _solve_model_rows(source_rows: list[dict[str, Any]], parameters: dict[str, d
                 "iteration_count": diagnostics.get("iteration_count", ""),
                 "pressure_consistency_norm": diagnostics.get("pressure_consistency_norm", ""),
                 "chemical_potential_consistency_norm": diagnostics.get("chemical_potential_consistency_norm", ""),
+                "native_binding": diagnostics.get("native_binding", ""),
+                "validation_scope": diagnostics.get("validation_scope", ""),
+                "public_route_admission": diagnostics.get("public_route_admission", ""),
+                "production_exposed": bool(diagnostics.get("production_exposed", True)),
+                "source_component": diagnostics.get("source_component", ""),
+                "association_derivative_backend": diagnostics.get("association_derivative_receipt", {}).get(
+                    "derivative_mode", ""
+                ),
+                "association_phase_receipt_count": len(association_phases),
+                "association_exact_site_fraction_jacobian_available": bool(
+                    association.get("exact_site_fraction_jacobian_available")
+                ),
+                "association_exact_site_fraction_hessian_available": bool(
+                    association.get("exact_site_fraction_hessian_available")
+                ),
+                "association_max_mass_action_residual": max_mass_action_residual,
+                "association_mass_action_residual_tolerance": mass_action_tolerance,
+                "association_minimum_site_fraction": minimum_site_fraction,
+                "association_maximum_site_fraction": maximum_site_fraction,
+                "association_route_eval_h_calls": int(association.get("route_eval_h_calls", 0)),
+                "association_returned_hessian_symmetry_scope": association_phases[0].get(
+                    "hessian_symmetry_evidence_scope", ""
+                ),
             }
         )
     return rows
 
 
 def _score(model_rows: list[dict[str, Any]], source_rows: list[dict[str, Any]]) -> dict[str, Any]:
+    if not model_rows:
+        raise RuntimeError("Figure 1 requires retained native model rows.")
+    association_backend = "cppad_implicit_association"
+    symmetry_scope = "returned_post_symmetrization_matrices"
+    exact_association = all(
+        row.get("association_derivative_backend") == association_backend
+        and int(row.get("association_phase_receipt_count", 0)) == 2
+        and _required_bool(
+            row.get("association_exact_site_fraction_jacobian_available"),
+            "association_exact_site_fraction_jacobian_available",
+        )
+        and _required_bool(
+            row.get("association_exact_site_fraction_hessian_available"),
+            "association_exact_site_fraction_hessian_available",
+        )
+        and int(row.get("association_route_eval_h_calls", 0)) > 0
+        and row.get("association_returned_hessian_symmetry_scope") == symmetry_scope
+        for row in model_rows
+    )
+    max_mass_action_residual = max(float(row["association_max_mass_action_residual"]) for row in model_rows)
+    mass_action_residual_tolerance = min(
+        float(row["association_mass_action_residual_tolerance"])
+        for row in model_rows
+    )
+    minimum_site_fraction = min(float(row["association_minimum_site_fraction"]) for row in model_rows)
+    maximum_site_fraction = max(float(row["association_maximum_site_fraction"]) for row in model_rows)
+    if (
+        not exact_association
+        or max_mass_action_residual > mass_action_residual_tolerance
+        or minimum_site_fraction <= 0.0
+        or maximum_site_fraction > 1.0 + 1.0e-12
+    ):
+        raise RuntimeError("Figure 1 association derivative evidence did not satisfy the exact native contract.")
+    association_derivative_evidence = {
+        "backend": association_backend,
+        "exact_site_fraction_jacobian_available": True,
+        "exact_site_fraction_hessian_available": True,
+        "phase_receipts_per_solve": 2,
+        "max_mass_action_residual": max_mass_action_residual,
+        "mass_action_residual_tolerance": mass_action_residual_tolerance,
+        "minimum_site_fraction": minimum_site_fraction,
+        "maximum_site_fraction": maximum_site_fraction,
+        "returned_hessian_symmetry_scope": symmetry_scope,
+        "global_phase_set_certified": False,
+    }
     by_branch: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in model_rows:
         by_branch[f"{row['component']}:{row['branch']}"].append(row)
@@ -421,6 +556,7 @@ def _score(model_rows: list[dict[str, Any]], source_rows: list[dict[str, Any]]) 
         "normalized_plot_score": normalized_score,
         "branch_coverage_score": branch_coverage,
         "derivative_status": "verified_exact",
+        "association_derivative_evidence": association_derivative_evidence,
         "pass": branch_coverage == 1.0 and normalized_score >= 8.0,
         "branch_scores": branch_scores,
         "score_basis": "density-coordinate RMSE against calibrated Gross 2002 Figure 1 solid PC-SAFT curve points",
@@ -607,7 +743,7 @@ def _write_plotted_csv(source_rows: list[dict[str, Any]], model_rows: list[dict[
                 "branch": row["branch"],
                 "temperature_K": row["temperature_K"],
                 "density_kg_m3": row["density_kg_m3"],
-                "source_reference": "epcsaft_equilibrium single_component_vle exact Hessian route",
+                "source_reference": "internal associating single-component VLE exact-Hessian validation",
                 "source_method": "package_model",
             }
         )
@@ -701,7 +837,7 @@ def _write_fit_statistics_csv(
 
 
 def _native_receipt() -> dict[str, Any]:
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=extension_native_core(),
         checker_command=[
             "uv",
@@ -764,12 +900,35 @@ def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> 
                     "derivative_status": score_payload["derivative_status"],
                     "pass": score_payload["pass"],
                 },
+                "validation_scope": {
+                    "classification": "internal_validation_evidence",
+                    "native_binding": "_native_associating_single_component_vle_validation_result",
+                    "public_route_admission": "closed",
+                    "production_exposed": False,
+                },
+                "association_derivative_evidence": score_payload["association_derivative_evidence"],
             }
         )
         break
     else:
         raise RuntimeError("figure_01 record missing from full-replication manifest.")
     _write_json(MANIFEST_PATH, manifest)
+
+    association_manifest = json.loads(ASSOCIATION_MANIFEST_PATH.read_text(encoding="utf-8"))
+    for row in association_manifest["figures"]:
+        if row.get("figure_id") != FIGURE_ID:
+            continue
+        row["validation_scope"] = {
+            "classification": "internal_validation_evidence",
+            "native_binding": "_native_associating_single_component_vle_validation_result",
+            "public_route_admission": "closed",
+            "production_exposed": False,
+        }
+        row["association_derivative_evidence"] = score_payload["association_derivative_evidence"]
+        break
+    else:
+        raise RuntimeError("figure_01 record missing from association-acceptance manifest.")
+    _write_json(ASSOCIATION_MANIFEST_PATH, association_manifest)
 
 
 def main() -> int:
@@ -811,6 +970,21 @@ def main() -> int:
             "iteration_count",
             "pressure_consistency_norm",
             "chemical_potential_consistency_norm",
+            "native_binding",
+            "validation_scope",
+            "public_route_admission",
+            "production_exposed",
+            "source_component",
+            "association_derivative_backend",
+            "association_phase_receipt_count",
+            "association_exact_site_fraction_jacobian_available",
+            "association_exact_site_fraction_hessian_available",
+            "association_max_mass_action_residual",
+            "association_mass_action_residual_tolerance",
+            "association_minimum_site_fraction",
+            "association_maximum_site_fraction",
+            "association_route_eval_h_calls",
+            "association_returned_hessian_symmetry_scope",
         ],
     )
     _write_plotted_csv(source_rows, model_rows)
@@ -842,8 +1016,12 @@ def main() -> int:
         "score": score_payload,
         "near_critical_connectors": NEAR_CRITICAL_CONNECTORS,
         "native_route": {
-            "public_entrypoint": "epcsaft_equilibrium.Equilibrium(mixture, route='single_component_vle', T=...).solve()",
+            "native_binding": "_native_associating_single_component_vle_validation_result",
+            "validation_scope": "internal_associating_single_component_vle_validation",
+            "public_route_admission": "closed",
+            "production_exposed": False,
             "derivative_status": score_payload["derivative_status"],
+            "association_derivative_evidence": score_payload["association_derivative_evidence"],
             "model_csv": MODEL_CSV,
             "native_freshness_receipt": receipt,
         },

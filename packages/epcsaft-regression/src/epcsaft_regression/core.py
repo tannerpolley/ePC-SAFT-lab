@@ -10,10 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-
-from epcsaft._types import InputError, phase_to_int
-from epcsaft._types import vector_to_array
-from epcsaft.state.native_adapter import check_association, create_struct
+from epcsaft._types import InputError, phase_to_int, vector_to_array
 from epcsaft.model.datasets import (
     _MISSING,
     _deterministic_default,
@@ -26,6 +23,7 @@ from epcsaft.model.datasets import (
 )
 from epcsaft.model.parameters import ParameterSet, ParameterSource
 from epcsaft.model.templates import _infer_pure_template_name
+from epcsaft.state.native_adapter import check_association, create_struct
 
 from .native_adapter import (
     _evaluate_generic_native_debug,

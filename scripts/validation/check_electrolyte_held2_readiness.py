@@ -472,7 +472,7 @@ def main(argv: list[str] | None = None) -> int:
             from scripts.validation import native_freshness
 
             try:
-                native_freshness.require_receipt(dict(receipt))
+                native_freshness.require_equilibrium_native_fresh(dict(receipt))
             except ValueError as exc:
                 print(str(exc), file=sys.stderr)
                 return 2

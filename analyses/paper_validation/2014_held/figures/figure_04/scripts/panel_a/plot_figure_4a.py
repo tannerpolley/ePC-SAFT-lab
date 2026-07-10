@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import copy
 import csv
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -13,14 +13,12 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import analysis_scripts_dir
-from scripts.plot_outputs import REPO_ROOT
 import sys
-
-
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT, analysis_scripts_dir
 
 ANALYSIS_SCRIPTS = analysis_scripts_dir(__file__)
 if str(ANALYSIS_SCRIPTS) not in sys.path:
@@ -29,12 +27,14 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 import _common as common
+
 from scripts._env import require_epcsaft_install
 from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
+
 from scripts._epcsaft_oop import epcsaft_density, epcsaft_fugacity_coefficient, epcsaft_pressure
 
 T_REF = 298.15

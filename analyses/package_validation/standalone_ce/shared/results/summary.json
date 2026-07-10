@@ -7,10 +7,9 @@
   "ce_only": true,
   "phase_scope": "homogeneous_single_phase",
   "runtime_dependencies": [],
-  "public_routes": [
-    "reactive_speciation"
-  ],
+  "public_routes": [],
   "closed_surfaces": [
+    "reactive_speciation",
     "reactive_lle",
     "reactive_electrolyte_lle",
     "cpe"
@@ -139,8 +138,8 @@
     {
       "family_id": "mea_speciation",
       "label": "MEA CO2 H2O Smith-Missen no-oracle loading sweep",
-      "status": "complete",
-      "evidence_role": "retained_no_oracle_public_reactive_speciation_sweep",
+      "status": "blocked_live_reproduction",
+      "evidence_role": "retained_no_oracle_standalone_ce_diagnostic_sweep",
       "source": "MEA-Thermodynamics Smith-Missen Phase 1 retained fixture",
       "source_path": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/mea_ce_oracle_speciation_comparison_summary.json",
       "ce_only": true,
@@ -171,6 +170,17 @@
         "max_iterations": 1000,
         "tolerance": 1e-08
       },
+      "current_live_failure": {
+        "temperature_C": 40.0,
+        "loading_mol_co2_per_mol_mea": 0.4,
+        "accepted": false,
+        "failure_class": "balance_failure",
+        "balance_inf_norm": 2.5999999998789356,
+        "reaction_stationarity_inf_norm": 73.79118023038392,
+        "balance_inf_norm_max": 1e-08,
+        "reaction_stationarity_inf_norm_max": 1e-06,
+        "captured_by": "uv run --no-sync python analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_data.py"
+      },
       "units": {
         "amounts": "mol",
         "mole_fractions": "dimensionless",
@@ -192,6 +202,7 @@
         "water_per_amine_30wtpct": 7.909507954125047
       },
       "residuals": {
+        "snapshot_status": "superseded_by_current_live_failure",
         "loading_count": 161,
         "temperature_count": 2,
         "state_point_count": 322,
@@ -213,8 +224,9 @@
         "temperature_count_min": 2,
         "state_point_count_min": 322
       },
-      "strict_gates_passed": true,
+      "strict_gates_passed": false,
       "continuation_evidence": {
+        "snapshot_status": "superseded_by_current_live_failure",
         "artifact": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/mea_ce_continuation_trace_summary.csv",
         "max_stage_count": 3,
         "homotopy_point_count": 12,
@@ -223,6 +235,7 @@
         "all_final_proof_accepted": true
       },
       "shuffled_subset": {
+        "snapshot_status": "superseded_by_current_live_failure",
         "attempt_count": 34,
         "all_accepted": true,
         "all_no_source_oracle_seed": true,
@@ -316,18 +329,19 @@
     "lagrangian_hessian_exact": true,
     "source": "packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_nlp_activation.py"
   },
-  "capability_evidence": {
-    "status": "standalone_ce_open_cpe_closed",
-    "activation_gate": "issue_0330_complete",
-    "production": true,
-    "public_routes": [
-      "reactive_speciation"
-    ],
+  "validation_boundary": {
+    "status": "active_validation",
+    "activation_family": "reactive_speciation",
     "closed_surfaces": [
+      "reactive_speciation",
       "reactive_lle",
       "reactive_electrolyte_lle",
       "cpe"
-    ]
+    ],
+    "re_admission_limits": {
+      "balance_inf_norm_max": 1e-8,
+      "reaction_stationarity_inf_norm_max": 1e-6
+    }
   },
-  "claim_boundary": "This retained ladder proves standalone homogeneous CE evidence only; it does not admit reactive LLE, reactive electrolyte LLE, or CPE."
+  "claim_boundary": "This retained ladder is internal validation evidence only; reactive speciation, reactive LLE, reactive electrolyte LLE, and CPE remain closed."
 }

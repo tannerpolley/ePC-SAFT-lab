@@ -4,12 +4,10 @@ import csv
 import json
 import math
 import sys
-
-
+import sys as _bootstrap_sys
 from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
-import sys as _bootstrap_sys
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -19,12 +17,13 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-from typing import Dict, Iterable, List, Tuple
-from scripts.dev.native_runtime_env import apply_to_current_process
+from collections.abc import Iterable
 
 import matplotlib
 import numpy as np
+
+from scripts.dev.native_runtime_env import apply_to_current_process
+from scripts.plot_outputs import REPO_ROOT
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -42,8 +41,9 @@ apply_to_current_process()
 require_epcsaft_install()
 
 from epcsaft.model.datasets import get_prop_dict
-from scripts.data.paper_validation_parameters import paper_validation_parameter_path
+
 from scripts._epcsaft_oop import as_mixture
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 T_REF = 298.15
 P_REF = 1.0e5
@@ -85,11 +85,11 @@ BROWN_COLOR = "#7a1f1f"
 BLUE_COLOR = "#1f4da8"
 
 
-def _freeze_comp(comp: Dict[str, float]) -> Tuple[Tuple[str, float], ...]:
+def _freeze_comp(comp: dict[str, float]) -> tuple[tuple[str, float], ...]:
     return tuple(sorted((str(k), round(float(v), 12)) for k, v in comp.items()))
 
 
-def _thaw_comp(comp_key: Tuple[Tuple[str, float], ...]) -> Dict[str, float]:
+def _thaw_comp(comp_key: tuple[tuple[str, float], ...]) -> dict[str, float]:
     return {str(k): float(v) for k, v in comp_key}
 
 
@@ -168,13 +168,13 @@ def parse_float(value) -> float | None:
     return float(val)
 
 
-def read_csv_rows(path: Path) -> Tuple[List[str], List[Dict[str, str]]]:
+def read_csv_rows(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     with path.open("r", newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
         fields = [h.strip() for h in (reader.fieldnames or []) if h and h.strip()]
-        rows: List[Dict[str, str]] = []
+        rows: list[dict[str, str]] = []
         for row in reader:
-            clean: Dict[str, str] = {}
+            clean: dict[str, str] = {}
             for key, value in row.items():
                 if not key:
                     continue
@@ -201,10 +201,10 @@ def write_xlsx_to_csv(xlsx_path: Path, csv_path: Path | None = None) -> Path:
     return csv_path
 
 
-def species_for_combo(salt: str, solvent_system: str) -> List[str]:
+def species_for_combo(salt: str, solvent_system: str) -> list[str]:
     salt_spec = SALT_SPECS[salt]
     solvents = [s for s in solvent_system.split("-") if s]
-    solvent_species: List[str] = []
+    solvent_species: list[str] = []
     for solvent in solvents:
         if solvent == "water":
             solvent_species.append("H2O-2B-Li" if salt.startswith("Li") else "H2O-2B-NaCl")
@@ -217,7 +217,7 @@ def species_for_combo(salt: str, solvent_system: str) -> List[str]:
     return [salt_spec["cation"], salt_spec["anion"], *solvent_species]
 
 
-def normalized_comp(solvent_system: str, comp: Dict[str, float]) -> Dict[str, float]:
+def normalized_comp(solvent_system: str, comp: dict[str, float]) -> dict[str, float]:
     solvents = [s for s in solvent_system.split("-") if s]
     if len(solvents) == 1:
         return {solvents[0]: 1.0}
@@ -228,20 +228,20 @@ def normalized_comp(solvent_system: str, comp: Dict[str, float]) -> Dict[str, fl
     return {s: vals[s] / total for s in solvents}
 
 
-def mw_mix(solvent_system: str, comp: Dict[str, float]) -> float:
+def mw_mix(solvent_system: str, comp: dict[str, float]) -> float:
     frac = normalized_comp(solvent_system, comp)
     return sum(frac[s] * SOLVENT_MW[s] for s in frac)
 
 
-def stoich_for_salt(salt: str) -> Tuple[int, int]:
+def stoich_for_salt(salt: str) -> tuple[int, int]:
     spec = SALT_SPECS[salt]
-    zc = abs(int(round(spec["z_cation"])))
-    za = abs(int(round(spec["z_anion"])))
+    zc = abs(round(spec["z_cation"]))
+    za = abs(round(spec["z_anion"]))
     g = math.gcd(zc, za)
     return za // g, zc // g
 
 
-def salt_mole_fraction_from_molality(molality: np.ndarray, solvent_system: str, comp: Dict[str, float]) -> np.ndarray:
+def salt_mole_fraction_from_molality(molality: np.ndarray, solvent_system: str, comp: dict[str, float]) -> np.ndarray:
     m = np.asarray(molality, dtype=float)
     n_solv = 1.0 / mw_mix(solvent_system, comp)
     denom = n_solv + m
@@ -249,7 +249,7 @@ def salt_mole_fraction_from_molality(molality: np.ndarray, solvent_system: str, 
 
 
 def molality_to_species_molefraction(
-    molality: float, salt: str, solvent_system: str, comp: Dict[str, float]
+    molality: float, salt: str, solvent_system: str, comp: dict[str, float]
 ) -> np.ndarray:
     species = species_for_combo(salt, solvent_system)
     solvents = [s for s in solvent_system.split("-") if s]
@@ -258,7 +258,7 @@ def molality_to_species_molefraction(
     mw = mw_mix(solvent_system, frac)
     n_solv_total = 1.0 / mw
     nu_cat, nu_an = stoich_for_salt(salt)
-    n_totals: Dict[str, float] = {sp: 0.0 for sp in species}
+    n_totals: dict[str, float] = {sp: 0.0 for sp in species}
     for solvent_key, sp_name in zip(solvents, solvent_species):
         n_totals[sp_name] += frac[solvent_key] * n_solv_total
     n_totals[species[0]] += nu_cat * molality
@@ -270,7 +270,7 @@ def molality_to_species_molefraction(
 
 
 def build_params(
-    dataset_name: str, salt: str, solvent_system: str, comp: Dict[str, float], user_options: dict | None = None
+    dataset_name: str, salt: str, solvent_system: str, comp: dict[str, float], user_options: dict | None = None
 ) -> dict:
     x_ref = molality_to_species_molefraction(1e-8, salt, solvent_system, comp)
     return get_prop_dict(
@@ -291,11 +291,11 @@ def mean_ionic_activity_curve(
     dataset_name: str,
     salt: str,
     solvent_system: str,
-    comp: Dict[str, float],
+    comp: dict[str, float],
     m_max: float,
     points: int = 500,
     user_options: dict | None = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     comp_key = _freeze_comp(comp)
     user_options_key = _freeze_user_options(user_options)
     grid, gamma = _mean_ionic_activity_curve_cached(
@@ -315,11 +315,11 @@ def _mean_ionic_activity_curve_cached(
     dataset_name: str,
     salt: str,
     solvent_system: str,
-    comp_key: Tuple[Tuple[str, float], ...],
+    comp_key: tuple[tuple[str, float], ...],
     m_max: float,
     points: int,
     user_options_key: str,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     comp = _thaw_comp(comp_key)
     user_options = _thaw_user_options(user_options_key)
     grid = np.linspace(0.0, float(m_max), int(points))
@@ -336,11 +336,11 @@ def _mean_ionic_activity_curve_cached(
     return grid, gamma
 
 
-def extract_comp(row: Dict[str, str], solvent_system: str) -> Dict[str, float]:
+def extract_comp(row: dict[str, str], solvent_system: str) -> dict[str, float]:
     solvents = [s for s in solvent_system.split("-") if s]
     if len(solvents) == 1:
         return {solvents[0]: 1.0}
-    comp: Dict[str, float] = {}
+    comp: dict[str, float] = {}
     mapping = {
         "x_h2o": "water",
         "x_water": "water",
@@ -357,19 +357,19 @@ def extract_comp(row: Dict[str, str], solvent_system: str) -> Dict[str, float]:
                 comp[mapping[k]] = parsed
     if len(solvents) == 2 and len(comp) == 1:
         known = next(iter(comp))
-        other = [s for s in solvents if s != known][0]
+        other = next(s for s in solvents if s != known)
         comp[other] = 1.0 - comp[known]
     return normalized_comp(solvent_system, comp)
 
 
-def comp_signature(solvent_system: str, comp: Dict[str, float]) -> Tuple[Tuple[str, float], ...]:
+def comp_signature(solvent_system: str, comp: dict[str, float]) -> tuple[tuple[str, float], ...]:
     solvents = [s for s in solvent_system.split("-") if s]
     if len(solvents) <= 1:
         return tuple()
     return tuple((s, round(float(comp.get(s, 0.0)), 6)) for s in solvents)
 
 
-def read_miac_dataset(path: Path, solvent_system: str) -> List[Dict[str, object]]:
+def read_miac_dataset(path: Path, solvent_system: str) -> list[dict[str, object]]:
     fields, rows = read_csv_rows(path)
     lookup = {field.lower(): field for field in fields}
     molality_key = next((lookup[c] for c in ("molality", "m") if c in lookup), None)
@@ -378,7 +378,7 @@ def read_miac_dataset(path: Path, solvent_system: str) -> List[Dict[str, object]
     x_key = lookup.get("mole_fraction")
     if molality_key is None or miac_m_key is None:
         raise ValueError(f"Missing required columns in {path}.")
-    data: List[Dict[str, object]] = []
+    data: list[dict[str, object]] = []
     for row in rows:
         m = parse_float(row.get(molality_key))
         gm = parse_float(row.get(miac_m_key))
@@ -401,9 +401,9 @@ def read_miac_dataset(path: Path, solvent_system: str) -> List[Dict[str, object]
 
 
 def group_by_signature(
-    entries: List[Dict[str, object]],
-) -> Dict[Tuple[Tuple[str, float], ...], List[Dict[str, object]]]:
-    grouped: Dict[Tuple[Tuple[str, float], ...], List[Dict[str, object]]] = defaultdict(list)
+    entries: list[dict[str, object]],
+) -> dict[tuple[tuple[str, float], ...], list[dict[str, object]]]:
+    grouped: dict[tuple[tuple[str, float], ...], list[dict[str, object]]] = defaultdict(list)
     for entry in entries:
         grouped[entry["signature"]].append(entry)
     for rows in grouped.values():
@@ -411,22 +411,22 @@ def group_by_signature(
     return dict(grouped)
 
 
-def organic_weight_fraction(solvent_system: str, comp: Dict[str, float]) -> float:
+def organic_weight_fraction(solvent_system: str, comp: dict[str, float]) -> float:
     solvents = [s for s in solvent_system.split("-") if s]
     if len(solvents) != 2 or "water" not in solvents:
         raise ValueError("Organic weight fraction only implemented for water-organic binaries.")
-    organic = [s for s in solvents if s != "water"][0]
+    organic = next(s for s in solvents if s != "water")
     frac = normalized_comp(solvent_system, comp)
     num = frac[organic] * SOLVENT_MW[organic]
     den = num + frac["water"] * SOLVENT_MW["water"]
     return num / den if den > 0.0 else float("nan")
 
 
-def target_weight_fraction_to_comp(solvent_system: str, target_w_org: float) -> Dict[str, float]:
+def target_weight_fraction_to_comp(solvent_system: str, target_w_org: float) -> dict[str, float]:
     solvents = [s for s in solvent_system.split("-") if s]
     if len(solvents) != 2 or "water" not in solvents:
         raise ValueError("Target weight fraction conversion only implemented for water-organic binaries.")
-    organic = [s for s in solvents if s != "water"][0]
+    organic = next(s for s in solvents if s != "water")
     w = float(target_w_org)
     mw_o = SOLVENT_MW[organic]
     mw_w = SOLVENT_MW["water"]
@@ -435,10 +435,10 @@ def target_weight_fraction_to_comp(solvent_system: str, target_w_org: float) -> 
 
 
 def closest_group_to_weight_fraction(
-    entries: List[Dict[str, object]], solvent_system: str, target_w_org: float
-) -> Tuple[List[Dict[str, object]], Dict[str, float], float]:
+    entries: list[dict[str, object]], solvent_system: str, target_w_org: float
+) -> tuple[list[dict[str, object]], dict[str, float], float]:
     grouped = group_by_signature(entries)
-    candidates: List[Tuple[float, List[Dict[str, object]], Dict[str, float], float]] = []
+    candidates: list[tuple[float, list[dict[str, object]], dict[str, float], float]] = []
     for rows in grouped.values():
         comp = dict(rows[0]["comp"])
         w_org = organic_weight_fraction(solvent_system, comp)
@@ -458,7 +458,7 @@ def gsolv_ion(
     dataset_name: str,
     ion: str,
     solvent_system: str,
-    comp: Dict[str, float],
+    comp: dict[str, float],
     user_options: dict | None = None,
 ) -> float:
     return _gsolv_ion_cached(
@@ -475,7 +475,7 @@ def _gsolv_ion_cached(
     dataset_name: str,
     ion: str,
     solvent_system: str,
-    comp_key: Tuple[Tuple[str, float], ...],
+    comp_key: tuple[tuple[str, float], ...],
     user_options_key: str,
 ) -> float:
     comp = _thaw_comp(comp_key)
@@ -521,7 +521,7 @@ def _transfer_curve_cached(
     dataset_name: str,
     ion: str,
     organic_solvent: str,
-    x_org_key: Tuple[float, ...],
+    x_org_key: tuple[float, ...],
     user_options_key: str,
 ) -> np.ndarray:
     user_options = _thaw_user_options(user_options_key)
@@ -535,10 +535,10 @@ def _transfer_curve_cached(
     return out
 
 
-def literature_gsolv_water() -> Dict[str, float]:
+def literature_gsolv_water() -> dict[str, float]:
     path = REPO_ROOT / "data" / "G_solv" / "water.csv"
     _, rows = read_csv_rows(path)
-    out: Dict[str, float] = {}
+    out: dict[str, float] = {}
     for row in rows:
         ion = str(row.get("Ion", "")).strip()
         value = parse_float(row.get("Gsolv (kJ/mol)"))

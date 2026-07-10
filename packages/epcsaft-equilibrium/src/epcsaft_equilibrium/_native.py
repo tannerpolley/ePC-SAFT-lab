@@ -10,7 +10,6 @@ from epcsaft import provider_native_sdk
 _REQUIRED_EQUILIBRIUM_SYMBOLS = (
     "_native_equilibrium_selector_contract",
     "_native_equilibrium_selector_route_result",
-    "_native_neutral_two_phase_eos_result",
 )
 
 

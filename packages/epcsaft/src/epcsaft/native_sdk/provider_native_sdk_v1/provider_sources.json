@@ -34,8 +34,7 @@
     "native/bindings",
     "native/eos",
     "native/eos/contributions",
-    "native/model",
-    "native/runtime"
+    "native/model"
   ]
 }
 

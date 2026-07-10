@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from scripts.validation import check_gross_2002_association_acceptance as checker
+from scripts.validation import native_freshness
 
 
 def _fit_statistics_text(*, normalized_plot_score: float = 8.0, pass_value: bool = True) -> str:
@@ -36,6 +37,7 @@ def _artifact_set(tmp_path: Path, figure_id: str) -> dict[str, str]:
 
 
 def _completed_campaign_payload(tmp_path: Path) -> dict[str, object]:
+    current_identity = native_freshness.equilibrium_native_source_identity()
     payload = {
         "figure_records": [
             {
@@ -46,6 +48,22 @@ def _completed_campaign_payload(tmp_path: Path) -> dict[str, object]:
                 "source_point_count": 3,
                 "artifacts": _artifact_set(tmp_path, "figure_01"),
                 "pure_association_sanity": {"status": "verified"},
+                "validation_scope": {
+                    "classification": "internal_validation_evidence",
+                    "native_binding": "_native_associating_single_component_vle_validation_result",
+                    "public_route_admission": "closed",
+                    "production_exposed": False,
+                },
+                "association_derivative_evidence": {
+                    "backend": "cppad_implicit_association",
+                    "exact_site_fraction_jacobian_available": True,
+                    "exact_site_fraction_hessian_available": True,
+                    "phase_receipts_per_solve": 2,
+                    "max_mass_action_residual": 1.0e-12,
+                    "mass_action_residual_tolerance": 1.0e-10,
+                    "returned_hessian_symmetry_scope": "returned_post_symmetrization_matrices",
+                    "global_phase_set_certified": False,
+                },
             },
             {
                 "figure_id": "figure_08",
@@ -97,6 +115,18 @@ def _completed_campaign_payload(tmp_path: Path) -> dict[str, object]:
                 "scripts/validation/check_gross_2002_association_acceptance.py",
             ],
             "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+            "freshness_mode": "embedded_source_identity",
+            "source_identity_algorithm": current_identity["algorithm"],
+            "source_identity_scope": current_identity["scope"],
+            "source_identity_limit": current_identity["scope_limit"],
+            "source_identity_file_count": current_identity["file_count"],
+            "current_source_identity": current_identity["source_identity"],
+            "embedded_source_identity_algorithm": current_identity["algorithm"],
+            "embedded_source_identity_scope": current_identity["scope"],
+            "embedded_source_identity_limit": current_identity["scope_limit"],
+            "embedded_source_identity_file_count": current_identity["file_count"],
+            "embedded_source_identity": current_identity["source_identity"],
+            "source_identity_matches": True,
         },
         "summary_artifacts": {
             "json": str(tmp_path / "gross_2002_association_acceptance_summary.json"),
@@ -145,7 +175,16 @@ def test_evaluate_payload_accepts_completed_campaign(tmp_path: Path) -> None:
         "figure_07",
         "figure_09",
     ]
-    assert result["shared_certification"]["status"] == "accepted"
+    shared = result["shared_certification"]
+    assert shared["status"] == "accepted"
+    assert shared["production_exposed"] is False
+    assert shared["public_routes"] == []
+    assert shared["public_route_admission"] == "closed"
+    assert shared["global_held_proof"] is False
+    assert all(
+        row["classification"] == "internal_validation_evidence"
+        for row in shared["associating_evidence_rows"]
+    )
     for figure_id in ("figure_08", "figure_10"):
         margins = result["source_tolerance_margins"][figure_id]
         assert margins["normalized_plot_score"]["status"] == "accepted"
@@ -168,6 +207,28 @@ def test_evaluate_payload_blocks_failed_source_tolerance_margin(tmp_path: Path) 
     assert result["complete"] is False
     assert result["source_tolerance_margins"]["figure_08"]["normalized_plot_score"]["status"] == "blocked"
     assert "gross_2002_source_tolerance_blocked:figure_08:normalized_plot_score" in result["blockers"]
+
+
+def test_evaluate_payload_rejects_figure01_without_internal_validation_scope(tmp_path: Path) -> None:
+    payload = _completed_campaign_payload(tmp_path)
+    payload["figure_records"][0].pop("validation_scope")
+
+    result = checker.evaluate_payload(payload, require_complete=True)
+
+    assert result["complete"] is False
+    assert "gross_2002_figure_01_internal_validation_scope_missing" in result["blockers"]
+
+
+def test_evaluate_payload_rejects_figure01_without_exact_association_derivative_evidence(tmp_path: Path) -> None:
+    payload = _completed_campaign_payload(tmp_path)
+    payload["figure_records"][0]["association_derivative_evidence"][
+        "exact_site_fraction_hessian_available"
+    ] = False
+
+    result = checker.evaluate_payload(payload, require_complete=True)
+
+    assert result["complete"] is False
+    assert "gross_2002_figure_01_association_derivative_evidence_rejected" in result["blockers"]
 
 
 def test_figure_two_source_requirement_does_not_count_as_accepted(tmp_path: Path) -> None:

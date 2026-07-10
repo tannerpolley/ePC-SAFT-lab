@@ -4,8 +4,8 @@ import argparse
 import csv
 import json
 import time
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 import jax
 import jax.numpy as jnp

@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 import epcsaft
+import pytest
 from epcsaft_regression import fit_pure_ion, fit_pure_neutral
 from epcsaft_regression.native_adapter import native_ceres_backend_info
 from regression_support.regression_cases import _methane_like_records, _minimal_neutral_metadata

@@ -1,8 +1,9 @@
 {
   "case_label": "Matsuda 2011 perfluorohexane + hexane neutral LLE",
   "family_label": "PE-Neutral TP Flash",
-  "route": "lle",
+  "route": "internal_neutral_lle_tpd_diagnostic",
   "selector_route": "neutral_lle",
+  "evidence_scope": "internal_sampled_candidate_diagnostic",
   "species": [
     "perfluorohexane",
     "hexane"
@@ -18,9 +19,11 @@
     "parameter_source": "https://backend.orbit.dtu.dk/ws/files/5470724/AmraTihic_Ph%20D_Thesis.pdf"
   },
   "parameter_basis": "Tihic thesis PC-SAFT-compatible sPC-SAFT rows and family correlations; perfluorohexane is derived from the fluorinated-family molecular-weight correlations and hexane uses the reported Approach I row.",
-  "binary_interaction_basis": "Single-case source fit against the retained Matsuda/NIST paired perfluorohexane + hexane branch rows at 293.895 K and 101.3 kPa using the current neutral PC-SAFT route.",
+  "binary_interaction_basis": "Single-case source fit against the retained Matsuda/NIST paired perfluorohexane + hexane branch rows at 293.895 K and 101.3 kPa using the internal neutral PC-SAFT diagnostic.",
   "association_active": false,
   "electrolyte_active": false,
   "reaction_active": false,
-  "scope_statement": "This fixture proves one neutral, nonelectrolyte, nonreactive, nonassociating binary LLE showcase through the current public lle utility route. It does not promote generalized phase-set, associating, electrolyte, reactive, CE, or CPE admission."
+  "public_admission_state": "closed",
+  "global_held_proof": false,
+  "scope_statement": "This fixture retains one neutral, nonelectrolyte, nonreactive, nonassociating binary LLE internal sampled-candidate diagnostic. It does not establish global HELD phase-set completeness or admit public LLE, associating, electrolyte, reactive, CE, or CPE behavior."
 }

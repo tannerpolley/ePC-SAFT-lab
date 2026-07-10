@@ -683,77 +683,81 @@ def raise_with_equilibrium_route_diagnostics(exc: SolutionError, route: Mapping[
     ) from exc
 
 
-def _phase_payload_to_public(phase: Mapping[str, Any], *, label: str | None = None):
-    from ..workflows import EquilibriumPhase
-
-    ln_fugacity = phase.get("ln_fugacity_coefficient")
-    fugacity = phase.get("fugacity_coefficient")
-    return EquilibriumPhase(
-        str(phase["label"] if label is None else label),
-        composition=np.asarray(phase["composition"], dtype=float),
-        density=float(phase["density"]),
-        temperature=float(phase["temperature"]),
-        pressure=float(phase["pressure"]),
-        phase_fraction=float(phase["phase_fraction"]),
-        ln_fugacity_coefficient=None if ln_fugacity is None else np.asarray(ln_fugacity, dtype=float),
-        fugacity_coefficient=None if fugacity is None else np.asarray(fugacity, dtype=float),
-        diagnostics=_diagnostics(phase),
-    )
-
-
-def neutral_phase_payload_to_result(
-    payload: Mapping[str, Any],
+def native_selector_route_to_result(
+    route: Mapping[str, Any],
     *,
-    problem_kind: str | None = None,
-    phase_labels: Sequence[str] | None = None,
+    temperature: float,
+    pressure: float,
+    problem_kind: str,
+    public_route: str,
+    route_label: str,
+    selector_family: str,
+    composition_role: str,
+    feed_composition: Any = None,
 ):
-    """Convert an accepted native neutral phase payload into public dataclasses."""
-    from ..workflows import EquilibriumResult
+    """Convert the selector's canonical accepted evidence into public dataclasses."""
+    from ..workflows import EquilibriumPhase, EquilibriumResult
 
-    diagnostics = _diagnostics(payload)
-    if not bool(payload.get("accepted", False)):
-        reason = str(payload.get("rejection_reason", diagnostics.get("rejection_reason", "native_rejected")))
-        if "rejection_reason" not in diagnostics:
-            diagnostics["rejection_reason"] = reason
-        raise SolutionError(f"Native neutral two-phase EOS result was rejected: {reason}", diagnostics)
+    if not bool(route.get("accepted", False)):
+        raise_native_route_rejected(route, f"Native selector {route_label} route was rejected.")
 
-    phases_raw = payload.get("phases", ())
+    diagnostics = native_route_diagnostics(route)
+    if str(route.get("selector_family", "")) != selector_family:
+        raise SolutionError(f"Native selector {route_label} returned an unexpected route family.", diagnostics)
+    certification = diagnostics.get("postsolve_certification", {})
+    if not isinstance(certification, Mapping) or not bool(certification.get("accepted", False)):
+        raise SolutionError(f"Native selector {route_label} route failed postsolve certification.", diagnostics)
+
+    evidence = _route_physical_evidence(route)
+    phases_raw = evidence.get("phases", ())
     if not isinstance(phases_raw, Sequence) or isinstance(phases_raw, (str, bytes)):
-        raise SolutionError("Native neutral two-phase EOS result did not contain a phase sequence.", diagnostics)
-    if phase_labels is not None and len(phase_labels) != len(phases_raw):
-        raise SolutionError(
-            "Native neutral two-phase EOS result label count did not match phase payloads.", diagnostics
+        raise SolutionError(f"Native selector {route_label} did not return phase evidence.", diagnostics)
+    labels = native_route_phase_labels(route, route_label)
+    if not phases_raw or len(labels) != len(phases_raw):
+        raise SolutionError(f"Native selector {route_label} returned inconsistent phase evidence.", diagnostics)
+
+    phases: list[EquilibriumPhase] = []
+    for index, raw_phase in enumerate(phases_raw):
+        if not isinstance(raw_phase, Mapping):
+            raise SolutionError(f"Native selector {route_label} returned invalid phase evidence.", diagnostics)
+        ln_fugacity_raw = raw_phase.get("ln_fugacity_coefficients")
+        ln_fugacity = None if ln_fugacity_raw is None else np.asarray(ln_fugacity_raw, dtype=float)
+        phase_diagnostics = {
+            "native_label": str(raw_phase.get("label", "")),
+            "role": str(raw_phase.get("role", "")),
+            "phase_kind": int(raw_phase.get("phase_kind", 0)),
+            "amount_total": float(raw_phase.get("amount_total", 0.0)),
+            "volume": float(raw_phase.get("volume", 0.0)),
+        }
+        phases.append(
+            EquilibriumPhase(
+                label=labels[index],
+                composition=np.asarray(raw_phase["composition"], dtype=float),
+                density=float(raw_phase["density"]),
+                temperature=temperature,
+                pressure=pressure,
+                phase_fraction=float(raw_phase["phase_fraction"]),
+                ln_fugacity_coefficient=ln_fugacity,
+                fugacity_coefficient=None if ln_fugacity is None else np.exp(ln_fugacity),
+                diagnostics=phase_diagnostics,
+            )
         )
-    labels = [None] * len(phases_raw) if phase_labels is None else list(phase_labels)
-    phases = tuple(_phase_payload_to_public(phase, label=labels[index]) for index, phase in enumerate(phases_raw))
-    if not phases:
-        raise SolutionError("Native neutral two-phase EOS result accepted without phase payloads.", diagnostics)
 
-    resolved_problem_kind = (
-        payload.get("problem_kind", "neutral_two_phase_eos") if problem_kind is None else problem_kind
-    )
+    postsolve = route.get("postsolve", {})
+    stability_checked = bool(postsolve.get("stability_checked", False)) if isinstance(postsolve, Mapping) else False
+    stability_accepted = bool(postsolve.get("stability_accepted", False)) if isinstance(postsolve, Mapping) else False
     return EquilibriumResult(
-        backend=str(payload.get("backend", "native_equilibrium_nlp")),
-        problem_kind=str(resolved_problem_kind),
-        phases=phases,
-        stable=bool(payload.get("stable", False)),
-        split_detected=bool(payload.get("split_detected", True)),
+        backend="native_equilibrium_nlp",
+        problem_kind=problem_kind,
+        phases=tuple(phases),
+        stable=stability_checked and stability_accepted,
+        split_detected=True,
         diagnostics=diagnostics,
+        route=public_route,
+        selector_route=str(route.get("route", "")),
+        composition_role=composition_role,
+        feed_composition=feed_composition,
     )
-
-
-def native_route_summed_phase_amounts(route: Mapping[str, Any], ncomp: int, route_label: str) -> np.ndarray:
-    """Return the positive feed implied by a native two-phase route result."""
-    try:
-        phase_amounts = np.asarray(route["phase_amounts"], dtype=float)
-    except (KeyError, TypeError, ValueError) as exc:
-        raise SolutionError(f"Native neutral {route_label} route did not return phase amounts.") from exc
-    if phase_amounts.ndim != 2 or phase_amounts.shape[1] != int(ncomp):
-        raise SolutionError(f"Native neutral {route_label} route phase amounts had an invalid shape.")
-    feed = np.sum(phase_amounts, axis=0)
-    if not np.all(np.isfinite(feed)) or np.any(feed <= 0.0):
-        raise SolutionError(f"Native neutral {route_label} route phase amounts did not define a positive feed.")
-    return feed
 
 
 def native_route_solved_pressure(route: Mapping[str, Any], route_label: str) -> float:

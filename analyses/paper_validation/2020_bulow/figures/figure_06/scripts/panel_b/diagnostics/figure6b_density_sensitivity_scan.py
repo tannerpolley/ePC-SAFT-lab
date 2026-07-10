@@ -6,10 +6,8 @@ import argparse
 import csv
 import math
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -19,11 +17,11 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-from typing import Dict, List, Tuple
 
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(REPO_ROOT) not in sys.path:
@@ -44,6 +42,7 @@ from figure6b_libr_ethanol_contributions import (
     _molality_for_salt_mole_fraction,
     _molality_to_species_molefraction,
 )
+
 from scripts._epcsaft_oop import epcsaft_density, epcsaft_fugacity_coefficient_terms
 
 matplotlib.use("Agg")
@@ -65,7 +64,7 @@ TITLE_LABELS = {
 }
 
 
-def _calc_point_contributions(x_salt: float, params: Dict[str, object], rho_scale: float) -> Dict[str, float]:
+def _calc_point_contributions(x_salt: float, params: dict[str, object], rho_scale: float) -> dict[str, float]:
     molality = _molality_for_salt_mole_fraction(x_salt)
     m_eval = molality if molality > 0.0 else 1e-12
     x = _molality_to_species_molefraction(m_eval)
@@ -99,7 +98,7 @@ def _calc_point_contributions(x_salt: float, params: Dict[str, object], rho_scal
     return out
 
 
-def _metric_summary(y_data: np.ndarray, y_model: np.ndarray) -> Tuple[float, float, float]:
+def _metric_summary(y_data: np.ndarray, y_model: np.ndarray) -> tuple[float, float, float]:
     y_model = np.asarray(y_model, dtype=float)
     y_data = np.asarray(y_data, dtype=float)
     if (not np.all(np.isfinite(y_model))) or (not np.all(np.isfinite(y_data))):
@@ -111,8 +110,8 @@ def _metric_summary(y_data: np.ndarray, y_model: np.ndarray) -> Tuple[float, flo
     return rmse, mae, max_abs
 
 
-def _unique_digitized_x(series: Dict[str, Tuple[np.ndarray, np.ndarray]]) -> np.ndarray:
-    x_all: List[float] = []
+def _unique_digitized_x(series: dict[str, tuple[np.ndarray, np.ndarray]]) -> np.ndarray:
+    x_all: list[float] = []
     for name in CONTRIBUTION_ORDER:
         x_all.extend(np.asarray(series[name][0], dtype=float).tolist())
     x_unique = np.asarray(sorted({round(float(x), 10) for x in x_all}), dtype=float)
@@ -127,18 +126,18 @@ def run_scan(
     rho_min: float,
     rho_max: float,
     rho_step: float,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     series = _load_digitized_curves(digitized_path)
     params = _build_params(user_options={})
     x_union = _unique_digitized_x(series)
 
     scales = np.arange(float(rho_min), float(rho_max) + 0.5 * float(rho_step), float(rho_step))
-    summary_rows: List[Dict[str, float]] = []
-    point_rows: List[Dict[str, float]] = []
+    summary_rows: list[dict[str, float]] = []
+    point_rows: list[dict[str, float]] = []
 
     for rho_scale in scales:
         point_cache = {float(x): _calc_point_contributions(float(x), params, float(rho_scale)) for x in x_union}
-        summary: Dict[str, float] = {"rho_scale": float(rho_scale)}
+        summary: dict[str, float] = {"rho_scale": float(rho_scale)}
 
         for name in CONTRIBUTION_ORDER:
             x_data, y_data = series[name]
@@ -178,7 +177,7 @@ def run_scan(
         writer.writerows(summary_rows)
 
     with output_points_csv.open("w", newline="", encoding="utf-8") as handle:
-        fieldnames = ["rho_scale", "x_salt", "molality", "rho_base", "rho_scaled", "rho_inf"] + CONTRIBUTION_ORDER
+        fieldnames = ["rho_scale", "x_salt", "molality", "rho_base", "rho_scaled", "rho_inf", *CONTRIBUTION_ORDER]
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(point_rows)

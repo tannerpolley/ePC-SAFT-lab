@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import math
 
+import epcsaft._core as _provider_core
 import numpy as np
 import pytest
-
-import epcsaft._core as _provider_core
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft_equilibrium._native import extension_native_core
 

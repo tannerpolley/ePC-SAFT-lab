@@ -318,6 +318,13 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
   node IDs/checkers, sources, artifacts and acceptance metrics. Derive public
   reporting by joining those sources.
 
+- [ ] **Step 3a: Make native proof freshness executable**
+
+  Emit a deterministic native-source identity during the build and expose it
+  from the loaded extension. Strict checkers and generated native mirrors must
+  compare that identity with the current owning source set and fail on dirty or
+  stale native inputs. A runtime-stamped commit and module path are not proof.
+
 - [ ] **Step 4: Remove parallel hand-maintained production lists**
 
   Move repository test-slice orchestration out of provider runtime metadata and
@@ -364,10 +371,15 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 - [ ] **Step 1: Add red truthfulness tests**
 
   Assert reactive speciation, electrolyte LLE and neutral multiphase are absent
-  from public production exports. Assert the immediate exposed set is exactly
-  bubble/dew, neutral TP flash, neutral LLE and single-component VLE, each
-  native-selector-owned and evidence-complete. Require CE analysis metadata to
-  record the live validation failure with exact target metrics.
+  from public production exports. The evidence audit also found no independent
+  literature proof for neutral TP flash or bubble/dew temperature, so close
+  those routes rather than treating workbook self-consistency as admission.
+  Assert the immediate exposed set is exactly bubble pressure, dew pressure
+  and the scoped nonassociating hydrocarbon single-component VLE route, each
+  native-selector-owned and evidence-complete. Close neutral LLE because its
+  one-pass sampled-candidate audit is not the global HELD Stage-II proof its
+  current labels claim. Require CE analysis metadata to record the live
+  validation failure with exact target metrics.
 
 - [ ] **Step 2: Run the existing strict proof**
 
@@ -381,7 +393,7 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 
 - [ ] **Step 3: Remove public/production admission**
 
-  Close the three activation rows, clear their public routes and proof IDs, and
+  Close the four activation rows, clear their public routes and proof IDs, and
   remove their public route specs/exports. Keep internal formulation/component
   diagnostics required by Phase 4; remove API tests and examples that assert
   the closed surfaces.
@@ -427,7 +439,10 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 
 - [ ] **Step 1: Add characterization and bypass-failure tests**
 
-  Capture current accepted bubble/dew/flash/LLE payloads. Add tests that fail if
+  Capture current accepted bubble-pressure, dew-pressure and scoped
+  single-component-VLE payloads, plus negative contracts for closed neutral
+  LLE, flash and temperature-derived routes. Keep neutral-LLE candidate and
+  literature checks as explicitly internal validation. Add tests that fail if
   public Python dispatch names a route-specific native binding or if route code
   constructs acceptance outside `result_builder`.
 
@@ -444,10 +459,10 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 
 - [ ] **Step 4: Route public workflows through selector specs**
 
-  For the four exposed families, require selector route construction and native
+  For the three exposed routes, require selector route construction and native
   selector solve. Delete public bindings and Python helpers that only served
-  the three closed bypasses; retain only explicitly internal diagnostics needed
-  by later scientific admission tasks.
+  closed surfaces; retain only explicitly internal diagnostics needed by later
+  scientific admission tasks.
 
 - [ ] **Step 5: Resolve chemical-equilibrium contract ownership**
 
@@ -790,9 +805,9 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 
 **Use Cases:**
 
-- Users regain reactive speciation, electrolyte LLE or neutral multiphase only
-  after that family's public route, native selector, strict checker and retained
-  evidence agree.
+- Users regain neutral LLE, reactive speciation, electrolyte LLE or neutral
+  multiphase only after that family's public route, native selector, strict
+  checker and retained evidence agree.
 - Former direct helpers and production declarations remain removed until each
   family independently passes the complete re-admission proof.
 
@@ -996,6 +1011,9 @@ uv run --no-sync python run_pytest.py -q
 uv run --no-sync python run_pytest.py --confidence -q
 uv run --no-sync python run_pytest.py --equilibrium-confidence -q
 uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_standalone_ce_gate.py tests/workflows/repo/test_project_structure.py tests/workflows/repo/test_run_pytest.py -q
+uv run --no-sync python scripts/dev/generate_equilibrium_activation.py --check
+uv run --no-sync python scripts/validation/check_single_component_vle_nist_saturation.py --require-complete --require-fresh-native
+uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --require-complete --require-fresh-native
 uv run --no-sync python scripts/dev/validate_project.py docs
 uv run --no-sync ruff check .
 git diff --check

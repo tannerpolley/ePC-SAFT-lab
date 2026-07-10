@@ -30,6 +30,113 @@ struct ProblemFamilyActivation {
     std::string final_proof_policy;
 };
 
+struct SelectorRouteActivation {
+    std::string selector_route;
+    std::string public_route;
+    std::string selector_family;
+    bool production_exposed = false;
+    std::vector<std::string> proof_routes;
+};
+
+inline const std::vector<SelectorRouteActivation>& selector_route_activation_matrix() {
+    static const std::vector<SelectorRouteActivation> matrix = {
+        {
+            "bubble_pressure",
+            "bubble_pressure",
+            "bubble_dew_derived_routes",
+            true,
+            {
+                "associating_neutral_vle_gross_2002_bubble_pressure_figures_2_9_"
+                "public_exact_hessian",
+            },
+        },
+        {
+            "bubble_temperature",
+            "bubble_temperature",
+            "bubble_dew_derived_routes",
+            false,
+            {},
+        },
+        {
+            "dew_pressure",
+            "dew_pressure",
+            "bubble_dew_derived_routes",
+            true,
+            {
+                "associating_neutral_vle_gross_2002_dew_pressure_figures_2_9_"
+                "public_exact_hessian",
+            },
+        },
+        {
+            "dew_temperature",
+            "dew_temperature",
+            "bubble_dew_derived_routes",
+            false,
+            {},
+        },
+        {
+            "neutral_tp_flash",
+            "flash",
+            "neutral_tp_flash",
+            false,
+            {},
+        },
+        {
+            "neutral_lle",
+            "lle",
+            "neutral_lle",
+            false,
+            {},
+        },
+        {
+            "single_component_vle",
+            "single_component_vle",
+            "single_component_vle",
+            true,
+            {"single_component_vle_hydrocarbon_nist_saturation_exact_hessian"},
+        },
+    };
+    return matrix;
+}
+
+inline std::vector<std::string> selector_public_routes_for_family(
+    const std::string& selector_family) {
+    std::vector<std::string> routes;
+    for (const auto& route : selector_route_activation_matrix()) {
+        if (route.selector_family == selector_family && route.production_exposed) {
+            routes.push_back(route.public_route);
+        }
+    }
+    return routes;
+}
+
+inline std::vector<std::string> selector_proof_routes_for_family(
+    const std::string& selector_family) {
+    std::vector<std::string> proof_routes;
+    for (const auto& route : selector_route_activation_matrix()) {
+        if (route.selector_family != selector_family || !route.production_exposed) {
+            continue;
+        }
+        proof_routes.insert(
+            proof_routes.end(), route.proof_routes.begin(), route.proof_routes.end());
+    }
+    return proof_routes;
+}
+
+inline bool selector_family_production_exposed(const std::string& selector_family) {
+    for (const auto& route : selector_route_activation_matrix()) {
+        if (route.selector_family == selector_family && route.production_exposed) {
+            return true;
+        }
+    }
+    return false;
+}
+
+inline std::string selector_family_exposure_status(const std::string& selector_family) {
+    return selector_family_production_exposed(selector_family) ? "production_exposed"
+                                                                : "declared_not_exposed";
+}
+
 inline const std::vector<ProblemFamilyActivation>& problem_family_activation_matrix() {
     static const std::vector<ProblemFamilyActivation> matrix = {
         {
@@ -43,8 +150,8 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             "deterministic_tpd_candidate_screening",
             "tpd_postsolve",
             "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
-            true,
-            "production_exposed",
+            selector_family_production_exposed("neutral_tp_flash"),
+            selector_family_exposure_status("neutral_tp_flash"),
             {"material_balance", "phase_pressure_consistency", "phase_equilibrium", "phase_distance"},
             {
                 "material_balance",
@@ -52,10 +159,14 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
                 "phase_equilibrium",
                 "phase_volume_gap",
             },
-            {"neutral_tp_flash_hydrocarbon_ipopt_exact_hessian"},
-            {"flash"},
+            selector_proof_routes_for_family("neutral_tp_flash"),
+            selector_public_routes_for_family("neutral_tp_flash"),
             "phase_species_amounts_plus_phase_volume",
             "explicit_phase_volume_pressure_constraint",
+            {},
+            {},
+            {},
+            {},
         },
         {
             "neutral_lle",
@@ -68,17 +179,18 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             "deterministic_tpd_candidate_screening",
             "tpd_postsolve",
             "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
-            true,
-            "production_exposed",
+            selector_family_production_exposed("neutral_lle"),
+            selector_family_exposure_status("neutral_lle"),
             {"material_balance", "phase_pressure_consistency", "phase_equilibrium", "phase_distance"},
             {"material_balance", "phase_pressure_consistency", "phase_distance"},
-            {
-                "neutral_lle_binary_nonassociating_ipopt_exact_hessian",
-                "associating_neutral_lle_gross_2002_public_exact_hessian",
-            },
-            {"lle"},
+            selector_proof_routes_for_family("neutral_lle"),
+            selector_public_routes_for_family("neutral_lle"),
             "phase_species_amounts_plus_phase_volume",
             "explicit_phase_volume_pressure_constraint",
+            {},
+            {},
+            {},
+            {},
         },
         {
             "single_component_vle",
@@ -91,8 +203,8 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             "postsolve_local_only",
             "on",
             "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
-            true,
-            "production_exposed",
+            selector_family_production_exposed("single_component_vle"),
+            selector_family_exposure_status("single_component_vle"),
             {
                 "fixed_composition",
                 "phase_amount_total",
@@ -107,13 +219,14 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
                 "phase_equilibrium",
                 "phase_volume_gap",
             },
-            {
-                "single_component_vle_ethane_ipopt_exact_hessian",
-                "single_component_vle_pure_2b_associating_ipopt_exact_hessian",
-            },
-            {"single_component_vle"},
+            selector_proof_routes_for_family("single_component_vle"),
+            selector_public_routes_for_family("single_component_vle"),
             "phase_species_amounts_plus_phase_volume_plus_route_scalar",
             "explicit_phase_volume_pressure_constraint",
+            {},
+            {},
+            {},
+            {},
         },
         {
             "neutral_multiphase_nonassoc",
@@ -126,14 +239,18 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             "deterministic_tpd_candidate_screening",
             "tpd_postsolve",
             "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
-            true,
-            "production_exposed",
+            false,
+            "declared_not_exposed",
             {"material_balance", "phase_pressure_consistency", "phase_equilibrium", "phase_distance"},
             {"material_balance", "phase_pressure_consistency"},
-            {"neutral_multiphase_nonassoc_strict_fugacity_residual_ipopt_exact_hessian"},
-            {"multiphase"},
+            {},
+            {},
             "phase_species_amounts_plus_phase_volume",
             "explicit_phase_volume_pressure_constraint",
+            {},
+            {},
+            {},
+            {},
         },
         {
             "electrolyte_lle",
@@ -146,14 +263,18 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             "on",
             "on",
             "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
-            true,
-            "production_exposed",
+            false,
+            "declared_not_exposed",
             {"phase_equilibrium", "material_balance", "phase_charge"},
             {"phase_equilibrium", "phase_pressure_consistency", "phase_distance", "formula_feasibility", "phase_charge"},
-            {"electrolyte_held2_public_route_admission"},
-            {"electrolyte_lle"},
+            {},
+            {},
             "counterion_pair_reduced_phase_amounts_plus_phase_volume",
             "native_electrolyte_postsolve_certification",
+            {},
+            {},
+            {},
+            {},
         },
         {
             "reactive_speciation",
@@ -166,12 +287,12 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             "optional",
             "on",
             "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
-            true,
-            "production_exposed",
+            false,
+            "declared_not_exposed",
             {"conserved_balance", "reaction_stationarity"},
             {"conserved_balance"},
-            {"reactive_speciation_single_nlp_ipopt_exact_hessian"},
-            {"reactive_speciation"},
+            {},
+            {},
             "single_phase_species_amounts",
             "homogeneous_standard_state_activity",
             "ipopt_nlp_with_internal_continuation",
@@ -194,6 +315,12 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             "declared_not_exposed",
             {"conserved_balance", "reaction_stationarity", "phase_equilibrium"},
             {"conserved_balance", "reaction_stationarity", "phase_pressure_consistency", "phase_distance"},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
             {},
             {},
         },
@@ -220,6 +347,12 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             },
             {},
             {},
+            {},
+            {},
+            {},
+            {},
+            {},
+            {},
         },
         {
             "bubble_dew_derived_routes",
@@ -232,8 +365,8 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             "on",
             "on",
             "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
-            true,
-            "production_exposed",
+            selector_family_production_exposed("bubble_dew_derived_routes"),
+            selector_family_exposure_status("bubble_dew_derived_routes"),
             {
                 "fixed_composition",
                 "phase_amount_total",
@@ -248,10 +381,14 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
                 "phase_equilibrium",
                 "phase_volume_gap",
             },
-            {"neutral_bubble_pressure_hydrocarbon_ipopt_exact_hessian"},
-            {"bubble_pressure", "bubble_temperature", "dew_pressure", "dew_temperature"},
+            selector_proof_routes_for_family("bubble_dew_derived_routes"),
+            selector_public_routes_for_family("bubble_dew_derived_routes"),
             "phase_species_amounts_plus_phase_volume_plus_route_scalar",
             "explicit_phase_volume_pressure_constraint",
+            {},
+            {},
+            {},
+            {},
         },
     };
     return matrix;

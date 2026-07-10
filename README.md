@@ -14,9 +14,11 @@ Current package version: `0.2.0`
 
 - Build PC-SAFT/ePC-SAFT mixtures from user-owned parameter data.
 - Evaluate pressure, density, residual properties, fugacity coefficients, activity coefficients, and derivatives.
-- Use the constructor-configured neutral equilibrium API from `epcsaft_equilibrium`, including neutral nonassociating LLE, when the package is built with optional native Ipopt.
+- Use the constructor-configured `bubble_pressure`, `dew_pressure`, and scoped
+  nonassociating hydrocarbon `single_component_vle` routes from
+  `epcsaft_equilibrium` when the package is built with optional native Ipopt.
 - Run supported pure-neutral parameter-regression workflows from `epcsaft_regression`.
-- Inspect runtime capabilities with `capabilities()` before selecting optional native solver paths.
+- Inspect each package's `capabilities()` report before selecting optional native solver paths.
 
 The main provider objects are `ParameterSet`, `ModelOptions`, `Mixture`,
 `State`, and `create_input_template(...)`. Import `Equilibrium` from
@@ -213,8 +215,10 @@ Use `EPCSAFT_PEP517_IPOPT_DIR` instead when the install provides an `IpoptConfig
 The public equilibrium API does not expose a solver-backend selector. Import
 `Equilibrium` from `epcsaft_equilibrium` and use the certified route specs and
 ordinary solver tolerances when validating constrained-NLP behavior. The
-currently exposed route names are `bubble_pressure`, `bubble_temperature`,
-`dew_pressure`, `dew_temperature`, `flash`, and neutral nonassociating `lle`.
+currently exposed route names are `bubble_pressure`, `dew_pressure`, and scoped
+nonassociating hydrocarbon `single_component_vle`. Neutral LLE remains an
+internal validation path because its sampled-candidate Stage II audit is not a
+global HELD proof.
 
 ## Documentation
 

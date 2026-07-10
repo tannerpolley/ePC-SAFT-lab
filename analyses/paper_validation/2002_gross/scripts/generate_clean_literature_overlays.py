@@ -12,7 +12,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 REPO_ROOT = Path(__file__).resolve().parents[4]
 ANALYSIS_ROOT = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross"
 FIGURES_ROOT = ANALYSIS_ROOT / "figures"

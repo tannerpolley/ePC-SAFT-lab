@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 PC-SAFT with electrolyte term
 
@@ -38,47 +37,46 @@ Functions
     
 References
 ----------
-* J. Gross and G. Sadowski, “Perturbed-Chain SAFT:  An Equation of State 
+* J. Gross and G. Sadowski, “Perturbed-Chain SAFT: An Equation of State
 Based on a Perturbation Theory for Chain Molecules,” Ind. Eng. Chem. 
-Res., vol. 40, no. 4, pp. 1244–1260, Feb. 2001.
-* M. Kleiner and G. Sadowski, “Modeling of Polar Systems Using PCP-SAFT: 
+Res., vol. 40, no. 4, pp. 1244-1260, Feb. 2001.
+* M. Kleiner and G. Sadowski, “Modeling of Polar Systems Using PCP-SAFT:
 An Approach to Account for Induced-Association Interactions,” J. Phys. 
-Chem. C, vol. 111, no. 43, pp. 15544–15553, Nov. 2007.
-* Gross Joachim and Vrabec Jadran, “An equation‐of‐state contribution 
+Chem. C, vol. 111, no. 43, pp. 15544-15553, Nov. 2007.
+* Gross Joachim and Vrabec Jadran, “An equation-of-state contribution
 for polar components: Dipolar molecules,” AIChE J., vol. 52, no. 3, 
-pp. 1194–1204, Feb. 2006.
+pp. 1194-1204, Feb. 2006.
 * A. J. de Villiers, C. E. Schwarz, and A. J. Burger, “Improving 
-vapour–liquid-equilibria predictions for mixtures with non-associating polar 
+vapour-liquid-equilibria predictions for mixtures with non-associating polar
 components using sPC-SAFT extended with two dipolar terms,” Fluid Phase 
-Equilibria, vol. 305, no. 2, pp. 174–184, Jun. 2011.
+Equilibria, vol. 305, no. 2, pp. 174-184, Jun. 2011.
 * S. H. Huang and M. Radosz, “Equation of state for small, large, 
 polydisperse, and associating molecules,” Ind. Eng. Chem. Res., vol. 29,
-no. 11, pp. 2284–2294, Nov. 1990.
+no. 11, pp. 2284-2294, Nov. 1990.
 * S. H. Huang and M. Radosz, “Equation of state for small, large, 
 polydisperse, and associating molecules: extension to fluid mixtures,” 
-Ind. Eng. Chem. Res., vol. 30, no. 8, pp. 1994–2005, Aug. 1991.
+Ind. Eng. Chem. Res., vol. 30, no. 8, pp. 1994-2005, Aug. 1991.
 * S. H. Huang and M. Radosz, “Equation of state for small, large, 
 polydisperse, and associating molecules: extension to fluid mixtures. 
 [Erratum to document cited in CA115(8):79950j],” Ind. Eng. Chem. Res., 
-vol. 32, no. 4, pp. 762–762, Apr. 1993.
+vol. 32, no. 4, pp. 762-762, Apr. 1993.
 * J. Gross and G. Sadowski, “Application of the Perturbed-Chain SAFT 
 Equation of State to Associating Systems,” Ind. Eng. Chem. Res., vol. 
-41, no. 22, pp. 5510–5515, Oct. 2002.
+41, no. 22, pp. 5510-5515, Oct. 2002.
 * L. F. Cameretti, G. Sadowski, and J. M. Mollerup, “Modeling of Aqueous 
 Electrolyte Solutions with Perturbed-Chain Statistical Associated Fluid 
-Theory,” Ind. Eng. Chem. Res., vol. 44, no. 9, pp. 3355–3362, Apr. 2005.
+Theory,” Ind. Eng. Chem. Res., vol. 44, no. 9, pp. 3355-3362, Apr. 2005.
 * L. F. Cameretti, G. Sadowski, and J. M. Mollerup, “Modeling of Aqueous 
 Electrolyte Solutions with Perturbed-Chain Statistical Association Fluid 
-Theory,” Ind. Eng. Chem. Res., vol. 44, no. 23, pp. 8944–8944, Nov. 2005.
+Theory,” Ind. Eng. Chem. Res., vol. 44, no. 23, pp. 8944-8944, Nov. 2005.
 * C. Held, L. F. Cameretti, and G. Sadowski, “Modeling aqueous 
 electrolyte solutions: Part 1. Fully dissociated electrolytes,” Fluid 
-Phase Equilibria, vol. 270, no. 1, pp. 87–96, Aug. 2008.
+Phase Equilibria, vol. 270, no. 1, pp. 87-96, Aug. 2008.
 * C. Held, T. Reschke, S. Mohammad, A. Luza, and G. Sadowski, “ePC-SAFT 
-revised,” Chem. Eng. Res. Des., vol. 92, no. 12, pp. 2884–2897, Dec. 2014.
+revised,” Chem. Eng. Res. Des., vol. 92, no. 12, pp. 2884-2897, Dec. 2014.
 """
 import numpy as np
-from scipy.optimize import root
-from scipy.optimize import minimize
+from scipy.optimize import minimize, root
 
 
 class InputError(Exception):
@@ -92,11 +90,11 @@ class InputError(Exception):
 def check_input(x, name1, var1, name2, var2):
     ''' Perform a few basic checks to make sure the input is reasonable. '''
     if abs(np.sum(x) - 1) > 1e-7:
-        raise InputError('The mole fractions do not sum to 1. x = {}'.format(x))
+        raise InputError(f'The mole fractions do not sum to 1. x = {x}')
     if var1 <= 0:
-        raise InputError('The {} must be a positive number. {} = {}'.format(name1, name1, var1))
+        raise InputError(f'The {name1} must be a positive number. {name1} = {var1}')
     if var2 <= 0:
-        raise InputError('The {} must be a positive number. {} = {}'.format(name2, name2, var2))
+        raise InputError(f'The {name2} must be a positive number. {name2} = {var2}')
 
 
 def pcsaft_vaporP(p_guess, x, m, s, e, t, **kwargs):
@@ -1013,7 +1011,7 @@ def pcsaft_dadt(x, m, s, e, t, rho, k_ij=None, e_assoc=None, vol_a=None, dipm=No
         dadt_assoc = 0.
         idx = -1
         for i in range(ncA):
-            for j in range(a_sites):
+            for _j in range(a_sites):
                 idx += 1
                 dadt_assoc += x[iA[i]] * (1 / XA[idx] - 0.5) * dXA_dt[idx]
 
@@ -2198,13 +2196,13 @@ def dXA_find(ncA, ncomp, iA, delta_ij, den, XA, ddelta_dd, x, n_sites):
         if i in iA:
             indx4 += 1
         for j in range(ncA):
-            for h in range(n_sites):
+            for _h in range(n_sites):
                 indx1 = indx1 + 1
                 indx3 = indx3 + 1
                 indx2 = -1
                 sum1 = 0
                 for k in range(ncA):
-                    for l in range(n_sites):
+                    for _l in range(n_sites):
                         indx2 = indx2 + 1
                         sum1 = sum1 + den * x[k] * (XA[indx2] * ddelta_dd[j, k, i] * ((
                                                                                               indx1 + indx2) % 2))  # (indx1+indx2)%2 ensures that A-A and B-B associations are set to zero
@@ -2232,12 +2230,12 @@ def dXAdt_find(ncA, delta_ij, den, XA, ddelta_dt, x, n_sites):
 
     i_out = -1  # index of outer iteration loop (follows row of matrices)
     for i in range(ncA):
-        for ai in range(n_sites):
+        for _ai in range(n_sites):
             i_out += 1
             i_in = -1  # index for summation loops
             summ = 0
             for j in range(ncA):
-                for bj in range(n_sites):
+                for _bj in range(n_sites):
                     i_in += 1
                     B[i_out] -= x[j] * XA[i_in] * ddelta_dt[i, j] * ((i_in + i_out) % 2)
                     A[i_out, i_in] = x[j] * delta_ij[i, j] * ((i_in + i_out) % 2)
@@ -2255,12 +2253,12 @@ def d2XAdt_find(ncA, delta_ij, den, XA, dXA_dt, ddelta_dt, d2delta_dt, x, n_site
 
     i_out = -1  # index of outer iteration loop (follows row of matrices)
     for i in range(ncA):
-        for ai in range(n_sites):
+        for _ai in range(n_sites):
             i_out += 1
             i_in = -1  # index for summation loops
             summ = 0
             for j in range(ncA):
-                for bj in range(n_sites):
+                for _bj in range(n_sites):
                     i_in += 1
                     summ += x[j] * (XA[i_in] * ddelta_dt[i, j] * ((i_in + i_out) % 2) + \
                                     delta_ij[i, j] * ((i_in + i_out) % 2) * dXA_dt[i_in])
@@ -2422,8 +2420,8 @@ def dielc_water(t):
     range of 263.15 to 368.15 K.
 
     Reference:
-    D. G. Archer and P. Wang, “The Dielectric Constant of Water and Debye‐Hückel
-    Limiting Law Slopes,” J. Phys. Chem. Ref. Data, vol. 19, no. 2, pp. 371–411,
+    D. G. Archer and P. Wang, “The Dielectric Constant of Water and Debye-Hückel
+    Limiting Law Slopes,” J. Phys. Chem. Ref. Data, vol. 19, no. 2, pp. 371-411,
     Mar. 1990.
     """
     dielc = 7.6555618295E-04 * t ** 2 - 8.1783881423E-01 * t + 2.5419616803E+02
@@ -2449,7 +2447,7 @@ def aly_lee(t, c):
     Reference:
     F. A. Aly and L. L. Lee, “Self-consistent equations for calculating the ideal
     gas heat capacity, enthalpy, and entropy,” Fluid Phase Equilibria, vol. 6,
-    no. 3–4, pp. 169–179, 1981.
+    no. 3-4, pp. 169-179, 1981.
 
     """
     cp_ideal = (c[0] + c[1] * (c[2] / t / np.sinh(c[2] / t)) ** 2 + c[3] * (c[4] / t / np.cosh(c[4] / t)) ** 2) / 1000.

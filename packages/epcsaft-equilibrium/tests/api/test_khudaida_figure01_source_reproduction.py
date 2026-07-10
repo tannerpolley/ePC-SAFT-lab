@@ -3,7 +3,6 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[4]
 FIGURE_ROOT = REPO_ROOT / "analyses" / "paper_validation" / "2026_khudaida" / "figures" / "figure_01"
 
@@ -48,7 +47,7 @@ def test_khudaida_figure_01_electrolyte_scope_records_figiel_parameter_boundary(
 
     route_scope = by_key[("model", "package_route_scope")]
     assert route_scope["value"] == "figures_02_07_and_s2_s3"
-    assert "Public electrolyte_lle package-route evidence starts" in route_scope["notes"]
+    assert "Internal electrolyte diagnostics start" in route_scope["notes"]
 
     figiel_boundary = by_key[("parameters", "figiel_2025_snapshot")]
     assert figiel_boundary["value"] == "out_of_scope_for_figure_01_source_recreation"

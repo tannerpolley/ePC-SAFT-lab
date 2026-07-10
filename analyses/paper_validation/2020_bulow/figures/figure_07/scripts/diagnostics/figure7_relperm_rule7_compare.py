@@ -3,10 +3,8 @@ from __future__ import annotations
 import csv
 import math
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -16,10 +14,10 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT
 
 FIGURE_DIR = Path(__file__).resolve().parents[1]
 if str(FIGURE_DIR) not in sys.path:
@@ -33,10 +31,11 @@ from scripts.plot_outputs import paper_validation_dir
 require_epcsaft_install()
 
 import plot_figure_7 as fig7
-from epcsaft.parameters import get_prop_dict
-from scripts.data.paper_validation_parameters import paper_validation_parameter_path
-from scripts._epcsaft_oop import epcsaft_activity_coefficient, epcsaft_density
 from _plot_common import configure_style, save_figure
+from epcsaft.parameters import get_prop_dict
+
+from scripts._epcsaft_oop import epcsaft_activity_coefficient, epcsaft_density
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt

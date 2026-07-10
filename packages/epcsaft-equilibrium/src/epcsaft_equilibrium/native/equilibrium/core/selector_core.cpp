@@ -11,17 +11,9 @@
 namespace epcsaft::native::equilibrium {
 namespace {
 
-const char* kGross2002AssociatingLleProofRoute = "associating_neutral_lle_gross_2002_public_exact_hessian";
-const char* kGross2002AssociatingLleFixture = "Gross/Sadowski 2002 Figure 8 methanol-cyclohexane";
-const char* kGross2002Figure10AssociatingLleProofRoute = "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian";
-const char* kGross2002Figure10AssociatingLleFixture = "Gross/Sadowski 2002 Figure 10 water-1-pentanol";
-const char* kGross2002AssociatingVleProofRoute = "associating_neutral_vle_gross_2002_figures_2_9_public_exact_hessian";
 const char* kGross2002AssociatingVleFixture = "Gross/Sadowski 2002 Figures 2-9 associating binary VLE";
-const char* kGross2002Figure10AssociatingVleProofRoute = "associating_neutral_vle_gross_2002_figure_10_public_exact_hessian";
-const char* kGross2002Figure10AssociatingVleFixture = "Gross/Sadowski 2002 Figure 10 water-1-pentanol upper VLLE/VLE boundary";
 const char* kGross2002AssociatingBackend = "cppad_implicit_association";
 const char* kGross2002Figure8ParameterSourceLabel = "Gross/Sadowski 2002 Figure 8";
-const char* kGross2002Figure10ParameterSourceLabel = "Gross/Sadowski 2002 Figure 10";
 const char* kGross2002Figure2ParameterSourceLabel = "Gross/Sadowski 2002 Figure 2";
 const char* kGross2002Figure3ParameterSourceLabel = "Gross/Sadowski 2002 Figure 3";
 const char* kGross2002Figure4ParameterSourceLabel = "Gross/Sadowski 2002 Figure 4";
@@ -50,22 +42,15 @@ const ProblemFamilyActivation& activation_row(const std::string& key) {
     return *found;
 }
 
-std::string selector_family_for_route(const std::string& route) {
-    if (route == "bubble_pressure" || route == "bubble_temperature" || route == "dew_pressure"
-        || route == "dew_temperature") {
-        return "bubble_dew_derived_routes";
-    }
-    if (route == "neutral_tp_flash") {
-        return "neutral_tp_flash";
-    }
-    if (route == "neutral_lle") {
-        return "neutral_lle";
-    }
-    if (route == "single_component_vle") {
-        return "single_component_vle";
-    }
-    if (route == "multiphase" || route == "neutral_multiphase_nonassoc") {
-        return "neutral_multiphase_nonassoc";
+const SelectorRouteActivation& selector_route_activation(const std::string& route) {
+    const auto& matrix = selector_route_activation_matrix();
+    const auto found = std::find_if(
+        matrix.begin(),
+        matrix.end(),
+        [&](const SelectorRouteActivation& row) { return row.selector_route == route; }
+    );
+    if (found != matrix.end()) {
+        return *found;
     }
     throw ValueError("selector-ineligible: route family is declared-not-exposed or unsupported by the production selector.");
 }
@@ -127,6 +112,41 @@ bool vector_close_to(
     return true;
 }
 
+bool single_component_vle_nist_scope_matches(
+    const add_args& args,
+    double temperature,
+    double expected_m,
+    double expected_s,
+    double expected_e,
+    double lower_temperature,
+    double upper_temperature
+) {
+    return args.m.size() == 1
+        && args.s.size() == 1
+        && args.e.size() == 1
+        && close_to(args.m[0], expected_m)
+        && close_to(args.s[0], expected_s)
+        && close_to(args.e[0], expected_e)
+        && std::isfinite(temperature)
+        && temperature >= lower_temperature
+        && temperature <= upper_temperature;
+}
+
+bool has_nist_hydrocarbon_single_component_vle_proof(
+    const add_args& args,
+    double temperature
+) {
+    return single_component_vle_nist_scope_matches(
+               args, temperature, 1.0000, 3.7039, 150.03, 100.0, 180.0
+           )
+        || single_component_vle_nist_scope_matches(
+            args, temperature, 1.6069, 3.5206, 191.42, 100.0, 280.0
+        )
+        || single_component_vle_nist_scope_matches(
+            args, temperature, 2.0020, 3.6184, 208.11, 100.0, 340.0
+        );
+}
+
 bool int_vector_equals(const std::vector<int>& values, const std::vector<int>& expected) {
     return values == expected;
 }
@@ -140,47 +160,6 @@ bool gross_2002_source_backed_metadata_present(const add_args& args, const std::
         && contains_text(args.parameter_provenance_fields, "table")
         && contains_text(args.parameter_provenance_fields, "figure")
         && contains_text(args.parameter_provenance_fields, "source_path");
-}
-
-bool gross_2002_parameter_fingerprint_matches(const add_args& args) {
-    if (args.m.size() != 2 || args.s.size() != 2 || args.e.size() != 2) {
-        return false;
-    }
-    if (!vector_close_to(args.m, {1.5255, 2.5303})
-        || !vector_close_to(args.s, {3.2300, 3.8499})
-        || !vector_close_to(args.e, {188.90, 278.11})) {
-        return false;
-    }
-    if (!vector_close_to(args.e_assoc, {2899.5, 0.0}) || !vector_close_to(args.vol_a, {0.035176, 0.0})) {
-        return false;
-    }
-    if (!int_vector_equals(args.assoc_num, {2, 0})) {
-        return false;
-    }
-    if (!vector_close_to(
-            std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()),
-            {0.0, 1.0, 1.0, 0.0},
-            1.0e-12
-        )) {
-        return false;
-    }
-    if (args.k_ij.size() != 4
-        || !close_to(args.k_ij[0], 0.0, 1.0e-12)
-        || !close_to(args.k_ij[1], 0.051, 1.0e-12)
-        || !close_to(args.k_ij[2], 0.051, 1.0e-12)
-        || !close_to(args.k_ij[3], 0.0, 1.0e-12)) {
-        return false;
-    }
-    return all_zero_or_empty(args.z)
-        && all_zero_or_empty(args.k_hb)
-        && all_zero_or_empty(args.l_ij)
-        && all_zero_or_empty(args.d_born)
-        && all_zero_or_empty(args.f_solv);
-}
-
-bool has_gross_2002_associating_lle_proof(const add_args& args) {
-    return gross_2002_source_backed_metadata_present(args, kGross2002Figure8ParameterSourceLabel)
-        && gross_2002_parameter_fingerprint_matches(args);
 }
 
 bool gross_2002_vle_case_parameter_fingerprint_matches(
@@ -227,47 +206,6 @@ bool gross_2002_vle_case_parameter_fingerprint_matches(
         && all_zero_or_empty(args.l_ij)
         && all_zero_or_empty(args.d_born)
         && all_zero_or_empty(args.f_solv);
-}
-
-bool gross_2002_figure10_parameter_fingerprint_matches(const add_args& args) {
-    if (args.m.size() != 2 || args.s.size() != 2 || args.e.size() != 2) {
-        return false;
-    }
-    if (!vector_close_to(args.m, {1.0656, 3.6260})
-        || !vector_close_to(args.s, {3.0007, 3.4508})
-        || !vector_close_to(args.e, {366.51, 247.28})
-        || !vector_close_to(args.e_assoc, {2500.7, 2252.1})
-        || !vector_close_to(args.vol_a, {0.034868, 0.010319})) {
-        return false;
-    }
-    if (!int_vector_equals(args.assoc_num, {2, 2})) {
-        return false;
-    }
-    if (!vector_close_to(
-            std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()),
-            {0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0},
-            1.0e-12
-        )) {
-        return false;
-    }
-    if (args.k_ij.size() != 4
-        || !close_to(args.k_ij[0], 0.0, 1.0e-12)
-        || !close_to(args.k_ij[1], 0.016, 1.0e-12)
-        || !close_to(args.k_ij[2], 0.016, 1.0e-12)
-        || !close_to(args.k_ij[3], 0.0, 1.0e-12)) {
-        return false;
-    }
-    const bool zero_or_empty_fsolv = all_zero_or_empty(args.f_solv) || vector_close_to(args.f_solv, {1.0, 1.0}, 1.0e-12);
-    return all_zero_or_empty(args.z)
-        && all_zero_or_empty(args.k_hb)
-        && all_zero_or_empty(args.l_ij)
-        && all_zero_or_empty(args.d_born)
-        && zero_or_empty_fsolv;
-}
-
-bool has_gross_2002_figure10_associating_lle_proof(const add_args& args) {
-    return gross_2002_source_backed_metadata_present(args, kGross2002Figure10ParameterSourceLabel)
-        && gross_2002_figure10_parameter_fingerprint_matches(args);
 }
 
 bool has_gross_2002_associating_vle_proof(const add_args& args) {
@@ -389,29 +327,7 @@ bool has_gross_2002_associating_vle_proof(const add_args& args) {
             {0.0, 0.020, 0.020, 0.0}
         );
     }
-    if (args.parameter_source_label == kGross2002Figure10ParameterSourceLabel) {
-        return gross_2002_figure10_parameter_fingerprint_matches(args);
-    }
     return false;
-}
-
-bool has_pure_2b_single_component_vle_association_proof(const add_args& args) {
-    if (args.m.size() != 1) {
-        return false;
-    }
-    if (!int_vector_equals(args.assoc_num, {2})) {
-        return false;
-    }
-    if (!vector_close_to(std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()), {0.0, 1.0, 1.0, 0.0}, 1.0e-12)) {
-        return false;
-    }
-    return args.e_assoc.size() == 1
-        && args.vol_a.size() == 1
-        && std::isfinite(args.e_assoc[0])
-        && args.e_assoc[0] > 0.0
-        && std::isfinite(args.vol_a[0])
-        && args.vol_a[0] > 0.0
-        && all_zero_or_empty(args.z);
 }
 
 SelectorInputClassification classify_selector_input(const add_args& args) {
@@ -460,6 +376,13 @@ void require_eligible_input(
 ) {
     if (classification.neutral && classification.nonreactive && classification.nonelectrolyte
         && classification.nonassociating) {
+        if (request.route == "single_component_vle"
+            && !has_nist_hydrocarbon_single_component_vle_proof(args, request.temperature)) {
+            throw ValueError(
+                "selector-ineligible: single_component_vle requires NIST-backed methane, ethane, or propane "
+                "parameters within the retained temperature range."
+            );
+        }
         return;
     }
     if (
@@ -469,15 +392,8 @@ void require_eligible_input(
         && classification.nonelectrolyte
         && !classification.nonassociating
     ) {
-        if (has_pure_2b_single_component_vle_association_proof(args)) {
-            classification.active_family_markers.insert(
-                classification.active_family_markers.begin(),
-                "associating_single_component_vle_proven"
-            );
-            return;
-        }
         throw ValueError(
-            "selector-ineligible: associating single_component_vle requires a pure neutral 2B associating proof input."
+            "selector-ineligible: single_component_vle requires a nonassociating pure-component input."
         );
     }
     if (
@@ -499,30 +415,10 @@ void require_eligible_input(
             "Figures 2-9 neutral binary exact-Hessian proof input."
         );
     }
-    if (
-        request.route == "neutral_lle"
-        && classification.neutral
-        && classification.nonreactive
-        && classification.nonelectrolyte
-        && !classification.nonassociating
-    ) {
-        if (has_gross_2002_associating_lle_proof(args) || has_gross_2002_figure10_associating_lle_proof(args)) {
-            classification.active_family_markers.insert(
-                classification.active_family_markers.begin(),
-                "associating_neutral_lle_proven"
-            );
-            return;
-        }
-        throw ValueError(
-            "selector-ineligible: associating neutral_lle requires source-backed Gross/Sadowski 2002 "
-            "exact-Hessian proof for the public two-phase LLE admission gate."
-        );
-    }
     throw ValueError(
         "selector-ineligible: production selector routes support only neutral, non-reactive, "
         "non-electrolyte, non-associating mixtures except source-backed Gross/Sadowski 2002 "
-        "Figures 2-9 bubble/dew VLE, Figure 10 bubble/dew or neutral two-phase LLE, and Figure 8 neutral two-phase "
-        "LLE proof inputs."
+        "Figures 2-9 bubble/dew VLE proof inputs."
     );
 }
 
@@ -651,7 +547,8 @@ bool any_nonzero_finite(const std::vector<double>& values) {
 
 SelectorParameterReadiness evaluate_parameter_readiness(
     const add_args& args,
-    const ProblemFamilyActivation& activation
+    const ProblemFamilyActivation& activation,
+    const SelectorRouteActivation& route_activation
 ) {
     SelectorParameterReadiness out;
     const std::size_t species_count = args.m.size();
@@ -697,24 +594,9 @@ SelectorParameterReadiness evaluate_parameter_readiness(
     }
     out.required_parameter_families_present = out.missing_required_parameter_families.empty();
     out.derivative_gate = activation.derivative_requirement;
-    if (activation.key == "neutral_lle" && has_gross_2002_associating_lle_proof(args)) {
-        out.associating_admission_proof_route = kGross2002AssociatingLleProofRoute;
-        out.associating_admission_fixture = kGross2002AssociatingLleFixture;
-        out.associating_admission_backend = kGross2002AssociatingBackend;
-    }
-    if (activation.key == "neutral_lle" && has_gross_2002_figure10_associating_lle_proof(args)) {
-        out.associating_admission_proof_route = kGross2002Figure10AssociatingLleProofRoute;
-        out.associating_admission_fixture = kGross2002Figure10AssociatingLleFixture;
-        out.associating_admission_backend = kGross2002AssociatingBackend;
-    }
     if (activation.key == "bubble_dew_derived_routes" && has_gross_2002_associating_vle_proof(args)) {
-        if (args.parameter_source_label == kGross2002Figure10ParameterSourceLabel) {
-            out.associating_admission_proof_route = kGross2002Figure10AssociatingVleProofRoute;
-            out.associating_admission_fixture = kGross2002Figure10AssociatingVleFixture;
-        } else {
-            out.associating_admission_proof_route = kGross2002AssociatingVleProofRoute;
-            out.associating_admission_fixture = kGross2002AssociatingVleFixture;
-        }
+        out.associating_admission_proof_route = route_activation.proof_routes.at(0);
+        out.associating_admission_fixture = kGross2002AssociatingVleFixture;
         out.associating_admission_backend = kGross2002AssociatingBackend;
     }
     return out;
@@ -734,20 +616,15 @@ void require_parameter_readiness(const SelectorParameterReadiness& readiness) {
 }
 
 std::vector<std::string> request_applicable_proof_routes(
-    const ProblemFamilyActivation& activation,
+    const SelectorRouteActivation& route_activation,
     const SelectorParameterReadiness& readiness,
     const SelectorInputClassification& classification
 ) {
-    if (activation.key != "neutral_lle") {
-        return activation.proof_routes;
-    }
-    if (classification.nonassociating) {
-        return {"neutral_lle_binary_nonassociating_ipopt_exact_hessian"};
-    }
-    if (!readiness.associating_admission_proof_route.empty()) {
+    if (!readiness.associating_admission_proof_route.empty()
+        && !classification.nonassociating) {
         return {readiness.associating_admission_proof_route};
     }
-    return {};
+    return route_activation.proof_routes;
 }
 
 void require_present(bool present, const std::string& label, const std::string& route) {
@@ -1034,7 +911,11 @@ SelectorContract evaluate_selector_contract(
     SelectorRouteRequest request = raw_request;
     request.route = normalized_token(request.route);
     request.composition_role = normalized_token(request.composition_role);
-    const std::string family = selector_family_for_route(request.route);
+    const SelectorRouteActivation& route_activation = selector_route_activation(request.route);
+    if (!route_activation.production_exposed) {
+        throw ValueError("selector-ineligible: selector route is not production exposed.");
+    }
+    const std::string& family = route_activation.selector_family;
     const ProblemFamilyActivation& activation = activation_row(family);
     if (!activation.production_exposed || activation.exposure_status != "production_exposed") {
         throw ValueError("selector-ineligible: activation row is not production exposed.");
@@ -1052,12 +933,16 @@ SelectorContract evaluate_selector_contract(
     out.activation = activation;
     out.request_pretreatment = pretreat_selector_request(args, request);
     out.thermodynamic_input = build_thermodynamic_input(args, request);
-    out.parameter_readiness = evaluate_parameter_readiness(args, out.activation);
+    out.parameter_readiness = evaluate_parameter_readiness(
+        args,
+        out.activation,
+        route_activation
+    );
     require_parameter_readiness(out.parameter_readiness);
     out.input_classification = classify_selector_input(args);
     require_eligible_input(args, request, out.input_classification);
     out.applicable_proof_routes = request_applicable_proof_routes(
-        out.activation,
+        route_activation,
         out.parameter_readiness,
         out.input_classification
     );

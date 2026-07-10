@@ -17,9 +17,11 @@ for import_root in (REPO_ROOT, SRC_ROOT, EQUILIBRIUM_SRC_ROOT):
     if import_path not in sys.path:
         sys.path.insert(0, import_path)
 
-from scripts.validation import check_electrolyte_held2_phase_discovery
-from scripts.validation import check_electrolyte_held2_stage_i
-from scripts.validation import check_electrolyte_tpd_gate
+from scripts.validation import (
+    check_electrolyte_held2_phase_discovery,
+    check_electrolyte_held2_stage_i,
+    check_electrolyte_tpd_gate,
+)
 
 ALGORITHM_SCOPE = "held2_stage_ii_electrolyte_dual_phase_discovery_only"
 CHARGE_TOLERANCE = check_electrolyte_tpd_gate.CHARGE_TOLERANCE
@@ -590,7 +592,7 @@ def main(argv: list[str] | None = None) -> int:
             from scripts.validation import native_freshness
 
             try:
-                native_freshness.require_receipt(dict(receipt))
+                native_freshness.require_equilibrium_native_fresh(dict(receipt))
             except ValueError as exc:
                 print(str(exc), file=sys.stderr)
                 return 2

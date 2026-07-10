@@ -27,9 +27,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image, ImageDraw
-
 from epcsaft_equilibrium._native import extension_native_core
+from PIL import Image, ImageDraw
 
 FIGURE_ID = "figure_10"
 PRESSURE_BAR = 1.013
@@ -131,6 +130,11 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+
+
+def _strip_trailing_whitespace(path: Path) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -343,7 +347,7 @@ def _write_source_artifacts(rows: list[dict[str, Any]]) -> None:
 
 
 def _native_receipt() -> dict[str, Any]:
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=extension_native_core(),
         checker_command=[
             "uv",
@@ -355,6 +359,13 @@ def _native_receipt() -> dict[str, Any]:
             "--require-exact-association-hessian",
             "--require-fresh-native",
         ],
+    )
+    receipt.update(
+        {
+            "generation_evidence_scope": "internal_cross_association_component_diagnostic",
+            "neutral_lle_public_route_admission": "closed",
+            "neutral_lle_global_held_proof": False,
+        }
     )
     return native_freshness.receipt_to_jsonable(receipt)
 
@@ -476,6 +487,7 @@ def _write_plot(source_rows: list[dict[str, Any]], model_rows: list[dict[str, An
     )
     fig.savefig(PNG, dpi=180)
     fig.savefig(SVG)
+    _strip_trailing_whitespace(SVG)
     fig.savefig(PDF)
     plt.close(fig)
 
@@ -556,6 +568,9 @@ def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> 
                 "artifacts": artifacts,
                 "remaining_work": [] if score_payload["pass"] else ["improve Figure 10 full replication score or exact association Hessian evidence"],
                 "source_data_basis": "calibrated Gross 2002 Figure 10 visible PC-SAFT VLLE/LLE envelope trace with retained exact association Hessian diagnostic for water/1-pentanol",
+                "evidence_scope": "internal_cross_association_component_diagnostic",
+                "public_route_admission": "closed",
+                "global_held_proof": False,
                 "score": {
                     "normalized_plot_score": score_payload["normalized_plot_score"],
                     "branch_coverage_score": score_payload["branch_coverage_score"],
@@ -614,12 +629,15 @@ def main() -> int:
         "model_point_count": len(model_rows),
         "score": score_payload,
         "native_route": {
-            "figure10_public_admission": "source-backed Figure 10 water/1-pentanol associating route admitted by selector fingerprints",
+            "evidence_scope": "internal_cross_association_component_diagnostic",
+            "public_route_admission": "closed",
+            "global_held_proof": False,
             "exact_association_hessian": score_payload["exact_association_hessian"],
             "model_curve_basis": "retained paper PC-SAFT curve trace for full visual replication",
             "native_freshness_receipt": receipt,
         },
     }
+    _write_json(SUMMARY_JSON, summary)
     _update_manifest(score_payload, receipt)
     print(json.dumps(_jsonable(summary), indent=2, sort_keys=True))
     return 0 if score_payload["pass"] else 2

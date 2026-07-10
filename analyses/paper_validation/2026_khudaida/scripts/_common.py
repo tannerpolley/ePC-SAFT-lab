@@ -7,26 +7,21 @@ import os
 import platform
 import subprocess
 import sys
-
-
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-import sys as _bootstrap_sys
-from pathlib import Path as _BootstrapPath
-
-for _candidate in _BootstrapPath(__file__).resolve().parents:
-    if (_candidate / "scripts" / "plot_outputs.py").is_file():
-        if str(_candidate) not in _bootstrap_sys.path:
-            _bootstrap_sys.path.insert(0, str(_candidate))
-        break
-else:
-    raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-from typing import Iterable
 
 import matplotlib
 import numpy as np
 import pandas as pd
+
+for _candidate in Path(__file__).resolve().parents:
+    if (_candidate / "scripts" / "plot_outputs.py").is_file():
+        if str(_candidate) not in sys.path:
+            sys.path.insert(0, str(_candidate))
+        break
+else:
+    raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
+from scripts.plot_outputs import REPO_ROOT
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -40,7 +35,13 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts._env import require_epcsaft_install
 from scripts.dev.native_runtime_env import apply_native_runtime_env
-from scripts.plot_outputs import analysis_data_path, analysis_plot_set_dir, paper_validation_output_path, save_plot_figure
+from scripts.plot_outputs import (
+    analysis_data_path,
+    analysis_plot_set_dir,
+    paper_validation_output_path,
+    save_plot_figure,
+)
+from scripts.validation.khudaida_parameter_provenance import evaluate_khudaida_parameter_provenance
 
 require_epcsaft_install()
 apply_native_runtime_env(os.environ)
@@ -53,13 +54,19 @@ def _fast_machine() -> str:
 platform.machine = _fast_machine
 
 import epcsaft
-import epcsaft_equilibrium
+from epcsaft_equilibrium.workflows import _run_electrolyte_lle_validation
+
 from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 P_REF = 1.0e5
 MODEL_SOLVE_MAX_ITERATIONS = 180
 KHUDAIDA_MIN_PHASE_DISTANCE = 1.0e-3
 KHUDAIDA_MINOR_BETA_REVIEW = 1.0e-4
+ELECTROLYTE_VALIDATION_SOURCE = "epcsaft_internal_electrolyte_lle_validation"
+REJECTED_ROUTE_STATUS = "internal_validation_rejected"
+REJECTED_COLLAPSED_STATUS = "rejected_collapsed_split"
+REJECTED_SOLVER_STATUS = "rejected_solver_failure"
+REJECTED_PARAMETER_STATUS = "rejected_parameter_provenance"
 PARAMETER_DATASET = paper_validation_parameter_path("2026_Khudaida")
 SPECIES = ["H2O", "Ethanol", "Butanol", "Na+", "Cl-"]
 FORMULA_SPECIES = ["H2O", "Ethanol", "Isobutanol", "NaCl"]
@@ -77,6 +84,7 @@ LIGHT_GREEN = "#63c46b"
 WATER_COLOR = "#2f6fb3"
 ETHANOL_COLOR = "#c25a14"
 ISOBUTANOL_COLOR = "#5f8f1f"
+
 
 def explicit_to_formula(x_ion: np.ndarray) -> np.ndarray:
     return ion_to_formula_basis(x_ion)
@@ -267,12 +275,15 @@ MODEL_DIAGNOSTIC_COLUMNS = [
     "hessian_approximation",
     "route_hessian_approximation",
 ]
-MODEL_COLUMNS = (
-    PHASE_COLUMNS[:-1]
-    + ["beta", "residual_norm", "objective", "converged"]
-    + MODEL_DIAGNOSTIC_COLUMNS
-    + ["source"]
-)
+MODEL_COLUMNS = [
+    *PHASE_COLUMNS[:-1],
+    "beta",
+    "residual_norm",
+    "objective",
+    "converged",
+    *MODEL_DIAGNOSTIC_COLUMNS,
+    "source",
+]
 FEED_COLUMNS = [
     "tie_line",
     "temperature_K",
@@ -394,9 +405,7 @@ def source_experimental_cases() -> dict[tuple[float, float], list[tuple[int, tup
             organic = tuple(
                 float(raw[name]) for name in ("x_water_org", "x_ethanol_org", "x_isobutanol_org", "x_nacl_org")
             )
-            aqueous = tuple(
-                float(raw[name]) for name in ("x_water_aq", "x_ethanol_aq", "x_isobutanol_aq", "x_nacl_aq")
-            )
+            aqueous = tuple(float(raw[name]) for name in ("x_water_aq", "x_ethanol_aq", "x_isobutanol_aq", "x_nacl_aq"))
             cases.setdefault(key, []).append((int(raw["tie_line"]), organic, aqueous))
     return cases
 
@@ -751,6 +760,7 @@ def _plot_formula_series(
         label=scatter_label,
     )
 
+
 def _candidate_formula_feeds(exp_row: dict, target_feed_formula: np.ndarray | None = None) -> list[np.ndarray]:
     feeds = []
     if target_feed_formula is not None and np.all(np.isfinite(target_feed_formula)):
@@ -808,15 +818,16 @@ def _failed_solve_result(
     route_status: str | None = None,
     solver_status: str | None = None,
     application_status: str | None = None,
+    rejection_status: str = REJECTED_SOLVER_STATUS,
 ) -> dict:
     return {
         "converged": False,
-        "status": None,
+        "status": rejection_status,
         "message": message,
         "residual_norm": residual_norm,
-        "route_status": route_status,
+        "route_status": REJECTED_ROUTE_STATUS,
         "solver_status": solver_status,
-        "application_status": application_status,
+        "application_status": rejection_status,
         "feed_formula": ion_to_formula_basis(z_feed),
         "organic_formula": np.full(4, np.nan),
         "aqueous_formula": np.full(4, np.nan),
@@ -824,7 +835,7 @@ def _failed_solve_result(
         "beta_aqueous": np.nan,
         "split_norm": np.nan,
         "objective": np.nan,
-        "source": "epcsaft_public_electrolyte_lle",
+        "source": ELECTROLYTE_VALIDATION_SOURCE,
         **_route_diagnostic_summary(
             {
                 "route_status": route_status,
@@ -841,6 +852,15 @@ def _solve_formula_feed_direct(temperature_k: float, feed_formula: np.ndarray) -
     if not np.all(np.isfinite(z_feed)):
         return None
 
+    provenance = evaluate_khudaida_parameter_provenance(ANALYSIS_ROOT)
+    if provenance["blocking"]:
+        return _failed_solve_result(
+            z_feed,
+            message="Khudaida model execution is blocked by unresolved interaction provenance: "
+            + "; ".join(provenance["blockers"]),
+            rejection_status=REJECTED_PARAMETER_STATUS,
+        )
+
     try:
         mixture = epcsaft.Mixture.from_folder(
             PARAMETER_DATASET,
@@ -848,13 +868,11 @@ def _solve_formula_feed_direct(temperature_k: float, feed_formula: np.ndarray) -
             reference_temperature=float(temperature_k),
             reference_composition=z_feed,
         )
-        result = epcsaft_equilibrium.Equilibrium(
-            mixture,
-            route="electrolyte_lle",
+        result = _run_electrolyte_lle_validation(
+            mixture.native,
             T=float(temperature_k),
             P=P_REF,
             z=z_feed,
-        ).solve(
             solver_options={
                 "max_iterations": MODEL_SOLVE_MAX_ITERATIONS,
                 "tolerance": 1.0e-6,
@@ -864,7 +882,7 @@ def _solve_formula_feed_direct(temperature_k: float, feed_formula: np.ndarray) -
                 "ipopt_constraint_violation_tolerance": 1.0e-8,
                 "ipopt_dual_infeasibility_tolerance": 1.0e-8,
                 "ipopt_complementarity_tolerance": 1.0e-8,
-            }
+            },
         )
     except (epcsaft.InputError, epcsaft.SolutionError, RuntimeError, ValueError) as exc:
         diagnostics = getattr(exc, "diagnostics", None) or (
@@ -915,7 +933,7 @@ def _solve_formula_feed_direct(temperature_k: float, feed_formula: np.ndarray) -
         "beta_aqueous": float(result.phase_fractions[aqueous_label]),
         "split_norm": float(diagnostic_summary["phase_distance"]),
         "objective": np.nan,
-        "source": "epcsaft_public_electrolyte_lle",
+        "source": ELECTROLYTE_VALIDATION_SOURCE,
         **diagnostic_summary,
     }
 
@@ -985,7 +1003,7 @@ def _solve_formula_feed(temperature_k: float, feed_formula: np.ndarray) -> dict 
             timeout=120,
         )
     except subprocess.TimeoutExpired:
-        return _failed_solve_result(z_feed, message="public electrolyte_lle solve timed out in isolated subprocess")
+        return _failed_solve_result(z_feed, message="internal electrolyte LLE validation timed out")
 
     stdout_lines = [line for line in completed.stdout.splitlines() if line.strip()]
     if completed.returncode != 0:
@@ -993,10 +1011,10 @@ def _solve_formula_feed(temperature_k: float, feed_formula: np.ndarray) -> dict 
         detail = stderr_lines[0] if stderr_lines else f"returncode={completed.returncode}"
         return _failed_solve_result(
             z_feed,
-            message=f"public electrolyte_lle isolated solve failed: {detail}",
+            message=f"internal electrolyte LLE validation failed: {detail}",
         )
     if not stdout_lines:
-        return _failed_solve_result(z_feed, message="public electrolyte_lle isolated solve returned no JSON")
+        return _failed_solve_result(z_feed, message="internal electrolyte LLE validation returned no JSON")
     return _solve_result_from_json(json.loads(stdout_lines[-1]))
 
 
@@ -1016,22 +1034,12 @@ def solve_model_rows(exp_rows: list[dict], feed_rows: list[dict] | None = None) 
             if best is not None and target_feed_formula is not None and feed_idx == 0 and best["converged"]:
                 break
         if best is None:
-            best = {
-                "converged": False,
-                "status": None,
-                "message": "No converged model candidate.",
-                "residual_norm": np.nan,
-                "route_status": None,
-                "solver_status": None,
-                "application_status": None,
-                "feed_formula": np.full(4, np.nan),
-                "organic_formula": np.full(4, np.nan),
-                "aqueous_formula": np.full(4, np.nan),
-                "beta_organic": np.nan,
-                "beta_aqueous": np.nan,
-                "split_norm": np.nan,
-                "objective": np.nan,
-            }
+            best = _failed_solve_result(
+                formula_to_ion_basis(target_feed_formula)
+                if target_feed_formula is not None
+                else formula_to_ion_basis(0.5 * (exp_row["organic_formula"] + exp_row["aqueous_formula"])),
+                message="No converged model candidate.",
+            )
         solved.append(
             {
                 "tie_line": exp_row["tie_line"],
@@ -1083,7 +1091,8 @@ def _minor_beta(row: dict) -> float:
 
 def _collapsed_split_failure(row: dict) -> dict[str, str | float] | None:
     status = str(row.get("status") or "").strip().lower()
-    if status != "collapsed_split" and not bool(row.get("converged")):
+    status_collapsed = status in {"collapsed_split", REJECTED_COLLAPSED_STATUS}
+    if not status_collapsed and not bool(row.get("converged")):
         return None
     if not _finite_model_phases(row):
         return None
@@ -1093,12 +1102,12 @@ def _collapsed_split_failure(row: dict) -> dict[str, str | float] | None:
     collapsed = np.isfinite(phase_distance) and phase_distance < KHUDAIDA_MIN_PHASE_DISTANCE
     duplicate_formula = np.isfinite(formula_distance) and formula_distance < KHUDAIDA_MIN_PHASE_DISTANCE
     trace_minor_phase = np.isfinite(minor_beta) and minor_beta < KHUDAIDA_MINOR_BETA_REVIEW
-    if status != "collapsed_split" and not (collapsed or duplicate_formula or trace_minor_phase):
+    if not status_collapsed and not (collapsed or duplicate_formula or trace_minor_phase):
         return None
     return {
         "failure_kind": "collapsed_split",
         "root_cause": "postsolve_acceptance",
-        "message": "Public electrolyte_lle returned a collapsed split under the Khudaida model-row contract.",
+        "message": "Internal electrolyte LLE validation returned a collapsed split under the Khudaida model-row contract.",
         "phase_distance": phase_distance,
         "formula_phase_distance": formula_distance,
         "phase_distance_threshold": KHUDAIDA_MIN_PHASE_DISTANCE,
@@ -1108,12 +1117,53 @@ def _collapsed_split_failure(row: dict) -> dict[str, str | float] | None:
     }
 
 
+def _is_explicit_rejection_status(value: object) -> bool:
+    return str(value or "").strip().startswith("rejected_")
+
+
+def _row_has_rejection_status(row: dict) -> bool:
+    return (
+        _is_explicit_rejection_status(row.get("status"))
+        or str(row.get("route_status") or "").strip() == REJECTED_ROUTE_STATUS
+        or _is_explicit_rejection_status(row.get("application_status"))
+    )
+
+
+def _model_row_is_accepted(row: dict) -> bool:
+    return (
+        bool(row.get("converged"))
+        and bool(row.get("postsolve_accepted"))
+        and not _row_has_rejection_status(row)
+        and _finite_model_phases(row)
+        and _collapsed_split_failure(row) is None
+    )
+
+
 def _accepted_model_rows(rows: list[dict]) -> list[dict]:
-    return [
-        row
-        for row in rows
-        if bool(row.get("converged")) and _finite_model_phases(row) and _collapsed_split_failure(row) is None
-    ]
+    return [row for row in rows if _model_row_is_accepted(row)]
+
+
+def _model_row_rejection_contract_is_current(row: dict) -> bool:
+    collapse = _collapsed_split_failure(row)
+    status = str(row.get("status") or "").strip()
+    if collapse is not None or status == REJECTED_COLLAPSED_STATUS:
+        return (
+            not bool(row.get("converged"))
+            and row.get("status") == REJECTED_COLLAPSED_STATUS
+            and row.get("route_status") == REJECTED_ROUTE_STATUS
+            and row.get("application_status") == REJECTED_COLLAPSED_STATUS
+            and not bool(row.get("postsolve_accepted"))
+        )
+    if _row_has_rejection_status(row) or not bool(row.get("converged")):
+        expected_status = status if _is_explicit_rejection_status(status) else REJECTED_SOLVER_STATUS
+        return (
+            not bool(row.get("converged"))
+            and row.get("status") == expected_status
+            and row.get("route_status") == REJECTED_ROUTE_STATUS
+            and row.get("application_status") == expected_status
+            and not bool(row.get("postsolve_accepted"))
+        )
+    return True
 
 
 def _load_model_rows_from_csv(path: Path) -> list[dict]:
@@ -1139,7 +1189,7 @@ def _load_model_rows_from_csv(path: Path) -> list[dict]:
                     "status": None,
                     "message": None,
                     "split_norm": np.nan,
-                    "source": raw.get("source", "epcsaft_public_electrolyte_lle"),
+                    "source": raw.get("source", ELECTROLYTE_VALIDATION_SOURCE),
                     "route_status": raw.get("route_status", ""),
                     "solver_status": raw.get("solver_status", ""),
                     "application_status": raw.get("application_status", ""),
@@ -1203,8 +1253,9 @@ def get_or_build_model_rows(
         cached = _load_model_rows_from_csv(cache_path)
         cached_ties = {row["tie_line"] for row in cached}
         expected_ties = {row["tie_line"] for row in exp_rows}
-        if cached_ties == expected_ties:
-            return cached
+        if cached_ties == expected_ties and all(row.get("source") == ELECTROLYTE_VALIDATION_SOURCE for row in cached):
+            if all(_model_row_rejection_contract_is_current(row) for row in cached):
+                return cached
     model_rows = solve_model_rows(exp_rows, feed_rows=feed_rows)
     write_case_data(fig_dir, exp_rows, model_rows)
     return model_rows
@@ -1235,8 +1286,23 @@ def _model_rows_for_csv(rows: list[dict]) -> list[dict]:
     for row in rows:
         feed = np.asarray(row.get("feed_formula", np.full(4, np.nan)), dtype=float)
         collapse = _collapsed_split_failure(row)
-        model_accepted = bool(row["converged"]) and collapse is None
-        status = "collapsed_split" if collapse is not None else row.get("status", "")
+        model_accepted = _model_row_is_accepted(row)
+        if collapse is not None:
+            status = REJECTED_COLLAPSED_STATUS
+            route_status = REJECTED_ROUTE_STATUS
+            application_status = REJECTED_COLLAPSED_STATUS
+            postsolve_accepted = False
+        elif _row_has_rejection_status(row) or not bool(row.get("converged")):
+            current_status = str(row.get("status") or "").strip()
+            status = current_status if _is_explicit_rejection_status(current_status) else REJECTED_SOLVER_STATUS
+            route_status = REJECTED_ROUTE_STATUS
+            application_status = status
+            postsolve_accepted = False
+        else:
+            status = row.get("status", "")
+            route_status = row.get("route_status", "")
+            application_status = row.get("application_status", "")
+            postsolve_accepted = bool(row.get("postsolve_accepted", False))
         message = str(collapse["message"]) if collapse is not None else row.get("message", "")
         for phase_name, x, beta in (
             ("organic", row["organic_formula"], row["beta_organic"]),
@@ -1262,10 +1328,10 @@ def _model_rows_for_csv(rows: list[dict]) -> list[dict]:
                     "feed_x_nacl": _csv_float(feed[3]),
                     "status": status,
                     "message": message,
-                    "route_status": row.get("route_status", ""),
+                    "route_status": route_status,
                     "solver_status": row.get("solver_status", ""),
-                    "application_status": row.get("application_status", ""),
-                    "postsolve_accepted": bool(row.get("postsolve_accepted", False)),
+                    "application_status": application_status,
+                    "postsolve_accepted": postsolve_accepted,
                     "phase_distance": _csv_float(row.get("phase_distance", row.get("split_norm"))),
                     "phase_distance_tolerance": _csv_float(row.get("phase_distance_tolerance")),
                     "pressure_consistency_norm": _csv_float(row.get("pressure_consistency_norm")),
@@ -1275,7 +1341,7 @@ def _model_rows_for_csv(rows: list[dict]) -> list[dict]:
                     "exact_hessian_available": bool(row.get("exact_hessian_available", False)),
                     "hessian_approximation": row.get("hessian_approximation", ""),
                     "route_hessian_approximation": row.get("route_hessian_approximation", ""),
-                    "source": str(row.get("source", "epcsaft_public_electrolyte_lle")),
+                    "source": str(row.get("source", ELECTROLYTE_VALIDATION_SOURCE)),
                 }
             )
     return out
@@ -1454,9 +1520,9 @@ def _model_failure_summary(model_rows: list[dict], *, include_objectives: bool) 
                 f"follow_up_issue={collapse['follow_up_issue']}"
             )
         elif not bool(row.get("converged")):
-            reason = row.get("message") or "public electrolyte_lle route did not converge"
+            reason = row.get("message") or "internal electrolyte LLE validation route did not converge"
         elif not finite_phases:
-            reason = row.get("message") or "public electrolyte_lle route produced no finite model phases"
+            reason = row.get("message") or "internal electrolyte LLE validation route produced no finite model phases"
         elif include_objectives:
             objective = _short_float(row.get("objective"))
             phase_distance = _short_float(row.get("phase_distance", row.get("split_norm")))
@@ -1602,7 +1668,7 @@ def _write_lle_contract_outputs(
     write_csv_rows(result_path(fig_dir, "model_curve.csv"), MODEL_COLUMNS, _model_rows_for_csv(model_rows))
     plotted_rows = [
         *_phase_plot_rows("source", "experimental_tielines", exp_rows, "paper_table"),
-        *_phase_plot_rows("model", "package_electrolyte_lle", model_rows, "epcsaft_public_electrolyte_lle"),
+        *_phase_plot_rows("model", "package_electrolyte_lle", model_rows, ELECTROLYTE_VALIDATION_SOURCE),
         *_organic_series_plot_rows("source", "paper_epcsaft_organic", paper_rows, "published_figure_trace"),
         *_feed_plot_rows(feed_rows),
     ]
@@ -1614,9 +1680,27 @@ def _write_lle_contract_outputs(
         [
             {"section": "provenance", "key": "paper", "value": "Khudaida 2026", "unit": "", "notes": ""},
             {"section": "provenance", "key": "figure", "value": figure_id, "unit": "", "notes": ""},
-            {"section": "provenance", "key": "source_image", "value": f"source/{figure_id}.png", "unit": "", "notes": ""},
-            {"section": "basis", "key": "composition", "value": "salt-free ternary projection with NaCl retained in source/model CSV rows", "unit": "", "notes": ""},
-            {"section": "model", "key": "route", "value": "public electrolyte_lle", "unit": "", "notes": "package rows are retained from the latest public electrolyte_lle regeneration; set KHUDAIDA_FORCE_RECOMPUTE=1 to refresh"},
+            {
+                "section": "provenance",
+                "key": "source_image",
+                "value": f"source/{figure_id}.png",
+                "unit": "",
+                "notes": "",
+            },
+            {
+                "section": "basis",
+                "key": "composition",
+                "value": "salt-free ternary projection with NaCl retained in source/model CSV rows",
+                "unit": "",
+                "notes": "",
+            },
+            {
+                "section": "model",
+                "key": "route",
+                "value": "internal electrolyte LLE validation",
+                "unit": "",
+                "notes": "package rows are retained internal component diagnostics; set KHUDAIDA_FORCE_RECOMPUTE=1 to refresh",
+            },
             {
                 "section": "model",
                 "key": "collapsed_split_contract",
@@ -1629,7 +1713,7 @@ def _write_lle_contract_outputs(
                 "key": "parameter_dataset",
                 "value": PARAMETER_DATASET.relative_to(REPO_ROOT).as_posix(),
                 "unit": "",
-                "notes": "retained 2026_Khudaida Tables 5-7 parameter bundle for public-route validation",
+                "notes": "retained 2026_Khudaida Tables 5-7 parameter bundle for internal component validation",
             },
             {
                 "section": "parameters",
@@ -1685,9 +1769,9 @@ def write_lle_figure_data(
     force_recompute: bool | None = None,
 ) -> dict[str, list[dict]]:
     exp_rows = _experimental_rows(salt_wt, temperature_k)
-    feed_rows = _source_feed_rows_for_figure(figure_number, temperature_k, salt_wt) or _derived_feed_rows(
-        salt_wt, temperature_k
-    )
+    feed_rows = _source_feed_rows_for_figure(figure_number, temperature_k, salt_wt)
+    if not feed_rows:
+        raise FileNotFoundError(f"Khudaida Figure {figure_number} has no retained source feed rows.")
     if force_recompute is None:
         force_recompute = os.environ.get("KHUDAIDA_FORCE_RECOMPUTE", "").strip().lower() in {"1", "true", "yes", "on"}
     model_rows = get_or_build_model_rows(fig_dir, exp_rows, feed_rows=feed_rows, force_recompute=force_recompute)
@@ -1697,9 +1781,40 @@ def write_lle_figure_data(
     return {"experimental": exp_rows, "feed": feed_rows, "model": model_rows, "paper": paper_rows}
 
 
+def load_lle_figure_data(
+    fig_dir: Path,
+    figure_number: int,
+    temperature_k: float,
+    salt_wt: float,
+) -> dict[str, list[dict]]:
+    exp_rows = _experimental_rows(salt_wt, temperature_k)
+    feed_rows = _source_feed_rows_for_figure(figure_number, temperature_k, salt_wt)
+    if not feed_rows:
+        raise FileNotFoundError(f"Khudaida Figure {figure_number} has no retained source feed rows.")
+    model_path = _model_cache_path(fig_dir)
+    if not model_path.is_file():
+        raise FileNotFoundError(
+            f"Khudaida Figure {figure_number} retained model rows are missing; run its generate_data.py first."
+        )
+    model_rows = _load_model_rows_from_csv(model_path)
+    expected_ties = {row["tie_line"] for row in exp_rows}
+    retained_ties = {row["tie_line"] for row in model_rows}
+    if retained_ties != expected_ties:
+        raise ValueError(
+            f"Khudaida Figure {figure_number} retained model tie lines {sorted(retained_ties)} "
+            f"do not match source tie lines {sorted(expected_ties)}."
+        )
+    if any(row.get("source") != ELECTROLYTE_VALIDATION_SOURCE for row in model_rows):
+        raise ValueError(f"Khudaida Figure {figure_number} retained model rows have stale source identity.")
+    if any(not _model_row_rejection_contract_is_current(row) for row in model_rows):
+        raise ValueError(f"Khudaida Figure {figure_number} retained model rows have stale rejection labels.")
+    paper_rows = _paper_epcsaft_source_rows(fig_dir, temperature_k, salt_wt)
+    return {"experimental": exp_rows, "feed": feed_rows, "model": model_rows, "paper": paper_rows}
+
+
 def plot_lle_figure(fig_dir: Path, figure_number: int, temperature_k: float, salt_wt: float) -> None:
     configure_style()
-    data = write_lle_figure_data(fig_dir, figure_number, temperature_k, salt_wt)
+    data = load_lle_figure_data(fig_dir, figure_number, temperature_k, salt_wt)
     exp_rows = data["experimental"]
     feed_rows = data["feed"]
     model_rows = data["model"]
@@ -1715,13 +1830,13 @@ def plot_lle_figure(fig_dir: Path, figure_number: int, temperature_k: float, sal
     _plot_feed_points(ax, feed_rows, label="Feed")
     ax.legend(loc="upper right", fontsize=8)
     if valid_model_rows:
-        model_caption = f"red dashed (package public ePC-SAFT, {len(valid_model_rows)}/{len(model_rows)} tie-lines)"
+        model_caption = f"red dashed (package internal validation, {len(valid_model_rows)}/{len(model_rows)} tie-lines)"
     else:
-        model_caption = "package public ePC-SAFT rejected all model tie-lines; no red model tie-lines are drawn"
+        model_caption = "package internal validation rejected all model tie-lines; no red model tie-lines are drawn"
     paper_caption = f"blue squares (paper ePC-SAFT organic branch, {len(paper_rows)} points)"
     add_figure_caption(
         fig,
-        f"Figure {figure_number}. LLE for the system water + ethanol + isobutanol + {int(round(salt_wt * 100))} wt % NaCl at {temperature_k:.2f} K and atmospheric pressure expressed as salt-free composition: black (exp), {model_caption}, {paper_caption}, and green (feed compositions).",
+        f"Figure {figure_number}. LLE for the system water + ethanol + isobutanol + {round(salt_wt * 100)} wt % NaCl at {temperature_k:.2f} K and atmospheric pressure expressed as salt-free composition: black (exp), {model_caption}, {paper_caption}, and green (feed compositions).",
     )
     save_figure(fig, fig_dir / f"{figure_id_for_number(figure_number)}.png")
     plt.close(fig)
@@ -1801,7 +1916,13 @@ def _write_figure_1_contract_outputs(
             {"section": "provenance", "key": "paper", "value": "Khudaida 2026", "unit": "", "notes": ""},
             {"section": "provenance", "key": "figure", "value": "figure_01", "unit": "", "notes": ""},
             {"section": "provenance", "key": "source_image", "value": "source/figure_01.png", "unit": "", "notes": ""},
-            {"section": "basis", "key": "composition", "value": "salt-free ternary projection", "unit": "", "notes": ""},
+            {
+                "section": "basis",
+                "key": "composition",
+                "value": "salt-free ternary projection",
+                "unit": "",
+                "notes": "",
+            },
             {
                 "section": "model",
                 "key": "route",
@@ -1814,7 +1935,7 @@ def _write_figure_1_contract_outputs(
                 "key": "package_route_scope",
                 "value": "figures_02_07_and_s2_s3",
                 "unit": "",
-                "notes": "Public electrolyte_lle package-route evidence starts with the model-comparable Khudaida figures.",
+                "notes": "Internal electrolyte diagnostics start with the model-comparable Khudaida figures; no public route is admitted.",
             },
             {
                 "section": "parameters",
@@ -1982,9 +2103,27 @@ def _write_metric_contract_outputs(fig_dir: Path, figure_number: int, rows: list
         [
             {"section": "provenance", "key": "paper", "value": "Khudaida 2026", "unit": "", "notes": ""},
             {"section": "provenance", "key": "figure", "value": figure_id, "unit": "", "notes": ""},
-            {"section": "provenance", "key": "source_image", "value": f"source/{figure_id}.png", "unit": "", "notes": ""},
-            {"section": "basis", "key": "x_axis", "value": "ethanol mole fraction in aqueous phase", "unit": "mole fraction", "notes": ""},
-            {"section": "basis", "key": "y_axis", "value": y_key, "unit": "", "notes": "source metric from table rows and retained no-salt trace"},
+            {
+                "section": "provenance",
+                "key": "source_image",
+                "value": f"source/{figure_id}.png",
+                "unit": "",
+                "notes": "",
+            },
+            {
+                "section": "basis",
+                "key": "x_axis",
+                "value": "ethanol mole fraction in aqueous phase",
+                "unit": "mole fraction",
+                "notes": "",
+            },
+            {
+                "section": "basis",
+                "key": "y_axis",
+                "value": y_key,
+                "unit": "",
+                "notes": "source metric from table rows and retained no-salt trace",
+            },
         ],
     )
     write_csv_rows(
@@ -2091,8 +2230,20 @@ def plot_figure_10(fig_dir: Path) -> None:
         [
             {"section": "provenance", "key": "paper", "value": "Khudaida 2026", "unit": "", "notes": ""},
             {"section": "provenance", "key": "figure", "value": figure_id, "unit": "", "notes": ""},
-            {"section": "provenance", "key": "source_image", "value": f"source/{figure_id}.png", "unit": "", "notes": ""},
-            {"section": "basis", "key": "figure_role", "value": "sigma profile source retention", "unit": "", "notes": "not an electrolyte LLE solve"},
+            {
+                "section": "provenance",
+                "key": "source_image",
+                "value": f"source/{figure_id}.png",
+                "unit": "",
+                "notes": "",
+            },
+            {
+                "section": "basis",
+                "key": "figure_role",
+                "value": "sigma profile source retention",
+                "unit": "",
+                "notes": "not an electrolyte LLE solve",
+            },
         ],
     )
     write_csv_rows(result_path(fig_dir, "model_curve.csv"), list(source_rows[0].keys()), source_rows)
@@ -2137,39 +2288,33 @@ def plot_figure_10(fig_dir: Path) -> None:
 def _supporting_panel_rows(figure_number: int) -> list[dict]:
     rows = []
     for panel, main_figure, temperature_k, salt_wt in SUPPORTING_FIGURE_PANELS[figure_number]:
-        exp_rows = _experimental_rows(salt_wt, temperature_k)
-        feed_rows = _source_feed_rows_for_figure(main_figure, temperature_k, salt_wt) or _derived_feed_rows(
-            salt_wt, temperature_k
-        )
         main_fig_dir = figure_root(main_figure)
-        model_rows = get_or_build_model_rows(main_fig_dir, exp_rows, feed_rows)
-        paper_rows = _paper_epcsaft_source_rows(
-            main_fig_dir, temperature_k, salt_wt
-        )
+        data = load_lle_figure_data(main_fig_dir, main_figure, temperature_k, salt_wt)
         rows.append(
             {
                 "panel": panel,
                 "main_figure": main_figure,
                 "temperature_K": temperature_k,
                 "salt_wtfrac": salt_wt,
-                "experimental": exp_rows,
-                "feed": feed_rows,
-                "model": model_rows,
-                "paper": paper_rows,
+                "experimental": data["experimental"],
+                "feed": data["feed"],
+                "model": data["model"],
+                "paper": data["paper"],
             }
         )
     return rows
 
 
-def write_supporting_figure_data(fig_dir: Path, figure_number: int) -> None:
+def write_supporting_figure_data(fig_dir: Path, figure_number: int) -> list[dict]:
     if figure_number not in SUPPORTING_FIGURE_PANELS:
         raise ValueError(f"Unsupported Khudaida supporting figure: S{figure_number}")
     phase_rows: list[dict] = []
     feed_rows_out: list[dict] = []
-    for panel in _supporting_panel_rows(figure_number):
+    panel_rows = _supporting_panel_rows(figure_number)
+    for panel in panel_rows:
         for source, rows, phase_key in (
             ("experimental_table_3_4", panel["experimental"], None),
-            ("package_public_native_electrolyte_lle", panel["model"], None),
+            ("package_internal_electrolyte_lle_validation", panel["model"], None),
             ("paper_epcsaft_source_curve", panel["paper"], "organic_formula"),
         ):
             for row in rows:
@@ -2249,6 +2394,8 @@ def write_supporting_figure_data(fig_dir: Path, figure_number: int) -> None:
         ],
         feed_rows_out,
     )
+    _write_supporting_contract_outputs(fig_dir, figure_number, panel_rows)
+    return panel_rows
 
 
 def _write_supporting_contract_outputs(fig_dir: Path, supporting_number: int, panel_rows: list[dict]) -> None:
@@ -2279,9 +2426,11 @@ def _write_supporting_contract_outputs(fig_dir: Path, supporting_number: int, pa
                     "model",
                     f"panel_{panel_id}_package_electrolyte_lle",
                     model_rows,
-                    "epcsaft_public_electrolyte_lle",
+                    "epcsaft_internal_electrolyte_lle_validation",
                 ),
-                *_organic_series_plot_rows("source", f"panel_{panel_id}_paper_epcsaft_organic", paper_rows, "published_figure_trace"),
+                *_organic_series_plot_rows(
+                    "source", f"panel_{panel_id}_paper_epcsaft_organic", paper_rows, "published_figure_trace"
+                ),
                 *_feed_plot_rows(feed_rows),
             ]
         )
@@ -2322,17 +2471,47 @@ def _write_supporting_contract_outputs(fig_dir: Path, supporting_number: int, pa
     _write_source_notes(
         fig_dir,
         [
-            {"section": "provenance", "key": "paper", "value": "Khudaida 2026 Supporting Information", "unit": "", "notes": ""},
-            {"section": "provenance", "key": "figure", "value": f"Figure S{supporting_number}", "unit": "", "notes": figure_id},
-            {"section": "provenance", "key": "source_image", "value": f"source/{figure_id}.png", "unit": "", "notes": ""},
-            {"section": "basis", "key": "composition", "value": "salt-free ternary projection with NaCl retained in source/model CSV rows", "unit": "", "notes": ""},
-            {"section": "model", "key": "route", "value": "public electrolyte_lle", "unit": "", "notes": "three-panel retained package/source comparison"},
+            {
+                "section": "provenance",
+                "key": "paper",
+                "value": "Khudaida 2026 Supporting Information",
+                "unit": "",
+                "notes": "",
+            },
+            {
+                "section": "provenance",
+                "key": "figure",
+                "value": f"Figure S{supporting_number}",
+                "unit": "",
+                "notes": figure_id,
+            },
+            {
+                "section": "provenance",
+                "key": "source_image",
+                "value": f"source/{figure_id}.png",
+                "unit": "",
+                "notes": "",
+            },
+            {
+                "section": "basis",
+                "key": "composition",
+                "value": "salt-free ternary projection with NaCl retained in source/model CSV rows",
+                "unit": "",
+                "notes": "",
+            },
+            {
+                "section": "model",
+                "key": "route",
+                "value": "internal electrolyte LLE validation",
+                "unit": "",
+                "notes": "three-panel retained package/source comparison",
+            },
             {
                 "section": "parameters",
                 "key": "parameter_dataset",
                 "value": PARAMETER_DATASET.relative_to(REPO_ROOT).as_posix(),
                 "unit": "",
-                "notes": "retained 2026_Khudaida Tables 5-7 parameter bundle for public-route validation",
+                "notes": "retained 2026_Khudaida Tables 5-7 parameter bundle for internal component validation",
             },
             {
                 "section": "parameters",
@@ -2348,8 +2527,6 @@ def _write_supporting_contract_outputs(fig_dir: Path, supporting_number: int, pa
 def plot_supporting_figure_grid(fig_dir: Path, figure_number: int) -> None:
     configure_style()
     panel_rows = _supporting_panel_rows(figure_number)
-    write_supporting_figure_data(fig_dir, figure_number)
-    _write_supporting_contract_outputs(fig_dir, figure_number, panel_rows)
     fig, axes = plt.subplots(1, 3, figsize=(14.0, 4.9))
     fig.subplots_adjust(left=0.04, right=0.99, top=0.88, bottom=0.18, wspace=0.18)
     for ax, panel in zip(axes, panel_rows, strict=True):
@@ -2368,7 +2545,7 @@ def plot_supporting_figure_grid(fig_dir: Path, figure_number: int) -> None:
     salt_label = "5 wt % NaCl" if figure_number == 2 else "10 wt % NaCl"
     add_figure_caption(
         fig,
-        f"Figure S{figure_number}. LLE for water + ethanol + isobutanol + {salt_label} at 293.15, 303.15, and 313.15 K: black (experimental), red dashed (package public electrolyte_lle solve), blue (paper ePC-SAFT), and green triangles (feed compositions).",
+        f"Figure S{figure_number}. LLE for water + ethanol + isobutanol + {salt_label} at 293.15, 303.15, and 313.15 K: black (experimental), red dashed (package internal electrolyte LLE validation solve), blue (paper ePC-SAFT), and green triangles (feed compositions).",
         left=0.04,
         y=0.02,
     )
@@ -2409,15 +2586,11 @@ def _table_rows_for_png(salt_wt: float) -> list[list[str]]:
         (0.10, 303.15): 6,
         (0.10, 313.15): 7,
     }
-    force_recompute = os.environ.get("KHUDAIDA_FORCE_RECOMPUTE", "").strip().lower() in {"1", "true", "yes", "on"}
     for temperature_k in temps:
-        exp_rows = _experimental_rows(salt_wt, temperature_k)
-        feed_rows = _source_feed_rows_for_figure(
-            figure_number_map[(salt_wt, temperature_k)], temperature_k, salt_wt
-        ) or _derived_feed_rows(salt_wt, temperature_k)
-        fig_dir = figure_root(figure_number_map[(salt_wt, temperature_k)])
-        model_rows = get_or_build_model_rows(fig_dir, exp_rows, feed_rows=feed_rows, force_recompute=force_recompute)
-        ours = _aad_summary(exp_rows, model_rows)
+        figure_number = figure_number_map[(salt_wt, temperature_k)]
+        fig_dir = figure_root(figure_number)
+        data = load_lle_figure_data(fig_dir, figure_number, temperature_k, salt_wt)
+        ours = _aad_summary(data["experimental"], data["model"])
         paper_epc = EePCSAFT_AAD_REFERENCE[salt_wt][temperature_k]
         paper_enrtl = ENRTL_AAD_REFERENCE[salt_wt][temperature_k]
         for model_name, summary in (
@@ -2443,35 +2616,54 @@ def _table_rows_for_png(salt_wt: float) -> list[list[str]]:
     return rows
 
 
-def plot_tables_9_10(tables_root: Path) -> None:
-    configure_style()
-    columns = [
-        "T / K",
-        "Model",
-        "Org x1",
-        "Org x2",
-        "Org x3",
-        "Org x4",
-        "Aq x1",
-        "Aq x2",
-        "Aq x3",
-        "Aq x4",
-        "Grand AAD",
-    ]
+TABLE_AAD_COLUMNS = [
+    "T / K",
+    "Model",
+    "Org x1",
+    "Org x2",
+    "Org x3",
+    "Org x4",
+    "Aq x1",
+    "Aq x2",
+    "Aq x3",
+    "Aq x4",
+    "Grand AAD",
+]
+
+
+def write_tables_9_10_data(tables_root: Path) -> None:
     for table_number, salt_wt in ((9, 0.05), (10, 0.10)):
         table_dir = tables_root / f"table_{table_number:03d}" / "results"
-        table_dir.mkdir(parents=True, exist_ok=True)
         rows = _table_rows_for_png(salt_wt)
-        csv_rows = [dict(zip(columns, row)) for row in rows]
-        write_csv_rows(out_path(table_dir, f"table_{table_number}.csv"), columns, csv_rows)
+        csv_rows = [dict(zip(TABLE_AAD_COLUMNS, row, strict=True)) for row in rows]
+        write_csv_rows(table_dir / "data" / f"table_{table_number}.csv", TABLE_AAD_COLUMNS, csv_rows)
+
+
+def _load_table_rows(path: Path) -> list[list[str]]:
+    if not path.is_file():
+        raise FileNotFoundError(f"Retained Khudaida table data are missing; run generate_data.py first: {path}")
+    with path.open(newline="", encoding="utf-8-sig") as handle:
+        rows = list(csv.DictReader(handle))
+    if not rows:
+        raise ValueError(f"Retained Khudaida table data are empty: {path}")
+    return [[row[column] for column in TABLE_AAD_COLUMNS] for row in rows]
+
+
+def plot_tables_9_10(tables_root: Path) -> None:
+    configure_style()
+    for table_number in (9, 10):
+        table_dir = tables_root / f"table_{table_number:03d}" / "results"
+        rows = _load_table_rows(table_dir / "data" / f"table_{table_number}.csv")
         fig, ax = plt.subplots(figsize=(13.0, 3.0 + 0.28 * len(rows)))
         ax.axis("off")
-        table = ax.table(cellText=rows, colLabels=columns, loc="center", cellLoc="center")
+        table = ax.table(cellText=rows, colLabels=TABLE_AAD_COLUMNS, loc="center", cellLoc="center")
         table.auto_set_font_size(False)
         table.set_fontsize(8)
         table.scale(1.0, 1.2)
         ax.set_title(
-            f"Table {table_number}: AAD comparison for {int(round(salt_wt * 100))} wt% NaCl", fontsize=11, pad=12
+            f"Table {table_number}: AAD comparison for {5 if table_number == 9 else 10} wt% NaCl",
+            fontsize=11,
+            pad=12,
         )
         save_figure(fig, table_dir / f"table_{table_number}.png")
         plt.close(fig)
@@ -2482,12 +2674,12 @@ def write_provenance_notes() -> None:
 
 - Tables 3 and 4 in the local Khudaida markdown/PDF are treated as the canonical experimental tie-line source for Figures 2-7 and for the salted points in Figures 8-9.
 - Analysis-owned source CSVs in `shared/source/` retain paper Tables 3-7 and Supporting Information Tables S1-S4. The runtime dataset `2026_Khudaida` uses the paper's Table 5 pure-component parameters, Table 6 dielectric constants, Table 7 binary interaction parameters, and the Figiel 2025 SSM+DS Born option family.
-- Figures S2 and S3 are represented as three-panel figure-owned workflows that reuse the public non-reactive `electrolyte_lle` route and snapshot the exact plotted phase/feed points.
+- Figures S2 and S3 are represented as three-panel figure-owned workflows that reuse the internal electrolyte LLE component diagnostic and snapshot the exact plotted phase/feed points.
 - Figure 1 salt-free data and the no-salt points in Figures 8-9 were reconstructed from the local paper figures because the Zotero baseline source remained inaccessible in this session.
 - The no-salt baseline is therefore marked as `published_figure_trace` in the emitted CSV files.
 - Tables 9 and 10 include package-generated ePC-SAFT AAD values and paper-copied eNRTL/ePC-SAFT reference values for comparison.
-- The package model evidence is non-reactive electrolyte LLE through the public `electrolyte_lle` route with the `2026_Khudaida` Born SSM+DS dataset options.
-- The current public-route regeneration is retained in `figures/figure_02` through `figure_07` under `results/data/model_tielines.csv`. The artifacts are complete, but the model-fit statistics do not pass the Khudaida source-data reproduction criteria.
+- The package model evidence is non-reactive electrolyte LLE through the internal electrolyte LLE component diagnostic with the `2026_Khudaida` Born SSM+DS dataset options.
+- The current internal-validation regeneration is retained in `figures/figure_02` through `figure_07` under `results/data/model_tielines.csv`. The artifacts are complete, but the model-fit statistics do not pass the Khudaida source-data reproduction criteria.
 """
     path = ANALYSIS_ROOT / "docs" / "md" / "provenance_notes.md"
     path.parent.mkdir(parents=True, exist_ok=True)

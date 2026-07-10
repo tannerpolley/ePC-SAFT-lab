@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import json
+import shutil
+import subprocess
 from pathlib import Path
 
 import epcsaft
 import epcsaft_equilibrium
 import epcsaft_regression
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 PROVIDER_NATIVE_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft" / "native"
@@ -19,6 +23,50 @@ CONTRACTS = {
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
+
+
+def _copy_provider_package(tmp_path: Path) -> Path:
+    source_package = REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft"
+    copied_package = tmp_path / "epcsaft"
+    shutil.copytree(source_package, copied_package)
+    return copied_package
+
+
+def _write_provider_manifest(copied_package: Path, mutate) -> None:
+    manifest_path = copied_package / "native_sdk" / "provider_native_sdk_v1" / "provider_sources.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    mutate(manifest)
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
+
+def _run_provider_sdk_probe(tmp_path: Path, copied_package: Path) -> subprocess.CompletedProcess[str]:
+    probe_source = tmp_path / "probe"
+    probe_source.mkdir()
+    (probe_source / "CMakeLists.txt").write_text(
+        "\n".join(
+            [
+                "cmake_minimum_required(VERSION 3.20)",
+                "project(provider_manifest_probe LANGUAGES CXX)",
+                f'set(EPCSAFT_EIGEN_INCLUDE "{(copied_package / "native").as_posix()}")',
+                f'include("{(copied_package / "native_sdk" / "provider_native_sdk_v1" / "epcsaft_provider_sdk.cmake").as_posix()}")',
+                "epcsaft_provider_sdk_add_provider_native(provider_manifest_probe)",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return subprocess.run(
+        ["cmake", "-S", str(probe_source), "-B", str(tmp_path / "build")],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def _assert_provider_sdk_manifest_error(result: subprocess.CompletedProcess[str], message: str) -> None:
+    combined_output = " ".join((result.stdout + result.stderr).split())
+    assert result.returncode != 0
+    assert message in combined_output
 
 
 def test_package_extension_contract_docs_exist_and_share_status() -> None:
@@ -115,14 +163,7 @@ def test_runtime_capabilities_are_separable_by_future_package_owner() -> None:
     assert equilibrium_capabilities["requires"] == ["epcsaft", "cppad", "ipopt"]
     assert equilibrium_capabilities["public_routes"] == [
         "bubble_pressure",
-        "bubble_temperature",
         "dew_pressure",
-        "dew_temperature",
-        "electrolyte_lle",
-        "flash",
-        "lle",
-        "multiphase",
-        "reactive_speciation",
         "single_component_vle",
     ]
 
@@ -159,6 +200,156 @@ def test_provider_native_sdk_is_runtime_visible_without_extension_ownership() ->
         "epcsaft_equilibrium._native_core",
         "epcsaft_regression._native_core",
     ]
+
+
+def test_root_and_provider_package_builds_consume_canonical_provider_source_manifest() -> None:
+    root_cmake = (REPO_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+    package_cmake = (REPO_ROOT / "packages" / "epcsaft" / "CMakeLists.txt").read_text(encoding="utf-8")
+    helper = (
+        REPO_ROOT
+        / "packages"
+        / "epcsaft"
+        / "src"
+        / "epcsaft"
+        / "native_sdk"
+        / "provider_native_sdk_v1"
+        / "epcsaft_provider_sdk.cmake"
+    )
+    manifest = helper.with_name("provider_sources.json")
+
+    assert helper.is_file()
+    assert manifest.is_file()
+    for cmake_text in (root_cmake, package_cmake):
+        assert "epcsaft_provider_sdk.cmake" in cmake_text
+        assert "set(EPCSAFT_PROVIDER_NATIVE_SOURCES" not in cmake_text
+        assert "set(EPCSAFT_PROVIDER_NATIVE_INCLUDE_DIRS" not in cmake_text
+        assert "native/model/parameter_setup.cpp" not in cmake_text
+
+
+def test_provider_source_manifest_declares_only_existing_paths() -> None:
+    manifest_path = (
+        REPO_ROOT
+        / "packages"
+        / "epcsaft"
+        / "src"
+        / "epcsaft"
+        / "native_sdk"
+        / "provider_native_sdk_v1"
+        / "provider_sources.json"
+    )
+    package_root = manifest_path.parents[2]
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    role_checks = {
+        "sources": Path.is_file,
+        "include_dirs": Path.is_dir,
+    }
+
+    for key, role_check in role_checks.items():
+        entries = manifest[key]
+        assert len(entries) == len(set(entries))
+        for relative_path in entries:
+            assert relative_path
+            assert role_check(package_root / relative_path), relative_path
+
+
+def test_provider_source_manifest_mutation_drives_sdk_target_graph(tmp_path: Path) -> None:
+    copied_package = _copy_provider_package(tmp_path)
+
+    manifest_path = copied_package / "native_sdk" / "provider_native_sdk_v1" / "provider_sources.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    mutated_source = "native/manifest_mutation.cpp"
+    mutated_include_dir = "native/manifest_include_mutation"
+    (copied_package / mutated_source).write_text(
+        "int provider_manifest_mutation = 0;\n",
+        encoding="utf-8",
+    )
+    (copied_package / mutated_include_dir).mkdir()
+    manifest["sources"].append(mutated_source)
+    manifest["include_dirs"].append(mutated_include_dir)
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+
+    probe_source = tmp_path / "probe"
+    probe_source.mkdir()
+    (probe_source / "CMakeLists.txt").write_text(
+        "\n".join(
+            [
+                "cmake_minimum_required(VERSION 3.20)",
+                "project(provider_manifest_probe LANGUAGES CXX)",
+                f'set(EPCSAFT_EIGEN_INCLUDE "{(copied_package / "native").as_posix()}")',
+                f'include("{(copied_package / "native_sdk" / "provider_native_sdk_v1" / "epcsaft_provider_sdk.cmake").as_posix()}")',
+                "epcsaft_provider_sdk_add_provider_native(provider_manifest_probe)",
+                "get_target_property(provider_sources provider_manifest_probe SOURCES)",
+                "get_target_property(provider_include_dirs provider_manifest_probe INCLUDE_DIRECTORIES)",
+                f'list(FIND provider_sources "{(copied_package / mutated_source).as_posix()}" source_index)',
+                f'list(FIND provider_include_dirs "{(copied_package / mutated_include_dir).as_posix()}" include_dir_index)',
+                'if(source_index EQUAL -1 OR include_dir_index EQUAL -1)',
+                '    message(FATAL_ERROR "provider target did not consume the mutated manifest graph")',
+                "endif()",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    subprocess.run(
+        ["cmake", "-S", str(probe_source), "-B", str(tmp_path / "build")],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+
+@pytest.mark.parametrize(
+    ("manifest_key", "mutated_entry", "message"),
+    [
+        ("sources", "native/missing_source.cpp", "Provider native source manifest entry does not exist"),
+        ("include_dirs", "native/missing_include_root", "Provider native source manifest entry does not exist"),
+        ("sources", "", "Provider native source manifest path must be a nonempty package-relative path"),
+        ("include_dirs", "", "Provider native source manifest path must be a nonempty package-relative path"),
+        ("sources", "native/eos", "Provider native source manifest 'sources' entries must be existing files"),
+        ("include_dirs", "native/model/parameter_setup.cpp", "Provider native source manifest 'include_dirs' entries must be existing directories"),
+    ],
+)
+def test_provider_source_manifest_invalid_entries_break_sdk_loader(
+    tmp_path: Path,
+    manifest_key: str,
+    mutated_entry: str,
+    message: str,
+) -> None:
+    copied_package = _copy_provider_package(tmp_path)
+    _write_provider_manifest(
+        copied_package,
+        lambda manifest: manifest[manifest_key].append(mutated_entry),
+    )
+
+    result = _run_provider_sdk_probe(tmp_path, copied_package)
+
+    _assert_provider_sdk_manifest_error(result, message)
+
+
+@pytest.mark.parametrize(
+    ("manifest_key", "duplicate_entry", "message"),
+    [
+        ("sources", "native/model/parameter_setup.cpp", "Provider native source manifest 'sources' entries must be unique"),
+        ("include_dirs", "native/model", "Provider native source manifest 'include_dirs' entries must be unique"),
+    ],
+)
+def test_provider_source_manifest_duplicate_entries_break_sdk_loader(
+    tmp_path: Path,
+    manifest_key: str,
+    duplicate_entry: str,
+    message: str,
+) -> None:
+    copied_package = _copy_provider_package(tmp_path)
+    _write_provider_manifest(
+        copied_package,
+        lambda manifest: manifest[manifest_key].append(duplicate_entry),
+    )
+
+    result = _run_provider_sdk_probe(tmp_path, copied_package)
+
+    _assert_provider_sdk_manifest_error(result, message)
 
 
 def test_provider_owns_pure_neutral_parameter_derivative_native_symbol() -> None:

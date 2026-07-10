@@ -3,7 +3,14 @@
 from __future__ import annotations
 
 from ._native import native_ipopt_backend_info, provider_contract
-from .equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
+from .capability_evidence import (
+    DEVELOPMENT_COMPONENT_EVIDENCE,
+    production_capability_evidence,
+)
+from .equilibrium_activation import (
+    EQUILIBRIUM_ACTIVATION_MATRIX,
+    EQUILIBRIUM_SELECTOR_ROUTE_CONTRACTS,
+)
 from .phase_equilibrium_certification import (
     phase_equilibrium_certification_contracts,
     validate_phase_equilibrium_certification_contracts,
@@ -23,7 +30,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "backend": "cppad_phase_blocks",
         "supported": True,
         "classification": "production_supported",
-        "reason": "production selector exposes neutral bubble/dew pressure and temperature routes through exact Ipopt callbacks",
+        "reason": "production selector exposes neutral bubble/dew pressure routes through exact Ipopt callbacks and retained source-backed evidence",
         "tests": (
             "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
             "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
@@ -36,8 +43,8 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "derivative": "lagrangian_hessian",
         "backend": "cppad_phase_blocks",
         "supported": True,
-        "classification": "production_supported",
-        "reason": "production selector exposes neutral two-phase TP flash through activation-plan assembly and postsolve certification",
+        "classification": "component_evidence",
+        "reason": "neutral two-phase TP flash retains component-level solver evidence, but its workbook explicitly does not establish a literature benchmark or public admission",
         "tests": (
             "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
             "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
@@ -50,8 +57,8 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "derivative": "lagrangian_hessian",
         "backend": "cppad_phase_blocks",
         "supported": True,
-        "classification": "production_supported",
-        "reason": "production selector exposes neutral nonassociating LLE through the generic two-phase EOS NLP with exact Ipopt callbacks",
+        "classification": "internal_validation_evidence",
+        "reason": "neutral nonassociating LLE retains an internal exact-derivative formulation and sampled-candidate validation, but it has no global phase-set proof or public selector admission",
         "tests": (
             "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
             "packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py",
@@ -60,13 +67,11 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
     {
         "row_family": "equilibrium",
         "subsystem": "native_ipopt",
-        "quantity": "associating_neutral_lle_gross_2002_public_exact_hessian",
+        "quantity": "associating_neutral_lle_gross_2002_internal_exact_hessian",
         "derivative": "association_lagrangian_hessian",
         "backend": "cppad_implicit_association",
         "supported": True,
-        "classification": "production_supported",
-        "public_admission_state": "public_route_open",
-        "public_route": "lle",
+        "classification": "internal_validation_evidence",
         "selector_family": "neutral_lle",
         "source_configuration": "Gross2002 Figure8 methanol-cyclohexane",
         "component_pair": ("methanol", "cyclohexane"),
@@ -77,7 +82,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "data/reference/equilibrium_benchmarks/associating_lle/"
             "methanol_cyclohexane"
         ),
-        "reason": "issue #190 admits only the source-backed Gross/Sadowski 2002 methanol/cyclohexane neutral two-phase LLE proof from #145 through exact implicit-association Hessian evidence",
+        "reason": "the source-backed Gross/Sadowski 2002 methanol/cyclohexane case retains internal exact implicit-association Hessian evidence, but the sampled-candidate audit does not prove global phase-set completeness",
         "tests": (
             "scripts/validation/check_associating_gfpe_gate.py",
             "scripts/validation/check_associating_lle_gross_2002.py",
@@ -91,13 +96,11 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
     {
         "row_family": "equilibrium",
         "subsystem": "native_ipopt",
-        "quantity": "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian",
+        "quantity": "associating_neutral_lle_gross_2002_figure_10_internal_exact_hessian",
         "derivative": "association_lagrangian_hessian",
         "backend": "cppad_implicit_association",
         "supported": True,
-        "classification": "production_supported",
-        "public_admission_state": "public_route_open",
-        "public_route": "lle",
+        "classification": "internal_validation_evidence",
         "selector_family": "neutral_lle",
         "source_configuration": "Gross2002 Figure10 water-1-pentanol",
         "component_pair": ("water", "1-pentanol"),
@@ -105,7 +108,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "k_ij": 0.016,
         "phase_count": 2,
         "source_fixture": "analyses/paper_validation/2002_gross/figures/figure_10",
-        "reason": "Figure 10 full replication admits only the source-backed Gross/Sadowski 2002 water/1-pentanol lower LLE boundary through exact implicit-association Hessian evidence.",
+        "reason": "Figure 10 retains source-backed internal exact implicit-association Hessian evidence for the lower LLE boundary; it is not a global phase-set proof or public-route admission.",
         "tests": (
             "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
             "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
@@ -118,9 +121,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "derivative": "association_lagrangian_hessian",
         "backend": "cppad_implicit_association",
         "supported": True,
-        "classification": "production_supported",
-        "public_admission_state": "public_route_open",
-        "public_route": "bubble_pressure/dew_pressure",
+        "classification": "component_evidence",
         "selector_family": "bubble_dew_derived_routes",
         "source_configuration": "Gross2002 Figure10 water-1-pentanol",
         "component_pair": ("water", "1-pentanol"),
@@ -128,7 +129,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "k_ij": 0.016,
         "phase_count": 2,
         "source_fixture": "analyses/paper_validation/2002_gross/figures/figure_10",
-        "reason": "Figure 10 full replication admits only the source-backed Gross/Sadowski 2002 water/1-pentanol upper VLLE/VLE boundary through pressure-route exact implicit-association Hessian evidence.",
+        "reason": "Figure 10 retains source-backed upper VLLE/VLE component evidence, but it is not an activation proof for the public pressure routes.",
         "tests": (
             "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
             "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
@@ -136,15 +137,15 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
     },
     {
         "row_family": "equilibrium",
-        "subsystem": "native_ipopt",
+        "subsystem": "internal_multiphase_diagnostic",
         "quantity": "neutral_multiphase_nonassoc",
         "derivative": "lagrangian_hessian",
         "backend": "cppad_explicit_density",
         "supported": True,
-        "classification": "production_supported",
-        "reason": "production selector exposes explicit neutral nonassociating multiphase sets through the strict reduced-fugacity residual route",
+        "classification": "internal_diagnostic_evidence",
+        "selector_family": "neutral_multiphase_nonassoc",
+        "reason": "retained internal reduced-fugacity diagnostics do not establish native-selector ownership or public admission",
         "tests": (
-            "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
             "packages/epcsaft-equilibrium/tests/native/diagnostics/test_internal_multiphase_activation_contracts.py",
         ),
     },
@@ -153,10 +154,10 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "subsystem": "native_ipopt",
         "quantity": "single_component_vle",
         "derivative": "lagrangian_hessian",
-        "backend": "cppad_phase_blocks_with_cppad_implicit_association_for_pure_2b_associating_inputs",
+        "backend": "cppad_phase_blocks",
         "supported": True,
         "classification": "production_supported",
-        "reason": "production selector exposes single-component VLE saturation through a fixed-temperature pressure route with exact Ipopt callbacks, including the narrow pure neutral 2B associating admission used for Gross/Sadowski 2002 Figure 1",
+        "reason": "production selector exposes nonassociating methane, ethane, and propane saturation through a fixed-temperature pressure route with exact Ipopt callbacks and retained NIST joins",
         "tests": (
             "packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py",
             "packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py",
@@ -166,21 +167,17 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
     {
         "row_family": "equilibrium",
         "subsystem": "native_ipopt",
-        "quantity": "reactive_speciation_standalone_ce_public_proof",
+        "quantity": "reactive_speciation_standalone_ce_validation",
         "derivative": "standalone_ce_lagrangian_hessian_and_final_proof_diagnostics",
         "backend": "analytic_ce_objective_with_cppad_eos_activity_extensions",
         "supported": True,
-        "classification": "production_supported",
-        "public_admission_state": "public_route_open",
-        "public_route": "reactive_speciation",
+        "classification": "internal_validation_evidence",
         "selector_family": "reactive_speciation",
         "reason": (
-            "standalone homogeneous reactive_speciation is admitted through the strict standalone CE "
-            "checker, exact final proof diagnostics, retained MEA evidence, and EOS activity diagnostic "
-            "matrix while CPE and reactive phase routes remain closed"
+            "standalone homogeneous CE remains an internal validation target; the live MEA continuation "
+            "fails final balance and stationarity proof and therefore authorizes no public route"
         ),
         "tests": (
-            "packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py",
             "packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_eos_activity.py",
             "tests/native/contracts/test_standalone_ce_gate.py",
             "tests/native/contracts/test_ce_robustness_followup_gate.py",
@@ -196,7 +193,6 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "backend": "cppad_born_ssm_ds",
         "supported": True,
         "classification": "prerequisite_evidence",
-        "public_admission_state": "prerequisite_evidence_only",
         "selector_family": "electrolyte_lle",
         "source_configuration": "Khudaida 2026 electrolyte LLE readiness",
         "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
@@ -209,7 +205,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "reason": (
             "issue #300 records the electrolyte HELD2 prerequisite gate: source-backed "
             "Khudaida inputs, exact charge-neutral NaCl amount lifting, CppAD Born "
-            "SSM/DS derivative receipts, and downstream public-admission prerequisites."
+            "SSM/DS derivative receipts retained for selector-integration repair."
         ),
         "tests": (
             "scripts/validation/check_electrolyte_held2_readiness.py",
@@ -227,7 +223,6 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "backend": "native_counterion_pair_phase_discovery",
         "supported": True,
         "classification": "phase_discovery_evidence",
-        "public_admission_state": "prerequisite_evidence_only",
         "selector_family": "electrolyte_lle",
         "source_configuration": "Khudaida 2026 NaCl plus Ascani 2022 mixed-electrolyte counterion fixtures",
         "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
@@ -262,7 +257,6 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "backend": "native_electrolyte_stage_iii_refinement",
         "supported": True,
         "classification": "stage_iii_refinement_evidence",
-        "public_admission_state": "prerequisite_evidence_only",
         "selector_family": "electrolyte_lle",
         "source_configuration": "Khudaida 2026 NaCl local Stage III refinement",
         "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
@@ -278,8 +272,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "the checker consumes #269/#300/#302/#306, calls native "
             "`_native_electrolyte_stage_iii_refinement`, retains exact reduced "
             "counterion-pair residual Jacobian/Hessian receipts, records strict "
-            "Ipopt solver diagnostics, and feeds postsolve certification plus "
-            "public electrolyte route admission."
+            "Ipopt solver diagnostics and feeds internal postsolve validation."
         ),
         "tests": (
             "scripts/validation/check_electrolyte_stage_iii_refinement.py",
@@ -297,7 +290,6 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "backend": "native_electrolyte_postsolve_certification",
         "supported": True,
         "classification": "postsolve_certification_evidence",
-        "public_admission_state": "prerequisite_evidence_only",
         "selector_family": "electrolyte_lle",
         "source_configuration": "Khudaida 2026 NaCl local postsolve certification",
         "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
@@ -306,7 +298,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "water_ethanol_isobutanol_nacl"
         ),
         "reduced_basis": "independent_counterion_pair_matrix",
-        "stage_status": "postsolve_certified_public_admission_pending",
+        "stage_status": "postsolve_component_diagnostic_complete_selector_integration_pending",
         "route_hessian_mode": "limited_memory_charged_born_route",
         "reason": (
             "issue #313 records the electrolyte postsolve certification gate: "
@@ -314,8 +306,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "`_native_electrolyte_postsolve_certification`, retains explicit-ion "
             "reconstruction, per-phase and total charge residuals, neutral and "
             "mean-ionic transfer residuals, pressure consistency, phase amount, "
-            "composition normalization, and domain-margin diagnostics consumed by "
-            "#314 public electrolyte route admission."
+            "composition normalization, and domain-margin diagnostics retained for repair."
         ),
         "tests": (
             "scripts/validation/check_electrolyte_postsolve_certification.py",
@@ -327,14 +318,12 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
     },
     {
         "row_family": "equilibrium",
-        "subsystem": "electrolyte_public_admission",
-        "quantity": "electrolyte_lle_khudaida_public_admission",
+        "subsystem": "electrolyte_validation_repair",
+        "quantity": "electrolyte_lle_khudaida_repair_evidence",
         "derivative": "exact_reduced_counterion_pair_jacobian_hessian_receipts",
         "backend": "native_electrolyte_postsolve_certification",
         "supported": True,
-        "classification": "production_supported",
-        "public_admission_state": "public_route_open",
-        "public_route": "electrolyte_lle",
+        "classification": "internal_validation_evidence",
         "selector_family": "electrolyte_lle",
         "source_configuration": "Khudaida 2026 NaCl mixed-solvent electrolyte LLE",
         "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
@@ -345,20 +334,15 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         ),
         "parameter_bundle": "analyses/paper_validation/2026_khudaida/parameters",
         "reduced_basis": "independent_counterion_pair_matrix",
-        "stage_status": "public_admission_complete",
-        "phase_discovery_status": "held2_public_route_phase_discovery_and_scenario_validation_admitted",
+        "stage_status": "retained_diagnostic_evidence",
+        "phase_discovery_status": "held2_component_diagnostics_retained_selector_integration_required",
         "route_hessian_mode": "limited_memory_charged_born_route_with_exact_reduced_derivative_receipts",
         "reason": (
-            "issue #350 admits only the source-backed Khudaida 2026 NaCl mixed-solvent "
-            "electrolyte LLE route after #269/#300/#302/#306/#312/#313/#314 and #344-#349 "
-            "evidence proves source fixture parsing, reduced charge-neutral variables, "
-            "continuous charge-neutral TPD, HELD2 Stage I/II discovery, Stage III replay "
-            "consumption, postsolve phase-set certification, and the retained scenario ladder."
+            "source-backed Khudaida component diagnostics are retained for repair, but direct postsolve "
+            "dispatch does not establish native-selector ownership or public electrolyte-LLE admission"
         ),
         "tests": (
             "scripts/validation/check_electrolyte_public_admission.py",
-            "scripts/validation/check_electrolyte_held2_public_route_scenarios.py",
-            "tests/native/contracts/test_electrolyte_public_admission.py",
             "tests/native/contracts/test_electrolyte_postsolve_certification.py",
             "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
             "tests/native/contracts/test_generalized_equilibrium_registry.py",
@@ -376,30 +360,64 @@ def _capability_value(value: object) -> object:
 
 
 def public_routes_by_family() -> dict[str, tuple[str, ...]]:
-    routes_by_family: dict[str, tuple[str, ...]] = {}
-    for row in EQUILIBRIUM_ACTIVATION_MATRIX:
-        family_key = str(row["key"])
-        routes = tuple(str(route) for route in row.get("public_routes", ()))
-        if not bool(row["production_exposed"]):
-            if routes:
-                raise RuntimeError(f"Declared-not-exposed equilibrium family '{family_key}' publishes routes.")
+    grouped: dict[str, list[str]] = {}
+    proofs_by_family: dict[str, list[str]] = {}
+    selector_families: set[str] = set()
+    for contract in EQUILIBRIUM_SELECTOR_ROUTE_CONTRACTS:
+        family = str(contract["selector_family"])
+        selector_families.add(family)
+        proof_routes = [str(route) for route in contract.get("proof_routes", ())]
+        if not bool(contract["production_exposed"]):
+            if proof_routes:
+                raise RuntimeError(
+                    f"Closed equilibrium selector route '{contract['public_route']}' publishes proofs."
+                )
             continue
-        if not routes:
-            raise RuntimeError(f"Production equilibrium family '{family_key}' publishes no public routes.")
-        routes_by_family[family_key] = routes
-    return routes_by_family
+        grouped.setdefault(family, []).append(str(contract["public_route"]))
+        proofs_by_family.setdefault(family, []).extend(proof_routes)
+
+    activation_by_family = {
+        str(row["key"]): row for row in EQUILIBRIUM_ACTIVATION_MATRIX
+    }
+    unknown_families = selector_families - set(activation_by_family)
+    if unknown_families:
+        raise RuntimeError(
+            "Selector routes reference unknown activation families: "
+            + ", ".join(sorted(unknown_families))
+            + "."
+        )
+    for family in selector_families:
+        activation = activation_by_family[family]
+        public_routes = grouped.get(family, [])
+        if bool(activation["production_exposed"]) != bool(public_routes):
+            raise RuntimeError(
+                f"Selector route exposure does not match activation family '{family}'."
+            )
+        if list(activation.get("public_routes", ())) != public_routes:
+            raise RuntimeError(
+                f"Selector public routes do not match activation family '{family}'."
+            )
+        if list(activation.get("proof_routes", ())) != proofs_by_family.get(family, []):
+            raise RuntimeError(
+                f"Selector proof routes do not match activation family '{family}'."
+            )
+    return {family: tuple(routes) for family, routes in grouped.items()}
 
 
 def public_route_family_map() -> dict[str, str]:
     route_to_family: dict[str, str] = {}
-    for family_key, routes in public_routes_by_family().items():
-        for route in routes:
-            if route in route_to_family:
-                raise RuntimeError(
-                    f"Public equilibrium route '{route}' is admitted by both "
-                    f"'{route_to_family[route]}' and '{family_key}'."
-                )
-            route_to_family[route] = family_key
+    public_routes_by_family()
+    for contract in EQUILIBRIUM_SELECTOR_ROUTE_CONTRACTS:
+        if not bool(contract["production_exposed"]):
+            continue
+        route = str(contract["public_route"])
+        family = str(contract["selector_family"])
+        if route in route_to_family:
+            raise RuntimeError(
+                f"Public equilibrium route '{route}' is admitted by both "
+                f"'{route_to_family[route]}' and '{family}'."
+            )
+        route_to_family[route] = family
     return route_to_family
 
 
@@ -409,17 +427,23 @@ def registered_public_routes() -> list[str]:
 
 def _activation_capabilities(*, ipopt_route_available: bool) -> dict[str, object]:
     rows = [_capability_value(row) for row in EQUILIBRIUM_ACTIVATION_MATRIX]
+    selector_route_contracts = [
+        _capability_value(row) for row in EQUILIBRIUM_SELECTOR_ROUTE_CONTRACTS
+    ]
+    evidence = production_capability_evidence(EQUILIBRIUM_ACTIVATION_MATRIX)
     production_families = [str(row["key"]) for row in rows if bool(row["production_exposed"])]
     declared_not_exposed = [str(row["key"]) for row in rows if str(row["exposure_status"]) == "declared_not_exposed"]
     routes_by_family = {family: list(routes) for family, routes in public_routes_by_family().items()}
     return {
         "source": "native_cpp",
         "rows": rows,
+        "selector_route_contracts": selector_route_contracts,
         "production_families": production_families,
         "declared_not_exposed_families": declared_not_exposed,
         "public_routes": registered_public_routes(),
         "public_routes_by_family": routes_by_family,
         "public_route_family_map": dict(sorted(public_route_family_map().items())),
+        "evidence_complete_families": list(evidence),
         "ipopt_available": ipopt_route_available,
     }
 
@@ -432,10 +456,25 @@ def capabilities() -> dict[str, object]:
     ipopt = native_ipopt_backend_info()
     ipopt_route_available = bool(ipopt.get("available", False))
     activation = _activation_capabilities(ipopt_route_available=ipopt_route_available)
-    public_routes_by_family = dict(activation["public_routes_by_family"])
-    reactive_activation = next(
-        row for row in activation["rows"] if row["key"] == "reactive_speciation"
-    )
+    production_evidence = {
+        family: _capability_value(record)
+        for family, record in production_capability_evidence(
+            EQUILIBRIUM_ACTIVATION_MATRIX
+        ).items()
+    }
+    family_capabilities = {
+        family: {
+            "available": bool(activation["ipopt_available"]),
+            "production": True,
+            "entrypoint": record["public_entrypoint"],
+            "public_routes": record["public_routes"],
+            "selector_core": True,
+            "input_scope": record["input_scope"],
+            "requires": ["cppad", "ipopt"],
+            "evidence": record,
+        }
+        for family, record in production_evidence.items()
+    }
     route_derivative_rows = [_capability_value(row) for row in EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE]
     route_derivative_evidence = {
         "source": "epcsaft_equilibrium",
@@ -492,109 +531,15 @@ def capabilities() -> dict[str, object]:
         },
         "route_derivative_evidence": route_derivative_evidence,
         "phase_equilibrium_certification": phase_equilibrium_certification,
-        "bubble_dew_derived_routes": {
-            "available": bool(activation["ipopt_available"]),
-            "production": True,
-            "entrypoint": "Equilibrium(mixture, route=..., ...).solve()",
-            "public_routes": public_routes_by_family["bubble_dew_derived_routes"],
-            "selector_core": True,
-            "input_scope": "neutral non-reactive non-electrolyte non-associating mixtures",
-            "requires": ["cppad", "ipopt"],
-        },
-        "neutral_tp_flash": {
-            "available": bool(activation["ipopt_available"]),
-            "production": True,
-            "entrypoint": "Equilibrium(mixture, route='flash', T=..., P=..., z=...).solve()",
-            "public_routes": public_routes_by_family["neutral_tp_flash"],
-            "selector_core": True,
-            "input_scope": "neutral non-reactive non-electrolyte non-associating two-phase mixtures",
-            "requires": ["cppad", "ipopt"],
-        },
-        "neutral_lle": {
-            "available": bool(activation["ipopt_available"]),
-            "production": True,
-            "entrypoint": "Equilibrium(mixture, route='lle', T=..., P=..., z=...).solve()",
-            "public_routes": public_routes_by_family["neutral_lle"],
-            "selector_core": True,
-            "input_scope": (
-                "neutral non-reactive non-electrolyte liquid/liquid mixtures: non-associating mixtures plus "
-                "the source-backed Gross/Sadowski 2002 methanol/cyclohexane and water/1-pentanol associating proof fixtures"
-            ),
-            "requires": ["cppad", "ipopt"],
-        },
-        "neutral_multiphase_nonassoc": {
-            "available": bool(activation["ipopt_available"]),
-            "production": True,
-            "entrypoint": "Equilibrium(mixture, route='multiphase', T=..., P=..., z=..., phase_kinds=[...]).solve()",
-            "public_routes": public_routes_by_family["neutral_multiphase_nonassoc"],
-            "selector_core": True,
-            "input_scope": "neutral non-reactive non-electrolyte non-associating explicit phase-kind sets",
-            "requires": ["cppad", "ipopt"],
-        },
-        "single_component_vle": {
-            "available": bool(activation["ipopt_available"]),
-            "production": True,
-            "entrypoint": "Equilibrium(mixture, route='single_component_vle', T=...).solve()",
-            "public_routes": public_routes_by_family["single_component_vle"],
-            "selector_core": True,
-            "input_scope": "single neutral non-reactive non-electrolyte component, including pure 2B associating components for the retained Gross/Sadowski 2002 Figure 1 saturation proof",
-            "requires": ["cppad", "ipopt"],
-        },
-        "electrolyte_lle": {
-            "available": bool(activation["ipopt_available"]),
-            "production": True,
-            "entrypoint": "Equilibrium(mixture, route='electrolyte_lle', T=..., P=..., z=...).solve()",
-            "public_routes": public_routes_by_family["electrolyte_lle"],
-            "selector_core": False,
-            "input_scope": (
-                "source-backed Khudaida 2026 NaCl mixed-solvent LLE for explicit-ion "
-                "H2O/Ethanol/Butanol/Na+/Cl- feeds built from the retained parameter bundle"
-            ),
-            "phase_discovery_status": "held2_public_route_phase_discovery_and_scenario_validation_admitted",
-            "validation_scope": (
-                "retained HELD2 Stage I/II public-route discovery, Stage III replay consumption, "
-                "postsolve certification, and stable/unstable/boundary/phase-label/neutral-limit/"
-                "common-ion/mixed-salt scenario ladder for the admitted electrolyte_lle fixture only"
-            ),
-            "requires": ["cppad", "ipopt"],
-            "unsupported_surfaces": [
-                "reactive_electrolyte_lle",
-                "reactive_lle",
-                "reactive_speciation",
-                "ce",
-                "cpe",
-                "regression",
+        "capability_evidence": {
+            "source": "epcsaft_equilibrium.capability_evidence",
+            "complete_families": list(production_evidence),
+            "production_records": production_evidence,
+            "development_component_evidence": [
+                _capability_value(record) for record in DEVELOPMENT_COMPONENT_EVIDENCE
             ],
         },
-        "standalone_reactive_speciation": {
-            "available": bool(activation["ipopt_available"]),
-            "production": True,
-            "entrypoint": "reactive_speciation(species=..., reactions=..., feed_amounts=..., equilibrium_constants=...)",
-            "route": "reactive_speciation",
-            "native_binding": "_native_chemical_equilibrium_nlp_activation",
-            "capability_scope": "standalone_ce_only",
-            "phase_scope": "homogeneous",
-            "coupling_scope": "chemical_equilibrium_only",
-            "public_routes": public_routes_by_family["reactive_speciation"],
-            "solver_strategy": reactive_activation["solver_strategy"],
-            "initialization_strategy": reactive_activation["initialization_strategy"],
-            "continuation_strategy": reactive_activation["continuation_strategy"],
-            "final_proof_policy": reactive_activation["final_proof_policy"],
-            "closed_surfaces": ["reactive_lle", "reactive_electrolyte_lle", "cpe"],
-            "activation_gate": "issue_0330_complete",
-            "validation_evidence": "scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete",
-            "requires": ["cppad", "ipopt"],
-            "result_fields": [
-                "species_amounts",
-                "activities",
-                "reduced_chemical_potentials",
-                "reaction_extents",
-                "balances",
-                "affinities",
-                "standard_state_metadata",
-                "diagnostics",
-            ],
-        },
+        **family_capabilities,
         "problem_objects": {
             "available": True,
             "backend": "constructor_configured_frontend",

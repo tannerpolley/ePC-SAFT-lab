@@ -4,7 +4,7 @@ source_document: "docs/superpowers/milestones/M4-equilibrium/generalized-fluid-p
 policy:
   label_policy: "family_label values are planning labels only, not runtime keys or public route strings."
   generalized_status_policy: "Generalized family rows stay planned_not_public until full HELD-stage phase discovery, exact derivatives, postsolve certification, and public admission are proven for the named scope."
-  current_public_route_policy: "Existing public utility routes remain implemented and tested. Source-backed public admission rows are narrow production exposures only for their retained fixture scope."
+  current_public_route_policy: "Only bubble/dew pressure and scoped nonassociating hydrocarbon single-component VLE are public production routes; neutral TP flash and neutral LLE are internal, and retained evidence for closed families is diagnostic only."
   deterministic_screening_policy: "Current deterministic TPD/candidate screening is seed and certification support, not full HELD."
   domain_safety_policy: "All generalized routes require route-owned bounds, a smooth VariableTransform wrapper, and Ipopt internal barrier handling of explicit bounds and constraints."
   custom_barrier_policy: "Production thermodynamic objectives must not include permanent custom barrier terms."
@@ -20,10 +20,7 @@ excluded_current_runtime_route_keys:
 activation_status_vocabulary:
   planned_not_public: "Planning family with no generalized production exposure."
   implemented_utility_not_generalized: "Existing public utility behavior may exist, but does not satisfy generalized admission gates."
-  source_backed_associating_lle_public_admitted: "Source-backed associating LLE public admission for the retained methanol/cyclohexane fixture only."
-  representative_public_admitted_blocked_by_khudaida_model_reproduction: "Representative source-backed electrolyte LLE public admission is retained for the explicit-ion Khudaida fixture, but full Khudaida model reproduction and broader HELD2 flash validation remain blocked by issue #320."
-  standalone_ce_public_admitted: "Standalone homogeneous reactive_speciation admission after the strict standalone CE checker passes; reactive phase and CPE surfaces remain closed."
-  held2_public_route_phase_discovery_admitted_blocked_by_perdomo_figiel_validation: "Full HELD2-style public-route phase-discovery evidence is admitted for the retained electrolyte_lle scope after issue #350. Perdomo/Figiel HELD2 validation, generic electrolyte families, fitted-model regression, CE/CPE, reactive, and release claims remain closed until their own gates pass."
+  active_validation_not_public: "Internal validation evidence exists, but selector ownership or the required live proof is incomplete and no public route is admitted."
   diagnostic_only: "Internal helper or diagnostic layer only."
   source_data_needed: "A source-backed target exists but local executable fixture data are missing."
 
@@ -56,24 +53,24 @@ generalized_production_gates:
 family_rows:
   - family_label: "PE-Neutral TP Flash"
     family_kind: phase_equilibrium
-    activation_status: planned_not_public
+    activation_status: active_validation_not_public
     production_exposed: false
-    existing_public_utility_routes: [flash, lle]
-    scope: "Neutral, nonelectrolyte, nonreactive TP flash plus neutral VLE/LLE validation ladder."
+    existing_public_utility_routes: []
+    scope: "Internal neutral, nonelectrolyte, nonreactive TP flash and LLE validation ladder; sampled-candidate evidence does not admit a public route."
     primary_problem: "TP flash at fixed T, P, and feed composition."
     knowns: [T, P, feed_composition]
     physical_variables: [phase_species_amounts, phase_volumes]
     objective_family: pressure_transformed_helmholtz
     hard_constraints: [material_balance, phase_pressure_consistency, chemical_potential_equality]
     derivative_contract: exact_gradient_jacobian_hessian_required_before_generalized_exposure
-    phase_discovery_status: continuous_tpd_stage_i_stage_ii_dual_loop_replay_verified_current_fixture
+    phase_discovery_status: sampled_candidate_stage_ii_component_diagnostic_not_global_held
     phase_discovery_gate_status:
       deterministic_screening: implemented_seed_and_certification_support_not_full_held
       continuous_tpd_minimization: implemented_neutral_coordinate_search_convergence_required
       held_stage_i_stability: implemented_neutral_multi_start_convergence_required
-      held_stage_ii_candidate_bound_audit: current_neutral_candidate_bound_audit_closed
-      held_stage_ii_dual_phase_discovery: current_neutral_dual_loop_replay_verified_current_fixture
-      held_stage_iii_ipopt_refinement: current_route_refinement_reports_accepted_seed_and_declines_replay_when_replay_seed_misses_postsolve
+      held_stage_ii_candidate_bound_audit: sampled_candidate_bound_audit_only_not_global
+      held_stage_ii_dual_phase_discovery: sampled_candidate_dual_loop_component_evidence_not_global_held
+      held_stage_iii_ipopt_refinement: internal_refinement_evidence_does_not_admit_public_route
     required_gates:
       - infrastructure_gate
       - continuous_tpd_minimization
@@ -81,6 +78,12 @@ family_rows:
       - held_stage_ii_dual_phase_discovery
       - held_stage_iii_ipopt_refinement
       - postsolve_phase_set_certification
+    diagnostic_evidence:
+      - evidence_label: "Matsuda neutral LLE internal sampled-candidate diagnostic"
+        evidence_tier: T1
+        command: "uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --json --require-complete --require-fresh-native"
+        scope: "Source-backed Matsuda/NIST neutral nonassociating LLE fixture with internal sampled-candidate and exact-derivative evidence."
+        result_requirement: "Source and tolerance margins pass, native identity is fresh, and the payload explicitly reports closed public admission and no global HELD proof."
     reference_cases:
       - case_label: "Hydrocarbon workbook derived TP flash"
         evidence_tier: T1
@@ -106,13 +109,14 @@ family_rows:
           - source_backed_binodal_branch_rows
           - source_backed_pure_parameters
           - source_fitted_binary_interaction
-          - current_lle_route_acceptance
+          - internal_sampled_candidate_diagnostic
           - material_balance
           - pressure_consistency
           - chemical_potential_equality
-          - held_stage_ii_replay
-          - held_stage_iii_accepted_seed_provenance
-          - shared_phase_equilibrium_certification
+          - sampled_candidate_stage_ii_not_global_held
+          - internal_stage_iii_refinement_evidence
+          - public_route_admission_closed
+          - internal_phase_equilibrium_evidence
           - source_tolerance_margins
           - exact_hessian
       - case_label: "Pereira 2012 System III"
@@ -136,34 +140,34 @@ family_rows:
 
   - family_label: "PE-Associating TP Flash"
     family_kind: phase_equilibrium
-    activation_status: source_backed_associating_lle_public_admitted
-    production_exposed: true
-    existing_public_utility_routes: [lle]
-    scope: "Neutral associating TP flash, VLE, and LLE; public exposure is currently limited to the retained methanol/cyclohexane LLE fixture."
+    activation_status: active_validation_not_public
+    production_exposed: false
+    existing_public_utility_routes: []
+    scope: "Internal neutral associating TP flash, VLE, and LLE validation; the retained methanol/cyclohexane fixture is component evidence and admits no public LLE route."
     primary_problem: "Associating TP flash with PC-SAFT association mass-action consistency."
     knowns: [T, P, feed_composition]
     physical_variables: [phase_species_amounts, phase_volumes, association_state]
     objective_family: pressure_transformed_helmholtz_association
     hard_constraints: [material_balance, phase_pressure_consistency, chemical_potential_equality, association_mass_action]
     derivative_contract: exact_association_gradient_jacobian_hessian_required_before_exposure
-    phase_discovery_status: planned_after_neutral_held_and_association_derivatives
+    phase_discovery_status: sampled_candidate_component_diagnostics_no_global_held
     required_gates:
       - infrastructure_gate
       - exact_association_derivatives
       - association_mass_action_certification
       - neutral_phase_discovery_reuse
       - postsolve_phase_set_certification
-    admission_evidence:
+    diagnostic_evidence:
       - evidence_label: "Gross/Sadowski 2002 methanol/cyclohexane internal exact-Hessian gate"
         evidence_tier: T2
         command: "uv run python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete"
         scope: "Source-backed one-associating-component neutral LLE fixture for issue #145 using Gross/Sadowski 2002 Figure 8, Table 1, Table 2, retained parameters, exact association Hessian diagnostics, internal source-pair certification, and closed public associating route admission."
-        result_requirement: "Figure 8 LLE rows retained; methanol 2B association and cyclohexane neutral parameters retained; k_ij = 0.051 retained; exact association site first/second sensitivities and objective/pressure/mass-action/Lagrangian Hessians verified; public associating LLE admission remains closed until issue #190."
-      - evidence_label: "Associating public GFPE admission gate"
+        result_requirement: "Figure 8 LLE rows retained; methanol 2B association and cyclohexane neutral parameters retained; k_ij = 0.051 retained; exact association site first/second sensitivities and objective/pressure/mass-action/Lagrangian Hessians verified; public LLE admission remains closed until a separate global HELD proof and re-admission change."
+      - evidence_label: "Gross association internal evidence gate"
         evidence_tier: T2
-        command: "uv run python scripts/validation/check_associating_gfpe_gate.py --json --require-source-data --require-public-admission --require-exact-association-hessian --require-complete"
-        scope: "Public source-backed associating LLE admission evidence for `Equilibrium(..., route='lle')` using the retained methanol/cyclohexane Figure 8 fixture."
-        result_requirement: "Checker returns complete with no blockers; public route is `lle`; selector route is `neutral_lle`; exact association Hessian evidence is retained; reactive, TP-flash, and generalized associating phase-set surfaces remain outside this admission."
+        command: "uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native"
+        scope: "Source-backed internal associating LLE component evidence for the retained methanol/cyclohexane Figure 8 fixture and Figure 10 cross-association stress case."
+        result_requirement: "Checker returns complete with no blockers; exact association Hessian and fresh-native identity evidence are retained; public `lle`, reactive, TP-flash, and generalized associating phase-set surfaces remain closed."
     reference_cases:
       - case_label: "Gross/Sadowski 2002 methanol/cyclohexane"
         evidence_tier: T2
@@ -172,16 +176,16 @@ family_rows:
         route: associating_lle_internal_proof
         fixture_status: available
         proof_status: internal_exact_hessian_source_pair_certified
-        scope: "Source-backed methanol/cyclohexane Figure 8 liquid-liquid branch fixture for one-associating-component public proof."
+        scope: "Source-backed methanol/cyclohexane Figure 8 liquid-liquid branch fixture for one-associating-component internal validation."
         acceptance_checks:
           - source_digitized_figure_8_lle_rows
           - source_backed_parameters
           - source_backed_binary_interaction
-          - public_associating_route_admitted
+          - public_route_admission_closed
+          - sampled_candidate_stage_ii_not_global_held
           - association_mass_action
           - exact_hessian
-          - phase_equilibrium_certification
-          - shared_phase_equilibrium_certification
+          - internal_phase_equilibrium_evidence
           - source_tolerance_margins
       - case_label: "Water/1-pentanol associating follow-on"
         evidence_tier: T0
@@ -197,20 +201,20 @@ family_rows:
 
   - family_label: "PE-Electrolyte LLE/TP Flash"
     family_kind: phase_equilibrium
-    activation_status: held2_public_route_phase_discovery_admitted_blocked_by_perdomo_figiel_validation
-    production_exposed: true
-    existing_public_utility_routes: [electrolyte_lle]
-    scope: "Strong-electrolyte LLE and TP flash with charge-neutral reduced variables."
+    activation_status: active_validation_not_public
+    production_exposed: false
+    existing_public_utility_routes: []
+    scope: "Internal strong-electrolyte LLE diagnostics with charge-neutral reduced variables; selector integration and source reproduction remain incomplete."
     primary_problem: "Electrolyte LLE/TP flash with electrochemical transfer equilibrium."
     knowns: [T, P, feed_composition]
     physical_variables: [reduced_charge_neutral_species_amounts, neutral_species_amounts, phase_volumes]
     objective_family: pressure_transformed_helmholtz_electrolyte
     hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, electrochemical_potential_equality]
     derivative_contract: born_ssm_ds_exact_hessian_required_before_electrolyte_validation
-    phase_discovery_status: held2_public_route_phase_discovery_and_scenario_validation_admitted_perdomo_figiel_validation_blocked_by_320
+    phase_discovery_status: retained_component_diagnostics_selector_integration_and_perdomo_figiel_validation_pending
     phase_discovery_contract:
       completed_issue: 350
-      scope: "Full HELD2-style public-route phase discovery is admitted for the retained electrolyte_lle scope through #344-#350: doctrine, continuous TPD, Stage I, Stage II, public route orchestration, scenario validation, and registry/capability admission."
+      scope: "Retained HELD2 component diagnostics through #344-#350 are internal repair evidence; they do not prove native-selector ownership or source reproduction."
       required_payload_groups:
         - prerequisite_gate_receipts_269_300_302
         - charged_species_ordering_and_charges
@@ -222,10 +226,7 @@ family_rows:
         - stage_ii_dual_loop_bound_history_and_replay
         - stage_iii_reduced_variable_refinement
         - postsolve_explicit_ion_phase_set_certification
-        - public_route_stage_i_to_postsolve_orchestration
         - shared_phase_equilibrium_certification
-        - seven_scenario_public_route_validation_ladder
-        - stage_statuses_with_public_admission
       required_matrix_tests:
         - nacl_single_salt_rank_one
         - na_k_cl_common_anion_rank_two
@@ -235,7 +236,7 @@ family_rows:
         - reject_missing_multi_ion_source_fixture
         - reject_raw_single_ion_transfer_acceptance
         - reject_incomplete_prerequisite_gates
-        - reject_premature_stage_iii_postsolve_or_public_admission_completion
+        - reject_premature_stage_iii_or_postsolve_completion
     required_gates:
       - infrastructure_gate
       - born_ssm_ds_exact_hessian
@@ -249,10 +250,7 @@ family_rows:
       - held2_stage_discovery
       - charge_and_electrochemical_certification
       - electrolyte_gfpe_closed_admission_source_gate
-      - electrolyte_public_route_admission
-      - held2_public_route_scenario_validation
-      - held2_public_route_capability_admission
-    admission_evidence:
+    diagnostic_evidence:
       - evidence_label: "Khudaida electrolyte GFPE closed-admission gate"
         evidence_tier: T1
         command: "uv run --no-sync python scripts/validation/check_electrolyte_gfpe_gate.py --json --require-source-data --require-parameter-bundle --require-native-diagnostics --require-complete"
@@ -283,21 +281,6 @@ family_rows:
         command: "uv run --no-sync python scripts/validation/check_electrolyte_postsolve_certification.py --json --require-stage-iii --require-postsolve-certification --require-complete"
         scope: "Postsolve electrolyte phase-set certification evidence: consumes #312, calls native `_native_electrolyte_postsolve_certification`, and retains explicit-ion reconstruction, per-phase and total charge residuals, neutral and mean-ionic transfer residuals, pressure consistency, phase amount, composition normalization, and domain-margin diagnostics."
         result_requirement: "Checker returns complete with no blockers; explicit-ion feed reconstruction <= 1.0e-4; phase and total charge residuals <= 1.0e-8; neutral and mean-ionic transfer residuals <= 1.0e-4; pressure consistency <= 1.0e-4; phase distance exceeds 1.0e-8."
-      - evidence_label: "Electrolyte public route admission gate"
-        evidence_tier: T1
-        command: "uv run --no-sync python scripts/validation/check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete"
-        scope: "Public source-backed electrolyte LLE admission evidence after #348: calls `Equilibrium(..., route='electrolyte_lle')`, requires HELD2 Stage I/II discovery provenance, consumes the Stage II replay in Stage III, and exposes only the certified Khudaida 2026 H2O/Ethanol/Butanol/Na+/Cl- pre-association electrolyte LLE scope."
-        result_requirement: "Checker returns complete with no blockers; Stage II status is `dual_loop_verified`; Stage III consumes the Stage II replay payload; public route `electrolyte_lle` maps to selector family `electrolyte_lle`; phase labels are `liquid1` and `liquid2`; `shared_certification.status=accepted`; raw single-ion equality is not used; reduced electroneutral lift/back-lift charge and round-trip residuals are 0.0; mean-ionic transfer residual `4.104478534827649e-08 <= 1.0e-4`; phase and total charge residuals are <= 1.0e-8; retained pressure consistency `0.004609477080521174 <= 10.0`; exact reduced Jacobian/Hessian and Born SSM/DS active-block receipts are retained; reactive, CE, CPE, regression, and release claims remain closed."
-      - evidence_label: "Electrolyte HELD2 public-route scenario validation ladder"
-        evidence_tier: T1
-        command: "uv run --no-sync python scripts/validation/check_electrolyte_held2_public_route_scenarios.py --json --require-complete"
-        scope: "Full HELD2 public-route scenario validation after #349: stable feed, unstable feed, boundary feed, phase-label permutation, neutral-limit parity, common-ion electrolyte, and mixed-salt/asymmetric electrolyte cases retain Stage I/II, Stage III, postsolve, reduced-basis, charge, transfer, phase-distance, and shared electrolyte residual-block diagnostics."
-        result_requirement: "Checker returns complete with no blockers and 7 accepted scenarios; unstable/boundary/phase-label rows use the public `electrolyte_lle` route with Stage II `dual_loop_verified`, Stage III `complete`, postsolve `complete`, positive phase distance, charge residual <= tolerance, mean-ionic residual <= tolerance, and accepted shared certification; neutral-limit rows make no charged residual-family claim; common-ion and mixed-salt rows retain full-rank reduced-basis evidence."
-      - evidence_label: "Electrolyte HELD2 capability admission registry contract"
-        evidence_tier: T1
-        command: "uv run --no-sync python -m pytest tests\\native\\contracts\\test_equilibrium_benchmark_registry.py tests\\native\\contracts\\test_generalized_equilibrium_registry.py -q"
-        scope: "Issue #350 registry and capability-doc admission: machine-checks that the electrolyte family row names the exact public-route proof commands, admits only the retained `electrolyte_lle` scope, and keeps #320 Perdomo/Figiel validation plus generic electrolyte, reactive, CE/CPE, regression, and release surfaces closed."
-        result_requirement: "Registry contract tests pass; docs validation passes separately; #191 remains blocked by #320 and #343 until their GitHub issues close with retained evidence."
     reference_cases:
       - case_label: "Khudaida 2026 electrolyte LLE"
         evidence_tier: T1
@@ -312,10 +295,7 @@ family_rows:
           - projected_mean_ionic_transfer_residual
           - born_ssm_ds_exact_hessian
           - electrolyte_tpd_or_held2_certification
-          - held2_public_route_phase_discovery
-          - held2_public_route_scenario_validation
           - electrolyte_postsolve_phase_set_certification
-          - electrolyte_public_route_admission
       - case_label: "Held 2014 Figure 6"
         evidence_tier: T0
         source: "Held et al. 2014 ePC-SAFT benchmark"
@@ -336,33 +316,28 @@ family_rows:
 
   - family_label: "PE-Generalized Multiphase"
     family_kind: phase_equilibrium
-    activation_status: neutral_public_admitted
-    production_exposed: true
-    existing_public_utility_routes: [multiphase]
-    scope: "More-than-two-phase discovery and phase-set completeness; neutral nonassociating public admission is active while associating, electrolyte, and reactive families remain separate gates."
-    primary_problem: "Unknown phase count TP flash with source-backed phase-set certification."
+    activation_status: active_validation_not_public
+    production_exposed: false
+    existing_public_utility_routes: []
+    scope: "Internal more-than-two-phase sampled-candidate diagnostics; the public route is closed and global candidate completeness is unproven."
+    primary_problem: "Unknown phase count TP flash with globally complete phase discovery and postsolve certification."
     knowns: [T, P, feed_composition]
     physical_variables: [phase_count, phase_species_amounts, phase_volumes]
     objective_family: pressure_transformed_helmholtz
     hard_constraints: [material_balance, phase_pressure_consistency, transferable_potential_equality]
     derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    phase_discovery_status: neutral_stage_ii_stage_iii_replay_verified_public_admission
-    admission_evidence:
-      - evidence_label: "Neutral generalized phase-set diagnostic records"
+    phase_discovery_status: neutral_internal_sampled_candidate_replay_global_completeness_unproven
+    diagnostic_evidence:
+      - evidence_label: "Neutral generalized sampled-candidate audit"
         evidence_tier: T1
         command: "uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --require-complete"
-        scope: "Neutral nonassociating three-candidate phase-set record contract retained as historical internal certification evidence."
-        result_requirement: "Three selected records, at least one rejected record, mass-balance feasible, noncollapsed selected compositions, phase_set_certified."
+        scope: "Neutral nonassociating finite sampled-candidate record contract retained as internal diagnostic evidence; it does not prove global phase-set completeness."
+        result_requirement: "Three selected records, at least one rejected record, mass-balance feasible, noncollapsed selected compositions, status sampled_candidate_audit_complete_global_completeness_unproven, global_phase_set_certified=false, and the public route remains closed."
       - evidence_label: "Strict neutral multiphase fugacity-residual refinement"
         evidence_tier: T1
         command: "uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete"
-        scope: "Neutral nonassociating Stage II candidate-set replay refined by the strict fugacity-residual route."
-        result_requirement: "strict_multiphase_fugacity_residual_route, exact_reduced_fugacity_residual_derivatives, stage_ii_candidate_set_replay_consumed, accepted postsolve, ln_fugacity_consistency_norm <= 1.0e-6."
-      - evidence_label: "Public neutral multiphase admission checker"
-        evidence_tier: T1
-        command: "uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-public-admission --require-complete"
-        scope: "Public neutral nonassociating `Equilibrium(..., route=\"multiphase\", phase_kinds=[...]).solve()` admission backed by the strict residual route."
-        result_requirement: "public_multiphase_route, neutral_multiphase_nonassoc selector family, exact Hessian evidence, accepted postsolve, ln_fugacity_consistency_norm <= 1.0e-6, generalized_phase_set_public_admission_checker."
+        scope: "Neutral nonassociating finite sampled-candidate replay refined by the strict fugacity-residual route; local refinement does not prove global phase discovery."
+        result_requirement: "strict_multiphase_fugacity_residual_route, exact_reduced_fugacity_residual_derivatives, sampled_candidate_set_replay_consumed, accepted local postsolve, ln_fugacity_consistency_norm <= 1.0e-6, and global_phase_set_certified=false."
     required_gates:
       - infrastructure_gate
       - held_stage_i_stability
@@ -372,9 +347,7 @@ family_rows:
       - phase_set_completeness
       - strict_multiphase_fugacity_residual_route
       - exact_reduced_fugacity_residual_derivatives
-      - stage_ii_candidate_set_replay_consumed
-      - public_multiphase_route
-      - generalized_phase_set_public_admission_checker
+      - sampled_candidate_set_replay_consumed
     reference_cases:
       - case_label: "Representative neutral/associating/electrolyte replay"
         evidence_tier: T0
@@ -390,10 +363,10 @@ family_rows:
 
   - family_label: "CE Standalone Reactive Speciation"
     family_kind: chemical_equilibrium
-    activation_status: standalone_ce_public_admitted
-    production_exposed: true
-    existing_public_utility_routes: [reactive_speciation]
-    scope: "Homogeneous single-phase chemical and speciation equilibrium after standard-state conventions are explicit."
+    activation_status: active_validation_not_public
+    production_exposed: false
+    existing_public_utility_routes: []
+    scope: "Internal homogeneous single-phase chemical-equilibrium validation; the live MEA final proof fails."
     primary_problem: "Chemical equilibrium without phase split."
     knowns: [T, P, feed_composition, reaction_set]
     physical_variables: [species_amounts, reaction_extents_or_element_basis]
@@ -409,13 +382,13 @@ family_rows:
       - reaction_affinity_certification
       - exact_chemical_potential_derivatives
       - ce_validation_ladder
-    admission_evidence:
+    diagnostic_evidence:
       - evidence_label: "Standalone CE validation ladder"
         evidence_tier: T1
         command: "uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete"
-        scope: "CE-only homogeneous reactive_speciation evidence using analytic ideal, charged conservation, Ascani 2023 constants, MEA true-species bookkeeping, and retained Cantera/Pope oracle fixtures."
+        scope: "Internal CE-only homogeneous evidence using analytic ideal, charged conservation, Ascani 2023 constants, MEA true-species bookkeeping, and retained Cantera/Pope oracle fixtures."
         retained_evidence: "analyses/package_validation/standalone_ce/shared/results/summary.json"
-        result_requirement: "Checker returns complete with no blockers; validation families include analytic_ideal, charged_conservation, ascani_2023, mea_speciation, cantera_reference_oracle, and pope_reference_oracle; only standalone reactive_speciation is public while reactive LLE, reactive electrolyte LLE, and CPE remain closed."
+        result_requirement: "Re-admission requires checker status complete, balance_inf_norm <= 1.0e-8, and reaction_stationarity_inf_norm <= 1.0e-6; the current MEA proof fails at 2.5999999998789356 and 73.79118023038392, so reactive speciation and coupled reactive surfaces remain closed."
     reference_cases:
       - case_label: "Standalone CE validation ladder"
         evidence_tier: T1
@@ -427,8 +400,7 @@ family_rows:
           - reaction_affinity
           - exact_chemical_potential_derivatives
           - ce_validation_ladder
-          - standalone_reactive_speciation_public
-          - reactive_phase_and_cpe_closed
+          - reactive_speciation_and_coupled_surfaces_closed
     forbidden_shortcuts:
       - hidden_standard_state
 
@@ -519,7 +491,7 @@ derived_subworkflows:
     workflow_kind: derived_boundary
     planned_after_family: "PE-Neutral TP Flash"
     activation_family_row: false
-    current_runtime_routes: [bubble_pressure, bubble_temperature]
+    current_runtime_routes: [bubble_pressure]
     current_convergence_status: current_fixture_strict_route_points_verified
     fixed_variables: [temperature_or_pressure, liquid_or_feed_composition]
     free_variables: [incipient_vapor_composition, phase_volumes, boundary_pressure_or_temperature]
@@ -534,7 +506,7 @@ derived_subworkflows:
     workflow_kind: derived_boundary
     planned_after_family: "PE-Neutral TP Flash"
     activation_family_row: false
-    current_runtime_routes: [dew_pressure, dew_temperature]
+    current_runtime_routes: [dew_pressure]
     current_convergence_status: current_fixture_strict_route_points_verified
     fixed_variables: [temperature_or_pressure, vapor_composition]
     free_variables: [incipient_liquid_composition, phase_volumes, boundary_pressure_or_temperature]
@@ -669,15 +641,15 @@ benchmark_cases:
     source_path: "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane"
     source_model_family: PC-SAFT
     retained_evidence: "uv run python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete"
-    todo: "Use as the #145 internal exact-Hessian and closed-admission proof. #190 remains the public associating GFPE admission issue."
+    todo: "Use as internal exact-Hessian and sampled-candidate component evidence. Public associating LLE requires a separate global HELD proof and re-admission change."
 
   - case_label: "Khudaida 2026 electrolyte LLE"
     family_labels: ["PE-Electrolyte LLE/TP Flash"]
     priority_rank: 1
-    status: held2_public_route_phase_discovery_admitted
+    status: internal_diagnostic_selector_integration_required
     fixture_status: available
     source_path: "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl"
-    todo: "Retained as the admitted public electrolyte_lle HELD2 phase-discovery scope after #350. Do not treat it as Perdomo/Figiel validation, fitted Khudaida model reproduction, generic electrolyte flash coverage, CE/CPE, reactive, regression, or release evidence."
+    todo: "Retain component diagnostics for selector integration and source-reproduction repair; this fixture authorizes no public electrolyte route."
 
   - case_label: "Held 2014 Figure 6"
     family_labels: ["PE-Electrolyte LLE/TP Flash"]

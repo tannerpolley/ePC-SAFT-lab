@@ -22,6 +22,7 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 apply_native_runtime_env(os.environ)
 
 from epcsaft_equilibrium._native import extension_native_core
+
 from scripts.validation import check_equilibrium_benchmark_fixture as fixture_checker
 from scripts.validation import check_phase_discovery as phase_discovery_checker
 from scripts.validation import equilibrium_validation_runtime as runtime
@@ -256,7 +257,7 @@ def evaluate_neutral_flash(
             "seed_attempts": seed_attempts,
             "postsolve": route_payload.get("postsolve"),
         }
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=_core,
         checker_command=checker_command
         or ["uv", "run", "--no-sync", "python", "scripts/validation/check_neutral_tp_flash_fixture.py"],
@@ -351,7 +352,7 @@ def main(argv: list[str] | None = None) -> int:
     payload["phase_discovery_source"] = phase_discovery_source
     if args.require_complete:
         try:
-            native_freshness.require_receipt(dict(payload.get("native_freshness_receipt", {})))
+            native_freshness.require_equilibrium_native_fresh(dict(payload.get("native_freshness_receipt", {})))
         except ValueError as exc:
             print(str(exc), file=sys.stderr)
             return 2

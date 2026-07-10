@@ -6,7 +6,7 @@ import statistics
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import TypeVar
+from typing import Generic, TypeVar
 
 import numpy as np
 
@@ -25,6 +25,7 @@ if __package__ in {None, ""}:
         load_provider_cases,
         load_public_saturation_rows,
     )
+    from analyses.package_validation.explicit_association_toybox.scripts.metrics import timed_closure
     from analyses.package_validation.explicit_association_toybox.scripts.picard_policy_grid import (
         run_picard_policy_grid,
     )
@@ -36,7 +37,6 @@ if __package__ in {None, ""}:
         PureSaturationResult,
         solve_pure_saturation,
     )
-    from analyses.package_validation.explicit_association_toybox.scripts.metrics import timed_closure
 else:
     from .closure_models import EXACT_MASS_ACTION_BASELINE, PICARD_POLICY_GRID, PicardPolicy
     from .fixed_state_property_residuals import (
@@ -129,7 +129,7 @@ def build_final_picard_admission_rows(
             continue
         simulation_id = _simulation_id(source_row)
         exact_attempt = _timed_repeat(
-            lambda: solve_pure_saturation(
+            lambda case=case, source_row=source_row: solve_pure_saturation(
                 case,
                 temperature=float(source_row["T_K"]),
                 closure_name=EXACT_MASS_ACTION_BASELINE,
@@ -143,7 +143,7 @@ def build_final_picard_admission_rows(
         for policy in PICARD_POLICY_GRID:
             summary = policy_summaries[policy.closure_name]
             policy_attempt = _timed_repeat(
-                lambda policy=policy: solve_pure_saturation(
+                lambda policy=policy, case=case, source_row=source_row: solve_pure_saturation(
                     case,
                     temperature=float(source_row["T_K"]),
                     closure_name=policy.closure_name,
@@ -272,7 +272,7 @@ def _exact_row(
     source_row: Mapping[str, object],
     case: Mapping[str, object],
     simulation_id: str,
-    exact_attempt: "_TimedAttempt[PureSaturationResult]",
+    exact_attempt: _TimedAttempt[PureSaturationResult],
     policy_summaries: Mapping[str, Mapping[str, object]],
 ) -> dict[str, object]:
     exact_result = exact_attempt.result
@@ -324,8 +324,8 @@ def _policy_row(
     simulation_id: str,
     policy: PicardPolicy,
     summary: Mapping[str, object],
-    exact_attempt: "_TimedAttempt[PureSaturationResult]",
-    policy_attempt: "_TimedAttempt[PureSaturationResult]",
+    exact_attempt: _TimedAttempt[PureSaturationResult],
+    policy_attempt: _TimedAttempt[PureSaturationResult],
     exact_result: PureSaturationResult | None,
 ) -> dict[str, object]:
     policy_result = policy_attempt.result
@@ -388,7 +388,10 @@ def _base_report_row(source_row: Mapping[str, object], case: Mapping[str, object
     }
 
 
-class _TimedAttempt[T]:
+T = TypeVar("T")
+
+
+class _TimedAttempt(Generic[T]):
     def __init__(self, result: T | None, timings: list[float], message: str) -> None:
         self.result = result
         self.timings = timings

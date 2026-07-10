@@ -3,9 +3,8 @@ from __future__ import annotations
 import json
 from dataclasses import replace
 
-import pytest
-
 import epcsaft
+import pytest
 from support.hydrocarbon_cases import HYDROCARBON_COMPONENTS, hydrocarbon_parameter_set
 
 

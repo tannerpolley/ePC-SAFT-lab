@@ -372,7 +372,7 @@ def build_standard_state_registry(records: Sequence[EquilibriumConstantRecord]) 
     return StandardStateRegistry(registry)
 
 
-def solve_chemical_equilibrium_nlp_activation(
+def _solve_closed_chemical_equilibrium_nlp_activation(
     compiled: CompiledChemicalEquilibrium,
     standard_states: StandardStateRegistry,
     *,
@@ -388,7 +388,7 @@ def solve_chemical_equilibrium_nlp_activation(
     ipopt_linear_solver: str = "auto",
     eos_mixture: Any | None = None,
 ) -> dict[str, Any]:
-    """Solve standalone CE through the internal activation-matrix NLP/Ipopt path."""
+    """Run the closed standalone-CE diagnostic through its native activation path."""
 
     if not isinstance(compiled, CompiledChemicalEquilibrium):
         raise InputError("chemical equilibrium NLP activation requires a compiled CE schema.")
@@ -417,7 +417,7 @@ def solve_chemical_equilibrium_nlp_activation(
     from ._native import extension_native_core
 
     core = extension_native_core()
-    return core._native_chemical_equilibrium_nlp_activation(
+    result = core._native_chemical_equilibrium_nlp_activation(
         compiled.to_native_payload(),
         standard_states.to_native_payload(),
         initial,
@@ -432,6 +432,39 @@ def solve_chemical_equilibrium_nlp_activation(
         eos_mixture,
         linear_solver=str(ipopt_linear_solver),
     )
+    _require_closed_chemical_equilibrium_activation(result)
+    return result
+
+
+def _require_closed_chemical_equilibrium_activation(result: object) -> None:
+    if not isinstance(result, Mapping):
+        raise RuntimeError("Internal chemical-equilibrium validation returned a non-mapping result.")
+    expected = {
+        "native_binding": "_native_chemical_equilibrium_nlp_activation",
+        "route": "reactive_speciation",
+        "activation_compiler": "activation_plan",
+        "thermodynamic_block": "homogeneous_chemical_equilibrium",
+    }
+    mismatches = [key for key, value in expected.items() if result.get(key) != value]
+    if mismatches:
+        raise RuntimeError(
+            "Internal chemical-equilibrium validation returned an invalid native contract: "
+            + ", ".join(mismatches)
+            + "."
+        )
+    activation = result.get("activation")
+    if not isinstance(activation, Mapping):
+        raise RuntimeError("Internal chemical-equilibrium validation omitted its activation row.")
+    if (
+        activation.get("key") != "reactive_speciation"
+        or activation.get("production_exposed") is not False
+        or activation.get("public_routes") != []
+        or activation.get("proof_routes") != []
+    ):
+        raise RuntimeError("Internal chemical-equilibrium validation attempted to open a production surface.")
+    selector = result.get("selector_contract")
+    if not isinstance(selector, Mapping) or selector.get("selector_family") != "reactive_speciation":
+        raise RuntimeError("Internal chemical-equilibrium validation returned an invalid selector contract.")
 
 
 def _clean_label(value: Any, label: str) -> str:

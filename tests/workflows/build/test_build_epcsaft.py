@@ -103,6 +103,22 @@ def test_build_script_passes_profile_to_cmake(monkeypatch) -> None:
     )
 
     assert "-DEPCSAFT_BUILD_PROFILE=provider" in captured["cmd"]
+    git_cache_index = captured["cmd"].index("GIT_EXECUTABLE")
+    assert captured["cmd"][git_cache_index - 1] == "-U"
+
+
+@pytest.mark.parametrize(
+    "cmake_path",
+    [
+        "CMakeLists.txt",
+        "packages/epcsaft-regression/CMakeLists.txt",
+    ],
+)
+def test_fetched_ceres_headers_are_system_headers(cmake_path: str) -> None:
+    cmake_text = (build_epcsaft.REPO_ROOT / cmake_path).read_text(encoding="utf-8")
+
+    assert "INTERFACE_SYSTEM_INCLUDE_DIRECTORIES" in cmake_text
+    assert "EPCSAFT_CERES_INTERFACE_INCLUDE_DIRS" in cmake_text
 
 
 def test_cmake_command_pairs_venv_cmake_with_venv_python(monkeypatch, tmp_path) -> None:
@@ -217,12 +233,10 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert "INTERFACE_COMPILE_DEFINITIONS HAVE_CSTDDEF" in cmake_text
     assert "GIT_SHALLOW TRUE" in cmake_text
     assert 'add_subdirectory("${ceres_solver_SOURCE_DIR}" "${ceres_solver_BINARY_DIR}" EXCLUDE_FROM_ALL)' in cmake_text
-    assert "EPCSAFT_NATIVE_MODEL_SOURCES" in cmake_text
-    assert "EPCSAFT_NATIVE_EOS_SOURCES" in cmake_text
-    assert "EPCSAFT_NATIVE_AUTODIFF_SOURCES" in cmake_text
+    assert "epcsaft_provider_sdk.cmake" in cmake_text
+    assert "EPCSAFT_PROVIDER_NATIVE_TARGET_SOURCES" in cmake_text
     assert "EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES" in cmake_text
     assert "EPCSAFT_NATIVE_REGRESSION_SOURCES" in cmake_text
-    assert "EPCSAFT_PROVIDER_NATIVE_SOURCES" in cmake_text
     assert "EPCSAFT_NATIVE_OBJECT_TARGETS" in cmake_text
     assert "add_library(epcsaft_provider_native OBJECT" in cmake_text
     assert "add_library(epcsaft_equilibrium_native OBJECT" in cmake_text
@@ -341,7 +355,7 @@ def test_source_checkout_build_syncs_editable_native_import_target(tmp_path, mon
     editable_package = editable_site / "epcsaft"
     source_package.mkdir(parents=True)
     editable_package.mkdir(parents=True)
-    (editable_site / "_epcsaft_editable.py").write_text("# editable marker\n", encoding="utf-8")
+    (editable_site / "_editable_skbc_epcsaft.py").write_text("# editable marker\n", encoding="utf-8")
     source_artifact = source_package / "_core.cpython-313-x86_64-linux-gnu.so"
     source_artifact.write_bytes(b"source-build")
     stale_artifact = editable_package / "_core.cpython-312-x86_64-linux-gnu.so"
@@ -356,3 +370,23 @@ def test_source_checkout_build_syncs_editable_native_import_target(tmp_path, mon
 
     assert (editable_package / source_artifact.name).read_bytes() == b"source-build"
     assert not stale_artifact.exists()
+
+
+def test_source_checkout_build_rejects_stale_native_import_target_without_editable_marker(
+    tmp_path, monkeypatch
+) -> None:
+    source_package = tmp_path / "packages" / "epcsaft" / "src" / "epcsaft"
+    site_root = tmp_path / "venv" / "lib" / "python3.13" / "site-packages"
+    installed_package = site_root / "epcsaft"
+    source_package.mkdir(parents=True)
+    installed_package.mkdir(parents=True)
+    (source_package / "_core.cpython-313-x86_64-linux-gnu.so").write_bytes(b"source-build")
+    (installed_package / "_core.cpython-313-x86_64-linux-gnu.so").write_bytes(b"stale")
+
+    monkeypatch.setattr(build_epcsaft, "PACKAGE_DIR", source_package)
+    monkeypatch.setattr(
+        build_epcsaft.sysconfig, "get_path", lambda name: str(site_root) if name == "purelib" else None
+    )
+
+    with pytest.raises(RuntimeError, match="editable marker"):
+        build_epcsaft._sync_editable_native_artifacts()

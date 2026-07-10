@@ -19,9 +19,11 @@ for import_root in (REPO_ROOT, SRC_ROOT, EQUILIBRIUM_SRC_ROOT):
     if import_path not in sys.path:
         sys.path.insert(0, import_path)
 
-from scripts.validation import check_electrolyte_gfpe_gate
-from scripts.validation import check_electrolyte_held2_phase_discovery
-from scripts.validation import check_electrolyte_tpd_gate
+from scripts.validation import (
+    check_electrolyte_gfpe_gate,
+    check_electrolyte_held2_phase_discovery,
+    check_electrolyte_tpd_gate,
+)
 
 ALGORITHM_SCOPE = "held2_stage_iii_reduced_variable_refinement_only"
 HELD2_SCOPE = check_electrolyte_held2_phase_discovery.ALGORITHM_SCOPE
@@ -64,6 +66,7 @@ def _native_stage_iii_payload(case_dir: Path, checker_command: list[str] | None)
 
     apply_native_runtime_env(os.environ)
     from epcsaft_equilibrium._native import extension_native_core
+
     from scripts.validation import native_freshness
 
     mixture, feed, temperature, pressure = check_electrolyte_tpd_gate._khudaida_mixture_and_feed(case_dir)
@@ -84,7 +87,7 @@ def _native_stage_iii_payload(case_dir: Path, checker_command: list[str] | None)
         ACTIVE_BOUND_TOLERANCE,
     )
     stage_iii = dict(stage_iii)
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=core,
         checker_command=checker_command
         or [
@@ -505,7 +508,7 @@ def main(argv: list[str] | None = None) -> int:
             from scripts.validation import native_freshness
 
             try:
-                native_freshness.require_receipt(dict(receipt))
+                native_freshness.require_equilibrium_native_fresh(dict(receipt))
             except ValueError as exc:
                 print(str(exc), file=sys.stderr)
                 return 2

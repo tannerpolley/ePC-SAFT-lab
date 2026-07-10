@@ -15,10 +15,8 @@ from __future__ import annotations
 import argparse
 import csv
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -28,12 +26,11 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import figure_root_dir
-from scripts.plot_outputs import REPO_ROOT
-from typing import Dict, Tuple
 
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT, figure_root_dir
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(REPO_ROOT) not in sys.path:
@@ -41,7 +38,10 @@ if str(REPO_ROOT) not in sys.path:
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from scripts.plot_outputs import paper_validation_dir, save_plot_figure
+from figure6b_digitized_reference_replica import (
+    SERIES_STYLES,
+    _load_digitized_curves,
+)
 from figure6b_libr_ethanol_contributions import (
     AXIS_LABEL_SIZE,
     AXIS_TICK_SIZE,
@@ -50,10 +50,8 @@ from figure6b_libr_ethanol_contributions import (
     _load_exp_data,
     _salt_mole_fraction_from_molality,
 )
-from figure6b_digitized_reference_replica import (
-    SERIES_STYLES,
-    _load_digitized_curves,
-)
+
+from scripts.plot_outputs import paper_validation_dir, save_plot_figure
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -94,7 +92,7 @@ METHOD_STYLES = {
 
 def _metric_summary(
     x_data: np.ndarray, y_data: np.ndarray, x_model: np.ndarray, y_model: np.ndarray
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     y_interp = np.interp(x_data, x_model, y_model)
     delta = y_interp - y_data
     rmse = float(np.sqrt(np.mean(delta * delta)))
@@ -103,7 +101,7 @@ def _metric_summary(
     return rmse, mae, max_abs
 
 
-def _y_limits(y_data: np.ndarray, y_model: np.ndarray) -> Tuple[float, float]:
+def _y_limits(y_data: np.ndarray, y_model: np.ndarray) -> tuple[float, float]:
     y_all = np.concatenate([np.asarray(y_data, dtype=float), np.asarray(y_model, dtype=float)])
     y_min = float(np.min(y_all))
     y_max = float(np.max(y_all))
@@ -112,7 +110,7 @@ def _y_limits(y_data: np.ndarray, y_model: np.ndarray) -> Tuple[float, float]:
     return y_min - pad, y_max + pad
 
 
-def _sum_contribution_curves(curves: Dict[str, np.ndarray]) -> np.ndarray:
+def _sum_contribution_curves(curves: dict[str, np.ndarray]) -> np.ndarray:
     return (
         np.asarray(curves["born"], dtype=float)
         + np.asarray(curves["dh"], dtype=float)
@@ -131,7 +129,7 @@ def run_analysis(
     x_min: float,
     x_max: float,
     d_born_mode: int | None = None,
-) -> Dict[str, Dict[str, float]]:
+) -> dict[str, dict[str, float]]:
     m_exp, _, _ = _load_exp_data(miac_data_path)
     m_upper = float(np.max(m_exp))
     m_grid = np.linspace(0.0, m_upper, int(grid_points))
@@ -141,14 +139,14 @@ def run_analysis(
     if d_born_mode is not None:
         user_options = {"elec_model": {"born_model": {"d_Born_mode": int(d_born_mode)}}}
     params = _build_params(user_options=user_options)
-    model_curves_by_method: Dict[str, Dict[str, np.ndarray]] = {}
-    method_errors: Dict[str, str] = {}
+    model_curves_by_method: dict[str, dict[str, np.ndarray]] = {}
+    method_errors: dict[str, str] = {}
     for method_name in ("lnphi", "mu"):
         try:
             model_curves_by_method[method_name] = _calc_ln_miac_contributions(m_grid, params, method=method_name)
         except Exception as exc:
             method_errors[method_name] = str(exc)
-    born_compare_curves: Dict[str, np.ndarray] = {}
+    born_compare_curves: dict[str, np.ndarray] = {}
     if d_born_mode is None or int(d_born_mode) == 1:
         try:
             compare_params = _build_params(user_options={"elec_model": {"born_model": {"d_Born_mode": 0}}})
@@ -158,7 +156,7 @@ def run_analysis(
     digitized = _load_digitized_curves(digitized_path)
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    results: Dict[str, Dict[str, float]] = {}
+    results: dict[str, dict[str, float]] = {}
     summary_rows = []
 
     for name in CONTRIBUTION_ORDER:

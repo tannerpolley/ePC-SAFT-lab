@@ -29,7 +29,7 @@ When output names a domain concept in an issue title, refactor proposal, hypothe
 
 If the needed concept is not in the glossary yet, either reconsider whether the language belongs in this repo or note the gap for `grill-with-docs`.
 
-When suggesting or documenting package entrypoints, prefer the current public seams recorded in `CONTEXT.md` and the ADRs: `from epcsaft_equilibrium import Equilibrium` followed by `Equilibrium(mixture, route=..., ...).solve()` for production neutral VLE, neutral TP flash, and neutral nonassociating LLE equilibrium, canonical parameter families through `ParameterSet`, shared regression summaries through `TargetDataset.target_family_summaries()`, provider capability claims through `epcsaft.capabilities()`, and equilibrium capability claims through `epcsaft_equilibrium.capabilities()`.
+When suggesting or documenting package entrypoints, prefer the current public seams recorded in `CONTEXT.md` and the ADRs: `from epcsaft_equilibrium import Equilibrium` followed by `Equilibrium(mixture, route=..., ...).solve()` for the evidence-backed pressure-boundary VLE, source-backed LLE, and nonassociating single-component VLE routes; canonical parameter families through `ParameterSet`; shared regression summaries through `TargetDataset.target_family_summaries()`; provider capability claims through `epcsaft.capabilities()`; and equilibrium capability claims through `epcsaft_equilibrium.capabilities()`.
 
 ## Flag ADR conflicts
 

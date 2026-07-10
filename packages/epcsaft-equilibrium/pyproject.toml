@@ -49,6 +49,8 @@ include = [
     "LICENSE",
     "pyproject.toml",
     "build_backend/*.py",
+    "cmake/**/*.cmake",
+    "cmake/**/*.json",
     "src/epcsaft_equilibrium/**/*.py",
     "src/epcsaft_equilibrium/**/*.pyi",
     "src/epcsaft_equilibrium/native/**/*.cpp",

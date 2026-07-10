@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
-from epcsaft_equilibrium._native import extension_native_core
 from epcsaft.state.native_adapter import ePCSAFTMixture
+from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
 from equilibrium_support.equilibrium_cases import (
@@ -127,7 +126,7 @@ def test_internal_multiphase_eos_nlp_contract_reports_exact_hessian_for_three_ph
     assert payload["constraint_families"] == ["material_balance", "phase_pressure_consistency"]
 
 
-def test_internal_multiphase_phase_set_diagnostics_certify_three_phase_shape_with_public_exposure() -> None:
+def test_internal_multiphase_phase_set_records_sampled_three_phase_audit_without_global_certification() -> None:
     mix = _symmetric_ternary_nonassociating_mixture()
 
     payload = _core._native_neutral_tpd_phase_discovery(
@@ -140,11 +139,13 @@ def test_internal_multiphase_phase_set_diagnostics_certify_three_phase_shape_wit
         1.0e-6,
     )
 
-    assert payload["phase_set_status"] == "phase_set_certified"
+    assert payload["phase_set_status"] == "sampled_candidate_audit_complete_global_completeness_unproven"
     assert payload["phase_set_mass_balance_feasible"] is True
-    assert payload["stability_accepted"] is True
-    assert payload["candidate_completeness_accepted"] is True
-    assert payload["held_stage_ii_replay_seed_name"] == "held_stage_ii_dual_loop_candidate_set"
+    assert payload["stability_accepted"] is False
+    assert payload["candidate_completeness_accepted"] is False
+    assert payload["deterministic_screening_is_full_held"] is False
+    assert payload["held_stage_ii_status"] == "sampled_candidate_audit_complete"
+    assert payload["held_stage_ii_replay_seed_name"] == "sampled_candidate_set_replay"
     assert payload["phase_distance"] > 0.0
     assert payload["selected_candidate_count"] == 3
     assert payload["selected_phase_kinds"] == [0, 0, 0]
@@ -189,12 +190,12 @@ def test_internal_multiphase_phase_set_diagnostics_certify_three_phase_shape_wit
     assert first_selected["volume"] > 0.0
     assert first_selected["density"] > 0.0
     assert first_selected["composition"] == pytest.approx(payload["selected_phase_compositions"][0])
-    assert payload["phase_discovery_backend"] == "continuous_tpd_held_dual_phase_discovery"
+    assert payload["phase_discovery_backend"] == "continuous_tpd_sampled_candidate_audit"
     assert payload["stability_certificate"] == "tpd_postsolve"
     assert payload["candidate_mass_balance_norm"] >= 0.0
 
 
-def test_internal_multiphase_strict_fugacity_residual_route_consumes_stage_ii_candidate_set() -> None:
+def test_internal_multiphase_strict_fugacity_residual_route_refines_sampled_candidate_set() -> None:
     _skip_without_ipopt()
     mix = _symmetric_ternary_nonassociating_mixture()
 
@@ -234,18 +235,22 @@ def test_internal_multiphase_strict_fugacity_residual_route_consumes_stage_ii_ca
     assert payload["hessian_backend"] == "cppad_phase_system_plus_reduced_fugacity_residual"
     assert payload["residual_exact_jacobian_available"] is True
     assert payload["residual_exact_hessian_available"] is True
-    assert payload["public_route_admission"] == "open"
+    assert payload["production_exposed"] is False
+    assert payload["validation_scope"] == "internal_component_diagnostic"
+    assert "public_route_admission" not in payload
     assert payload["requested_phase_kinds"] == [0, 0, 0]
     assert payload["requested_phase_count"] == 3
-    assert payload["seed_name"] == "held_stage_ii_dual_loop_candidate_set"
+    assert payload["seed_name"] == "sampled_candidate_set_replay"
     assert payload["seed_attempts"]
     assert all(attempt["status"] != "max_iterations_exceeded" for attempt in payload["seed_attempts"])
     assert postsolve["accepted"] is True
+    assert postsolve["phase_set_status"] == "sampled_candidate_audit_complete_global_completeness_unproven"
+    assert postsolve["candidate_completeness_accepted"] is False
     assert postsolve["ln_fugacity_consistency_norm"] <= 1.0e-6
-    assert postsolve["held_stage_ii_replay_seed_name"] == "held_stage_ii_dual_loop_candidate_set"
+    assert postsolve["held_stage_ii_replay_seed_name"] == "sampled_candidate_set_replay"
     assert postsolve["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
     assert postsolve["held_stage_iii_consumed_stage_ii_replay_metadata"] is True
-    assert postsolve["held_stage_iii_replay_seed_name"] == "held_stage_ii_dual_loop_candidate_set"
+    assert postsolve["held_stage_iii_replay_seed_name"] == "sampled_candidate_set_replay"
     assert postsolve["held_stage_iii_replay_candidate_count"] == postsolve["held_stage_ii_replay_candidate_count"]
     assert postsolve["selected_candidate_count"] == 3
     assert postsolve["phase_distance"] > 0.0

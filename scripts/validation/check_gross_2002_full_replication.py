@@ -50,6 +50,17 @@ PLOT_FAMILY_THRESHOLDS = {
     "phase_boundary": 8.0,
 }
 DIAGNOSTIC_SCORE_CAP = 4.0
+FIGURE_02_SOURCE_IDENTITY_FIELDS = (
+    "figure_id",
+    "dataset",
+    "series",
+    "point_index",
+    "source_reference",
+    "source_detail",
+    "source_pdf",
+    "source_data_file",
+)
+FIGURE_02_SOURCE_IDENTITY_MATCH_FIELDS = FIGURE_02_SOURCE_IDENTITY_FIELDS[:6]
 
 
 def _jsonable(value: Any) -> Any:
@@ -189,6 +200,10 @@ def _accepted_record_blockers(
         if not _path_exists(artifacts.get(key, "")):
             blockers.append(f"gross_2002_{figure_id}_{key}_missing")
 
+    for key, path_value in artifacts.items():
+        if not _path_exists(path_value):
+            blockers.append(f"gross_2002_{figure_id}_{key}_missing")
+
     if not _path_exists(artifacts.get("source_notes_csv", "")):
         blockers.append(f"gross_2002_{figure_id}_source_notes_csv_missing")
 
@@ -264,10 +279,56 @@ def _accepted_record_blockers(
             blockers.append(f"gross_2002_{figure_id}_{SECOND_ORDER_MISSING_SUFFIX}")
     if figure_id == "figure_02" and record.get("source_identity_status") != "resolved":
         blockers.append("gross_2002_figure_02_source_identity_unresolved")
+    if figure_id == "figure_02":
+        blockers.extend(_figure_02_source_identity_blockers(artifacts))
     if record.get("requires_branch_trace") is True:
         blockers.extend(_branch_trace_blockers(record, artifacts))
 
     return blockers
+
+
+def _figure_02_source_identity_blockers(artifacts: dict[str, Any]) -> list[str]:
+    path_value = artifacts.get("source_identity_csv", "")
+    if not str(path_value).strip() or not _path_exists(path_value):
+        return []
+    rows = _safe_csv_rows(str(path_value))
+    if not rows:
+        return ["gross_2002_figure_02_source_identity_fields_missing"]
+
+    blockers: list[str] = []
+    missing_fields = sorted(set(FIGURE_02_SOURCE_IDENTITY_FIELDS) - set(rows[0]))
+    if missing_fields:
+        blockers.append("gross_2002_figure_02_source_identity_fields_missing")
+        return blockers
+
+    for row in rows:
+        for field in FIGURE_02_SOURCE_IDENTITY_FIELDS:
+            if not str(row.get(field, "")).strip():
+                blockers.append(f"gross_2002_figure_02_source_identity_{field}_missing")
+        for field in ("source_pdf", "source_data_file"):
+            if str(row.get(field, "")).strip() and not _path_exists(row[field]):
+                blockers.append(f"gross_2002_figure_02_source_identity_{field}_missing")
+
+    source_data_files = {
+        str(row.get("source_data_file", "")).strip()
+        for row in rows
+        if str(row.get("source_data_file", "")).strip()
+    }
+    if len(source_data_files) != 1:
+        blockers.append("gross_2002_figure_02_source_identity_row_mismatch")
+    else:
+        literature_rows = _safe_csv_rows(next(iter(source_data_files)))
+        identity_keys = sorted(
+            tuple(str(row.get(field, "")).strip() for field in FIGURE_02_SOURCE_IDENTITY_MATCH_FIELDS)
+            for row in rows
+        )
+        literature_keys = sorted(
+            tuple(str(row.get(field, "")).strip() for field in FIGURE_02_SOURCE_IDENTITY_MATCH_FIELDS)
+            for row in literature_rows
+        )
+        if not literature_rows or identity_keys != literature_keys:
+            blockers.append("gross_2002_figure_02_source_identity_row_mismatch")
+    return sorted(set(blockers))
 
 
 def _blocker_token(value: str) -> str:
@@ -395,8 +456,8 @@ def evaluate_payload(
         try:
             from scripts.validation import native_freshness
 
-            native_freshness.require_receipt(dict(payload.get("native_freshness_receipt", {})))
-        except Exception:
+            native_freshness.require_equilibrium_native_fresh(dict(payload.get("native_freshness_receipt", {})))
+        except ValueError:
             blockers.append("gross_2002_full_replication_native_freshness_receipt_missing")
 
     unique_blockers = sorted(set(blockers))

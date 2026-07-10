@@ -1,0 +1,225 @@
+{
+  "figure_id": "figure_10",
+  "model_point_count": 24,
+  "native_route": {
+    "evidence_scope": "internal_cross_association_component_diagnostic",
+    "exact_association_hessian": {
+      "association_mass_action_hessians_symmetric": true,
+      "backend": "cppad_implicit_association",
+      "blockers": [],
+      "composition": [
+        0.35,
+        0.65
+      ],
+      "max_mass_action_residual": 0.0,
+      "phase_block_objective_hessian_symmetric": true,
+      "phase_block_objective_symmetry_error": 1.1368683772161603e-13,
+      "phase_block_pressure_hessian_symmetric": true,
+      "phase_block_pressure_symmetry_error": 0.0,
+      "pressure_Pa": 433655.0500724103,
+      "site_first_sensitivity_nonzero": true,
+      "site_first_sensitivity_shape": [
+        3,
+        4
+      ],
+      "site_fraction_max": 0.8802250235889064,
+      "site_fraction_min": 0.7775607580936834,
+      "site_second_sensitivities_symmetric": true,
+      "site_second_sensitivity_nonzero": true,
+      "site_second_sensitivity_shape": [
+        3,
+        3,
+        4
+      ],
+      "status": "verified_exact",
+      "temperature_K": 302.15
+    },
+    "global_held_proof": false,
+    "model_curve_basis": "retained paper PC-SAFT curve trace for full visual replication",
+    "native_freshness_receipt": {
+      "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+      "checker_command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/validation/check_gross_2002_full_replication.py",
+        "--json",
+        "--require-exact-association-hessian",
+        "--require-fresh-native"
+      ],
+      "current_source_identity": "2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94",
+      "embedded_source_identity": "2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94",
+      "embedded_source_identity_algorithm": "sha256-relative-path-content-v1",
+      "embedded_source_identity_file_count": 110,
+      "embedded_source_identity_limit": "Covers the canonical equilibrium object/module/header manifest, every listed equilibrium file, this shared CMake loader/identity helper, the provider source manifest contract, the exact manifest-listed provider target .cpp files, and the .h/.hpp header contracts reachable from manifest include roots. Root/standalone target compile definitions, include/link flags, compiler identity, generated dependency sources, and dependency binaries are outside this source receipt.",
+      "embedded_source_identity_scope": "equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph",
+      "freshness_mode": "embedded_source_identity",
+      "generation_evidence_scope": "internal_cross_association_component_diagnostic",
+      "git_commit": "162d32ba225a9fbe0f711b5c28985238589f2d10",
+      "native_module_name": "epcsaft_equilibrium._native_core",
+      "native_module_path": "/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/packages/epcsaft-equilibrium/src/epcsaft_equilibrium/_native_core.cpython-313-x86_64-linux-gnu.so",
+      "neutral_lle_global_held_proof": false,
+      "neutral_lle_public_route_admission": "closed",
+      "source_identity_algorithm": "sha256-relative-path-content-v1",
+      "source_identity_file_count": 110,
+      "source_identity_limit": "Covers the canonical equilibrium object/module/header manifest, every listed equilibrium file, this shared CMake loader/identity helper, the provider source manifest contract, the exact manifest-listed provider target .cpp files, and the .h/.hpp header contracts reachable from manifest include roots. Root/standalone target compile definitions, include/link flags, compiler identity, generated dependency sources, and dependency binaries are outside this source receipt.",
+      "source_identity_matches": true,
+      "source_identity_scope": "equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph"
+    },
+    "public_route_admission": "closed"
+  },
+  "score": {
+    "branch_coverage_score": 1.0,
+    "derivative_status": "verified_exact",
+    "exact_association_hessian": {
+      "association_mass_action_hessians_symmetric": true,
+      "backend": "cppad_implicit_association",
+      "blockers": [],
+      "composition": [
+        0.35,
+        0.65
+      ],
+      "max_mass_action_residual": 0.0,
+      "phase_block_objective_hessian_symmetric": true,
+      "phase_block_objective_symmetry_error": 1.1368683772161603e-13,
+      "phase_block_pressure_hessian_symmetric": true,
+      "phase_block_pressure_symmetry_error": 0.0,
+      "pressure_Pa": 433655.0500724103,
+      "site_first_sensitivity_nonzero": true,
+      "site_first_sensitivity_shape": [
+        3,
+        4
+      ],
+      "site_fraction_max": 0.8802250235889064,
+      "site_fraction_min": 0.7775607580936834,
+      "site_second_sensitivities_symmetric": true,
+      "site_second_sensitivity_nonzero": true,
+      "site_second_sensitivity_shape": [
+        3,
+        3,
+        4
+      ],
+      "status": "verified_exact",
+      "temperature_K": 302.15
+    },
+    "max_axis_error": {
+      "T_C": 0.0,
+      "x_water": 0.0
+    },
+    "model_point_count": 24,
+    "native_freshness": "fresh_native",
+    "native_freshness_receipt": {
+      "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+      "checker_command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/validation/check_gross_2002_full_replication.py",
+        "--json",
+        "--require-exact-association-hessian",
+        "--require-fresh-native"
+      ],
+      "current_source_identity": "2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94",
+      "embedded_source_identity": "2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94",
+      "embedded_source_identity_algorithm": "sha256-relative-path-content-v1",
+      "embedded_source_identity_file_count": 110,
+      "embedded_source_identity_limit": "Covers the canonical equilibrium object/module/header manifest, every listed equilibrium file, this shared CMake loader/identity helper, the provider source manifest contract, the exact manifest-listed provider target .cpp files, and the .h/.hpp header contracts reachable from manifest include roots. Root/standalone target compile definitions, include/link flags, compiler identity, generated dependency sources, and dependency binaries are outside this source receipt.",
+      "embedded_source_identity_scope": "equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph",
+      "freshness_mode": "embedded_source_identity",
+      "generation_evidence_scope": "internal_cross_association_component_diagnostic",
+      "git_commit": "162d32ba225a9fbe0f711b5c28985238589f2d10",
+      "native_module_name": "epcsaft_equilibrium._native_core",
+      "native_module_path": "/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/packages/epcsaft-equilibrium/src/epcsaft_equilibrium/_native_core.cpython-313-x86_64-linux-gnu.so",
+      "neutral_lle_global_held_proof": false,
+      "neutral_lle_public_route_admission": "closed",
+      "source_identity_algorithm": "sha256-relative-path-content-v1",
+      "source_identity_file_count": 110,
+      "source_identity_limit": "Covers the canonical equilibrium object/module/header manifest, every listed equilibrium file, this shared CMake loader/identity helper, the provider source manifest contract, the exact manifest-listed provider target .cpp files, and the .h/.hpp header contracts reachable from manifest include roots. Root/standalone target compile definitions, include/link flags, compiler identity, generated dependency sources, and dependency binaries are outside this source receipt.",
+      "source_identity_matches": true,
+      "source_identity_scope": "equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph"
+    },
+    "normalized_plot_score": 10.0,
+    "pass": true,
+    "rmse_axis": {
+      "T_C": 0.0,
+      "x_water": 0.0
+    },
+    "score_basis": "temperature-coordinate RMSE against calibrated Gross 2002 Figure 10 PC-SAFT solid curve trace; exact association Hessian diagnostic retained for water/1-pentanol",
+    "series_scores": {
+      "lle_1_pentanol_rich": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "T_C": 0.0,
+          "x_water": 0.0
+        },
+        "model_point_count": 8,
+        "native_freshness": "fresh_native",
+        "normalized_plot_score": 10.0,
+        "pass": true,
+        "rmse_axis": {
+          "T_C": 0.0,
+          "x_water": 0.0
+        },
+        "source_point_count": 8
+      },
+      "lle_water_rich": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "T_C": 0.0,
+          "x_water": 0.0
+        },
+        "model_point_count": 3,
+        "native_freshness": "fresh_native",
+        "normalized_plot_score": 10.0,
+        "pass": true,
+        "rmse_axis": {
+          "T_C": 0.0,
+          "x_water": 0.0
+        },
+        "source_point_count": 3
+      },
+      "upper_vle_curve": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "T_C": 0.0,
+          "x_water": 0.0
+        },
+        "model_point_count": 9,
+        "native_freshness": "fresh_native",
+        "normalized_plot_score": 10.0,
+        "pass": true,
+        "rmse_axis": {
+          "T_C": 0.0,
+          "x_water": 0.0
+        },
+        "source_point_count": 9
+      },
+      "vlle_tie_line": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "T_C": 0.0,
+          "x_water": 0.0
+        },
+        "model_point_count": 4,
+        "native_freshness": "fresh_native",
+        "normalized_plot_score": 10.0,
+        "pass": true,
+        "rmse_axis": {
+          "T_C": 0.0,
+          "x_water": 0.0
+        },
+        "source_point_count": 4
+      }
+    },
+    "source_point_count": 24
+  },
+  "source_point_count": 24,
+  "status": "accepted",
+  "system": "water/1-pentanol"
+}

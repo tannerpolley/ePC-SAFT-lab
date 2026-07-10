@@ -2,14 +2,12 @@
 
 #include "equilibrium/core/chemical_equilibrium_objective.h"
 #include "equilibrium/core/route_metadata.h"
-#include "equilibrium/derivatives/nlp_contract_snapshot.h"
 #include "model/native_types.h"
 
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <limits>
-#include <memory>
 #include <numeric>
 #include <sstream>
 #include <utility>
@@ -709,37 +707,44 @@ const epcsaft::native::equilibrium::VariableLayout& HomogeneousChemicalEquilibri
     return layout_;
 }
 
-NeutralTwoPhaseEosNlpContract evaluate_activated_chemical_equilibrium_nlp_contract(
-    const ChemicalEquilibriumNlpInput& input,
-    const epcsaft::native::equilibrium::ActivationPlan& plan,
-    const epcsaft::native::equilibrium::VariableLayout& layout
-) {
-    HomogeneousChemicalEquilibriumNlp problem(input, plan, layout);
-    NeutralTwoPhaseEosNlpContract out = make_neutral_two_phase_nlp_contract_snapshot(
-        problem,
-        layout.phase_count,
-        layout.species_count,
-        NlpContractSnapshotDetail::FullDerivativeEvidence
+ReactionProofScalingMetrics HomogeneousChemicalEquilibriumNlp::reaction_proof_scaling_metrics(
+    const HomogeneousChemicalEquilibriumBlockResult& block,
+    double reaction_stationarity_tolerance
+) const {
+    return reaction_proof_scaling_metrics_for(input_, block, reaction_stationarity_tolerance);
+}
+
+ChemicalEquilibriumProofEvaluation HomogeneousChemicalEquilibriumNlp::evaluate_physical_proof(
+    const std::vector<double>& solver_variables,
+    double balance_tolerance,
+    double reaction_stationarity_tolerance
+) const {
+    require_positive_finite(balance_tolerance, "chemical equilibrium balance tolerance");
+    ChemicalEquilibriumProofEvaluation out;
+    const std::vector<double> amounts = physical_amounts_from_solver_variables(solver_variables);
+    out.block = evaluate_physical_block(amounts);
+    out.balance_inf_norm = vector_inf_norm(out.block.balance_residuals);
+    out.reaction_stationarity_inf_norm = vector_inf_norm(out.block.reaction_affinities);
+    out.proof_metrics = reaction_proof_scaling_metrics(
+        out.block,
+        reaction_stationarity_tolerance
     );
-    const HomogeneousChemicalEquilibriumBlockResult block = problem.evaluate_physical_block(input.initial_amounts);
-    out.balance_row_count = static_cast<int>(input.conservation_labels.size());
-    out.reaction_count = static_cast<int>(input.reaction_labels.size());
-    out.standard_mu_rt = block.standard_mu_rt;
+    out.thermodynamically_accepted = out.balance_inf_norm <= balance_tolerance
+        && out.reaction_stationarity_inf_norm <= reaction_stationarity_tolerance;
     return out;
 }
 
-namespace {
-
-ChemicalEquilibriumNlpInput input_with_initial_amounts(
-    const ChemicalEquilibriumNlpInput& input,
-    const std::vector<double>& initial_amounts
-) {
-    ChemicalEquilibriumNlpInput out = input;
-    out.initial_amounts = initial_amounts;
-    return out;
+std::vector<double> HomogeneousChemicalEquilibriumNlp::initial_constraint_multipliers() const {
+    const HomogeneousChemicalEquilibriumBlockResult block = evaluate_physical_block(input_.initial_amounts);
+    return estimate_constraint_multipliers(
+        input_,
+        block.objective_gradient,
+        block.objective_scaling,
+        block.balance_scaling
+    );
 }
 
-FeasibleInitializationInput feasible_initialization_input_from_ce(
+FeasibleInitializationInput chemical_equilibrium_feasible_initialization_input(
     const ChemicalEquilibriumNlpInput& input
 ) {
     FeasibleInitializationInput out;
@@ -751,67 +756,7 @@ FeasibleInitializationInput feasible_initialization_input_from_ce(
     return out;
 }
 
-IpoptSolveOptions ce_stage_options(
-    const IpoptSolveOptions& options,
-    const std::string& option_profile
-) {
-    IpoptSolveOptions out = options;
-    out.option_profile = option_profile;
-    if (out.bound_push <= 0.0) {
-        out.bound_push = 1.0e-12;
-    }
-    if (out.bound_frac <= 0.0) {
-        out.bound_frac = 1.0e-12;
-    }
-    return out;
-}
-
-ContinuationStageSpec ce_homotopy_stage(
-    const ChemicalEquilibriumNlpInput& base_input,
-    const epcsaft::native::equilibrium::ActivationPlan& plan,
-    const epcsaft::native::equilibrium::VariableLayout& layout,
-    const IpoptSolveOptions& options,
-    const std::string& stage_id,
-    double lambda,
-    bool final_proof
-) {
-    ContinuationStageSpec stage;
-    stage.stage_id = stage_id;
-    stage.parameter_value = lambda;
-    stage.final_proof = final_proof;
-    stage.options = ce_stage_options(options, final_proof ? "proof" : "continuation_trace");
-    ChemicalEquilibriumNlpInput stage_input =
-        chemical_equilibrium_input_with_log_k_lambda(base_input, lambda);
-    stage.problem_factory = [stage_input, plan, layout]() {
-        return std::make_unique<HomogeneousChemicalEquilibriumNlp>(stage_input, plan, layout);
-    };
-    return stage;
-}
-
-ContinuationStageSpec ce_activity_homotopy_stage(
-    const ChemicalEquilibriumNlpInput& base_input,
-    const epcsaft::native::equilibrium::ActivationPlan& plan,
-    const epcsaft::native::equilibrium::VariableLayout& layout,
-    const IpoptSolveOptions& options,
-    const std::string& stage_id,
-    double lambda,
-    bool final_proof
-) {
-    ContinuationStageSpec stage;
-    stage.stage_id = stage_id;
-    stage.parameter_value = lambda;
-    stage.final_proof = final_proof;
-    stage.options = ce_stage_options(options, final_proof ? "proof" : "continuation_trace");
-    ChemicalEquilibriumNlpInput stage_input =
-        chemical_equilibrium_input_with_activity_lambda(
-            chemical_equilibrium_input_with_log_k_lambda(base_input, 1.0),
-            lambda
-        );
-    stage.problem_factory = [stage_input, plan, layout]() {
-        return std::make_unique<HomogeneousChemicalEquilibriumNlp>(stage_input, plan, layout);
-    };
-    return stage;
-}
+namespace {
 
 struct PhysicalProofResidualSystem {
     HomogeneousChemicalEquilibriumBlockResult block;
@@ -821,16 +766,8 @@ struct PhysicalProofResidualSystem {
     double residual_inf_norm = 0.0;
     double balance_inf_norm = 0.0;
     double reaction_stationarity_inf_norm = 0.0;
+    bool thermodynamically_accepted = false;
 };
-
-bool physical_proof_passed(
-    const HomogeneousChemicalEquilibriumBlockResult& block,
-    double balance_tolerance,
-    double reaction_stationarity_tolerance
-) {
-    return vector_inf_norm(block.balance_residuals) <= balance_tolerance
-        && vector_inf_norm(block.reaction_affinities) <= reaction_stationarity_tolerance;
-}
 
 PhysicalProofResidualSystem evaluate_physical_proof_residual_system(
     const HomogeneousChemicalEquilibriumNlp& problem,
@@ -841,16 +778,18 @@ PhysicalProofResidualSystem evaluate_physical_proof_residual_system(
 ) {
     const int species_count = problem.variable_count();
     const int reaction_count = static_cast<int>(problem.input().reaction_labels.size());
-    const std::vector<double> amounts = problem.physical_amounts_from_solver_variables(variables);
-    PhysicalProofResidualSystem out;
-    out.block = problem.evaluate_physical_block(amounts);
-    out.balance_inf_norm = vector_inf_norm(out.block.balance_residuals);
-    out.reaction_stationarity_inf_norm = vector_inf_norm(out.block.reaction_affinities);
-    out.proof_metrics = reaction_proof_scaling_metrics_for(
-        problem.input(),
-        out.block,
+    const ChemicalEquilibriumProofEvaluation proof = problem.evaluate_physical_proof(
+        variables,
+        balance_tolerance,
         reaction_stationarity_tolerance
     );
+    const std::vector<double>& amounts = proof.block.amounts;
+    PhysicalProofResidualSystem out;
+    out.block = proof.block;
+    out.balance_inf_norm = proof.balance_inf_norm;
+    out.reaction_stationarity_inf_norm = proof.reaction_stationarity_inf_norm;
+    out.proof_metrics = proof.proof_metrics;
+    out.thermodynamically_accepted = proof.thermodynamically_accepted;
     const int equation_count = static_cast<int>(independent_balance_rows.size()) + reaction_count;
     out.residuals.assign(static_cast<std::size_t>(equation_count), 0.0);
     out.jacobian_row_major.assign(static_cast<std::size_t>(equation_count * species_count), 0.0);
@@ -888,14 +827,13 @@ PhysicalProofResidualSystem evaluate_physical_proof_residual_system(
     return out;
 }
 
-PhysicalProofCorrectorResult run_physical_proof_corrector(
-    const ChemicalEquilibriumNlpInput& input,
-    const epcsaft::native::equilibrium::ActivationPlan& plan,
-    const epcsaft::native::equilibrium::VariableLayout& layout,
+}  // namespace
+
+PhysicalProofCorrectorResult HomogeneousChemicalEquilibriumNlp::correct_physical_proof(
     const std::vector<double>& initial_variables,
     double balance_tolerance,
     double reaction_stationarity_tolerance
-) {
+) const {
     constexpr int kMaxIterations = 24;
     constexpr int kMaxLineSearchTrials = 16;
     constexpr double kMinimumStepDecrease = 1.0e-12;
@@ -903,16 +841,15 @@ PhysicalProofCorrectorResult run_physical_proof_corrector(
     PhysicalProofCorrectorResult out;
     out.attempted = true;
     out.status = "started";
-    HomogeneousChemicalEquilibriumNlp problem(input, plan, layout);
-    const int species_count = problem.variable_count();
-    const int balance_count = problem.constraint_count();
+    const int species_count = variable_count();
+    const int balance_count = constraint_count();
     require_size(
         initial_variables.size(),
         static_cast<std::size_t>(species_count),
         "chemical equilibrium proof-corrector initial variables"
     );
     const std::vector<int> independent_balance_rows = independent_row_indices(
-        input.conservation_matrix_row_major,
+        input_.conservation_matrix_row_major,
         balance_count,
         species_count
     );
@@ -921,7 +858,8 @@ PhysicalProofCorrectorResult run_physical_proof_corrector(
         return out;
     }
     const int equation_count =
-        static_cast<int>(independent_balance_rows.size()) + static_cast<int>(input.reaction_labels.size());
+        static_cast<int>(independent_balance_rows.size())
+        + static_cast<int>(input_.reaction_labels.size());
     if (equation_count != species_count) {
         out.status = "rejected_non_square_physical_proof_system";
         return out;
@@ -929,7 +867,7 @@ PhysicalProofCorrectorResult run_physical_proof_corrector(
 
     std::vector<double> variables = initial_variables;
     PhysicalProofResidualSystem system = evaluate_physical_proof_residual_system(
-        problem,
+        *this,
         variables,
         independent_balance_rows,
         balance_tolerance,
@@ -947,7 +885,7 @@ PhysicalProofCorrectorResult run_physical_proof_corrector(
         out.proof_metrics = system.proof_metrics;
         out.variables = variables;
         out.postsolve = system.block;
-        if (physical_proof_passed(system.block, balance_tolerance, reaction_stationarity_tolerance)) {
+        if (system.thermodynamically_accepted) {
             out.accepted = true;
             out.status = "accepted";
             return out;
@@ -986,13 +924,13 @@ PhysicalProofCorrectorResult run_physical_proof_corrector(
                     alpha * step[static_cast<std::size_t>(species)];
             }
             PhysicalProofResidualSystem trial_system = evaluate_physical_proof_residual_system(
-                problem,
+                *this,
                 trial_variables,
                 independent_balance_rows,
                 balance_tolerance,
                 reaction_stationarity_tolerance
             );
-            if (physical_proof_passed(trial_system.block, balance_tolerance, reaction_stationarity_tolerance)
+            if (trial_system.thermodynamically_accepted
                 || trial_system.residual_inf_norm < system.residual_inf_norm * (1.0 - kMinimumStepDecrease)) {
                 variables = std::move(trial_variables);
                 system = std::move(trial_system);
@@ -1007,555 +945,6 @@ PhysicalProofCorrectorResult run_physical_proof_corrector(
     }
 
     out.status = "rejected_iteration_limit";
-    return out;
-}
-
-ChemicalEquilibriumNlpResult build_ce_result_from_solve(
-    const ChemicalEquilibriumNlpInput& input,
-    const epcsaft::native::equilibrium::ActivationPlan& plan,
-    const epcsaft::native::equilibrium::VariableLayout& layout,
-    const IpoptSolveResult& solve,
-    double balance_tolerance,
-    double reaction_stationarity_tolerance
-) {
-    HomogeneousChemicalEquilibriumNlp problem(input, plan, layout);
-    ChemicalEquilibriumNlpResult out;
-    out.contract = evaluate_activated_chemical_equilibrium_nlp_contract(input, plan, layout);
-    out.solve = solve;
-    const std::vector<double>& variables = out.solve.variables.empty()
-        ? problem.initial_point()
-        : out.solve.variables;
-    const std::vector<double> amounts = problem.physical_amounts_from_solver_variables(variables);
-    out.postsolve = problem.evaluate_physical_block(amounts);
-    out.balance_inf_norm = vector_inf_norm(out.postsolve.balance_residuals);
-    out.reaction_stationarity_inf_norm = vector_inf_norm(out.postsolve.reaction_affinities);
-    out.proof_metrics = reaction_proof_scaling_metrics_for(
-        input,
-        out.postsolve,
-        reaction_stationarity_tolerance
-    );
-    out.accepted = ipopt_solve_result_allows_postsolve(out.solve)
-        && out.balance_inf_norm <= balance_tolerance
-        && out.reaction_stationarity_inf_norm <= reaction_stationarity_tolerance;
-    return out;
-}
-
-ChemicalEquilibriumNlpResult solve_single_ce_proof(
-    const ChemicalEquilibriumNlpInput& input,
-    const epcsaft::native::equilibrium::ActivationPlan& plan,
-    const epcsaft::native::equilibrium::VariableLayout& layout,
-    const IpoptSolveOptions& options,
-    double balance_tolerance,
-    double reaction_stationarity_tolerance
-) {
-    HomogeneousChemicalEquilibriumNlp problem(input, plan, layout);
-    validate_nlp_problem_shape(problem);
-    IpoptSolveOptions solve_options = ce_stage_options(options, "proof");
-    if (solve_options.initial_constraint_multipliers.empty()) {
-        const HomogeneousChemicalEquilibriumBlockResult initial_block =
-            problem.evaluate_physical_block(input.initial_amounts);
-        solve_options.initial_constraint_multipliers = estimate_constraint_multipliers(
-            input,
-            initial_block.objective_gradient,
-            initial_block.objective_scaling,
-            initial_block.balance_scaling
-        );
-        solve_options.initial_bound_lower_multipliers.assign(
-            static_cast<std::size_t>(problem.variable_count()),
-            0.0
-        );
-        solve_options.initial_bound_upper_multipliers.assign(
-            static_cast<std::size_t>(problem.variable_count()),
-            0.0
-        );
-    }
-    return build_ce_result_from_solve(
-        input,
-        plan,
-        layout,
-        solve_ipopt_nlp(problem, solve_options),
-        balance_tolerance,
-        reaction_stationarity_tolerance
-    );
-}
-
-ChemicalEquilibriumNlpResult result_from_homotopy_trace(
-    const ChemicalEquilibriumNlpInput& true_input,
-    const epcsaft::native::equilibrium::ActivationPlan& plan,
-    const epcsaft::native::equilibrium::VariableLayout& layout,
-    const ContinuationTraceResult& trace,
-    double balance_tolerance,
-    double reaction_stationarity_tolerance
-) {
-    if (trace.trace.empty()) {
-        ChemicalEquilibriumNlpResult out;
-        out.continuation = trace;
-        return out;
-    }
-    ChemicalEquilibriumNlpResult out = build_ce_result_from_solve(
-        true_input,
-        plan,
-        layout,
-        trace.trace.back().solve,
-        balance_tolerance,
-        reaction_stationarity_tolerance
-    );
-    out.continuation = trace;
-    out.accepted = trace.accepted && out.accepted;
-    return out;
-}
-
-bool trace_finished_final_lambda_one(const ContinuationTraceResult& trace) {
-    if (trace.trace.empty()) {
-        return false;
-    }
-    const ContinuationStageResult& final_stage = trace.trace.back();
-    return final_stage.final_proof
-        && std::abs(final_stage.parameter_value - 1.0) <= 1.0e-12
-        && !final_stage.solve.variables.empty();
-}
-
-std::string activity_continuation_stage_id(double activity_lambda, int attempt_index) {
-    if (std::abs(activity_lambda) <= 1.0e-12) {
-        return "activity_lambda_0";
-    }
-    if (std::abs(activity_lambda - 0.5) <= 1.0e-12) {
-        return "activity_lambda_half";
-    }
-    if (std::abs(activity_lambda - 1.0) <= 1.0e-12) {
-        return "activity_lambda_1";
-    }
-    std::ostringstream stream;
-    stream << "activity_lambda_" << attempt_index;
-    return stream.str();
-}
-
-ContinuationTraceResult run_adaptive_eos_activity_continuation(
-    const ChemicalEquilibriumNlpInput& seeded_input,
-    const epcsaft::native::equilibrium::ActivationPlan& plan,
-    const epcsaft::native::equilibrium::VariableLayout& layout,
-    const IpoptSolveOptions& options,
-    double minimum_step,
-    int maximum_stage_count,
-    std::vector<double>& accepted_activity_steps,
-    std::vector<double>& rejected_activity_steps
-) {
-    ContinuationTraceResult trace;
-    ContinuationState current_state;
-    current_state.variables = log_amounts_from_physical_amounts(seeded_input.initial_amounts);
-    double current_lambda = 0.0;
-    double step = 0.5;
-    bool solved_initial_stage = false;
-
-    for (int attempt = 0; attempt < maximum_stage_count; ++attempt) {
-        const double target_lambda = solved_initial_stage
-            ? std::min(1.0, current_lambda + step)
-            : 0.0;
-        const bool final_proof = std::abs(target_lambda - 1.0) <= 1.0e-12;
-        ContinuationStageSpec stage = ce_activity_homotopy_stage(
-            seeded_input,
-            plan,
-            layout,
-            options,
-            activity_continuation_stage_id(target_lambda, attempt),
-            target_lambda,
-            final_proof
-        );
-        ContinuationTraceResult stage_trace = run_continuation_plan({stage}, current_state);
-        if (stage_trace.trace.empty()) {
-            trace.final_proof_status = "rejected";
-            trace.rejection_stage_id = stage.stage_id;
-            break;
-        }
-
-        const ContinuationStageResult& stage_result = stage_trace.trace.back();
-        trace.trace.push_back(stage_result);
-        if (stage_result.final_proof) {
-            trace.final_stage_id = stage_result.stage_id;
-            trace.final_proof_status = stage_result.accepted ? "accepted" : "rejected";
-        }
-
-        if (stage_result.accepted) {
-            accepted_activity_steps.push_back(target_lambda);
-            current_state = stage_result.continuation_state;
-            trace.continuation_state = current_state;
-            current_lambda = target_lambda;
-            solved_initial_stage = true;
-            trace.rejection_stage_id.clear();
-            if (final_proof) {
-                break;
-            }
-            continue;
-        }
-
-        rejected_activity_steps.push_back(target_lambda);
-        trace.rejection_stage_id = stage_result.stage_id;
-        if (!solved_initial_stage) {
-            break;
-        }
-        step *= 0.5;
-        if (step < minimum_step) {
-            break;
-        }
-        trace.rejection_stage_id.clear();
-    }
-
-    if (trace.final_proof_status == "pending") {
-        trace.final_proof_status = trace.rejection_stage_id.empty() ? "no_final_stage" : "rejected";
-    }
-    trace.accepted = trace.rejection_stage_id.empty() && trace.final_proof_status == "accepted";
-    return trace;
-}
-
-ChemicalEquilibriumNlpResult solve_eos_activity_continuation_from_seed(
-    const ChemicalEquilibriumNlpInput& seeded_input,
-    const epcsaft::native::equilibrium::ActivationPlan& plan,
-    const epcsaft::native::equilibrium::VariableLayout& layout,
-    const IpoptSolveOptions& options,
-    double balance_tolerance,
-    double reaction_stationarity_tolerance
-) {
-    ChemicalEquilibriumNlpInput true_input =
-        chemical_equilibrium_input_with_activity_lambda(
-            chemical_equilibrium_input_with_log_k_lambda(seeded_input, 1.0),
-            1.0
-        );
-    constexpr double kActivityMinimumStep = 0.125;
-    constexpr int kActivityMaximumStageCount = 20;
-    std::vector<double> accepted_activity_steps;
-    std::vector<double> rejected_activity_steps;
-    ContinuationTraceResult trace = run_adaptive_eos_activity_continuation(
-        seeded_input,
-        plan,
-        layout,
-        options,
-        kActivityMinimumStep,
-        kActivityMaximumStageCount,
-        accepted_activity_steps,
-        rejected_activity_steps
-    );
-    ChemicalEquilibriumNlpResult out = result_from_homotopy_trace(
-        true_input,
-        plan,
-        layout,
-        trace,
-        balance_tolerance,
-        reaction_stationarity_tolerance
-    );
-    out.continuation_parameter_name = "activity_lambda";
-    out.continuation_lambdas = accepted_activity_steps;
-    out.activity_continuation_lambdas = accepted_activity_steps;
-    out.activity_continuation_mode = "adaptive_bisection";
-    out.activity_continuation_minimum_step = kActivityMinimumStep;
-    out.activity_continuation_maximum_stage_count = kActivityMaximumStageCount;
-    out.accepted_activity_steps = accepted_activity_steps;
-    out.rejected_activity_steps = rejected_activity_steps;
-    if (!out.accepted && trace_finished_final_lambda_one(trace)) {
-        out.proof_corrector = run_physical_proof_corrector(
-            true_input,
-            plan,
-            layout,
-            trace.trace.back().solve.variables,
-            balance_tolerance,
-            reaction_stationarity_tolerance
-        );
-        if (out.proof_corrector.accepted) {
-            out.postsolve = out.proof_corrector.postsolve;
-            out.balance_inf_norm = out.proof_corrector.balance_inf_norm;
-            out.reaction_stationarity_inf_norm = out.proof_corrector.reaction_stationarity_inf_norm;
-            out.proof_metrics = out.proof_corrector.proof_metrics;
-            out.accepted = true;
-            out.continuation.accepted = true;
-            out.continuation.final_proof_status = "accepted";
-        }
-    }
-    return out;
-}
-
-void record_seed_attempt_diagnostics(
-    ChemicalEquilibriumNlpResult& result,
-    bool caller_seed_attempted,
-    bool caller_seed_final_proof_accepted,
-    bool caller_seed_escalated,
-    const std::string& caller_seed_rejection_reason = "",
-    bool caller_seed_exception_observed = false,
-    const std::string& caller_seed_exception_message = ""
-) {
-    result.caller_seed_attempted = caller_seed_attempted;
-    result.caller_seed_final_proof_attempted = caller_seed_attempted;
-    result.caller_seed_final_proof_accepted = caller_seed_attempted && caller_seed_final_proof_accepted;
-    result.caller_seed_escalated = caller_seed_attempted && caller_seed_escalated;
-    result.caller_seed_rejection_source = result.caller_seed_escalated ? "caller_initial_amounts" : "";
-    result.caller_seed_rejection_reason = result.caller_seed_escalated ? caller_seed_rejection_reason : "";
-    result.caller_seed_exception_observed = result.caller_seed_escalated && caller_seed_exception_observed;
-    result.caller_seed_exception_message = result.caller_seed_exception_observed
-        ? caller_seed_exception_message
-        : "";
-    result.accepted_seed_source = result.accepted ? result.seed_source : "";
-    result.seed_attempt_order.clear();
-    if (caller_seed_attempted) {
-        result.seed_attempt_order.push_back("caller_initial_amounts");
-    }
-    if (!caller_seed_attempted || caller_seed_escalated) {
-        result.seed_attempt_order.push_back("max_min_feasible_interior");
-    }
-}
-
-}  // namespace
-
-ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
-    const ChemicalEquilibriumNlpInput& input,
-    const epcsaft::native::equilibrium::ActivationPlan& plan,
-    const epcsaft::native::equilibrium::VariableLayout& layout,
-    const IpoptSolveOptions& options,
-    double balance_tolerance,
-    double reaction_stationarity_tolerance
-) {
-    if (input.eos_activity_enabled) {
-        std::string caller_seed_rejection_reason;
-        bool caller_seed_exception_observed = false;
-        std::string caller_seed_exception_message;
-        if (!input.initial_amounts.empty()) {
-            try {
-                ChemicalEquilibriumNlpResult out = solve_eos_activity_continuation_from_seed(
-                    input,
-                    plan,
-                    layout,
-                    options,
-                    balance_tolerance,
-                    reaction_stationarity_tolerance
-                );
-                out.source_oracle_initial_amounts = true;
-                out.seed_source = "caller_initial_amounts";
-                out.direct_final_proof_attempted = false;
-                out.direct_final_proof_accepted = false;
-                if (out.accepted) {
-                    record_seed_attempt_diagnostics(out, true, true, false);
-                    return out;
-                }
-                caller_seed_rejection_reason = "final_proof_rejected";
-            } catch (const std::exception& exc) {
-                caller_seed_rejection_reason = "caller_seed_exception";
-                caller_seed_exception_observed = true;
-                caller_seed_exception_message = exc.what();
-                // A positive caller seed is only a hint; CE-owned initialization remains authoritative.
-            }
-        }
-
-        FeasibleInitializationResult feasible = solve_max_min_feasible_initialization(
-            feasible_initialization_input_from_ce(input),
-            ce_stage_options(options, "proof"),
-            balance_tolerance
-        );
-        ChemicalEquilibriumNlpResult out;
-        if (feasible.accepted) {
-            ChemicalEquilibriumNlpInput seeded_input = input_with_initial_amounts(input, feasible.amounts);
-            out = solve_eos_activity_continuation_from_seed(
-                seeded_input,
-                plan,
-                layout,
-                options,
-                balance_tolerance,
-                reaction_stationarity_tolerance
-            );
-        }
-        out.source_oracle_initial_amounts = false;
-        out.seed_source = "max_min_feasible_interior";
-        out.feasible_initialization = feasible;
-        out.direct_final_proof_attempted = false;
-        out.direct_final_proof_accepted = false;
-        record_seed_attempt_diagnostics(
-            out,
-            !input.initial_amounts.empty(),
-            false,
-            !input.initial_amounts.empty(),
-            caller_seed_rejection_reason.empty() ? "final_proof_rejected" : caller_seed_rejection_reason,
-            caller_seed_exception_observed,
-            caller_seed_exception_message
-        );
-        return out;
-    }
-
-    bool caller_seed_attempted = false;
-    bool caller_seed_final_proof_accepted = false;
-    std::string caller_seed_rejection_reason;
-    bool caller_seed_exception_observed = false;
-    std::string caller_seed_exception_message;
-    if (!input.initial_amounts.empty()) {
-        caller_seed_attempted = true;
-        try {
-            ChemicalEquilibriumNlpInput true_input =
-                chemical_equilibrium_input_with_log_k_lambda(input, 1.0);
-            ChemicalEquilibriumNlpResult out = solve_single_ce_proof(
-                true_input,
-                plan,
-                layout,
-                options,
-                balance_tolerance,
-                reaction_stationarity_tolerance
-            );
-            const bool direct_proof_accepted = out.accepted;
-            if (!out.accepted && !out.solve.variables.empty()) {
-                out.proof_corrector = run_physical_proof_corrector(
-                    true_input,
-                    plan,
-                    layout,
-                    out.solve.variables,
-                    balance_tolerance,
-                    reaction_stationarity_tolerance
-                );
-                if (out.proof_corrector.accepted) {
-                    out.postsolve = out.proof_corrector.postsolve;
-                    out.balance_inf_norm = out.proof_corrector.balance_inf_norm;
-                    out.reaction_stationarity_inf_norm = out.proof_corrector.reaction_stationarity_inf_norm;
-                    out.proof_metrics = out.proof_corrector.proof_metrics;
-                    out.accepted = true;
-                }
-            }
-            out.source_oracle_initial_amounts = true;
-            out.seed_source = "caller_initial_amounts";
-            out.direct_final_proof_attempted = true;
-            out.direct_final_proof_accepted = direct_proof_accepted;
-            out.continuation.final_proof_status = out.accepted ? "accepted" : "rejected";
-            out.continuation.final_stage_id = "lambda_1";
-            out.continuation.accepted = out.accepted;
-            out.continuation_lambdas = {1.0};
-            caller_seed_final_proof_accepted = out.accepted;
-            if (out.accepted) {
-                record_seed_attempt_diagnostics(out, true, true, false);
-                return out;
-            }
-            caller_seed_rejection_reason = "final_proof_rejected";
-        } catch (const std::exception& exc) {
-            caller_seed_final_proof_accepted = false;
-            caller_seed_rejection_reason = "caller_seed_exception";
-            caller_seed_exception_observed = true;
-            caller_seed_exception_message = exc.what();
-        }
-    }
-
-    FeasibleInitializationResult feasible = solve_max_min_feasible_initialization(
-        feasible_initialization_input_from_ce(input),
-        ce_stage_options(options, "proof"),
-        balance_tolerance
-    );
-    ChemicalEquilibriumNlpInput seeded_input = input_with_initial_amounts(input, feasible.amounts);
-    ChemicalEquilibriumNlpInput true_input =
-        chemical_equilibrium_input_with_log_k_lambda(seeded_input, 1.0);
-
-    ChemicalEquilibriumNlpResult direct;
-    if (feasible.accepted) {
-        direct = solve_single_ce_proof(
-            true_input,
-            plan,
-            layout,
-            options,
-            balance_tolerance,
-            reaction_stationarity_tolerance
-        );
-    }
-    const bool direct_proof_accepted = feasible.accepted && direct.accepted;
-    if (feasible.accepted && !direct.accepted && !direct.solve.variables.empty()) {
-        direct.proof_corrector = run_physical_proof_corrector(
-            true_input,
-            plan,
-            layout,
-            direct.solve.variables,
-            balance_tolerance,
-            reaction_stationarity_tolerance
-        );
-        if (direct.proof_corrector.accepted) {
-            direct.postsolve = direct.proof_corrector.postsolve;
-            direct.balance_inf_norm = direct.proof_corrector.balance_inf_norm;
-            direct.reaction_stationarity_inf_norm = direct.proof_corrector.reaction_stationarity_inf_norm;
-            direct.proof_metrics = direct.proof_corrector.proof_metrics;
-            direct.accepted = true;
-        }
-    }
-    if (feasible.accepted && direct.accepted) {
-        direct.source_oracle_initial_amounts = false;
-        direct.seed_source = "max_min_feasible_interior";
-        direct.feasible_initialization = feasible;
-        direct.direct_final_proof_attempted = true;
-        direct.direct_final_proof_accepted = direct_proof_accepted;
-        direct.continuation.final_proof_status = "accepted";
-        direct.continuation.final_stage_id = "lambda_1";
-        direct.continuation.accepted = true;
-        direct.continuation_lambdas = {1.0};
-        record_seed_attempt_diagnostics(
-            direct,
-            caller_seed_attempted,
-            caller_seed_final_proof_accepted,
-            caller_seed_attempted && !caller_seed_final_proof_accepted,
-            caller_seed_rejection_reason.empty() ? "final_proof_rejected" : caller_seed_rejection_reason,
-            caller_seed_exception_observed,
-            caller_seed_exception_message
-        );
-        return direct;
-    }
-
-    ContinuationTraceResult trace;
-    std::vector<double> lambdas;
-    if (feasible.accepted) {
-        std::vector<ContinuationStageSpec> stages;
-        stages.push_back(ce_homotopy_stage(seeded_input, plan, layout, options, "lambda_0", 0.0, false));
-        stages.push_back(ce_homotopy_stage(seeded_input, plan, layout, options, "lambda_half", 0.5, false));
-        stages.push_back(ce_homotopy_stage(seeded_input, plan, layout, options, "lambda_1", 1.0, true));
-        ContinuationState initial_state;
-        initial_state.variables = log_amounts_from_physical_amounts(feasible.amounts);
-        trace = run_continuation_plan(stages, initial_state);
-        lambdas = {0.0, 0.5, 1.0};
-    }
-
-    ChemicalEquilibriumNlpResult out = feasible.accepted
-        ? result_from_homotopy_trace(
-            true_input,
-            plan,
-            layout,
-            trace,
-            balance_tolerance,
-            reaction_stationarity_tolerance
-        )
-        : ChemicalEquilibriumNlpResult{};
-    out.continuation = trace;
-    if (feasible.accepted
-        && !out.accepted
-        && !trace.trace.empty()
-        && trace.final_stage_id == "lambda_1"
-        && !trace.trace.back().solve.variables.empty()) {
-        out.proof_corrector = run_physical_proof_corrector(
-            true_input,
-            plan,
-            layout,
-            trace.trace.back().solve.variables,
-            balance_tolerance,
-            reaction_stationarity_tolerance
-        );
-        if (out.proof_corrector.accepted) {
-            out.postsolve = out.proof_corrector.postsolve;
-            out.balance_inf_norm = out.proof_corrector.balance_inf_norm;
-            out.reaction_stationarity_inf_norm = out.proof_corrector.reaction_stationarity_inf_norm;
-            out.proof_metrics = out.proof_corrector.proof_metrics;
-            out.accepted = true;
-            out.continuation.accepted = true;
-            out.continuation.final_proof_status = "accepted";
-        }
-    }
-    out.source_oracle_initial_amounts = false;
-    out.seed_source = "max_min_feasible_interior";
-    out.feasible_initialization = feasible;
-    out.direct_final_proof_attempted = feasible.accepted;
-    out.direct_final_proof_accepted = direct_proof_accepted;
-    out.continuation_lambdas = lambdas;
-    record_seed_attempt_diagnostics(
-        out,
-        caller_seed_attempted,
-        caller_seed_final_proof_accepted,
-        caller_seed_attempted && !caller_seed_final_proof_accepted,
-        caller_seed_rejection_reason.empty() ? "final_proof_rejected" : caller_seed_rejection_reason,
-        caller_seed_exception_observed,
-        caller_seed_exception_message
-    );
     return out;
 }
 

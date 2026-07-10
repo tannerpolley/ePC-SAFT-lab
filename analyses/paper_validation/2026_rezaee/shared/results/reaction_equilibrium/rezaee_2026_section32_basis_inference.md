@@ -24,5 +24,5 @@ The direct replication should therefore keep using the 26 rows as the benchmark 
 
 ## Generated Files
 
-- `shared\results\processed\rezaee_2026_section32_basis_inference_rows.csv`
-- `results\reaction_equilibrium\rezaee_2026_section32_basis_inference_summary.json`
+- `shared/results/processed/rezaee_2026_section32_basis_inference_rows.csv`
+- `shared/results/reaction_equilibrium/rezaee_2026_section32_basis_inference_summary.json`

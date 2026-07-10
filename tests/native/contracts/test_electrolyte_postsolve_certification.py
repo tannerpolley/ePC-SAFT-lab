@@ -228,13 +228,19 @@ def test_cli_requires_complete_electrolyte_postsolve_certification() -> None:
         text=True,
     )
 
-    assert result.returncode == 0, result.stderr
+    assert result.returncode == 2, result.stderr
     payload = json.loads(result.stdout)
-    assert payload["complete"] is True
-    assert payload["blockers"] == []
+    assert result.stderr == ""
+    assert payload["complete"] is False
+    assert {
+        "postsolve_certification_incomplete",
+        "postsolve_phase_discovery_incomplete",
+        "postsolve_stage_iii_incomplete",
+        "postsolve_phase_set_not_accepted",
+    }.issubset(payload["blockers"])
     assert (
         payload["electrolyte_postsolve_certification"]["stage_statuses"]["public_route_admission"]
         == "separate_public_admission_gate"
     )
-    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is True
-    assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == ["electrolyte_lle"]
+    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is False
+    assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == []

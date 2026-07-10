@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -11,13 +11,12 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import analysis_root
 import sys
 
-
-
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
+from scripts.plot_outputs import analysis_root
 
 ANALYSIS_ROOT = analysis_root(__file__)
 if str(ANALYSIS_ROOT) not in sys.path:

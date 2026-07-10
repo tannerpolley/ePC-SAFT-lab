@@ -5,7 +5,6 @@ import re
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 PAPER_VALIDATION_ROOT = REPO_ROOT / "analyses" / "paper_validation"
 FORBIDDEN_REFERENCE_ROOT = REPO_ROOT / "data" / "reference" / "paper_validation"

@@ -14,11 +14,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 from urllib.request import url2pathname
 
-from .capability_evidence import (
-    DERIVATIVE_COVERAGE_ROWS,
-    TEST_SLICES,
-    VALIDATION_LANES,
-)
+from .capability_evidence import DERIVATIVE_COVERAGE_ROWS
 
 
 def _package_version() -> str:
@@ -194,9 +190,6 @@ def _capability_evidence_summary(derivative_coverage: dict[str, object]) -> dict
     return {
         "source": "registered_capability_evidence",
         "derivative_row_count": len(derivative_rows) if isinstance(derivative_rows, list) else 0,
-        "pytest_slices": list(TEST_SLICES),
-        "validation_lanes": list(VALIDATION_LANES),
-        "cheap_validation_lanes": [name for name, lane in VALIDATION_LANES.items() if bool(lane["cheap_by_default"])],
     }
 
 
@@ -225,12 +218,7 @@ def _derivative_coverage_capabilities(cppad: dict[str, object]) -> dict[str, obj
         "density_root_implicit_sensitivities": {
             "available": True,
             "production": True,
-            "scope": "validated CppAD-implicit density sensitivities used by native regression Jacobians",
-        },
-        "speciation_implicit_sensitivities": {
-            "available": True,
-            "production": True,
-            "scope": "public frontend requires CppAD-backed solved-state sensitivities; analytic kernels are internal only",
+            "scope": "validated provider CppAD-implicit density-root sensitivities",
         },
         "born_parameter_derivatives": {
             "available": True,

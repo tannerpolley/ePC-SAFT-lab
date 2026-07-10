@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping
 
 import numpy as np
 from scipy.optimize import least_squares
@@ -13,7 +13,6 @@ from .toy_property_eos import (
     solve_liquid_density_root,
     state_from_provider_case,
 )
-
 
 INITIAL_GUESS_POLICY = "reference_pressure_liquid_density_ideal_vapor_seed"
 

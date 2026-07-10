@@ -4,8 +4,8 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-
 from epcsaft.state.native_adapter import ePCSAFTMixture
+
 from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -48,7 +48,7 @@ def _expanded_first_feed() -> np.ndarray:
 def test_khudaida_parameter_bundle_constructs_through_path_without_public_dataset_registration() -> None:
     composition = _expanded_first_feed()
 
-    with pytest.raises(Exception):
+    with pytest.raises(FileNotFoundError, match="Unknown dataset '2026_Khudaida'"):
         ePCSAFTMixture.from_dataset("2026_Khudaida", SPECIES, composition, TEMPERATURE)
 
     mixture = ePCSAFTMixture.from_dataset(
@@ -82,14 +82,12 @@ def test_electrolyte_gfpe_gate_reports_source_backed_prerequisite_complete() -> 
     assert payload["parameter_bundle"]["status"] == "constructs_native_mixture"
     assert payload["native_diagnostics"]["electrolyte_contribution"]["active"] is True
     assert payload["native_diagnostics"]["phase_system"]["max_phase_charge_residual"] <= 1.0e-8
-    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is True
-    assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == ["electrolyte_lle"]
-    assert payload["public_route_state"]["electrolyte_lle"]["proof_routes"] == [
-        "electrolyte_held2_public_route_admission"
-    ]
+    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is False
+    assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == []
+    assert payload["public_route_state"]["electrolyte_lle"]["proof_routes"] == []
 
 
-def test_legacy_closed_route_requirement_rejects_current_public_admission() -> None:
+def test_closed_route_requirement_accepts_internal_validation_state() -> None:
     from scripts.validation import check_electrolyte_gfpe_gate as checker
 
     payload = checker.evaluate_case_dir(
@@ -100,5 +98,5 @@ def test_legacy_closed_route_requirement_rejects_current_public_admission() -> N
 
     result = checker.evaluate_payload(payload, require_public_routes_closed=True)
 
-    assert result["complete"] is False
-    assert "electrolyte_lle_public_route_exposed" in result["blockers"]
+    assert result["complete"] is True
+    assert result["blockers"] == []

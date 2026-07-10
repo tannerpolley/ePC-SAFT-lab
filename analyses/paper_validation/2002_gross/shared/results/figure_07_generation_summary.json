@@ -1,0 +1,115 @@
+{
+  "derivative_status": "verified_exact",
+  "figure_id": "figure_07",
+  "model_row_count": 32,
+  "native_freshness": "fresh_native",
+  "native_freshness_receipt": {
+    "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+    "checker_command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/validation/check_gross_2002_full_replication.py",
+      "--json",
+      "--require-exact-association-hessian",
+      "--require-fresh-native"
+    ],
+    "current_source_identity": "2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94",
+    "embedded_source_identity": "2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94",
+    "embedded_source_identity_algorithm": "sha256-relative-path-content-v1",
+    "embedded_source_identity_file_count": 110,
+    "embedded_source_identity_limit": "Covers the canonical equilibrium object/module/header manifest, every listed equilibrium file, this shared CMake loader/identity helper, the provider source manifest contract, the exact manifest-listed provider target .cpp files, and the .h/.hpp header contracts reachable from manifest include roots. Root/standalone target compile definitions, include/link flags, compiler identity, generated dependency sources, and dependency binaries are outside this source receipt.",
+    "embedded_source_identity_scope": "equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph",
+    "freshness_mode": "embedded_source_identity",
+    "git_commit": "162d32ba225a9fbe0f711b5c28985238589f2d10",
+    "native_module_name": "epcsaft_equilibrium._native_core",
+    "native_module_path": "/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/packages/epcsaft-equilibrium/src/epcsaft_equilibrium/_native_core.cpython-313-x86_64-linux-gnu.so",
+    "source_identity_algorithm": "sha256-relative-path-content-v1",
+    "source_identity_file_count": 110,
+    "source_identity_limit": "Covers the canonical equilibrium object/module/header manifest, every listed equilibrium file, this shared CMake loader/identity helper, the provider source manifest contract, the exact manifest-listed provider target .cpp files, and the .h/.hpp header contracts reachable from manifest include roots. Root/standalone target compile definitions, include/link flags, compiler identity, generated dependency sources, and dependency binaries are outside this source receipt.",
+    "source_identity_matches": true,
+    "source_identity_scope": "equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph"
+  },
+  "normalized_plot_score": 8.323266071643346,
+  "pc_saft_kij": 0.028,
+  "series_scores": {
+    "T_100C": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 0.0473790768323763,
+        "x_butane": 0.0
+      },
+      "model_point_count": 11,
+      "native_freshness": "fresh_native",
+      "normalized_plot_score": 9.95186176754567,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.028882939472598033,
+        "x_butane": 0.0
+      },
+      "source_point_count": 11
+    },
+    "T_140C": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 1.1000845565398905,
+        "x_butane": 0.0
+      },
+      "model_point_count": 9,
+      "native_freshness": "fresh_native",
+      "normalized_plot_score": 9.301484706981459,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.4191091758111254,
+        "x_butane": 0.0
+      },
+      "source_point_count": 9
+    },
+    "T_160C": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 0.7883085448530984,
+        "x_butane": 0.0
+      },
+      "model_point_count": 8,
+      "native_freshness": "fresh_native",
+      "normalized_plot_score": 9.155950792933107,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.506429524240136,
+        "x_butane": 0.0
+      },
+      "source_point_count": 8
+    },
+    "T_190C": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 1.5829026898193987,
+        "x_butane": 0.0
+      },
+      "model_point_count": 4,
+      "native_freshness": "fresh_native",
+      "normalized_plot_score": 8.323266071643346,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 1.0060403570139929,
+        "x_butane": 0.0
+      },
+      "source_point_count": 4
+    }
+  },
+  "source_row_count": 32,
+  "supercritical_partner_caveat": "Gross 2002 identifies Figure 7 as a mixture with one component above its critical point; the retained source set excludes pure-endpoint markers and one mid-high-x 140 degC diamond inside the current public-route solve gap between the low-x and high-x continuation branches.",
+  "system": "ethanol/n-butane",
+  "temperature_series_C": [
+    100.0,
+    140.0,
+    160.0,
+    190.0
+  ]
+}

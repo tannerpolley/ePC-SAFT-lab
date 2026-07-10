@@ -78,6 +78,27 @@ def _payload(point: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def test_contract_only_gate_exposes_only_proven_public_pressure_routes() -> None:
+    args = checker.build_parser().parse_args(["--contracts-only", "--require-complete"])
+
+    payload, exit_code = checker.evaluate(args)
+
+    assert exit_code == 0
+    assert payload["complete"] is True
+    assert payload["boundary_status"] == "contracts_verified"
+    assert set(checker.BOUNDARY_ROUTES) == {"bubble_pressure", "dew_pressure"}
+    assert {route for workflow in payload["workflows"] for route in workflow["routes"]} == {
+        "bubble_pressure",
+        "dew_pressure",
+    }
+    assert {workflow["runtime_status"] for workflow in payload["workflows"]} == {
+        "public_route_open"
+    }
+    assert {workflow["route_point_status"] for workflow in payload["workflows"]} == {
+        "contracts_only"
+    }
+
+
 def test_boundary_trace_checker_accepts_complete_route_point_trace() -> None:
     result = checker.evaluate_boundary_payload(_payload(_point()))
 

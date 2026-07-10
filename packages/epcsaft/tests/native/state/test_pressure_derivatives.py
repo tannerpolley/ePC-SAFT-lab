@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
-from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft._types import InputError
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from support.native_cases import _neutral_state
 
 

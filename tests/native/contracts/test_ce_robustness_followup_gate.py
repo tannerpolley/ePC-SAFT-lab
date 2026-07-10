@@ -55,6 +55,15 @@ def test_ce_robustness_followup_gate_reports_complete_evidence() -> None:
         "caller_seed_exception_observed",
         "caller_seed_exception_message",
     ]
+    assert seed["runtime_result_accepted"] is True
+    assert seed["runtime_initialization"]["seed_source"] == "max_min_feasible_interior"
+    assert seed["runtime_initialization"]["caller_seed_attempted"] is True
+    assert seed["runtime_initialization"]["caller_seed_final_proof_accepted"] is False
+    assert seed["runtime_initialization"]["caller_seed_escalated"] is True
+    assert seed["runtime_initialization"]["caller_seed_rejection_source"] == "caller_initial_amounts"
+    assert seed["runtime_initialization"]["caller_seed_rejection_reason"] == "caller_seed_exception"
+    assert seed["runtime_initialization"]["caller_seed_exception_observed"] is True
+    assert "positive-log lower bound" in seed["runtime_initialization"]["caller_seed_exception_message"]
 
     continuation = report["findings"]["adaptive_eos_activity_continuation"]
     assert continuation["policy"]["mode"] == "adaptive_bisection"

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 from epcsaft import InputError
 from epcsaft_equilibrium.chemical_equilibrium import (
     ChemicalReaction,

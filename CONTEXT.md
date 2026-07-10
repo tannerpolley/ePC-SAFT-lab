@@ -19,7 +19,7 @@ A reusable package workflow exposed through public package interfaces and valid 
 _Avoid_: custom script, repo-specific workaround, synthetic demonstration
 
 **Capability Contract**:
-The package's current, validated statement of what workflows are supported, including the production path and evidence behind each claim. The authoritative public report is `epcsaft.capabilities()`, including its `capability_evidence` payload.
+The package's current, validated statement of what workflows are supported, including the production path and evidence behind each claim. Each distribution owns its report: `epcsaft.capabilities()` for the provider, `epcsaft_equilibrium.capabilities()` for equilibrium, and `epcsaft_regression.capabilities()` for regression.
 _Avoid_: aspiration, roadmap item, dependency presence
 
 ### Thermodynamic Model
@@ -55,7 +55,7 @@ _Avoid_: input row, loose condition dictionary
 ### Equilibrium And Regression
 
 **Public Frontend**:
-The Python-facing API that users import directly from `epcsaft`. The reset frontend exposes `Mixture`, `State`, `Equilibrium`, `Regression`, `ParameterSet`, `ModelOptions`, and the input-template helper only.
+The Python-facing API that users import directly. The provider root `epcsaft` exposes `Mixture`, `State`, `ParameterSet`, `ModelOptions`, and the input-template helper. `epcsaft_equilibrium` owns `Equilibrium`; `epcsaft_regression` owns `Regression`.
 _Avoid_: legacy lazy export layer, compatibility namespace, root free-function surface
 
 **Mixture**:
@@ -83,7 +83,7 @@ An equilibrium family recorded in the native activation matrix for roadmap and t
 _Avoid_: disabled route stub, hidden callable route, soft capability claim
 
 **Neutral VLE Route Spec**:
-A selector-admitted route specification for the production neutral VLE core, configured through `Equilibrium(mixture, route=..., ...)` and executed with `solve()`, such as bubble pressure, bubble temperature, dew pressure, dew temperature, or two-phase TP flash. The route spec changes knowns, unknowns, residual rows, hard constraints, and certification checks without creating a separate public route family, public route method, or Python-owned optimizer loop.
+A selector-admitted route specification for the production neutral VLE core, configured through `Equilibrium(mixture, route=..., ...)` and executed with `solve()`. The currently admitted VLE route specs are bubble pressure and dew pressure. Bubble/dew temperature and two-phase TP flash remain closed until they have live, literature-backed production proof. A route spec changes knowns, unknowns, residual rows, hard constraints, and certification checks without creating a separate public route family, public route method, or Python-owned optimizer loop.
 _Avoid_: wrapper fix, standalone flash route, ad hoc method alias
 
 **Electrolyte LLE Problem**:
@@ -158,12 +158,12 @@ _Avoid_: documented limitation, honest incompleteness, dependency-only proof
 
 - Use `Mixture(parameters, *, model_options=ModelOptions(...), components=None)` as the configured public frontend object.
 - Use `State(mixture, T=..., P=... or rho=..., x=..., phase=...)` for state/property evaluation.
-- Use `Equilibrium(mixture, route=..., ...)` and `Regression(mixture, ...)` to create configured workflow objects. The current production neutral VLE equilibrium call is `Equilibrium(mixture, route=..., ...).solve()` with route specs `bubble_pressure`, `bubble_temperature`, `dew_pressure`, `dew_temperature`, and two-phase `flash`.
+- Import `Equilibrium` from `epcsaft_equilibrium` and `Regression` from `epcsaft_regression` to create configured workflow objects. The evidence-backed production equilibrium routes are `bubble_pressure`, `dew_pressure`, and scoped nonassociating hydrocarbon `single_component_vle`.
 - Use `ParameterSet.from_dataset(...)`, `ParameterSet.from_records(...)`, and `ParameterSet.to_runtime_dict()` as the canonical parameter-family bridge between source records and runtime payloads.
 - Treat `ParameterSet` as parameter data only; put formulation and workflow choices in `ModelOptions` or workflow defaults.
 - Use configured `Equilibrium` and `Regression` workflow objects instead of root-level free functions.
 - Use `TargetDataset.target_family_summaries()` when agent output needs the shared target-family summary shape that generic and reactive regression diagnostics both expose.
-- Treat `epcsaft.capabilities()` and `capability_evidence` as the authoritative package capability surface. Capability text elsewhere must agree with that payload.
+- Treat each distribution's `capabilities()` and `capability_evidence` payload as authoritative for that distribution. Capability text elsewhere must agree with those package-owned reports.
 - Treat declared-not-exposed activation rows as roadmap metadata, not callable route support.
 
 ## Example Dialogue

@@ -6,7 +6,6 @@ import json
 
 import numpy as np
 import pytest
-
 from epcsaft import InputError, SolutionError
 from support.native_cases import _ionic_state, _neutral_state
 
@@ -71,7 +70,7 @@ def test_pressure_density_phase_branches_do_not_cross_at_two_phase_like_state() 
     assert liquid.density() == pytest.approx(10700.137898056397, rel=1e-10)
     assert liquid.density() / vapor.density() > 1.0e4
 
-def test_ionic_high_pressure_liquid_density_branch_remains_stable() -> None:
+def test_ionic_high_pressure_ssm_ds_liquid_branch_remains_stable() -> None:
     mix, species, _, _, _, composition = _ionic_state()
 
     state = mix.state(T=320.0, x=composition, P=5.0e7, phase="liq")
@@ -81,7 +80,7 @@ def test_ionic_high_pressure_liquid_density_branch_remains_stable() -> None:
     assert state.pressure() == pytest.approx(5.0e7)
     assert state.density() == pytest.approx(55177.833730914346, rel=1e-10)
     assert state.z() == pytest.approx(0.3405817367443399, rel=1e-10)
-    assert gamma == {"Na+Cl-": pytest.approx(0.9295936238832602, rel=1e-10)}
+    assert gamma == {"Na+Cl-": pytest.approx(0.9275934250981203, rel=1e-10)}
 
 def test_pressure_density_failure_reports_state_context_and_native_outcome() -> None:
     mix, _, _, _, temperature, composition = _ionic_state()

@@ -5,11 +5,10 @@ import math
 import os
 import platform
 import sys
-
-
-from collections import defaultdict
-from pathlib import Path
 import sys as _bootstrap_sys
+from collections import defaultdict
+from collections.abc import Iterable
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -19,11 +18,10 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-from typing import Dict, Iterable, List, Tuple
-
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -45,8 +43,9 @@ def _fast_machine() -> str:
 platform.machine = _fast_machine
 
 from epcsaft.parameters import get_prop_dict
-from scripts.data.paper_validation_parameters import paper_validation_parameter_path
+
 from scripts._epcsaft_oop import epcsaft_activity_coefficient, epcsaft_density, epcsaft_fugacity_coefficient
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 T_REF = 298.15
 P_REF = 1.0e5
@@ -120,13 +119,13 @@ def parse_float(value) -> float | None:
     return float(val)
 
 
-def read_csv_rows(path: Path) -> Tuple[List[str], List[Dict[str, str]]]:
+def read_csv_rows(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     with path.open("r", newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
         fields = [h.strip() for h in (reader.fieldnames or []) if h and h.strip()]
-        rows: List[Dict[str, str]] = []
+        rows: list[dict[str, str]] = []
         for row in reader:
-            clean: Dict[str, str] = {}
+            clean: dict[str, str] = {}
             for key, value in row.items():
                 if not key:
                     continue
@@ -138,15 +137,15 @@ def read_csv_rows(path: Path) -> Tuple[List[str], List[Dict[str, str]]]:
     return fields, rows
 
 
-def stoich_for_salt(salt: str) -> Tuple[int, int]:
+def stoich_for_salt(salt: str) -> tuple[int, int]:
     spec = SALT_SPECS[salt]
-    zc = abs(int(round(spec["z_cation"])))
-    za = abs(int(round(spec["z_anion"])))
+    zc = abs(round(spec["z_cation"]))
+    za = abs(round(spec["z_anion"]))
     g = math.gcd(zc, za)
     return za // g, zc // g
 
 
-def species_for_combo(salt: str, solvent_system: str) -> List[str]:
+def species_for_combo(salt: str, solvent_system: str) -> list[str]:
     spec = SALT_SPECS[salt]
     solvents = [s for s in solvent_system.split("-") if s]
     solvent_species = []
@@ -162,7 +161,7 @@ def species_for_combo(salt: str, solvent_system: str) -> List[str]:
     return [spec["cation"], spec["anion"], *solvent_species]
 
 
-def normalized_comp(solvent_system: str, comp: Dict[str, float]) -> Dict[str, float]:
+def normalized_comp(solvent_system: str, comp: dict[str, float]) -> dict[str, float]:
     solvents = [s for s in solvent_system.split("-") if s]
     if len(solvents) == 1:
         return {solvents[0]: 1.0}
@@ -173,7 +172,7 @@ def normalized_comp(solvent_system: str, comp: Dict[str, float]) -> Dict[str, fl
     return {s: vals[s] / total for s in solvents}
 
 
-def _weight_to_mole_fractions(weights: Dict[str, float]) -> Dict[str, float]:
+def _weight_to_mole_fractions(weights: dict[str, float]) -> dict[str, float]:
     moles = {}
     for s, w in weights.items():
         mw = SOLVENT_MW[s]
@@ -184,7 +183,7 @@ def _weight_to_mole_fractions(weights: Dict[str, float]) -> Dict[str, float]:
     return {s: moles[s] / total for s in weights}
 
 
-def extract_comp(row: Dict[str, str], solvent_system: str) -> Dict[str, float]:
+def extract_comp(row: dict[str, str], solvent_system: str) -> dict[str, float]:
     solvents = [s for s in solvent_system.split("-") if s]
     if len(solvents) == 1:
         return {solvents[0]: 1.0}
@@ -212,8 +211,8 @@ def extract_comp(row: Dict[str, str], solvent_system: str) -> Dict[str, float]:
         "w_etoh_salt_free": "ethanol",
     }
 
-    xs: Dict[str, float] = {}
-    ws: Dict[str, float] = {}
+    xs: dict[str, float] = {}
+    ws: dict[str, float] = {}
     for key, value in row.items():
         lk = key.strip().lower()
         if lk in xmap and xmap[lk] in solvents:
@@ -228,14 +227,14 @@ def extract_comp(row: Dict[str, str], solvent_system: str) -> Dict[str, float]:
     if xs:
         if len(solvents) == 2 and len(xs) == 1:
             known = next(iter(xs))
-            other = [s for s in solvents if s != known][0]
+            other = next(s for s in solvents if s != known)
             xs[other] = 1.0 - xs[known]
         return normalized_comp(solvent_system, xs)
 
     if ws:
         if len(solvents) == 2 and len(ws) == 1:
             known = next(iter(ws))
-            other = [s for s in solvents if s != known][0]
+            other = next(s for s in solvents if s != known)
             ws[other] = 1.0 - ws[known]
         mole_frac = _weight_to_mole_fractions(ws)
         return normalized_comp(solvent_system, mole_frac)
@@ -243,14 +242,14 @@ def extract_comp(row: Dict[str, str], solvent_system: str) -> Dict[str, float]:
     return normalized_comp(solvent_system, {})
 
 
-def comp_signature(solvent_system: str, comp: Dict[str, float]) -> Tuple[Tuple[str, float], ...]:
+def comp_signature(solvent_system: str, comp: dict[str, float]) -> tuple[tuple[str, float], ...]:
     solvents = [s for s in solvent_system.split("-") if s]
     if len(solvents) <= 1:
         return tuple()
     return tuple((s, round(float(comp.get(s, 0.0)), 6)) for s in solvents)
 
 
-def signature_label(signature: Tuple[Tuple[str, float], ...]) -> str:
+def signature_label(signature: tuple[tuple[str, float], ...]) -> str:
     if not signature:
         return "pure solvent"
     key_map = {"water": "H2O", "methanol": "MeOH", "ethanol": "EtOH"}
@@ -258,13 +257,13 @@ def signature_label(signature: Tuple[Tuple[str, float], ...]) -> str:
     return ", ".join(chunks)
 
 
-def mw_mix(solvent_system: str, comp: Dict[str, float]) -> float:
+def mw_mix(solvent_system: str, comp: dict[str, float]) -> float:
     frac = normalized_comp(solvent_system, comp)
     return sum(frac[s] * SOLVENT_MW[s] for s in frac)
 
 
 def molality_to_species_molefraction(
-    molality: float, salt: str, solvent_system: str, comp: Dict[str, float]
+    molality: float, salt: str, solvent_system: str, comp: dict[str, float]
 ) -> np.ndarray:
     species = species_for_combo(salt, solvent_system)
     solvents = [s for s in solvent_system.split("-") if s]
@@ -274,7 +273,7 @@ def molality_to_species_molefraction(
     n_solv_total = 1.0 / mw_mix(solvent_system, frac)
     nu_cat, nu_an = stoich_for_salt(salt)
 
-    n_totals: Dict[str, float] = {sp: 0.0 for sp in species}
+    n_totals: dict[str, float] = {sp: 0.0 for sp in species}
     for s_key, sp in zip(solvents, solvent_species):
         n_totals[sp] += frac[s_key] * n_solv_total
     n_totals[species[0]] += nu_cat * float(molality)
@@ -292,7 +291,7 @@ def pair_key_for_salt(salt: str) -> str:
     return f"{spec['cation']}{spec['anion']}"
 
 
-def _resolve_pair_key(result: Dict[str, float], salt: str) -> str:
+def _resolve_pair_key(result: dict[str, float], salt: str) -> str:
     target = pair_key_for_salt(salt)
     if target in result:
         return target
@@ -305,7 +304,7 @@ def _resolve_pair_key(result: Dict[str, float], salt: str) -> str:
 
 
 def build_params(
-    dataset: str, salt: str, solvent_system: str, comp: Dict[str, float], user_options: dict | None = None
+    dataset: str, salt: str, solvent_system: str, comp: dict[str, float], user_options: dict | None = None
 ) -> dict:
     x_ref = molality_to_species_molefraction(1e-8, salt, solvent_system, comp)
     return get_prop_dict(
@@ -321,11 +320,11 @@ def mean_ionic_activity_curve(
     dataset: str,
     salt: str,
     solvent_system: str,
-    comp: Dict[str, float],
+    comp: dict[str, float],
     m_max: float,
     points: int = 600,
     user_options: dict | None = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     grid = np.linspace(0.0, float(m_max), int(points))
     params = build_params(dataset, salt, solvent_system, comp, user_options=user_options)
     species = species_for_combo(salt, solvent_system)
@@ -348,11 +347,11 @@ def mean_ionic_activity_curve_x(
     dataset: str,
     salt: str,
     solvent_system: str,
-    comp: Dict[str, float],
+    comp: dict[str, float],
     m_max: float,
     points: int = 600,
     user_options: dict | None = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     grid = np.linspace(0.0, float(m_max), int(points))
     params = build_params(dataset, salt, solvent_system, comp, user_options=user_options)
     species = species_for_combo(salt, solvent_system)
@@ -376,7 +375,7 @@ def solvent_activity_curve(
     m_max: float,
     points: int = 600,
     user_options: dict | None = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     solvents = [s for s in solvent_system.split("-") if s]
     if len(solvents) != 1:
         raise ValueError("solvent_activity_curve currently supports only single-solvent systems.")
@@ -406,7 +405,7 @@ def solvent_activity_curve(
     return grid, gamma
 
 
-def read_miac_dataset(path: Path, solvent_system: str) -> List[Dict[str, object]]:
+def read_miac_dataset(path: Path, solvent_system: str) -> list[dict[str, object]]:
     fields, rows = read_csv_rows(path)
     lookup = {field.lower(): field for field in fields}
 
@@ -417,7 +416,7 @@ def read_miac_dataset(path: Path, solvent_system: str) -> List[Dict[str, object]
     if molality_key is None or miac_m_key is None:
         raise ValueError(f"Missing required columns in {path}.")
 
-    data: List[Dict[str, object]] = []
+    data: list[dict[str, object]] = []
     for row in rows:
         m = parse_float(row.get(molality_key))
         gm = parse_float(row.get(miac_m_key))
@@ -439,9 +438,9 @@ def read_miac_dataset(path: Path, solvent_system: str) -> List[Dict[str, object]
 
 
 def group_by_signature(
-    entries: List[Dict[str, object]],
-) -> Dict[Tuple[Tuple[str, float], ...], List[Dict[str, object]]]:
-    grouped: Dict[Tuple[Tuple[str, float], ...], List[Dict[str, object]]] = defaultdict(list)
+    entries: list[dict[str, object]],
+) -> dict[tuple[tuple[str, float], ...], list[dict[str, object]]]:
+    grouped: dict[tuple[tuple[str, float], ...], list[dict[str, object]]] = defaultdict(list)
     for entry in entries:
         grouped[entry["signature"]].append(entry)
     for group in grouped.values():

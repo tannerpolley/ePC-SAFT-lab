@@ -3,7 +3,10 @@
 Ipopt-backed equilibrium extension package for the ePC-SAFT monorepo.
 
 Use `from epcsaft_equilibrium import Equilibrium` for constructor-configured
-neutral bubble, dew, flash, and nonassociating LLE routes. The extension
+`bubble_pressure`, `dew_pressure`, and scoped nonassociating hydrocarbon
+`single_component_vle` routes. Neutral LLE, neutral TP flash, and bubble/dew
+temperature routes are closed. In particular, the retained neutral-LLE
+sampled-candidate Stage II audit is not a global HELD proof. The extension
 depends on the provider package and its `provider_native_sdk()` contract; the
 provider root does not re-export `Equilibrium`.
 

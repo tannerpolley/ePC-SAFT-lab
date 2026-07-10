@@ -20,13 +20,13 @@ from analyses.package_validation.explicit_association_toybox.scripts.fixed_state
     load_provider_cases,
     load_public_saturation_rows,
 )
-from analyses.package_validation.explicit_association_toybox.scripts.pure_saturation import (
-    PureSaturationResult,
-    solve_pure_saturation,
-)
 from analyses.package_validation.explicit_association_toybox.scripts.jax_pure_saturation import (
     JaxPureSaturationResult,
     solve_jax_picard_pure_saturation,
+)
+from analyses.package_validation.explicit_association_toybox.scripts.pure_saturation import (
+    PureSaturationResult,
+    solve_pure_saturation,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "pure_saturation_validation" / "output"

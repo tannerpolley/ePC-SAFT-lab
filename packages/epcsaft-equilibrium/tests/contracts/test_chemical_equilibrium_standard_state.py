@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 import yaml
 from epcsaft import InputError
-from epcsaft_equilibrium import reactive_speciation
 from epcsaft_equilibrium.chemical_equilibrium import (
     ChemicalReaction,
     ChemicalSpecies,
@@ -16,6 +15,7 @@ from epcsaft_equilibrium.chemical_equilibrium import (
     StandardStateRecord,
     build_standard_state_registry,
 )
+from epcsaft_equilibrium.workflows import _run_standalone_ce_validation
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 ASCANI_ANALYSIS = REPO_ROOT / "analyses" / "paper_validation" / "2023_ascani" / "analysis.yaml"
@@ -211,7 +211,7 @@ def test_reactive_speciation_rejects_mixed_activity_contexts_before_native() -> 
     ]
 
     with pytest.raises(InputError, match="single activity convention"):
-        reactive_speciation(
+        _run_standalone_ce_validation(
             species=[
                 ChemicalSpecies("A", {"X": 1.0}),
                 ChemicalSpecies("B", {"X": 1.0}),

@@ -5,6 +5,7 @@ import math
 import os
 import random
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -18,18 +19,19 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 
 apply_native_runtime_env(os.environ)
 
+from epcsaft import SolutionError
 from epcsaft_equilibrium import (
     ChemicalReaction,
     ChemicalSpecies,
     EquilibriumConstantRecord,
     EquilibriumSolverOptions,
     StandardStateRecord,
-    reactive_speciation,
 )
+from epcsaft_equilibrium.workflows import _run_standalone_ce_validation
 
 FIGURE_DIR = Path(__file__).resolve().parents[1]
 SOURCE_DIR = FIGURE_DIR / "source"
-RESULTS_DIR = FIGURE_DIR / "results"
+RESULTS_DIR = FIGURE_DIR / "output"
 SOURCE_CURVE_PATH = SOURCE_DIR / "phase1_speciation_curve.csv"
 
 MEA_WEIGHT_FRACTION = 0.3
@@ -40,6 +42,14 @@ TEMPERATURES_C = (20.0, 40.0)
 SHUFFLED_SUBSET_COUNT_PER_TEMPERATURE = 17
 SHUFFLED_SUBSET_SEED = 20260629
 SOLVER_OPTIONS = EquilibriumSolverOptions(max_iterations=1000, tolerance=1.0e-8)
+BALANCE_INF_NORM_MAX = 1.0e-8
+REACTION_STATIONARITY_INF_NORM_MAX = 1.0e-6
+LIVE_FAILURE_TEMPERATURE_C = 40.0
+LIVE_FAILURE_LOADING = 0.4
+GENERATION_COMMAND = (
+    "uv run --no-sync python analyses/package_validation/standalone_ce/figures/"
+    "mea_reactive_speciation_oracle_comparison/scripts/generate_data.py"
+)
 
 SPECIES_ORDER = (
     "CO2",
@@ -190,20 +200,32 @@ def _rows_for_state(
     return rows
 
 
-def _ce_diagnostics(result: Any) -> dict[str, Any]:
-    diagnostics = dict(result.diagnostics)
+def _normalized_ce_diagnostics(
+    diagnostics: Mapping[str, Any],
+    *,
+    balance_inf_norm: float,
+    reaction_stationarity_inf_norm: float,
+) -> dict[str, Any]:
+    diagnostics = dict(diagnostics)
     initialization = dict(diagnostics.get("initialization", {}))
     feasible = dict(initialization.get("feasible_initialization", {}))
     continuation = dict(diagnostics.get("continuation", {}))
     trace = list(continuation.get("trace", []))
     corrector = dict(continuation.get("physical_proof_corrector", {}))
     final_stage = dict(trace[-1]) if trace else {}
+    accepted = diagnostics.get("accepted") is True
+    failure_class = diagnostics.get("failure_class")
+    if failure_class is None:
+        if not accepted:
+            raise RuntimeError("standalone CE rejection omitted failure_class")
+        failure_class = "accepted"
     return {
         "solver_status": str(diagnostics["solver_status"]),
         "application_status": str(diagnostics["application_status"]),
-        "accepted": bool(diagnostics["accepted"]),
-        "balance_inf_norm": _max_abs(result.balances),
-        "reaction_stationarity_inf_norm": _max_abs(result.affinities),
+        "accepted": accepted,
+        "failure_class": str(failure_class),
+        "balance_inf_norm": float(balance_inf_norm),
+        "reaction_stationarity_inf_norm": float(reaction_stationarity_inf_norm),
         "native_binding": str(diagnostics["native_binding"]),
         "seed_policy": "max_min_feasible_interior_no_oracle",
         "seed_source": str(initialization.get("seed_source", "")),
@@ -250,6 +272,27 @@ def _ce_diagnostics(result: Any) -> dict[str, Any]:
             corrector.get("final_reaction_stationarity_inf_norm", math.nan)
         ),
     }
+
+
+def _ce_diagnostics(result: Any) -> dict[str, Any]:
+    return _normalized_ce_diagnostics(
+        result.diagnostics,
+        balance_inf_norm=_max_abs(result.balances),
+        reaction_stationarity_inf_norm=_max_abs(result.affinities),
+    )
+
+
+def _rejected_ce_diagnostics(exc: SolutionError) -> dict[str, Any]:
+    if len(exc.args) < 2 or not isinstance(exc.args[1], Mapping):
+        raise RuntimeError("standalone CE rejection omitted native diagnostics") from exc
+    diagnostics = dict(exc.args[1])
+    if diagnostics.get("accepted") is not False:
+        raise RuntimeError("standalone CE rejection diagnostics did not mark the state rejected") from exc
+    return _normalized_ce_diagnostics(
+        diagnostics,
+        balance_inf_norm=float(diagnostics["balance_inf_norm"]),
+        reaction_stationarity_inf_norm=float(diagnostics["reaction_stationarity_inf_norm"]),
+    )
 
 
 def _source_diagnostics() -> dict[str, Any]:
@@ -364,7 +407,7 @@ def _solve_no_oracle(
     loading: float,
 ) -> Any:
     effective_feed_loading = max(float(loading), MIN_EFFECTIVE_LOADING)
-    return reactive_speciation(
+    return _run_standalone_ce_validation(
         species=species,
         reactions=reactions,
         feed_amounts={"MEA": 1.0, "H2O": WATER_PER_AMINE_30WT, "CO2": effective_feed_loading},
@@ -372,6 +415,72 @@ def _solve_no_oracle(
         initial_amounts=None,
         solver_options=SOLVER_OPTIONS,
     )
+
+
+def _solve_state(
+    *,
+    species: list[ChemicalSpecies],
+    reactions: list[ChemicalReaction],
+    temperature_C: float,
+    loading: float,
+) -> dict[str, Any]:
+    try:
+        result = _solve_no_oracle(
+            species=species,
+            reactions=reactions,
+            temperature_C=temperature_C,
+            loading=loading,
+        )
+    except SolutionError as exc:
+        return {
+            "result": None,
+            "mole_fractions": {
+                species_label: math.nan for species_label in (*SPECIES_ORDER, *COMPOSITE_SPECIES)
+            },
+            "diagnostics": _rejected_ce_diagnostics(exc),
+        }
+    return {
+        "result": result,
+        "mole_fractions": _ce_mole_fractions(result),
+        "diagnostics": _ce_diagnostics(result),
+    }
+
+
+def _live_truth_metadata(trace_summary_frame: pd.DataFrame) -> dict[str, Any]:
+    rejected = trace_summary_frame[trace_summary_frame["accepted"].eq(False)]
+    if rejected.empty:
+        return {
+            "validation_status": "complete",
+            "current_live_failure": None,
+            "snapshot_status": "current_live_reproduction",
+            "rejected_state_point_count": 0,
+        }
+
+    canonical = rejected[
+        rejected["temperature_C"].sub(LIVE_FAILURE_TEMPERATURE_C).abs().le(1.0e-12)
+        & rejected["CO2_loading"].sub(LIVE_FAILURE_LOADING).abs().le(1.0e-12)
+    ]
+    if len(canonical) != 1:
+        raise RuntimeError(
+            "fresh MEA sweep rejected states but did not retain exactly one canonical 40 C, 0.4 loading failure"
+        )
+    row = canonical.iloc[0]
+    return {
+        "validation_status": "blocked_live_reproduction",
+        "current_live_failure": {
+            "temperature_C": float(row["temperature_C"]),
+            "loading_mol_co2_per_mol_mea": float(row["CO2_loading"]),
+            "accepted": bool(row["accepted"]),
+            "failure_class": str(row["failure_class"]),
+            "balance_inf_norm": float(row["balance_inf_norm"]),
+            "reaction_stationarity_inf_norm": float(row["reaction_stationarity_inf_norm"]),
+            "balance_inf_norm_max": BALANCE_INF_NORM_MAX,
+            "reaction_stationarity_inf_norm_max": REACTION_STATIONARITY_INF_NORM_MAX,
+            "captured_by": GENERATION_COMMAND,
+        },
+        "snapshot_status": "superseded_by_current_live_failure",
+        "rejected_state_point_count": len(rejected),
+    }
 
 
 def _source_groups(source_curve: pd.DataFrame) -> list[tuple[float, float, pd.DataFrame]]:
@@ -451,14 +560,14 @@ def generate() -> dict[str, Any]:
     for temperature_C, loading, _rows in groups:
         source_mole_fractions = source_state_by_key[(temperature_C, loading)]
         effective_feed_loading = max(loading, MIN_EFFECTIVE_LOADING)
-        result = _solve_no_oracle(
+        outcome = _solve_state(
             species=species,
             reactions=reactions,
             temperature_C=temperature_C,
             loading=loading,
         )
-        ce_mole_fractions = _ce_mole_fractions(result)
-        ce_diagnostics = _ce_diagnostics(result)
+        ce_mole_fractions = outcome["mole_fractions"]
+        ce_diagnostics = outcome["diagnostics"]
         source_rows.extend(
             _rows_for_state(
                 role="source_oracle",
@@ -503,14 +612,14 @@ def generate() -> dict[str, Any]:
     shuffled_rows: list[dict[str, Any]] = []
     for order_index, (temperature_C, loading) in enumerate(_shuffled_subset_keys(groups)):
         source_mole_fractions = source_state_by_key[(temperature_C, loading)]
-        result = _solve_no_oracle(
+        outcome = _solve_state(
             species=species,
             reactions=reactions,
             temperature_C=temperature_C,
             loading=loading,
         )
-        ce_mole_fractions = _ce_mole_fractions(result)
-        diagnostics = _ce_diagnostics(result)
+        ce_mole_fractions = outcome["mole_fractions"]
+        diagnostics = outcome["diagnostics"]
         max_abs_error = max(
             abs(ce_mole_fractions[species_label] - source_mole_fractions[species_label])
             for species_label in (*SPECIES_ORDER, *COMPOSITE_SPECIES)
@@ -539,6 +648,8 @@ def generate() -> dict[str, Any]:
     comparison_frame = pd.DataFrame(comparison_rows)
     trace_summary_frame = pd.DataFrame(trace_summary_rows)
     shuffled_audit = pd.DataFrame(shuffled_rows)
+    live_truth = _live_truth_metadata(trace_summary_frame)
+    snapshot_status = live_truth["snapshot_status"]
     overlay_plot_frame = pd.concat(
         [
             source_frame[source_frame["species"].isin(PLOT_SPECIES)],
@@ -571,6 +682,7 @@ def generate() -> dict[str, Any]:
 
     strict = _strict_summary(comparison_frame)
     shuffled_strict = {
+        "snapshot_status": snapshot_status,
         "attempt_count": len(shuffled_audit),
         "all_accepted": bool(shuffled_audit["accepted"].all()),
         "all_no_source_oracle_seed": bool(
@@ -601,6 +713,7 @@ def generate() -> dict[str, Any]:
         "physical_proof_corrector_final_balance_inf_norm",
     ]
     robustness_diagnostics = {
+        "snapshot_status": snapshot_status,
         "artifact": str((RESULTS_DIR / "mea_ce_unassisted_seed_audit.csv").relative_to(REPO_ROOT)).replace(
             "\\",
             "/",
@@ -615,19 +728,22 @@ def generate() -> dict[str, Any]:
         trace_summary_frame["physical_proof_corrector_attempted"].eq(True)
         & (
             trace_summary_frame["physical_proof_corrector_initial_reaction_stationarity_inf_norm"]
-            > 1.0e-6
+            > REACTION_STATIONARITY_INF_NORM_MAX
         )
         & (
             trace_summary_frame["physical_proof_corrector_final_reaction_stationarity_inf_norm"]
-            <= 1.0e-6
+            <= REACTION_STATIONARITY_INF_NORM_MAX
         )
-        & (trace_summary_frame["physical_proof_corrector_final_balance_inf_norm"] <= 1.0e-8)
+        & (trace_summary_frame["physical_proof_corrector_final_balance_inf_norm"] <= BALANCE_INF_NORM_MAX)
     ]
     report = {
         "schema_version": "epcsaft.standalone_ce.mea_speciation_oracle_comparison.v2",
         "source_oracle": str(SOURCE_CURVE_PATH.relative_to(REPO_ROOT)).replace("\\", "/"),
-        "public_route": "reactive_speciation",
-        "ce_workflow": "epcsaft_equilibrium.reactive_speciation",
+        "validation_scope": "internal_standalone_ce",
+        "validation_entrypoint": "epcsaft_equilibrium.workflows._run_standalone_ce_validation",
+        "validation_status": live_truth["validation_status"],
+        "current_live_failure": live_truth["current_live_failure"],
+        "rejected_state_point_count": live_truth["rejected_state_point_count"],
         "temperature_C": list(TEMPERATURES_C),
         "loading_count": int(comparison_frame["CO2_loading"].nunique()),
         "species": list(SPECIES_ORDER),
@@ -638,6 +754,7 @@ def generate() -> dict[str, Any]:
         "solver_options": {"max_iterations": SOLVER_OPTIONS.max_iterations, "tolerance": SOLVER_OPTIONS.tolerance},
         "zero_loading_note": "source-oracle loading 0.0 is solved with effective CE feed loading 1e-6 to match the Smith-Missen source solver's minimum loading convention",
         "pointwise_unassisted": {
+            "snapshot_status": snapshot_status,
             **strict,
             "artifact": str((RESULTS_DIR / "ce_reactive_speciation_curve.csv").relative_to(REPO_ROOT)).replace(
                 "\\",
@@ -645,6 +762,7 @@ def generate() -> dict[str, Any]:
             ),
         },
         "ce_owned_continuation_trace": {
+            "snapshot_status": snapshot_status,
             "artifact": str((RESULTS_DIR / "mea_ce_continuation_trace_summary.csv").relative_to(REPO_ROOT)).replace(
                 "\\",
                 "/",
@@ -683,8 +801,8 @@ def generate() -> dict[str, Any]:
             and strict["all_no_source_oracle_seed"]
             and strict["all_final_lambda_one"]
             and strict["max_abs_error"] <= 1.0e-8
-            and strict["max_balance_inf_norm"] <= 1.0e-8
-            and strict["max_reaction_stationarity_inf_norm"] <= 1.0e-6
+            and strict["max_balance_inf_norm"] <= BALANCE_INF_NORM_MAX
+            and strict["max_reaction_stationarity_inf_norm"] <= REACTION_STATIONARITY_INF_NORM_MAX
             and shuffled_strict["all_accepted"]
             and shuffled_strict["all_no_source_oracle_seed"]
             and shuffled_strict["max_abs_error"] <= 1.0e-8

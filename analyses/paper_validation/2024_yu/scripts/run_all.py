@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 SOURCE_PATTERNS = (
     "docs/papers/md/Yu - 2024 - Highly efficient lithium extraction*.md",
     "docs/papers/md/Yu - 2024 - Supporting*.md",

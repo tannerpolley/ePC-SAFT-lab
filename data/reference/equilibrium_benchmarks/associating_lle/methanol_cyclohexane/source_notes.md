@@ -17,6 +17,6 @@ Digitization basis:
 
 Scope:
 
-- #145 proves internal associating LLE source data and exact-association derivative gates before public admission.
-- Public `Equilibrium(..., route="lle")` remains limited to neutral nonassociating inputs until #190.
+- The fixture retains internal associating LLE source data and exact-association derivative evidence.
+- Public `Equilibrium(..., route="lle")` is closed because sampled-candidate diagnostics do not establish global HELD phase-set completeness.
 - Water/1-pentanol is retained as a later two-associating-component stress case and is not required for this fixture to complete.

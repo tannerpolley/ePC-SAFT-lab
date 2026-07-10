@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
-import sys
-
-
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -14,13 +11,19 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
+import sys
+
+from scripts.plot_outputs import analysis_scripts_dir
+
+ANALYSIS_SCRIPTS = analysis_scripts_dir(__file__)
+if str(ANALYSIS_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(ANALYSIS_SCRIPTS))
+
+import _common as common
+
+
 def main() -> None:
-    analysis_root = Path(__file__).resolve().parents[2]
-    for table_id in ("table_009", "table_010"):
-        table_root = analysis_root / "tables" / table_id
-        (table_root / "source").mkdir(parents=True, exist_ok=True)
-        (table_root / "results").mkdir(parents=True, exist_ok=True)
-    print("[skip] no standalone data-generation step for Khudaida tables 9 and 10.")
+    common.write_tables_9_10_data(Path(__file__).resolve().parents[2] / "tables")
 
 
 if __name__ == "__main__":

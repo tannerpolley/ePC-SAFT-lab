@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 """Dielectric-differential visualization for salts in water (rules 1-6)."""
 
 import csv
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -13,13 +12,12 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
 import sys
-
-
 
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT
 
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -29,11 +27,13 @@ from scripts._env import require_epcsaft_install
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
-from scripts.data.paper_validation_parameters import paper_validation_parameter_path
+
 from scripts._epcsaft_oop import epcsaft_relative_permittivity
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
 from scripts.plot_outputs import fits_plot_path, save_plot_figure
 
 

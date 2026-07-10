@@ -5,6 +5,7 @@ import json
 import math
 import sys
 from collections import defaultdict
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -25,16 +26,16 @@ apply_to_current_process()
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
-from PIL import Image, ImageDraw
-
 import epcsaft
 import epcsaft_equilibrium
+import matplotlib.pyplot as plt
+import numpy as np
 from epcsaft_equilibrium._native import extension_native_core
+from PIL import Image, ImageDraw
 
 FIGURE_ID = "figure_07"
 MIN_COMPOSITION = 1.0e-6
+MAX_CONTINUATION_GAP = 0.05
 SOURCE_SERIES = ("T_100C", "T_140C", "T_160C", "T_190C")
 SERIES_STYLE = {
     "T_100C": {"label": "T=100°C", "marker": "^", "color": "#111111"},
@@ -147,6 +148,11 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+
+
+def _strip_trailing_whitespace(path: Path) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -421,6 +427,33 @@ def _solve_route_point(
     ).solve(solver_options=solver_options)
 
 
+def _continuation_bridge_coordinates(start: float, target: float) -> list[float]:
+    segment_count = max(1, math.ceil(abs(target - start) / MAX_CONTINUATION_GAP))
+    return [
+        start + (target - start) * index / segment_count
+        for index in range(1, segment_count)
+    ]
+
+
+def _validated_primal_continuation(
+    result: epcsaft_equilibrium.EquilibriumResult,
+    *,
+    label: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    diagnostics = result.diagnostics
+    if diagnostics.get("hessian_approximation") != "exact" or diagnostics.get("exact_hessian_available") is not True:
+        raise RuntimeError(f"{label} did not report exact Hessian support.")
+    if diagnostics.get("postsolve_accepted") is not True:
+        raise RuntimeError(f"{label} was not postsolve accepted.")
+    returned_state = diagnostics.get("continuation_state")
+    if not isinstance(returned_state, Mapping) or "variables" not in returned_state:
+        raise RuntimeError(f"{label} did not return primal continuation variables.")
+    variables = [float(value) for value in returned_state["variables"]]
+    if not variables or any(not math.isfinite(value) for value in variables):
+        raise RuntimeError(f"{label} returned invalid primal continuation variables.")
+    return diagnostics, {"variables": variables}
+
+
 def _solve_series(source_rows: list[dict[str, Any]], series: str) -> list[dict[str, Any]]:
     mixture = _mixture()
     curve_rows = [row for row in source_rows if row["series"] == series]
@@ -439,16 +472,37 @@ def _solve_series(source_rows: list[dict[str, Any]], series: str) -> list[dict[s
     solved_by_key: dict[tuple[str, float], dict[str, Any]] = {}
     for sequence in solve_sequences:
         continuation_state = None
+        previous_coordinate: float | None = None
         for row in sequence:
             x_butane = float(row["x_butane"])
             temperature_k = float(row["T_K"])
+            bridge_coordinates = (
+                _continuation_bridge_coordinates(previous_coordinate, x_butane)
+                if previous_coordinate is not None
+                else []
+            )
+            for bridge_coordinate in bridge_coordinates:
+                bridge_result = _solve_route_point(
+                    mixture,
+                    temperature_k,
+                    bridge_coordinate,
+                    continuation_state,
+                )
+                _, continuation_state = _validated_primal_continuation(
+                    bridge_result,
+                    label=f"{series} continuation bridge at x_butane={bridge_coordinate:.6f}",
+                )
             result = _solve_route_point(mixture, temperature_k, x_butane, continuation_state)
-            diagnostics = result.diagnostics
-            continuation_state = diagnostics.get("continuation_state")
-            if diagnostics.get("hessian_approximation") != "exact" or diagnostics.get("exact_hessian_available") is not True:
-                raise RuntimeError(f"{series} solve at x_butane={x_butane:.3f} did not report exact Hessian support.")
-            if diagnostics.get("postsolve_accepted") is not True:
-                raise RuntimeError(f"{series} solve at x_butane={x_butane:.3f} was not postsolve accepted.")
+            diagnostics, continuation_state = _validated_primal_continuation(
+                result,
+                label=f"{series} solve at x_butane={x_butane:.6f}",
+            )
+            maximum_continuation_gap = (
+                abs(x_butane - previous_coordinate) / (len(bridge_coordinates) + 1)
+                if previous_coordinate is not None
+                else 0.0
+            )
+            previous_coordinate = x_butane
             solved_by_key[(series, x_butane)] = {
                 "series": series,
                 "T_K": temperature_k,
@@ -464,6 +518,8 @@ def _solve_series(source_rows: list[dict[str, Any]], series: str) -> list[dict[s
                 "postsolve_accepted": bool(diagnostics.get("postsolve_accepted")),
                 "hessian_backend": diagnostics.get("hessian_backend", ""),
                 "iteration_count": diagnostics.get("iteration_count", ""),
+                "continuation_bridge_count": len(bridge_coordinates),
+                "maximum_continuation_gap": maximum_continuation_gap,
             }
 
     for row in sorted(curve_rows, key=lambda item: float(item["x_butane"])):
@@ -570,6 +626,7 @@ def _write_plot(source_rows: list[dict[str, Any]], model_rows: list[dict[str, An
     fig.text(0.02, 0.01, f"minimum series score: {score_payload['normalized_plot_score']:.2f}; exact Hessian route verified", fontsize=8)
     fig.savefig(PNG, dpi=180)
     fig.savefig(SVG)
+    _strip_trailing_whitespace(SVG)
     fig.savefig(PDF)
     plt.close(fig)
 
@@ -604,7 +661,7 @@ def _write_plotted_csv(source_rows: list[dict[str, Any]], model_rows: list[dict[
 
 
 def _native_receipt() -> dict[str, Any]:
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=extension_native_core(),
         checker_command=[
             "uv",
@@ -731,12 +788,15 @@ def main() -> int:
             "postsolve_accepted",
             "hessian_backend",
             "iteration_count",
+            "continuation_bridge_count",
+            "maximum_continuation_gap",
         ],
     )
     _write_plotted_csv(source_rows, model_rows)
     _write_fit_statistics_csv(score_payload)
     _write_plot(source_rows, model_rows, score_payload)
     summary = _summary(score_payload, native_receipt)
+    _write_json(SUMMARY_JSON, summary)
     _update_manifest(score_payload, native_receipt)
     return 0
 

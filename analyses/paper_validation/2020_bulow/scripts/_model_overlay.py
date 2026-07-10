@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functools import lru_cache
+from functools import cache, lru_cache
 
 import numpy as np
 
@@ -9,13 +9,14 @@ from scripts._env import require_epcsaft_install
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
-from scripts.data.paper_validation_parameters import paper_validation_parameter_path
+
 from scripts._epcsaft_oop import (
     epcsaft_density,
-    epcsaft_solvation_free_energy,
     epcsaft_fugacity_coefficient_terms,
     epcsaft_pressure,
+    epcsaft_solvation_free_energy,
 )
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 R_GAS = 8.31446261815324
 T_REF = 298.15
@@ -68,7 +69,7 @@ def _species_for_ion(ion: str, solvent: str) -> list[str]:
     raise KeyError(f"Unsupported ion '{ion}'.")
 
 
-@lru_cache(maxsize=None)
+@cache
 def gsolv_ion(variant: str, ion: str, solvent: str, d_born_mode: int | None = None) -> float:
     dataset_name = VARIANT_DATASET[variant]
     species = _species_for_ion(ion, solvent)
@@ -85,7 +86,7 @@ def gsolv_ion(variant: str, ion: str, solvent: str, d_born_mode: int | None = No
     return float(values[ion]) / 1000.0
 
 
-@lru_cache(maxsize=None)
+@cache
 def _infinite_dilution_terms(variant: str, ion: str, solvent: str, d_born_mode: int | None = None):
     dataset_name = VARIANT_DATASET[variant]
     species = _species_for_ion(ion, solvent)
@@ -121,7 +122,7 @@ def _infinite_dilution_terms(variant: str, ion: str, solvent: str, d_born_mode: 
     return terms, ion_idx
 
 
-@lru_cache(maxsize=None)
+@cache
 def contribution_breakdown(
     variant: str,
     ion: str,

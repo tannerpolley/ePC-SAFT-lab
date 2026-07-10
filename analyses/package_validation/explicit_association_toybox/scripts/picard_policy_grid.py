@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import argparse
 import statistics
+import sys
 from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
-import sys
+from typing import TypeVar
 
 import numpy as np
+
+T = TypeVar("T")
 
 if __package__ in {None, ""}:
     REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -25,7 +28,9 @@ if __package__ in {None, ""}:
         PicardPolicy,
         evaluate_picard_policy,
     )
-    from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import solve_exact_site_fractions
+    from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import (
+        solve_exact_site_fractions,
+    )
     from analyses.package_validation.explicit_association_toybox.scripts.propagation_evidence import (
         relative_error,
         timed_closure,
@@ -177,7 +182,7 @@ def _policy_case_row(case: AssociationEvidenceCase, policy: PicardPolicy, *, rep
     }
 
 
-def _timed_repeat[T](function: Callable[[], T], *, repeat_count: int) -> tuple[T, list[float]]:
+def _timed_repeat(function: Callable[[], T], *, repeat_count: int) -> tuple[T, list[float]]:
     result: T | None = None
     timings: list[float] = []
     for _ in range(repeat_count):

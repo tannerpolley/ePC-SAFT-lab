@@ -6,10 +6,8 @@ import argparse
 import csv
 import math
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -19,12 +17,11 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import figure_root_dir
-from scripts.plot_outputs import REPO_ROOT
-from typing import Dict, List
 
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT, figure_root_dir
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(REPO_ROOT) not in sys.path:
@@ -46,6 +43,7 @@ from figure6b_libr_ethanol_contributions import (
     _molality_to_species_molefraction,
     _salt_mole_fraction_from_molality,
 )
+
 from scripts._epcsaft_oop import epcsaft_compressibility_factor, epcsaft_density, epcsaft_fugacity_coefficient_terms
 
 matplotlib.use("Agg")
@@ -58,7 +56,7 @@ FIGURE_ROOT = figure_root_dir(__file__)
 DEFAULT_MIAC_DATA = FIGURE_ROOT / "source" / "ethanol-LiBr.csv"
 
 
-def _mean_ionic_delta(terms: Dict[str, np.ndarray], terms_inf: Dict[str, np.ndarray], key: str) -> float:
+def _mean_ionic_delta(terms: dict[str, np.ndarray], terms_inf: dict[str, np.ndarray], key: str) -> float:
     a = np.asarray(terms[key], dtype=float)
     b = np.asarray(terms_inf[key], dtype=float)
     return float(0.5 * ((a[0] - b[0]) + (a[1] - b[1])))
@@ -69,14 +67,14 @@ def run_analysis(
     output_csv: Path,
     output_plot: Path,
     grid_points: int,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     m_exp, _, _ = _load_exp_data(miac_data_path)
     m_upper = float(np.max(m_exp))
     m_grid = np.linspace(0.0, m_upper, int(grid_points))
     x_grid = _salt_mole_fraction_from_molality(m_grid)
     params = _build_params(user_options={})
 
-    rows: List[Dict[str, float]] = []
+    rows: list[dict[str, float]] = []
     max_closure = 0.0
     max_lnfug_closure = 0.0
     max_mu_closure = 0.0

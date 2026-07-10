@@ -27,6 +27,7 @@ BUILD_DIR = REPO_ROOT / "build" / "dev"
 PACKAGE_DIR = PROVIDER_MODULE_DIR
 LOG_FILE_NAME = "build_epcsaft.log"
 STALE_LOCK_SECONDS = 120
+EDITABLE_MARKER_NAME = "_editable_skbc_epcsaft.py"
 
 
 class BuildProfile(NamedTuple):
@@ -234,10 +235,18 @@ def _editable_package_dir() -> Path | None:
     if not purelib:
         return None
     site_root = Path(purelib)
-    if not (site_root / "_epcsaft_editable.py").is_file():
-        return None
     package_dir = site_root / "epcsaft"
-    return package_dir if package_dir.is_dir() else None
+    if not (site_root / EDITABLE_MARKER_NAME).is_file():
+        stale_native_artifacts = sorted(package_dir.glob("_core*.so")) if package_dir.is_dir() else []
+        if stale_native_artifacts:
+            paths = ", ".join(str(path) for path in stale_native_artifacts)
+            raise RuntimeError(
+                f"Native import target exists without the required {EDITABLE_MARKER_NAME} editable marker: {paths}"
+            )
+        return None
+    if not package_dir.is_dir():
+        raise RuntimeError(f"Editable marker exists but the epcsaft package directory is missing: {package_dir}")
+    return package_dir
 
 
 def _editable_native_artifacts() -> list[Path]:
@@ -478,6 +487,7 @@ def _configure(
         f"-DPython_EXECUTABLE={sys.executable}",
         f"-Dpybind11_DIR={pybind11_dir}",
     ]
+    cmd.extend(["-U", "GIT_EXECUTABLE"])
     if ceres_dir is not None:
         cmd.append(f"-DCeres_DIR={ceres_dir}")
     if ipopt_dir is not None:

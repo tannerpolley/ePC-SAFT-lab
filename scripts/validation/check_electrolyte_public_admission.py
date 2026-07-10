@@ -21,14 +21,17 @@ for import_root in (REPO_ROOT, SRC_ROOT, EQUILIBRIUM_SRC_ROOT):
         sys.path.insert(0, import_path)
 
 from scripts.data.paper_validation_parameters import paper_validation_parameter_path
-from scripts.validation import check_electrolyte_gfpe_gate
-from scripts.validation import check_electrolyte_postsolve_certification
-from scripts.validation import check_electrolyte_stage_iii_refinement
-from scripts.validation import check_electrolyte_tpd_gate
+from scripts.validation import (
+    check_electrolyte_gfpe_gate,
+    check_electrolyte_postsolve_certification,
+    check_electrolyte_stage_iii_refinement,
+    check_electrolyte_tpd_gate,
+)
 
-ALGORITHM_SCOPE = "source_backed_electrolyte_lle_public_admission"
+ALGORITHM_SCOPE = "source_backed_electrolyte_lle_readmission"
 PUBLIC_ROUTE = "electrolyte_lle"
 SELECTOR_FAMILY = "electrolyte_lle"
+PUBLIC_PROOF_ROUTE = "electrolyte_held2_public_route_admission"
 SOURCE_FIXTURE = "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl"
 PARAMETER_BUNDLE = "analyses/paper_validation/2026_khudaida/parameters"
 CHECKER_CHAIN = [
@@ -50,6 +53,20 @@ UNSUPPORTED_SURFACES = {
     "release_claim": "closed",
     "unsupported_generalized_electrolyte": "closed",
 }
+
+
+def _public_route_open(public_state: Mapping[str, Any]) -> bool:
+    electrolyte = dict(public_state.get("electrolyte_lle") or {})
+    return (
+        electrolyte.get("present") is True
+        and electrolyte.get("production_exposed") is True
+        and electrolyte.get("exposure_status") == "production_exposed"
+        and electrolyte.get("public_routes") == [PUBLIC_ROUTE]
+        and electrolyte.get("proof_routes") == [PUBLIC_PROOF_ROUTE]
+        and PUBLIC_ROUTE in public_state.get("capabilities_public_routes", [])
+        and SELECTOR_FAMILY in public_state.get("production_families", [])
+        and public_state.get("public_route_family_map", {}).get(PUBLIC_ROUTE) == SELECTOR_FAMILY
+    )
 
 
 def _jsonable(value: Any) -> Any:
@@ -79,13 +96,14 @@ def _validate_gate(gate: dict[str, Any], *, blocker: str, complete_status: str =
     return blockers
 
 
-def _registry_evidence_payload() -> dict[str, Any]:
+def _registry_evidence_payload(public_state: Mapping[str, Any]) -> dict[str, Any]:
+    route_open = _public_route_open(public_state)
     return {
         "source_fixture": SOURCE_FIXTURE,
         "parameter_bundle": PARAMETER_BUNDLE,
         "checker_chain": CHECKER_CHAIN,
-        "public_route_status": "public_route_open",
-        "public_route": PUBLIC_ROUTE,
+        "public_route_status": "public_route_open" if route_open else "closed_repair_target",
+        "target_public_route": PUBLIC_ROUTE,
         "selector_family": SELECTOR_FAMILY,
         "tolerances": {
             "charge_balance": check_electrolyte_tpd_gate.CHARGE_TOLERANCE,
@@ -126,6 +144,7 @@ def _public_route_payload(case_dir: Path, checker_command: list[str] | None) -> 
     apply_native_runtime_env(os.environ)
     import epcsaft
     import epcsaft_equilibrium
+
     from scripts.validation import native_freshness
 
     fixture, expanded_feed_rows, _expanded_tieline_rows = check_electrolyte_gfpe_gate._source_fixture_payload(case_dir)
@@ -184,7 +203,7 @@ def _public_route_payload(case_dir: Path, checker_command: list[str] | None) -> 
 
     diagnostics = dict(result.diagnostics)
     postsolve = dict(diagnostics.get("postsolve_certification", {}))
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=epcsaft_equilibrium._native.extension_native_core(),
         checker_command=checker_command
         or [
@@ -230,12 +249,18 @@ def _public_route_payload(case_dir: Path, checker_command: list[str] | None) -> 
     )
 
 
-def _parent_closeout_payload() -> dict[str, Any]:
+def _parent_closeout_payload(public_state: Mapping[str, Any]) -> dict[str, Any]:
+    route_open = _public_route_open(public_state)
     return {
         "parent_issue": 191,
-        "status": "prepared_for_close_after_issue_314_merge",
-        "remaining_m4_blockers": [],
-        "next_gate": "M6 issue #192 downstream electrolyte evidence",
+        "status": "ready_for_close" if route_open else "blocked_pending_readmission",
+        "remaining_m4_blockers": []
+        if route_open
+        else [
+            "native_selector_integration",
+            "current_public_route_absent",
+        ],
+        "next_gate": "M6 issue #192 downstream electrolyte evidence" if route_open else "M4 electrolyte readmission",
     }
 
 
@@ -246,8 +271,12 @@ def _validate_public_route_state(public_state: dict[str, Any]) -> list[str]:
         blockers.append("electrolyte_lle_activation_row_missing")
     if electrolyte.get("production_exposed") is not True:
         blockers.append("electrolyte_lle_public_route_not_exposed")
+    if electrolyte.get("exposure_status") != "production_exposed":
+        blockers.append("electrolyte_lle_exposure_status_mismatch")
     if electrolyte.get("public_routes") != [PUBLIC_ROUTE]:
         blockers.append("electrolyte_lle_public_route_mismatch")
+    if electrolyte.get("proof_routes") != [PUBLIC_PROOF_ROUTE]:
+        blockers.append("electrolyte_lle_proof_route_mismatch")
     if PUBLIC_ROUTE not in public_state.get("capabilities_public_routes", []):
         blockers.append("electrolyte_lle_capability_public_route_missing")
     if SELECTOR_FAMILY not in public_state.get("production_families", []):
@@ -277,6 +306,10 @@ def _accepted_status(block: Mapping[str, Any]) -> bool:
 
 def _shared_certification_blockers(shared: Mapping[str, Any]) -> list[str]:
     blockers: list[str] = []
+    if shared.get("shared_contract_level") != "production_public_route":
+        blockers.append("electrolyte_shared_certification_public_route_closed")
+    if shared.get("public_admission_status") != "accepted":
+        blockers.append("electrolyte_shared_certification_public_admission_missing")
     if shared.get("route") != PUBLIC_ROUTE:
         blockers.append("electrolyte_shared_certification_route_mismatch")
     if shared.get("selector_family") != SELECTOR_FAMILY:
@@ -288,7 +321,7 @@ def _shared_certification_blockers(shared: Mapping[str, Any]) -> list[str]:
 
     residuals = shared.get("residual_blocks", {})
     if not isinstance(residuals, Mapping):
-        return blockers + ["electrolyte_shared_certification_residual_blocks_missing"]
+        return [*blockers, "electrolyte_shared_certification_residual_blocks_missing"]
 
     reduced = residuals.get("reduced_electroneutral_basis", {})
     if not isinstance(reduced, Mapping) or not _accepted_status(reduced):
@@ -355,7 +388,10 @@ def _validate_shared_certification(shared: Any) -> list[str]:
 
 def _shared_certification_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
     public = dict(payload.get("public_admission", {}))
-    stage_iii = dict(payload.get("electrolyte_stage_iii_refinement", public.get("electrolyte_stage_iii_refinement", {})))
+    route_admitted = public.get("status") == "accepted" and _public_route_open(payload.get("public_route_state", {}))
+    stage_iii = dict(
+        payload.get("electrolyte_stage_iii_refinement", public.get("electrolyte_stage_iii_refinement", {}))
+    )
     postsolve = dict(payload.get("electrolyte_postsolve_certification", {}))
     readiness = dict(payload.get("held2_readiness_gate", {}))
     held2 = dict(payload.get("held2_phase_discovery", public.get("held2_phase_discovery", {})))
@@ -385,26 +421,29 @@ def _shared_certification_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
         "problem_kind": public.get("problem_kind"),
         "family_residual_block": "electrolyte_lle",
         "variable_model": "counterion_pair_reduced_phase_amounts_plus_phase_volume",
-        "shared_contract_level": "production_public_route",
+        "shared_contract_level": "production_public_route" if route_admitted else "internal_repair_evidence",
+        "public_admission_status": public.get("status"),
         "raw_single_ion_equality_used": raw_single_ion,
         "phase_labels": list(public.get("phase_labels", [])),
         "stage_provenance": {
             "stage_ii_status": dict(held2.get("tpd_discovery", {})).get("held_stage_ii_status"),
             "stage_ii_replay_ready": dict(held2.get("tpd_discovery", {})).get("held_stage_ii_replay_ready"),
             "stage_iii_status": stage_iii.get("status"),
-            "postsolve_status": postsolve.get("status") or dict(public.get("postsolve_certification", {})).get("status"),
+            "postsolve_status": postsolve.get("status")
+            or dict(public.get("postsolve_certification", {})).get("status"),
         },
         "residual_blocks": {
             "reduced_electroneutral_basis": {
                 "status": "accepted"
-                if readiness_basis.get("status") == "verified_exact_charge_neutral_lift"
-                or lift.get("basis_label")
+                if readiness_basis.get("status") == "verified_exact_charge_neutral_lift" or lift.get("basis_label")
                 else "blocked",
                 "basis_label": lift.get("basis_label") or readiness_basis.get("basis_semantics"),
                 "basis_species": list(readiness_basis.get("basis_species", [])),
                 "native_species": list(readiness_basis.get("native_species", [])),
                 "charge_vector": list(readiness_basis.get("charge_vector", [])),
-                "max_abs_charge_balance": readiness_basis.get("max_abs_charge_balance", lift.get("max_charge_residual")),
+                "max_abs_charge_balance": readiness_basis.get(
+                    "max_abs_charge_balance", lift.get("max_charge_residual")
+                ),
                 "charge_balance_threshold": readiness_basis.get("charge_balance_threshold", 1.0e-10),
             },
             "lift_back_lift": {
@@ -420,7 +459,9 @@ def _shared_certification_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
             "charge_balance": {
                 "status": charge.get("status"),
                 "max_phase_charge_residual": charge.get("max_phase_charge_residual"),
-                "phase_charge_tolerance": charge.get("phase_charge_tolerance", check_electrolyte_tpd_gate.CHARGE_TOLERANCE),
+                "phase_charge_tolerance": charge.get(
+                    "phase_charge_tolerance", check_electrolyte_tpd_gate.CHARGE_TOLERANCE
+                ),
                 "total_charge_residual": charge.get("total_charge_residual"),
                 "total_charge_tolerance": charge.get("total_charge_tolerance"),
             },
@@ -492,9 +533,7 @@ def _validate_public_admission(public_admission: dict[str, Any]) -> list[str]:
     if not isinstance(held2, Mapping):
         blockers.append("public_admission_held2_discovery_missing")
     else:
-        blockers.extend(
-            f"public_admission_{blocker}" for blocker in _validate_held2_stage_ii(dict(held2))
-        )
+        blockers.extend(f"public_admission_{blocker}" for blocker in _validate_held2_stage_ii(dict(held2)))
     stage_iii = public_admission.get("electrolyte_stage_iii_refinement", {})
     if not isinstance(stage_iii, Mapping) or stage_iii.get("status") != "complete":
         blockers.append("public_admission_stage_iii_missing")
@@ -514,7 +553,7 @@ def _validate_held2_stage_ii(held2_phase_discovery: dict[str, Any]) -> list[str]
         blockers.append("held2_phase_discovery_incomplete")
     tpd = held2_phase_discovery.get("tpd_discovery", {})
     if not isinstance(tpd, Mapping):
-        return blockers + ["held2_stage_ii_discovery_missing"]
+        return [*blockers, "held2_stage_ii_discovery_missing"]
     if tpd.get("held_stage_ii_status") != "dual_loop_verified":
         blockers.append("held2_stage_ii_incomplete")
     if tpd.get("held_stage_ii_candidate_bound_audit_status") != "candidate_bound_gap_closed":
@@ -590,6 +629,8 @@ def evaluate_payload(
         parent = payload.get("parent_closeout", {})
         if parent.get("parent_issue") != 191:
             blockers.append("parent_issue_mismatch")
+        if parent.get("status") != "ready_for_close":
+            blockers.append("parent_issue_not_ready_for_close")
         if parent.get("remaining_m4_blockers") != []:
             blockers.append("parent_issue_m4_blockers_remain")
 
@@ -625,6 +666,7 @@ def evaluate_public_admission(
     stage_iii["complete"] = stage_iii.get("status") == "complete"
     postsolve = copy.deepcopy(postsolve_payload.get("electrolyte_postsolve_certification", {}))
     postsolve["complete"] = postsolve.get("status") == "complete"
+    public_route_state = _public_route_state_payload()
     payload = {
         "checker": "electrolyte_public_admission_gate",
         "case_label": "Khudaida 2026 electrolyte LLE public admission",
@@ -636,10 +678,10 @@ def evaluate_public_admission(
         "electrolyte_stage_iii_refinement": stage_iii,
         "electrolyte_postsolve_certification": postsolve,
         "public_admission": _public_route_payload(case_dir, checker_command),
-        "public_route_state": _public_route_state_payload(),
-        "registry_evidence": _registry_evidence_payload(),
+        "public_route_state": public_route_state,
+        "registry_evidence": _registry_evidence_payload(public_route_state),
         "unsupported_surfaces": dict(UNSUPPORTED_SURFACES),
-        "parent_closeout": _parent_closeout_payload(),
+        "parent_closeout": _parent_closeout_payload(public_route_state),
         "blockers": list(postsolve_payload.get("blockers", [])),
     }
     payload["shared_certification"] = _shared_certification_payload(payload)
@@ -686,6 +728,19 @@ def minimal_complete_payload_for_tests() -> dict[str, Any]:
     certification["transfer_residuals"]["mean_ionic_transfer"]["status"] = "accepted"
     held2 = copy.deepcopy(postsolve["held2_phase_discovery"])
     held2["complete"] = True
+    future_public_route_state = {
+        "electrolyte_lle": {
+            "present": True,
+            "production_exposed": True,
+            "exposure_status": "production_exposed",
+            "public_routes": [PUBLIC_ROUTE],
+            "proof_routes": [PUBLIC_PROOF_ROUTE],
+        },
+        "capabilities_public_routes": [PUBLIC_ROUTE],
+        "production_families": [SELECTOR_FAMILY],
+        "declared_not_exposed_families": ["reactive_speciation", "reactive_lle", "reactive_electrolyte_lle"],
+        "public_route_family_map": {PUBLIC_ROUTE: SELECTOR_FAMILY},
+    }
     payload = {
         "checker": "electrolyte_public_admission_gate",
         "algorithm_scope": ALGORITHM_SCOPE,
@@ -752,22 +807,10 @@ def minimal_complete_payload_for_tests() -> dict[str, Any]:
             "exact_hessian_available": True,
             "blockers": [],
         },
-        "public_route_state": {
-            "electrolyte_lle": {
-                "present": True,
-                "production_exposed": True,
-                "exposure_status": "production_exposed",
-                "public_routes": [PUBLIC_ROUTE],
-                "proof_routes": ["electrolyte_held2_public_route_admission"],
-            },
-            "capabilities_public_routes": [PUBLIC_ROUTE],
-            "production_families": [SELECTOR_FAMILY],
-            "declared_not_exposed_families": ["reactive_speciation", "reactive_lle", "reactive_electrolyte_lle"],
-            "public_route_family_map": {PUBLIC_ROUTE: SELECTOR_FAMILY},
-        },
-        "registry_evidence": _registry_evidence_payload(),
+        "public_route_state": future_public_route_state,
+        "registry_evidence": _registry_evidence_payload(future_public_route_state),
         "unsupported_surfaces": dict(UNSUPPORTED_SURFACES),
-        "parent_closeout": _parent_closeout_payload(),
+        "parent_closeout": _parent_closeout_payload(future_public_route_state),
         "blockers": [],
         "complete": True,
     }
@@ -797,14 +840,18 @@ def main(argv: list[str] | None = None) -> int:
 
     apply_native_runtime_env(os.environ)
     args = build_arg_parser().parse_args(argv)
-    checker_command = sys.argv[:] if argv is None else [
-        "uv",
-        "run",
-        "--no-sync",
-        "python",
-        "scripts/validation/check_electrolyte_public_admission.py",
-        *argv,
-    ]
+    checker_command = (
+        sys.argv[:]
+        if argv is None
+        else [
+            "uv",
+            "run",
+            "--no-sync",
+            "python",
+            "scripts/validation/check_electrolyte_public_admission.py",
+            *argv,
+        ]
+    )
     output = evaluate_public_admission(
         args.case_dir,
         require_source_gate=args.require_source_gate or args.require_complete,
@@ -824,7 +871,7 @@ def main(argv: list[str] | None = None) -> int:
             from scripts.validation import native_freshness
 
             try:
-                native_freshness.require_receipt(dict(receipt))
+                native_freshness.require_equilibrium_native_fresh(dict(receipt))
             except ValueError as exc:
                 print(str(exc), file=sys.stderr)
                 return 2
@@ -833,7 +880,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print(f"complete={output['complete']} blockers={','.join(output['blockers'])}")
     if args.require_complete and not output["complete"]:
-        return 2
+        return 1
     return 0
 
 

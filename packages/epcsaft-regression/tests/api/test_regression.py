@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import pytest
-
 import epcsaft
+import pytest
 from epcsaft_regression import Regression
 from regression_support.hydrocarbon_cases import hydrocarbon_parameter_set
 from regression_support.regression_cases import (

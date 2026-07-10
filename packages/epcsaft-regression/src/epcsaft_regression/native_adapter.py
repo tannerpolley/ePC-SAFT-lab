@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from importlib import import_module
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 import numpy as np
-
 from epcsaft import provider_native_sdk
 from epcsaft._types import InputError, vector_to_array
 from epcsaft.state.native_adapter import check_association, create_struct

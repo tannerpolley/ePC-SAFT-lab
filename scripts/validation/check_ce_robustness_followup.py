@@ -11,6 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from epcsaft_equilibrium.chemical_equilibrium import _solve_closed_chemical_equilibrium_nlp_activation
 from epcsaft_equilibrium.core.native_results import chemical_equilibrium_result_diagnostics
 
 from scripts.validation import check_standalone_ce_gate as standalone_ce_gate
@@ -25,7 +26,6 @@ EXPECTED_FINDINGS = (
     "eos_nonideality_diagnostic_matrix",
 )
 
-API_TEST_PATH = REPO_ROOT / "packages" / "epcsaft-equilibrium" / "tests" / "api" / "test_reactive_speciation_api.py"
 EOS_TEST_PATH = (
     REPO_ROOT
     / "packages"
@@ -35,7 +35,7 @@ EOS_TEST_PATH = (
     / "diagnostics"
     / "test_chemical_equilibrium_eos_activity.py"
 )
-NATIVE_RESULT_HEADER_PATH = (
+ACTIVATED_RESULT_HEADER_PATH = (
     REPO_ROOT
     / "packages"
     / "epcsaft-equilibrium"
@@ -44,7 +44,7 @@ NATIVE_RESULT_HEADER_PATH = (
     / "native"
     / "equilibrium"
     / "core"
-    / "chemical_equilibrium_nlp.h"
+    / "activated_equilibrium_nlp.h"
 )
 BINDINGS_PATH = (
     REPO_ROOT
@@ -56,7 +56,7 @@ BINDINGS_PATH = (
     / "equilibrium"
     / "register_bindings.cpp"
 )
-NATIVE_NLP_CPP_PATH = (
+ACTIVATED_NLP_CPP_PATH = (
     REPO_ROOT
     / "packages"
     / "epcsaft-equilibrium"
@@ -65,7 +65,7 @@ NATIVE_NLP_CPP_PATH = (
     / "native"
     / "equilibrium"
     / "core"
-    / "chemical_equilibrium_nlp.cpp"
+    / "activated_equilibrium_nlp.cpp"
 )
 
 
@@ -89,7 +89,7 @@ def _base_ce_payload() -> dict[str, Any]:
         "reaction_stationarity_inf_norm": 0.0,
         "proof_metrics": {},
         "selector_contract": {},
-        "activation": {"key": "reactive_speciation", "public_routes": ["reactive_speciation"]},
+        "activation": {"key": "reactive_speciation", "public_routes": []},
         "activation_plan": {},
         "variable_layout": {},
         "initialization": {
@@ -202,17 +202,45 @@ def _caller_seed_rejection_evidence() -> dict[str, Any]:
         "caller_seed_exception_message",
     ]
     snippets = [f'initialization["{field}"]' for field in fields]
-    header_ok, header_missing = _source_contains(NATIVE_RESULT_HEADER_PATH, fields)
+    header_ok, header_missing = _source_contains(ACTIVATED_RESULT_HEADER_PATH, fields)
     binding_ok, binding_missing = _source_contains(BINDINGS_PATH, snippets)
-    test_ok, test_missing = _source_contains(API_TEST_PATH, fields)
+    compiled, registry = standalone_ce_gate._ideal_ab_problem()
+    result = _solve_closed_chemical_equilibrium_nlp_activation(
+        compiled,
+        registry,
+        initial_amounts=[1.0e-300, 1.0],
+        max_iterations=100,
+        tolerance=1.0e-10,
+    )
+    initialization = dict(result.get("initialization") or {})
+    expected = {
+        "seed_source": "max_min_feasible_interior",
+        "caller_seed_attempted": True,
+        "caller_seed_final_proof_accepted": False,
+        "caller_seed_escalated": True,
+        "caller_seed_rejection_source": "caller_initial_amounts",
+        "caller_seed_rejection_reason": "caller_seed_exception",
+        "caller_seed_exception_observed": True,
+    }
     blockers: list[str] = []
     if not header_ok:
         blockers.extend(f"native_result_missing_{field}" for field in header_missing)
     if not binding_ok:
         blockers.extend(f"binding_missing_{field}" for field in binding_missing)
-    if not test_ok:
-        blockers.extend(f"api_test_missing_{field}" for field in test_missing)
-    return _finding("complete" if not blockers else "blocked", blockers, fields=fields)
+    for key, expected_value in expected.items():
+        if initialization.get(key) != expected_value:
+            blockers.append(f"runtime_{key}_mismatch")
+    if "positive-log lower bound" not in str(initialization.get("caller_seed_exception_message", "")):
+        blockers.append("runtime_caller_seed_exception_message_mismatch")
+    if result.get("accepted") is not True:
+        blockers.append("runtime_ce_owned_initialization_not_accepted")
+    return _finding(
+        "complete" if not blockers else "blocked",
+        blockers,
+        fields=fields,
+        runtime_initialization={key: initialization.get(key) for key in (*expected, "caller_seed_exception_message")},
+        runtime_result_accepted=result.get("accepted") is True,
+    )
 
 
 def _adaptive_eos_activity_continuation() -> dict[str, Any]:
@@ -237,8 +265,8 @@ def _adaptive_eos_activity_continuation() -> dict[str, Any]:
         "accepted_activity_steps",
         "rejected_activity_steps",
     ]
-    header_ok, header_missing = _source_contains(NATIVE_RESULT_HEADER_PATH, native_snippets[1:])
-    cpp_ok, cpp_missing = _source_contains(NATIVE_NLP_CPP_PATH, native_snippets)
+    header_ok, header_missing = _source_contains(ACTIVATED_RESULT_HEADER_PATH, native_snippets[1:])
+    cpp_ok, cpp_missing = _source_contains(ACTIVATED_NLP_CPP_PATH, native_snippets)
     binding_ok, binding_missing = _source_contains(BINDINGS_PATH, binding_snippets)
     test_ok, test_missing = _source_contains(EOS_TEST_PATH, test_snippets)
     blockers: list[str] = []

@@ -1,8 +1,21 @@
 {
   "schema_version": "epcsaft.standalone_ce.mea_speciation_oracle_comparison.v2",
   "source_oracle": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/source/phase1_speciation_curve.csv",
-  "public_route": "reactive_speciation",
-  "ce_workflow": "epcsaft_equilibrium.reactive_speciation",
+  "validation_scope": "internal_standalone_ce",
+  "validation_entrypoint": "epcsaft_equilibrium.workflows._run_standalone_ce_validation",
+  "validation_status": "blocked_live_reproduction",
+  "current_live_failure": {
+    "temperature_C": 40.0,
+    "loading_mol_co2_per_mol_mea": 0.4,
+    "accepted": false,
+    "failure_class": "balance_failure",
+    "balance_inf_norm": 2.5999999998789356,
+    "reaction_stationarity_inf_norm": 73.79118023038392,
+    "balance_inf_norm_max": 1e-08,
+    "reaction_stationarity_inf_norm_max": 1e-06,
+    "captured_by": "uv run --no-sync python analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_data.py"
+  },
+  "rejected_state_point_count": 8,
   "temperature_C": [
     20.0,
     40.0
@@ -39,30 +52,33 @@
   },
   "zero_loading_note": "source-oracle loading 0.0 is solved with effective CE feed loading 1e-6 to match the Smith-Missen source solver's minimum loading convention",
   "pointwise_unassisted": {
+    "snapshot_status": "superseded_by_current_live_failure",
     "row_count": 3220,
     "loading_count": 161,
-    "all_accepted": true,
+    "all_accepted": false,
     "all_no_source_oracle_seed": true,
     "all_final_lambda_one": true,
-    "max_abs_error": 3.7471946379152854e-10,
-    "max_balance_inf_norm": 9.253685817611768e-09,
-    "max_reaction_stationarity_inf_norm": 3.4620839528543e-10,
+    "max_abs_error": 3.804569714827011e-10,
+    "max_balance_inf_norm": 12.178280101956744,
+    "max_reaction_stationarity_inf_norm": 80.07251775071344,
     "artifact": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/ce_reactive_speciation_curve.csv"
   },
   "ce_owned_continuation_trace": {
+    "snapshot_status": "superseded_by_current_live_failure",
     "artifact": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/mea_ce_continuation_trace_summary.csv",
     "max_stage_count": 3,
-    "homotopy_point_count": 12,
-    "physical_proof_corrector_point_count": 322,
-    "corrected_stationarity_point_count": 322,
-    "max_initial_physical_proof_corrector_reaction_stationarity_inf_norm": 75.06626050447596,
-    "max_final_physical_proof_corrector_reaction_stationarity_inf_norm": 3.4620839528543e-10,
-    "max_final_physical_proof_corrector_balance_inf_norm": 9.253685817611768e-09,
-    "all_physical_proof_corrector_rejection_reasons_empty": true,
+    "homotopy_point_count": 20,
+    "physical_proof_corrector_point_count": 314,
+    "corrected_stationarity_point_count": 314,
+    "max_initial_physical_proof_corrector_reaction_stationarity_inf_norm": 84.1795162583535,
+    "max_final_physical_proof_corrector_reaction_stationarity_inf_norm": 73.79118023038392,
+    "max_final_physical_proof_corrector_balance_inf_norm": 2.5999999998789356,
+    "all_physical_proof_corrector_rejection_reasons_empty": false,
     "all_final_lambda_one": true,
-    "all_final_proof_accepted": true
+    "all_final_proof_accepted": false
   },
   "robustness_diagnostics": {
+    "snapshot_status": "superseded_by_current_live_failure",
     "artifact": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/mea_ce_unassisted_seed_audit.csv",
     "required_fields": [
       "activity_model",
@@ -84,23 +100,26 @@
     ],
     "activity_model": "mole_fraction_activity",
     "failure_classes": [
-      "accepted"
+      "accepted",
+      "balance_failure",
+      "stationarity_failure"
     ],
-    "accepted_state_point_count": 322,
+    "accepted_state_point_count": 314,
     "state_point_count": 322
   },
   "shuffled_subset": {
+    "snapshot_status": "superseded_by_current_live_failure",
     "attempt_count": 34,
-    "all_accepted": true,
+    "all_accepted": false,
     "all_no_source_oracle_seed": true,
-    "max_abs_error": 1.9754442526220828e-10,
+    "max_abs_error": 3.20530896963378e-10,
     "artifact": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/mea_ce_shuffled_subset_audit.csv"
   },
-  "max_abs_error": 3.7471946379152854e-10,
-  "max_balance_inf_norm": 9.253685817611768e-09,
-  "max_reaction_stationarity_inf_norm": 3.4620839528543e-10,
+  "max_abs_error": 3.804569714827011e-10,
+  "max_balance_inf_norm": 12.178280101956744,
+  "max_reaction_stationarity_inf_norm": 80.07251775071344,
   "all_solver_status_success": false,
   "all_application_status_succeeded": false,
-  "all_accepted": true,
-  "strict_gates_passed": true
+  "all_accepted": false,
+  "strict_gates_passed": false
 }

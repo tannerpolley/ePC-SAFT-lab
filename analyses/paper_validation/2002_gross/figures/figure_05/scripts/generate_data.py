@@ -25,11 +25,10 @@ apply_to_current_process()
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
-
 import epcsaft
 import epcsaft_equilibrium
+import matplotlib.pyplot as plt
+import numpy as np
 from epcsaft_equilibrium._native import extension_native_core
 
 FIGURE_ID = "figure_05"
@@ -103,6 +102,11 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+
+
+def _strip_trailing_whitespace(path: Path) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -234,28 +238,6 @@ def _mixture(series: str) -> epcsaft.Mixture:
     )
 
 
-def _pure_mixture(component: str, source_label: str, config: dict[str, Any]) -> epcsaft.Mixture:
-    if component not in config["species"]:
-        raise ValueError(component)
-    index = config["species"].index(component)
-    payload = {
-        "MW": np.asarray([config["MW"][index]]),
-        "m": np.asarray([config["m"][index]]),
-        "s": np.asarray([config["s"][index]]),
-        "e": np.asarray([config["e"][index]]),
-        "e_assoc": np.asarray([config["e_assoc"][index]]),
-        "vol_a": np.asarray([config["vol_a"][index]]),
-        "assoc_scheme": ["2B" if config["e_assoc"][index] else None],
-    }
-    return epcsaft.Mixture(
-        epcsaft.ParameterSet.from_dict(
-            payload,
-            species=[component],
-            metadata={"source": source_label, "source_backed": True},
-        )
-    )
-
-
 def _role_coordinate_key(role: str) -> str:
     return "x_alcohol" if role == "bubble_curve" else "y_alcohol"
 
@@ -297,47 +279,25 @@ def _solve_series(source_rows: list[dict[str, Any]], series: str) -> list[dict[s
     config = SYSTEM_CONFIG[series]
     mixture = _mixture(series)
     output_rows: list[dict[str, Any]] = []
-    pure_cache: dict[str, epcsaft_equilibrium.EquilibriumResult] = {}
     for role, route in (("bubble_curve", "bubble_pressure"), ("dew_curve", "dew_pressure")):
         continuation_state: dict[str, Any] | None = None
+        previous_route = ""
         curve_rows = [row for row in source_rows if row["series"] == series and row["source_role"] == role]
         coordinate_key = _role_coordinate_key(role)
         for row in sorted(curve_rows, key=lambda item: float(item[coordinate_key])):
             composition = float(row[coordinate_key])
-            if composition <= 1.0e-9 or composition >= 1.0 - 1.0e-9:
-                pure_component = config["species"][0] if composition >= 1.0 - 1.0e-9 else config["species"][1]
-                if pure_component not in pure_cache:
-                    pure_cache[pure_component] = epcsaft_equilibrium.Equilibrium(
-                        _pure_mixture(pure_component, f"Gross/Sadowski 2002 Figure 5 pure {pure_component}", config),
-                        route="single_component_vle",
-                        T=TEMPERATURE_K,
-                    ).solve(solver_options={"max_iterations": 220, "tolerance": 1.0e-8, "ipopt_print_level": 0})
-                result = pure_cache[pure_component]
-                diagnostics = result.diagnostics
-                output_rows.append(
-                    {
-                        "series": series,
-                        "source_role": role,
-                        "system": config["system"],
-                        "x_alcohol": composition,
-                        "y_alcohol": composition,
-                        "T_K": TEMPERATURE_K,
-                        "P_bar": float(result.P_sat) / 1.0e5,
-                        "route": "single_component_vle",
-                        "problem_kind": result.problem_kind,
-                        "route_status": diagnostics.get("route_status", ""),
-                        "solver_status": diagnostics.get("solver_status", ""),
-                        "hessian_approximation": diagnostics.get("hessian_approximation", ""),
-                        "exact_hessian_available": bool(diagnostics.get("exact_hessian_available")),
-                        "postsolve_accepted": bool(diagnostics.get("postsolve_accepted")),
-                        "hessian_backend": diagnostics.get("hessian_backend", ""),
-                        "iteration_count": diagnostics.get("iteration_count", ""),
-                    }
-                )
-                continue
-            result = _solve_route_point(mixture, route, composition, continuation_state)
+            is_boundary_limit = composition in {0.0, 1.0}
+            solve_route = "dew_pressure" if is_boundary_limit else route
+            route_continuation_state = continuation_state if solve_route == previous_route else None
+            result = _solve_route_point(mixture, solve_route, composition, route_continuation_state)
             diagnostics = result.diagnostics
-            continuation_state = diagnostics.get("continuation_state")
+            returned_state = diagnostics.get("continuation_state")
+            continuation_state = (
+                {"variables": list(returned_state["variables"])}
+                if isinstance(returned_state, dict) and "variables" in returned_state
+                else None
+            )
+            previous_route = solve_route
             if diagnostics.get("hessian_approximation") != "exact" or diagnostics.get("exact_hessian_available") is not True:
                 raise RuntimeError(f"{series} {role} at composition={composition:.3f} did not report exact Hessian support.")
             if diagnostics.get("postsolve_accepted") is not True:
@@ -360,6 +320,12 @@ def _solve_series(source_rows: list[dict[str, Any]], series: str) -> list[dict[s
                     "postsolve_accepted": bool(diagnostics.get("postsolve_accepted")),
                     "hessian_backend": diagnostics.get("hessian_backend", ""),
                     "iteration_count": diagnostics.get("iteration_count", ""),
+                    "requested_coordinate": min(
+                        1.0 - MIN_COMPOSITION,
+                        max(MIN_COMPOSITION, composition),
+                    ),
+                    "requested_coordinate_role": "y_alcohol" if solve_route == "dew_pressure" else "x_alcohol",
+                    "endpoint_limit_basis": "finite_binary_dew_pressure_limit" if is_boundary_limit else "",
                 }
             )
     return output_rows
@@ -459,6 +425,7 @@ def _write_plot(source_rows: list[dict[str, Any]], model_rows: list[dict[str, An
     fig.text(0.02, 0.01, f"minimum system score: {score_payload['normalized_plot_score']:.2f}; exact Hessian route verified", fontsize=8)
     fig.savefig(PNG, dpi=180)
     fig.savefig(SVG)
+    _strip_trailing_whitespace(SVG)
     fig.savefig(PDF)
     plt.close(fig)
 
@@ -503,7 +470,7 @@ def _write_plotted_csv(source_rows: list[dict[str, Any]], model_rows: list[dict[
 
 
 def _native_receipt() -> dict[str, Any]:
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=extension_native_core(),
         checker_command=[
             "uv",
@@ -614,6 +581,9 @@ def main() -> int:
             "postsolve_accepted",
             "hessian_backend",
             "iteration_count",
+            "requested_coordinate",
+            "requested_coordinate_role",
+            "endpoint_limit_basis",
         ],
     )
     _write_plotted_csv(source_rows, model_rows)
@@ -642,6 +612,7 @@ def main() -> int:
             "native_freshness_receipt": receipt,
         },
     }
+    _write_json(SUMMARY_JSON, summary)
     _update_manifest(score_payload, receipt)
     print(json.dumps(_jsonable(summary), indent=2, sort_keys=True))
     return 0 if score_payload["pass"] else 2

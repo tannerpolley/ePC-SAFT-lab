@@ -5,12 +5,10 @@ import csv
 import math
 import subprocess
 import sys
-from types import ModuleType
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
+from types import ModuleType
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
     if (_candidate / "scripts" / "plot_outputs.py").is_file():

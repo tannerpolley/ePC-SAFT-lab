@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-import pytest
+from dataclasses import replace
+from typing import ClassVar
 
+import pytest
+from epcsaft_equilibrium import branch_tracing as branch_tracing_module
 from epcsaft_equilibrium.branch_tracing import (
     BranchSolveRequest,
     BranchTraceAnchor,
@@ -12,7 +15,6 @@ from epcsaft_equilibrium.branch_tracing import (
     trace_equilibrium_boundary_route,
     validate_branch_trace_inputs,
 )
-from epcsaft_equilibrium import branch_tracing as branch_tracing_module
 
 
 def test_branch_trace_options_validate_supported_route_and_anchor_ids() -> None:
@@ -106,6 +108,33 @@ def test_trace_refines_until_coordinate_gap_is_bounded() -> None:
     assert len(calls) > 2
 
 
+def test_trace_bridges_required_anchor_gap_before_target() -> None:
+    calls: list[float] = []
+
+    def solver(request: BranchSolveRequest) -> BranchTracePoint:
+        calls.append(request.coordinate)
+        return _fake_point(request, pressure_bar=10.0 + request.coordinate)
+
+    result = trace_boundary_route(
+        anchors=[
+            BranchTraceAnchor(anchor_id="left", coordinate=0.10, required=True),
+            BranchTraceAnchor(anchor_id="right", coordinate=0.30, required=True),
+        ],
+        options=BranchTraceOptions(
+            route="bubble_pressure",
+            component_index=1,
+            fixed_variable="T_K",
+            fixed_value=373.15,
+            max_coordinate_gap=0.075,
+            max_interpolation_error=0.35,
+        ),
+        solve_point=solver,
+    )
+
+    assert result.complete is True
+    assert calls == pytest.approx([0.10, 1.0 / 6.0, 7.0 / 30.0, 0.30])
+
+
 def test_trace_rejects_coordinate_drift_beyond_tolerance() -> None:
     def solver(request: BranchSolveRequest) -> BranchTracePoint:
         return _fake_point(request, pressure_bar=10.0, solved_coordinate=request.coordinate + 0.01)
@@ -182,17 +211,53 @@ def test_trace_carries_continuation_state_between_required_anchors() -> None:
     assert anchor_states == [None, {"variables": [0.1, 12.1]}]
 
 
+def test_trace_drops_dual_multipliers_when_composition_changes() -> None:
+    anchor_states: list[object] = []
+
+    def solver(request: BranchSolveRequest) -> BranchTracePoint:
+        anchor_states.append(request.continuation_state)
+        point = _fake_point(request, pressure_bar=12.0 + request.coordinate)
+        return replace(
+            point,
+            continuation_state_returned={
+                "variables": [request.coordinate, 12.0 + request.coordinate],
+                "bound_lower_multipliers": [1.0, 2.0],
+                "bound_upper_multipliers": [3.0, 4.0],
+                "constraint_multipliers": [5.0, 6.0],
+            },
+        )
+
+    result = trace_boundary_route(
+        anchors=[
+            BranchTraceAnchor(anchor_id="left", coordinate=0.10, required=True),
+            BranchTraceAnchor(anchor_id="right", coordinate=0.12, required=True),
+        ],
+        options=BranchTraceOptions(
+            route="bubble_pressure",
+            component_index=1,
+            fixed_variable="T_K",
+            fixed_value=373.15,
+            max_coordinate_gap=0.05,
+            max_interpolation_error=0.35,
+        ),
+        solve_point=solver,
+    )
+
+    assert result.complete is True
+    assert anchor_states == [None, {"variables": [0.1, 12.1]}]
+
+
 def test_equilibrium_point_adapter_maps_bubble_route_and_continuation_state(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[dict[str, object]] = []
 
     class FakeResult:
         route = "bubble_pressure"
-        x = [0.75, 0.25]
-        y = [0.65, 0.35]
+        x: ClassVar[list[float]] = [0.75, 0.25]
+        y: ClassVar[list[float]] = [0.65, 0.35]
         pressure = 1.23e6
         temperature = 373.15
         problem_kind = "derived_bubble_pressure"
-        diagnostics = {
+        diagnostics: ClassVar[dict[str, object]] = {
             "exact_hessian_available": True,
             "hessian_approximation": "exact",
             "postsolve_accepted": True,
@@ -242,12 +307,12 @@ def test_equilibrium_point_adapter_maps_dew_route(monkeypatch: pytest.MonkeyPatc
 
     class FakeResult:
         route = "dew_pressure"
-        x = [0.60, 0.40]
-        y = [0.72, 0.28]
+        x: ClassVar[list[float]] = [0.60, 0.40]
+        y: ClassVar[list[float]] = [0.72, 0.28]
         pressure = 1.1e6
         temperature = 373.15
         problem_kind = "derived_dew_pressure"
-        diagnostics = {
+        diagnostics: ClassVar[dict[str, object]] = {
             "exact_hessian_available": True,
             "hessian_approximation": "exact",
             "postsolve_accepted": True,

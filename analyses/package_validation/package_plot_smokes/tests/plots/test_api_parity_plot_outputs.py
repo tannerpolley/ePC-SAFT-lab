@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import numpy as np
+from tests.helpers.runtime_cases import _ionic_state, _neutral_state
 
-from tests.helpers.runtime_cases import _ionic_state
-from tests.helpers.runtime_cases import _neutral_state
 from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import save_parity_plot
 
 

@@ -10,12 +10,21 @@ from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.validation.khudaida_parameter_provenance import (
+    evaluate_khudaida_parameter_provenance,
+)
+
 FIGURE_ROOT = REPO_ROOT / "analyses" / "paper_validation" / "2026_khudaida" / "figures"
+ANALYSIS_ROOT = FIGURE_ROOT.parent
 MANIFEST_PATH = REPO_ROOT / ".mplgallery" / "manifest.yaml"
 EXPECTED_FIGURES = tuple(f"figure_{idx:02d}" for idx in range(1, 13))
 FORMULA_COMPONENTS = ("x_water", "x_ethanol", "x_isobutanol", "x_nacl")
 KHUDAIDA_MIN_PHASE_DISTANCE = 1.0e-3
 KHUDAIDA_MINOR_BETA_REVIEW = 1.0e-4
+KHUDAIDA_PARAMETER_PROVENANCE_REJECTION = "rejected_parameter_provenance"
 
 
 def _load_contract_checker():
@@ -63,11 +72,7 @@ def _phase_rows(tie_rows: list[dict[str, str]]) -> dict[str, dict[str, str]]:
 
 
 def _components_finite(tie_rows: list[dict[str, str]]) -> bool:
-    return all(
-        math.isfinite(_finite_float(row.get(component)))
-        for row in tie_rows
-        for component in FORMULA_COMPONENTS
-    )
+    return all(math.isfinite(_finite_float(row.get(component))) for row in tie_rows for component in FORMULA_COMPONENTS)
 
 
 def _component_distance(tie_rows: list[dict[str, str]]) -> float:
@@ -95,10 +100,17 @@ def _minor_beta(tie_rows: list[dict[str, str]]) -> float:
     return min(finite) if finite else math.nan
 
 
+def _parameter_provenance() -> dict[str, Any]:
+    return evaluate_khudaida_parameter_provenance(ANALYSIS_ROOT)
+
+
 def _collapsed_split_failure(tie_rows: list[dict[str, str]]) -> dict[str, str] | None:
     if not _components_finite(tie_rows):
         return None
-    status_collapsed = any(str(row.get("status", "")).strip().lower() == "collapsed_split" for row in tie_rows)
+    status_collapsed = any(
+        str(row.get("status", "")).strip().lower() in {"collapsed_split", "rejected_collapsed_split"}
+        for row in tie_rows
+    )
     converged = all(_truthy(row.get("converged")) for row in tie_rows)
     phase_distance = _phase_distance(tie_rows)
     component_distance = _component_distance(tie_rows)
@@ -120,51 +132,146 @@ def _collapsed_split_failure(tie_rows: list[dict[str, str]]) -> dict[str, str] |
     }
 
 
-def _model_row_failures(root: Path) -> list[dict[str, str]]:
-    model_path = root / "results" / "data" / "model_tielines.csv"
-    if not model_path.is_file():
-        return []
-    rows = _read_csv(model_path)
-    grouped: dict[str, list[dict[str, str]]] = {}
-    for row in rows:
-        grouped.setdefault(row.get("tie_line", ""), []).append(row)
+def _rejected_status_contract_failure(tie_rows: list[dict[str, str]]) -> dict[str, str] | None:
+    collapsed = _collapsed_split_failure(tie_rows)
+    explicit_rejection = any(
+        str(row.get("status", "")).strip().startswith("rejected_")
+        or str(row.get("route_status", "")).strip() == "internal_validation_rejected"
+        for row in tie_rows
+    )
+    rejected = collapsed is not None or explicit_rejection or not all(_truthy(row.get("converged")) for row in tie_rows)
+    if not rejected:
+        return None
+    invalid_route = any(str(row.get("route_status", "")).strip() == "internal_validation_accepted" for row in tie_rows)
+    invalid_postsolve = any(_truthy(row.get("postsolve_accepted")) for row in tie_rows)
+    if not invalid_route and not invalid_postsolve:
+        return None
+    return {
+        "failure_kind": "rejected_status_contract",
+        "root_cause": "truth_integrity",
+        "message": "Rejected Khudaida model rows retain an acceptance route or postsolve flag.",
+        "invalid_route_status": "internal_validation_accepted" if invalid_route else "",
+        "invalid_postsolve_accepted": "True" if invalid_postsolve else "",
+    }
 
-    failures = []
-    for tie_line, tie_rows in sorted(grouped.items(), key=lambda item: int(item[0] or 0)):
-        phases = sorted(row.get("phase", "") for row in tie_rows)
+
+REQUIRED_MODEL_COLUMNS = {"tie_line", "phase", "converged", "status", "route_status", "postsolve_accepted"}
+
+
+def _retained_model_rows(root: Path) -> list[tuple[Path, list[dict[str, str]]]]:
+    retained = []
+    for path in (root / "results" / "data" / "model_tielines.csv", root / "results" / "model_curve.csv"):
+        if not path.is_file():
+            continue
+        rows = _read_csv(path)
+        if rows and REQUIRED_MODEL_COLUMNS <= set(rows[0]):
+            retained.append((path, rows))
+    return retained
+
+
+def _group_model_rows(rows: list[dict[str, str]]) -> dict[tuple[str, str, str], list[dict[str, str]]]:
+    grouped: dict[tuple[str, str, str], list[dict[str, str]]] = {}
+    for row in rows:
+        key = (row.get("temperature_K", ""), row.get("salt_wtfrac", ""), row.get("tie_line", ""))
+        grouped.setdefault(key, []).append(row)
+    return grouped
+
+
+def _model_failure_record(
+    key: tuple[str, str, str],
+    tie_rows: list[dict[str, str]],
+    *,
+    source_files: list[str],
+) -> dict[str, Any]:
+    temperature_k, salt_wtfrac, tie_line = key
+    phases = sorted(row.get("phase", "") for row in tie_rows)
+    converged = all(_truthy(row.get("converged")) for row in tie_rows)
+    collapsed = _collapsed_split_failure(tie_rows)
+    status_contract = _rejected_status_contract_failure(tie_rows)
+    parameter_provenance_rejection = any(
+        str(row.get("status", "")).strip() == KHUDAIDA_PARAMETER_PROVENANCE_REJECTION
+        or str(row.get("application_status", "")).strip() == KHUDAIDA_PARAMETER_PROVENANCE_REJECTION
+        for row in tie_rows
+    )
+    first = tie_rows[0]
+    failure_kind = (
+        status_contract["failure_kind"]
+        if status_contract is not None
+        else "parameter_provenance"
+        if parameter_provenance_rejection
+        else "collapsed_split"
+        if collapsed is not None
+        else "solver_failure"
+    )
+    return {
+        "tie_line": tie_line,
+        "temperature_K": temperature_k,
+        "salt_wtfrac": salt_wtfrac,
+        "source_files": source_files,
+        "phases": ",".join(phases),
+        "converged": str(converged),
+        "failure_kind": failure_kind,
+        "root_cause": (
+            status_contract["root_cause"]
+            if status_contract is not None
+            else "unresolved_interaction_provenance"
+            if parameter_provenance_rejection
+            else collapsed.get("root_cause", "")
+            if collapsed is not None
+            else ""
+        ),
+        "message": status_contract["message"] if status_contract is not None else first.get("message", ""),
+        "route_status": first.get("route_status", ""),
+        "solver_status": first.get("solver_status", ""),
+        "application_status": first.get("application_status", ""),
+        "objective": first.get("objective", ""),
+        "phase_distance": collapsed.get("phase_distance", first.get("phase_distance", ""))
+        if collapsed is not None
+        else first.get("phase_distance", ""),
+        "component_distance": collapsed.get("component_distance", "") if collapsed is not None else "",
+        "phase_distance_threshold": collapsed.get("phase_distance_threshold", "") if collapsed is not None else "",
+        "minor_beta": collapsed.get("minor_beta", "") if collapsed is not None else "",
+        "minor_beta_review_threshold": collapsed.get("minor_beta_review_threshold", "")
+        if collapsed is not None
+        else "",
+        "follow_up_issue": collapsed.get("follow_up_issue", "") if collapsed is not None else "",
+        "postsolve_accepted": first.get("postsolve_accepted", ""),
+        "status_contract": status_contract or {},
+    }
+
+
+def _model_row_failures(root: Path) -> list[dict[str, Any]]:
+    retained = _retained_model_rows(root)
+    if not retained:
+        return []
+
+    status_failures: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for path, rows in retained:
+        for key, tie_rows in _group_model_rows(rows).items():
+            if _rejected_status_contract_failure(tie_rows) is None:
+                continue
+            relative = _relative(path)
+            if key in status_failures:
+                status_failures[key]["source_files"].append(relative)
+            else:
+                status_failures[key] = _model_failure_record(key, tie_rows, source_files=[relative])
+
+    primary_path, primary_rows = retained[0]
+    normal_failures: list[dict[str, Any]] = []
+    for key, tie_rows in _group_model_rows(primary_rows).items():
+        if key in status_failures:
+            continue
         converged = all(_truthy(row.get("converged")) for row in tie_rows)
         finite_components = _components_finite(tie_rows)
         collapsed = _collapsed_split_failure(tie_rows)
         if converged and finite_components and collapsed is None:
             continue
-        first = tie_rows[0]
-        failure_kind = "collapsed_split" if collapsed is not None else "solver_failure"
-        failures.append(
-            {
-                "tie_line": tie_line,
-                "phases": ",".join(phases),
-                "converged": str(converged),
-                "failure_kind": failure_kind,
-                "root_cause": collapsed.get("root_cause", "") if collapsed is not None else "",
-                "message": first.get("message", ""),
-                "route_status": first.get("route_status", ""),
-                "solver_status": first.get("solver_status", ""),
-                "application_status": first.get("application_status", ""),
-                "objective": first.get("objective", ""),
-                "phase_distance": collapsed.get("phase_distance", first.get("phase_distance", ""))
-                if collapsed is not None
-                else first.get("phase_distance", ""),
-                "component_distance": collapsed.get("component_distance", "") if collapsed is not None else "",
-                "phase_distance_threshold": collapsed.get("phase_distance_threshold", "") if collapsed is not None else "",
-                "minor_beta": collapsed.get("minor_beta", "") if collapsed is not None else "",
-                "minor_beta_review_threshold": collapsed.get("minor_beta_review_threshold", "")
-                if collapsed is not None
-                else "",
-                "follow_up_issue": collapsed.get("follow_up_issue", "") if collapsed is not None else "",
-                "postsolve_accepted": first.get("postsolve_accepted", ""),
-            }
-        )
-    return failures
+        normal_failures.append(_model_failure_record(key, tie_rows, source_files=[_relative(primary_path)]))
+
+    return sorted(
+        [*status_failures.values(), *normal_failures],
+        key=lambda row: (float(row["temperature_K"] or 0.0), int(row["tie_line"] or 0)),
+    )
 
 
 def _manifest_paths() -> set[str]:
@@ -237,14 +344,35 @@ def evaluate(selected_figures: tuple[str, ...] = EXPECTED_FIGURES) -> dict[str, 
     figures = [_figure_payload(figure_id, manifest_paths, contract_checker) for figure_id in selected_figures]
     blockers = [blocker for figure in figures for blocker in figure["blockers"]]
     model_fit_failures = [failure for figure in figures for failure in figure["model_fit_failures"]]
+    status_integrity_blockers = [
+        {"figure": figure["figure"], **failure}
+        for figure in figures
+        for failure in figure["model_row_failures"]
+        if failure["failure_kind"] == "rejected_status_contract"
+    ]
+    parameter_provenance = _parameter_provenance()
+    model_blockers = [*model_fit_failures, *status_integrity_blockers]
+    if parameter_provenance["blocking"]:
+        model_blockers.append(
+            {
+                "failure_kind": "parameter_provenance",
+                "root_cause": "unresolved_interaction_provenance",
+                "message": (
+                    "Khudaida interaction provenance is incomplete; unresolved parameter families "
+                    "and Butanol-ion references block model-pass evidence."
+                ),
+                "parameter_provenance": parameter_provenance,
+            }
+        )
     return {
         "checker": "khudaida_2026_figure_validation",
         "figure_count": len(figures),
         "artifact_complete": not blockers,
-        "model_reproduction_complete": not model_fit_failures,
+        "model_reproduction_complete": not model_blockers,
         "complete": not blockers,
         "blockers": blockers,
-        "model_blockers": model_fit_failures,
+        "model_blockers": model_blockers,
+        "parameter_provenance": parameter_provenance,
         "figures": figures,
     }
 

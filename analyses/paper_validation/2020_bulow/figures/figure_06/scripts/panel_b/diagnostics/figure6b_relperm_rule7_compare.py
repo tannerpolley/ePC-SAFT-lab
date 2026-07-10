@@ -3,10 +3,8 @@ from __future__ import annotations
 import csv
 import math
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -16,10 +14,10 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT
 
 DIAG_DIR = Path(__file__).resolve().parent
 if str(REPO_ROOT) not in sys.path:
@@ -31,13 +29,14 @@ ANALYSIS_ROOT = FIG6_DIR.parent.parent
 if str(ANALYSIS_ROOT) not in sys.path:
     sys.path.insert(0, str(ANALYSIS_ROOT))
 
-from scripts.plot_outputs import paper_validation_dir
+from _plot_common import configure_style, save_figure
 from figure6b_libr_ethanol_contributions import (
-    _calc_ln_miac_contributions,
     _build_params,
+    _calc_ln_miac_contributions,
     _salt_mole_fraction_from_molality,
 )
-from _plot_common import configure_style, save_figure
+
+from scripts.plot_outputs import paper_validation_dir
 
 OUTPUT_ROOT = paper_validation_dir(DIAG_DIR)
 OUTPUT_DATA = OUTPUT_ROOT / "data"
@@ -134,7 +133,7 @@ def main() -> None:
     OUTPUT_PLOTS.mkdir(parents=True, exist_ok=True)
 
     digitized = _read_digitized_series(CURVE_PATH)
-    x_total, y_total = digitized["data"]
+    x_total, _y_total = digitized["data"]
     max_x = float(np.max(x_total))
     max_m = max_x * (1.0 / 46.068e-3) / max(1.0 - max_x, 1.0e-12)
     m_grid = np.linspace(0.0, max_m, 1201)

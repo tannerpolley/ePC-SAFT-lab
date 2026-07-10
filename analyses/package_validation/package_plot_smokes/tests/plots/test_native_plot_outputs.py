@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import numpy as np
+from tests.helpers.native_cases import _ionic_state as _native_ionic_state
+from tests.helpers.native_cases import _neutral_state as _native_neutral_state
 
 from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import (
     hydrocarbon_basis_mixture,
     save_comparison_plot,
     save_parity_plot,
 )
-from tests.helpers.native_cases import _ionic_state as _native_ionic_state
-from tests.helpers.native_cases import _neutral_state as _native_neutral_state
 
 
 def test_native_branch_and_contribution_reference_comparison_plot() -> None:

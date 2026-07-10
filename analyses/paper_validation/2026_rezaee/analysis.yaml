@@ -1,81 +1,49 @@
-id: rezaee_2026_paper_validation
-title: Rezaee 2025/2026 paper validation
-status: blocked_solver
-summary: In-worktree source-backed diagnostic validation of Rezaee source rows, reaction-equilibrium conventions, and Section 3.2 reaction-coordinate replication.
+id: rezaee_2025_2026_source_evidence
+title: Rezaee 2025/2026 source evidence
+status: internal_source_evidence_only
+summary: Retains source-backed Rezaee rows and basis diagnostics without a current package-model claim.
 owner: project
 boundary:
-  objective: Validate the local epcsaft package against source-backed Rezaee paper data before any surrogate generation.
+  objective: Preserve and validate the machine-readable literature evidence needed for future model work.
   not_objectives:
-    - Generate calibrated surrogate rows.
-    - Generate PrOMMiS/IDAES transfer or costing files.
-    - Generate presentation or deck artifacts.
-    - Claim direct published-constant closure when the source/reference-state diagnostics do not pass.
+    - Claim a public reactive-electrolyte equilibrium route.
+    - Claim current package phase-model validation.
+    - Generate surrogate, process-design, costing, or presentation outputs.
 epcsaft_dependency:
-  required: true
-  package_source: .
+  required: false
   notes:
-    - Uses Rezaee paper-reported DES/TOPO/RLi/RNa PC-SAFT parameters and binary interactions as source truth.
-    - Uses epcsaft activity and fugacity coefficient APIs for the validation calculations.
-    - Exercises the public reactive_electrolyte_lle phase_models route with separate aqueous and organic mixtures before retaining the blocked native Ipopt solver status.
-    - Keeps generated evidence inside analyses/paper_validation/2026_rezaee.
+    - The current package exposes no reactive-electrolyte equilibrium route.
+    - Provider-era equilibrium and regression APIs are outside this lane.
 inputs:
-  - path: analyses/paper_validation/2026_rezaee/shared/source/rezaee_2026_reaction_constants.csv
-    kind: source_transcription
-  - path: analyses/paper_validation/2026_rezaee/shared/source/rezaee_2026_organic_pcsaft_parameters.csv
-    kind: source_transcription
-  - path: analyses/paper_validation/2026_rezaee/shared/source/rezaee_2026_organic_binary_interactions.csv
-    kind: source_transcription
-  - path: analyses/paper_validation/2026_rezaee/shared/source/rezaee_2026_si_density_tables.csv
+  - path: analyses/paper_validation/2026_rezaee/shared/source/rezaee_2025_extraction_equilibrium_mole_fractions.csv
     kind: source_transcription
   - path: analyses/paper_validation/2026_rezaee/shared/source/rezaee_2025_doe_extraction_responses.csv
     kind: source_transcription
-  - path: analyses/paper_validation/2026_rezaee/shared/source/rezaee_2025_extraction_equilibrium_mole_fractions.csv
+  - path: analyses/paper_validation/2026_rezaee/shared/source/rezaee_2025_optimum_neighborhood.csv
     kind: source_transcription
-  - path: analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_paper_figure_digitized_points.csv
-    kind: source_backed_digitized_paper_figure_points
+  - path: analyses/paper_validation/2026_rezaee/shared/source/rezaee_2025_real_brine_extraction.csv
+    kind: source_transcription
 outputs:
   - path: analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2025_extraction_target_summary.csv
-    kind: generated_target_summary
+    kind: generated_source_summary
+  - path: analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2025_extraction_equilibrium_summary.csv
+    kind: generated_source_summary
   - path: analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_section32_basis_inference_rows.csv
-    kind: generated_basis_inference
-  - path: analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_section32_equilibrium_replication_rows.csv
-    kind: generated_pre_surrogate_validation_rows
-  - path: analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_section32_equilibrium_replication_summary.json
-    kind: generated_validation_summary
-  - path: analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_calibrated_native_ipopt_attempt_summary.json
-    kind: generated_public_native_ipopt_phase_models_attempt_summary
+    kind: generated_basis_diagnostic
+  - path: analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_section32_basis_inference_summary.json
+    kind: generated_basis_diagnostic
   - path: analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/summary.json
-    kind: generated_lane_gate_summary
-  - path: analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_package_figure_comparison_summary.json
-    kind: generated_package_vs_digitized_figure_summary
-  - path: analyses/paper_validation/2026_rezaee/figures/figure_07/results/figure_7_package_vs_paper.png
-    kind: generated_package_vs_digitized_figure
-  - path: analyses/paper_validation/2026_rezaee/figures/figure_08/results/figure_8_package_vs_paper.png
-    kind: generated_package_vs_digitized_figure
-  - path: analyses/paper_validation/2026_rezaee/figures/figure_10/results/figure_10_package_vs_paper.png
-    kind: generated_package_vs_digitized_figure
-  - path: analyses/paper_validation/2026_rezaee/figures/figure_11/results/figure_11_package_vs_paper.png
-    kind: generated_package_vs_digitized_figure
+    kind: generated_source_evidence_summary
 commands:
-  paper_validation:
-    - uv run python analyses/paper_validation/2026_rezaee/scripts/run_all.py
+  source_evidence:
+    - uv run --no-sync python analyses/paper_validation/2026_rezaee/scripts/run_all.py
 expected:
   row_count: 26
-  direct_published_constant_closure_supported: false
-  phase_models_supported: public_api_supported_solver_rejected
-  source_text_equilibrium_data_points: 36
-  source_backed_si_equilibrium_rows: 26
-tolerances:
-  max_abs_charge_residual: 1.0e-6
-  max_element_balance_norm: 1.0e-10
-  source_supported_combined_median_abs_ln_residual_min: 2.0
-  direct_li_extraction_aard_pct_min: 90.0
+  source_evidence_complete: true
+  model_validation_complete: false
+  phase_models_supported: false
+  public_route_admitted: false
 completion_contract:
-  - The lane passes when run_all.py exits 0 and summary.json records the 26 source-backed SI rows.
-  - The expected diagnostic outcome is that direct published-constant closure is not supported.
-  - The public phase_models route is supported only as far as native Ipopt execution; this lane remains blocked_solver until at least one accepted Rezaee reactive_electrolyte_lle solve and the required fit/holdout gate are retained.
-  - The figure comparison outputs must overlay digitized paper-model points with current in-worktree epcsaft package-model points.
-  - The 36-row text statement remains a documented source-text mismatch unless a new source-backed table is added.
-  - This lane must not be used to claim direct Rezaee paper-constant closure.
-runtime:
-  last_validated_seconds: 130
+  - The command exits zero only when the 26-row source and basis contracts pass.
+  - The lane must report model_validation_complete and public_route_admitted as false.
+  - The 36-row text statement remains a documented source mismatch until a traceable table is supplied.

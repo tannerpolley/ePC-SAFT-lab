@@ -316,28 +316,6 @@ bool fixed_temperature_pressure_flash_seed_satisfies_volume_bounds(
         && vapor_volume - liquid_volume >= kMinimumPhaseVolumeGap;
 }
 
-std::vector<double> lower_dense_to_symmetric_matrix(
-    const NlpHessianStructure& structure,
-    const std::vector<double>& values,
-    int variable_count,
-    const std::string& label
-) {
-    if (structure.rows.size() != values.size() || structure.cols.size() != values.size()) {
-        throw ValueError(label + " Hessian structure/value size mismatch.");
-    }
-    std::vector<double> dense(static_cast<std::size_t>(variable_count * variable_count), 0.0);
-    for (std::size_t index = 0; index < values.size(); ++index) {
-        const int row = structure.rows[index];
-        const int col = structure.cols[index];
-        if (row < 0 || row >= variable_count || col < 0 || col >= variable_count) {
-            throw ValueError(label + " Hessian structure index is out of range.");
-        }
-        dense[static_cast<std::size_t>(row * variable_count + col)] = values[index];
-        dense[static_cast<std::size_t>(col * variable_count + row)] = values[index];
-    }
-    return dense;
-}
-
 struct NamedInitialVariables {
     std::string seed_name;
     std::vector<double> variables;
@@ -495,6 +473,31 @@ std::vector<double> build_pressure_route_initial_variables(
         out.push_back(1.0 / density);
     }
     out.push_back(seed_pressure);
+    return out;
+}
+
+std::vector<double> retarget_pressure_route_initial_variables(
+    const std::vector<double>& variables,
+    const std::vector<double>& fixed_composition,
+    int fixed_phase_index,
+    const std::string& problem_name
+) {
+    const int species_count = static_cast<int>(fixed_composition.size());
+    const int local_variable_count = species_count + 1;
+    const std::size_t expected_size = static_cast<std::size_t>(2 * local_variable_count + 1);
+    if (variables.size() != expected_size) {
+        throw ValueError(problem_name + " continuation variable count does not match the pressure-route layout.");
+    }
+    if (fixed_phase_index < 0 || fixed_phase_index >= 2) {
+        throw ValueError(problem_name + " fixed phase index is out of range for continuation retargeting.");
+    }
+
+    std::vector<double> out = variables;
+    const int fixed_offset = fixed_phase_index * local_variable_count;
+    for (int species = 0; species < species_count; ++species) {
+        out[static_cast<std::size_t>(fixed_offset + species)] =
+            fixed_composition[static_cast<std::size_t>(species)];
+    }
     return out;
 }
 
@@ -1550,12 +1553,12 @@ public:
     )
         : args_(std::move(args)),
           temperature_(temperature),
+          initial_pressure_(initial_pressure),
           fixed_composition_(normalized_positive_values(fixed_composition, problem_name + " composition")),
           fixed_phase_index_(fixed_phase_index),
           problem_name_(std::move(problem_name)),
           charges_(std::move(charges)),
-          charge_constraint_tolerance_(charge_constraint_tolerance),
-          initial_pressure_(initial_pressure) {
+          charge_constraint_tolerance_(charge_constraint_tolerance) {
         require_positive_finite(temperature_, problem_name_ + " temperature");
         require_positive_finite(initial_pressure_, problem_name_ + " initial pressure");
         if (!std::isfinite(charge_constraint_tolerance_) || charge_constraint_tolerance_ < 0.0) {
@@ -3902,7 +3905,6 @@ NeutralTwoPhaseEosPostsolve fixed_temperature_pressure_postsolve(
     out.charge_balance_norm = phase_charge_norm(phase_amounts, charges);
     const bool pure_density_distance_postsolve =
         pure_density_distance_route && out.phase_densities.size() == 2;
-    const bool local_postsolve_accepted = out.accepted;
     if (pure_density_distance_postsolve) {
         const double first_density = out.phase_densities[0];
         const double second_density = out.phase_densities[1];
@@ -3912,22 +3914,21 @@ NeutralTwoPhaseEosPostsolve fixed_temperature_pressure_postsolve(
     const double effective_phase_distance_tolerance = pure_density_distance_route
         ? std::max(phase_distance_tolerance, kPureSaturationMinimumReducedDensitySeparation)
         : phase_distance_tolerance;
-    const bool pure_density_distance_rejected =
-        pure_density_distance_postsolve && out.phase_distance < effective_phase_distance_tolerance;
-    out.accepted = out.accepted
-        && out.fixed_composition_norm <= phase_total_tolerance
-        && out.phase_amount_total_norm <= phase_total_tolerance
-        && (charges.empty() || out.charge_balance_norm <= charge_tolerance)
-        && !pure_density_distance_rejected;
-    if (!charges.empty() && out.charge_balance_norm > charge_tolerance) {
-        out.rejection_reason = "charge_balance";
-    } else if (!out.accepted && out.phase_amount_total_norm > phase_total_tolerance) {
-        out.rejection_reason = "phase_amount_total";
-    } else if (!out.accepted && out.fixed_composition_norm > phase_total_tolerance) {
-        out.rejection_reason = "fixed_composition";
-    } else if (local_postsolve_accepted && pure_density_distance_rejected) {
-        out.rejection_reason = "phase_distance";
-    }
+    NeutralPostsolveAcceptanceCriteria criteria;
+    criteria.material_tolerance = phase_total_tolerance;
+    criteria.pressure_tolerance = pressure_tolerance;
+    criteria.chemical_potential_tolerance = chemical_potential_tolerance;
+    criteria.phase_distance_tolerance = effective_phase_distance_tolerance;
+    criteria.charge_tolerance = charge_tolerance;
+    criteria.fixed_composition_tolerance = phase_total_tolerance;
+    criteria.phase_amount_total_tolerance = phase_total_tolerance;
+    criteria.charged_system = !charges.empty();
+    criteria.phase_distance_required = pure_density_distance_postsolve;
+    criteria.charge_balance_required = !charges.empty();
+    criteria.fixed_composition_required = true;
+    criteria.phase_amount_total_required = true;
+    criteria.ln_fugacity_consistency_required = !pure_density_distance_route;
+    certify_neutral_postsolve(out, criteria);
     return out;
 }
 
@@ -4005,7 +4006,7 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
     );
     bool have_best = false;
     std::vector<RouteSeedAttempt> attempts;
-    attempts.reserve(seeds.size() + (options.initial_variables.empty() ? 0 : 1));
+    attempts.reserve(seeds.size() + (options.initial_variables.empty() ? 0 : 2));
 
     auto run_attempt = [&](const std::string& seed_name, const IpoptSolveOptions& attempt_options) {
         NeutralFixedTemperaturePressureProblem problem(
@@ -4071,8 +4072,31 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
     };
 
     if (!options.initial_variables.empty()) {
-        const NeutralTwoPhaseEosRouteResult continuation = run_attempt("continuation_state", options);
-        if (neutral_route_strict_ipopt_success(continuation)) {
+        IpoptSolveOptions previous_primal_options = options;
+        previous_primal_options.initial_bound_lower_multipliers.clear();
+        previous_primal_options.initial_bound_upper_multipliers.clear();
+        previous_primal_options.initial_constraint_multipliers.clear();
+        const NeutralTwoPhaseEosRouteResult previous_primal = run_attempt(
+            "previous_primal_continuation_state",
+            previous_primal_options
+        );
+        if (neutral_route_strict_ipopt_success(previous_primal)) {
+            best.seed_attempts = attempts;
+            return best;
+        }
+
+        IpoptSolveOptions retargeted_options = previous_primal_options;
+        retargeted_options.initial_variables = retarget_pressure_route_initial_variables(
+            options.initial_variables,
+            normalized_composition,
+            fixed_phase_index,
+            problem_name
+        );
+        const NeutralTwoPhaseEosRouteResult retargeted = run_attempt(
+            "retargeted_fixed_phase_continuation_state",
+            retargeted_options
+        );
+        if (neutral_route_strict_ipopt_success(retargeted)) {
             best.seed_attempts = attempts;
             return best;
         }

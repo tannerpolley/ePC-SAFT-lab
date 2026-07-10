@@ -6,6 +6,19 @@ from pathlib import Path
 
 from scripts.validation import check_gross_2002_full_replication as checker
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+GROSS_FIGURE_GENERATORS = tuple(
+    REPO_ROOT
+    / "analyses"
+    / "paper_validation"
+    / "2002_gross"
+    / "figures"
+    / f"figure_{number:02d}"
+    / "scripts"
+    / "generate_data.py"
+    for number in range(1, 11)
+)
+
 
 def _write(path: Path, text: str = "artifact\n") -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -91,7 +104,7 @@ def _artifact_set(
     png = _write(tmp_path / figure_id / "plot.png")
     svg = _write(tmp_path / figure_id / "plot.svg")
     pdf = _write(tmp_path / figure_id / "plot.pdf")
-    return {
+    artifacts = {
         "source_csv": source_csv,
         "source_notes_csv": source_notes_csv,
         "model_csv": model_csv,
@@ -101,6 +114,22 @@ def _artifact_set(
         "svg": svg,
         "pdf": pdf,
     }
+    if figure_id == "figure_02":
+        literature_csv = _write(
+            tmp_path / figure_id / "literature_points.csv",
+            "figure_id,dataset,series,point_index,source_reference,source_detail\n"
+            "figure_02,literature_table,bubble_line,1,Leu and Robinson 1992 Table I,"
+            "methanol(1)-isobutane(2) Table I\n",
+        )
+        artifacts["source_identity_csv"] = _write(
+            tmp_path / figure_id / "source_identity.csv",
+            "figure_id,dataset,series,point_index,source_reference,source_detail,source_pdf,source_data_file\n"
+            "figure_02,literature_table,bubble_line,1,Leu and Robinson 1992 Table I,"
+            "methanol(1)-isobutane(2) Table I,"
+            "analyses/paper_validation/2002_gross/docs/pdf/source_01_gross_2002.pdf,"
+            f"{literature_csv}\n",
+        )
+    return artifacts
 
 
 def _foundation_payload() -> dict[str, object]:
@@ -178,6 +207,99 @@ def test_accepted_figure_requires_all_replication_artifacts(tmp_path: Path) -> N
 
     assert result["complete"] is False
     assert "gross_2002_figure_08_source_notes_csv_missing" in result["blockers"]
+
+
+def test_accepted_figure_requires_every_declared_artifact(tmp_path: Path) -> None:
+    artifacts = _artifact_set(tmp_path, "figure_08")
+    artifacts["declared_extra"] = str(tmp_path / "figure_08" / "declared-extra.csv")
+    payload = _foundation_payload()
+    payload["figures"] = [
+        {
+            "figure_id": "figure_08",
+            "plot_family": "phase_boundary",
+            "replication_status": "accepted",
+            "counts_toward_completion": True,
+            "acceptance_threshold": 8.0,
+            checker.SECOND_ORDER_REQUIRED_FIELD: True,
+            "artifacts": artifacts,
+        }
+    ]
+
+    result = checker.evaluate_payload(payload, require_complete=True)
+
+    assert result["complete"] is False
+    assert "gross_2002_figure_08_declared_extra_missing" in result["blockers"]
+
+
+def test_figure_two_source_identity_payload_must_be_traceable(tmp_path: Path) -> None:
+    artifacts = _artifact_set(tmp_path, "figure_02", proof_status="verified_exact")
+    artifacts["source_identity_csv"] = _write(
+        tmp_path / "figure_02" / "source_identity.csv",
+        "figure_id,source_reference\nfigure_02,Leu and Robinson 1992 Table I\n",
+    )
+    payload = _foundation_payload()
+    payload["figures"] = [
+        {
+            "figure_id": "figure_02",
+            "plot_family": "vle",
+            "replication_status": "accepted",
+            "counts_toward_completion": True,
+            "acceptance_threshold": 8.0,
+            checker.SECOND_ORDER_REQUIRED_FIELD: True,
+            "source_identity_status": "resolved",
+            "artifacts": artifacts,
+        }
+    ]
+
+    result = checker.evaluate_payload(payload, require_complete=True)
+
+    assert result["complete"] is False
+    assert "gross_2002_figure_02_source_identity_fields_missing" in result["blockers"]
+
+
+def test_figure_two_source_identity_must_match_the_literature_rows(
+    tmp_path: Path,
+) -> None:
+    artifacts = _artifact_set(tmp_path, "figure_02", proof_status="verified_exact")
+    literature_csv = tmp_path / "figure_02" / "literature_points.csv"
+    _write(
+        literature_csv,
+        "figure_id,dataset,series,point_index,source_reference,source_detail\n"
+        "figure_02,literature_table,bubble_line,2,Leu and Robinson 1992 Table I,"
+        "methanol-isobutane Table I\n",
+    )
+    artifacts["source_identity_csv"] = _write(
+        tmp_path / "figure_02" / "source_identity.csv",
+        "figure_id,dataset,series,point_index,source_reference,source_detail,source_pdf,source_data_file\n"
+        "figure_02,literature_table,bubble_line,1,Leu and Robinson 1992 Table I,"
+        "methanol-isobutane Table I,"
+        "analyses/paper_validation/2002_gross/docs/pdf/source_01_gross_2002.pdf,"
+        f"{literature_csv}\n",
+    )
+    payload = _foundation_payload()
+    payload["figures"] = [
+        {
+            "figure_id": "figure_02",
+            "plot_family": "vle",
+            "replication_status": "accepted",
+            "counts_toward_completion": True,
+            "acceptance_threshold": 8.0,
+            checker.SECOND_ORDER_REQUIRED_FIELD: True,
+            "source_identity_status": "resolved",
+            "artifacts": artifacts,
+        }
+    ]
+
+    result = checker.evaluate_payload(payload, require_complete=True)
+
+    assert result["complete"] is False
+    assert "gross_2002_figure_02_source_identity_row_mismatch" in result["blockers"]
+
+
+def test_full_replication_checker_has_no_broad_exception_catch() -> None:
+    source = Path(checker.__file__).read_text(encoding="utf-8")
+
+    assert "except Exception" not in source
 
 
 def test_low_score_blocks_accepted_figure(tmp_path: Path) -> None:
@@ -415,10 +537,42 @@ def test_cli_foundation_passes_committed_manifest(capsys) -> None:
 
 
 def test_cli_require_complete_accepts_committed_manifest(capsys) -> None:
-    exit_code = checker.main(["--json", "--require-complete"])
+    exit_code = checker.main(
+        [
+            "--json",
+            "--require-complete",
+            "--require-exact-association-hessian",
+            "--require-fresh-native",
+        ]
+    )
 
     payload = json.loads(capsys.readouterr().out)
     assert exit_code == 0
     assert payload["complete"] is True
     assert payload["accepted_figures"] == [f"figure_{number:02d}" for number in range(1, 11)]
     assert payload["blockers"] == []
+
+
+def test_every_gross_figure_generator_embeds_equilibrium_source_identity() -> None:
+    assert all(path.is_file() for path in GROSS_FIGURE_GENERATORS)
+    for path in GROSS_FIGURE_GENERATORS:
+        source = path.read_text(encoding="utf-8")
+        assert "native_freshness.build_receipt(" not in source, path
+        assert "native_freshness.build_equilibrium_native_receipt(" in source, path
+
+
+def test_figure_eight_uses_only_internal_neutral_lle_diagnostics() -> None:
+    source = GROSS_FIGURE_GENERATORS[7].read_text(encoding="utf-8")
+
+    assert 'route="lle"' not in source
+    assert "_native_neutral_tpd_phase_discovery(" in source
+    assert '"public_route_admission": "closed"' in source
+    assert '"global_held_proof": False' in source
+
+
+def test_figure_ten_labels_cross_association_as_internal_evidence() -> None:
+    source = GROSS_FIGURE_GENERATORS[9].read_text(encoding="utf-8")
+
+    assert "figure10_public_admission" not in source
+    assert '"public_route_admission": "closed"' in source
+    assert '"evidence_scope": "internal_cross_association_component_diagnostic"' in source

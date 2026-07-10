@@ -1,4 +1,11 @@
 plots:
+  - id: khudaida_2026_figure_01
+    title: Khudaida 2026 Figure 1 NaCl salting-out LLE at 293.15 K
+    svg_path: analyses/paper_validation/2026_khudaida/figures/figure_01/results/figure_01.svg
+    png_path: analyses/paper_validation/2026_khudaida/figures/figure_01/results/figure_01.png
+    pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_01/results/figure_01.pdf
+    plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_01/results/plotted_data.csv
+    source_data: analyses/paper_validation/2026_khudaida/figures/figure_01/source/source_points.csv
   - id: khudaida_2026_figure_02
     title: Khudaida 2026 Figure 2 293.15 K 5 wt% NaCl LLE
     svg_path: analyses/paper_validation/2026_khudaida/figures/figure_02/results/figure_02.svg
@@ -6,3 +13,73 @@ plots:
     pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_02/results/figure_02.pdf
     plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_02/results/plotted_data.csv
     source_data: analyses/paper_validation/2026_khudaida/figures/figure_02/source/source_points.csv
+  - id: khudaida_2026_figure_03
+    title: Khudaida 2026 Figure 3 303.15 K 5 wt% NaCl LLE
+    svg_path: analyses/paper_validation/2026_khudaida/figures/figure_03/results/figure_03.svg
+    png_path: analyses/paper_validation/2026_khudaida/figures/figure_03/results/figure_03.png
+    pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_03/results/figure_03.pdf
+    plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_03/results/plotted_data.csv
+    source_data: analyses/paper_validation/2026_khudaida/figures/figure_03/source/source_points.csv
+  - id: khudaida_2026_figure_04
+    title: Khudaida 2026 Figure 4 313.15 K 5 wt% NaCl LLE
+    svg_path: analyses/paper_validation/2026_khudaida/figures/figure_04/results/figure_04.svg
+    png_path: analyses/paper_validation/2026_khudaida/figures/figure_04/results/figure_04.png
+    pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_04/results/figure_04.pdf
+    plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_04/results/plotted_data.csv
+    source_data: analyses/paper_validation/2026_khudaida/figures/figure_04/source/source_points.csv
+  - id: khudaida_2026_figure_05
+    title: Khudaida 2026 Figure 5 293.15 K 10 wt% NaCl LLE
+    svg_path: analyses/paper_validation/2026_khudaida/figures/figure_05/results/figure_05.svg
+    png_path: analyses/paper_validation/2026_khudaida/figures/figure_05/results/figure_05.png
+    pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_05/results/figure_05.pdf
+    plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_05/results/plotted_data.csv
+    source_data: analyses/paper_validation/2026_khudaida/figures/figure_05/source/source_points.csv
+  - id: khudaida_2026_figure_06
+    title: Khudaida 2026 Figure 6 303.15 K 10 wt% NaCl LLE
+    svg_path: analyses/paper_validation/2026_khudaida/figures/figure_06/results/figure_06.svg
+    png_path: analyses/paper_validation/2026_khudaida/figures/figure_06/results/figure_06.png
+    pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_06/results/figure_06.pdf
+    plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_06/results/plotted_data.csv
+    source_data: analyses/paper_validation/2026_khudaida/figures/figure_06/source/source_points.csv
+  - id: khudaida_2026_figure_07
+    title: Khudaida 2026 Figure 7 313.15 K 10 wt% NaCl LLE
+    svg_path: analyses/paper_validation/2026_khudaida/figures/figure_07/results/figure_07.svg
+    png_path: analyses/paper_validation/2026_khudaida/figures/figure_07/results/figure_07.png
+    pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_07/results/figure_07.pdf
+    plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_07/results/plotted_data.csv
+    source_data: analyses/paper_validation/2026_khudaida/figures/figure_07/source/source_points.csv
+  - id: khudaida_2026_figure_08
+    title: Khudaida 2026 Figure 8 water-over-ethanol separation factor
+    svg_path: analyses/paper_validation/2026_khudaida/figures/figure_08/results/figure_08.svg
+    png_path: analyses/paper_validation/2026_khudaida/figures/figure_08/results/figure_08.png
+    pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_08/results/figure_08.pdf
+    plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_08/results/plotted_data.csv
+    source_data: analyses/paper_validation/2026_khudaida/figures/figure_08/source/source_points.csv
+  - id: khudaida_2026_figure_09
+    title: Khudaida 2026 Figure 9 ethanol distribution coefficient
+    svg_path: analyses/paper_validation/2026_khudaida/figures/figure_09/results/figure_09.svg
+    png_path: analyses/paper_validation/2026_khudaida/figures/figure_09/results/figure_09.png
+    pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_09/results/figure_09.pdf
+    plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_09/results/plotted_data.csv
+    source_data: analyses/paper_validation/2026_khudaida/figures/figure_09/source/source_points.csv
+  - id: khudaida_2026_figure_10
+    title: Khudaida 2026 Figure 10 sigma-profile source retention
+    svg_path: analyses/paper_validation/2026_khudaida/figures/figure_10/results/figure_10.svg
+    png_path: analyses/paper_validation/2026_khudaida/figures/figure_10/results/figure_10.png
+    pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_10/results/figure_10.pdf
+    plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_10/results/plotted_data.csv
+    source_data: analyses/paper_validation/2026_khudaida/figures/figure_10/source/source_points.csv
+  - id: khudaida_2026_figure_11
+    title: Khudaida 2026 Supporting Figure S2 5 wt% NaCl LLE temperature grid
+    svg_path: analyses/paper_validation/2026_khudaida/figures/figure_11/results/figure_11.svg
+    png_path: analyses/paper_validation/2026_khudaida/figures/figure_11/results/figure_11.png
+    pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_11/results/figure_11.pdf
+    plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_11/results/plotted_data.csv
+    source_data: analyses/paper_validation/2026_khudaida/figures/figure_11/source/source_points.csv
+  - id: khudaida_2026_figure_12
+    title: Khudaida 2026 Supporting Figure S3 10 wt% NaCl LLE temperature grid
+    svg_path: analyses/paper_validation/2026_khudaida/figures/figure_12/results/figure_12.svg
+    png_path: analyses/paper_validation/2026_khudaida/figures/figure_12/results/figure_12.png
+    pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_12/results/figure_12.pdf
+    plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_12/results/plotted_data.csv
+    source_data: analyses/paper_validation/2026_khudaida/figures/figure_12/source/source_points.csv

@@ -5,8 +5,8 @@ Electrolyte LLE paper-validation workflow for Khudaida et al. 2026 water + ethan
 Scope:
 
 - Non-reactive electrolyte LLE only.
-- Public package route: `electrolyte_lle`.
-- Parameter dataset: `2026_Khudaida`, with paper Tables 5-7 and Born SSM+DS options retained under `shared/source/`.
+- Internal package diagnostic: partially source-backed `electrolyte_lle` component validation; no public route is admitted.
+- Parameter dataset: `2026_Khudaida`, with paper Tables 5-7 and Born SSM+DS options retained under `shared/source/`. Table 7 supplies source references for 8 of 10 required `k_ij` pairs; its Butanol/Na+ and Butanol/Cl- zero entries have no source references and remain unresolved. The paper does not supply `l_ij` or `k_hb_ij`, so no executable matrices for those families are retained.
 - Figures 1-9 and Tables 9-10 have figure-owned workflows; Supporting Information Figures S2-S3 are retained as three-panel workflows covering subfigures a-c.
 - Supporting Information Tables S1-S4 are retained as analysis-owned CSV inputs for distribution/separation-factor and eNRTL comparison checks.
 
@@ -31,13 +31,16 @@ To refresh the package model rows instead of reusing the retained
 KHUDAIDA_FORCE_RECOMPUTE=1 uv run --no-sync python analyses/paper_validation/2026_khudaida/scripts/run_all.py
 ```
 
-Figures 2-7 and Supporting Information Figures S2-S3 now call the public
-`epcsaft_equilibrium.Equilibrium(..., route="electrolyte_lle")` entry point
-through a per-feed isolated solve helper. The isolation is deliberate: native
-solver failures are recorded as failed model points instead of aborting the
-whole figure batch.
+Figures 2-7 and Supporting Information Figures S2-S3 use a private,
+source-bounded component diagnostic. Parameter provenance is checked before
+native mixture construction; the current unresolved interaction families
+produce retained rejected model rows without executing a package solve. This
+analysis is evidence for repairing and eventually re-admitting the capability,
+not evidence of production exposure.
 
 Current scientific status: the figure artifact contract is complete, but the
-public electrolyte LLE route does not yet reproduce the Khudaida salted
+internal electrolyte LLE component diagnostic does not yet reproduce the Khudaida salted
 tie-lines. The validation checker reports those model-fit failures separately
-from the file/plot contract so the missing equilibrium behavior remains visible.
+from the file/plot contract. Partial `k_ij` source coverage and unresolved
+`l_ij` and `k_hb_ij` families are blocking model-evidence conditions; the
+retained zero accepted-tieline result is not source-complete evidence.

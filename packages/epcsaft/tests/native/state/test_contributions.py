@@ -5,7 +5,6 @@ from __future__ import annotations
 import numpy as np
 import pytest
 from epcsaft._core import NativeValueError
-
 from support.native_cases import _ionic_state, _neutral_state
 from support.numeric import assert_allclose
 

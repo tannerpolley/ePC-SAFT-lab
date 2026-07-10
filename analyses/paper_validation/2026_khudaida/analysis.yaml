@@ -1,11 +1,30 @@
 analysis_id: 2026_khudaida
 title: Khudaida 2026 electrolyte LLE validation
 kind: paper_validation
-status: migrated
-package: epcsaft
-route: public electrolyte_lle
+status: active_validation
+package: epcsaft-equilibrium
+validation_scope: internal_component_diagnostic
+route: internal electrolyte LLE validation
+public_routes: []
+claim_boundary: Retained partially source-backed component diagnostics do not authorize electrolyte_lle production exposure or model-pass claims.
 parameter_dataset: 2026_Khudaida
 born_model: SSM+DS
+parameter_provenance:
+  status: partial_source_coverage
+  families:
+    k_ij:
+      source_backed_pair_count: 8
+      total_pair_count: 10
+      unresolved_pairs:
+        - Butanol/Na+
+        - Butanol/Cl-
+    l_ij:
+      status: unresolved_parameter_family
+      executable_matrix_retained: false
+    k_hb_ij:
+      status: unresolved_parameter_family
+      executable_matrix_retained: false
+  model_pass_blocked: true
 commands:
   run_all: uv run python analyses/paper_validation/2026_khudaida/scripts/run_all.py
 outputs:

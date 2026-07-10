@@ -124,14 +124,13 @@ def test_stage9_phase_discovery_checker_requires_complete_exit_status() -> None:
 
 
 def test_public_admission_rows_are_explicitly_scoped() -> None:
-    admitted = {
-        "PE-Generalized Multiphase": ("neutral_public_admitted", ["multiphase"]),
-        "PE-Associating TP Flash": ("source_backed_associating_lle_public_admitted", ["lle"]),
-        "PE-Electrolyte LLE/TP Flash": (
-            "held2_public_route_phase_discovery_admitted_blocked_by_perdomo_figiel_validation",
-            ["electrolyte_lle"],
-        ),
-        "CE Standalone Reactive Speciation": ("standalone_ce_public_admitted", ["reactive_speciation"]),
+    admitted: dict[str, tuple[str, list[str]]] = {}
+    active_validation = {
+        "PE-Neutral TP Flash",
+        "PE-Associating TP Flash",
+        "PE-Electrolyte LLE/TP Flash",
+        "PE-Generalized Multiphase",
+        "CE Standalone Reactive Speciation",
     }
     for row in _family_rows():
         assert "required_gates" in row, row["family_label"]
@@ -140,6 +139,11 @@ def test_public_admission_rows_are_explicitly_scoped() -> None:
             assert row["activation_status"] == expected_status
             assert row["production_exposed"] is True
             assert row["existing_public_utility_routes"] == expected_routes
+        elif row["family_label"] in active_validation:
+            assert row["activation_status"] == "active_validation_not_public"
+            assert row["production_exposed"] is False
+            assert row["existing_public_utility_routes"] == []
+            assert row["diagnostic_evidence"]
         else:
             assert row["activation_status"] == "planned_not_public", row["family_label"]
             assert row["production_exposed"] is False, row["family_label"]
@@ -149,7 +153,7 @@ def test_public_admission_rows_are_explicitly_scoped() -> None:
     assert "held_stage_ii_dual_phase_discovery" in neutral["required_gates"]
     assert (
         neutral["phase_discovery_status"]
-        == "continuous_tpd_stage_i_stage_ii_dual_loop_replay_verified_current_fixture"
+        == "sampled_candidate_stage_ii_component_diagnostic_not_global_held"
     )
     assert neutral["phase_discovery_gate_status"]["deterministic_screening"].endswith("not_full_held")
     assert (
@@ -160,15 +164,15 @@ def test_public_admission_rows_are_explicitly_scoped() -> None:
     assert neutral["phase_discovery_gate_status"]["held_stage_i_stability"] == expected_stage_i_status
     assert (
         neutral["phase_discovery_gate_status"]["held_stage_ii_candidate_bound_audit"]
-        == "current_neutral_candidate_bound_audit_closed"
+        == "sampled_candidate_bound_audit_only_not_global"
     )
     assert (
         neutral["phase_discovery_gate_status"]["held_stage_ii_dual_phase_discovery"]
-        == "current_neutral_dual_loop_replay_verified_current_fixture"
+        == "sampled_candidate_dual_loop_component_evidence_not_global_held"
     )
     assert (
         neutral["phase_discovery_gate_status"]["held_stage_iii_ipopt_refinement"]
-        == "current_route_refinement_reports_accepted_seed_and_declines_replay_when_replay_seed_misses_postsolve"
+        == "internal_refinement_evidence_does_not_admit_public_route"
     )
 
 
@@ -213,6 +217,8 @@ def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> N
     assert subworkflows["Dew point"]["current_convergence_status"] == (
         "current_fixture_strict_route_points_verified"
     )
+    assert subworkflows["Bubble point"]["current_runtime_routes"] == ["bubble_pressure"]
+    assert subworkflows["Dew point"]["current_runtime_routes"] == ["dew_pressure"]
     assert subworkflows["Cloud point"]["current_convergence_status"] == (
         "checker_gated_native_route_evidence_verified_public_routes_closed"
     )
@@ -228,6 +234,16 @@ def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> N
         assert "checker_gated_native_cloud_temperature_route" in row["acceptance_checks"], label
         assert "public_route_admission_closed" in row["acceptance_checks"], label
         assert "native_route_admission_blockers_declared" not in row["acceptance_checks"], label
+
+
+def test_derived_workflow_docs_distinguish_public_pressure_routes_from_closed_variants() -> None:
+    gfpe_text = GFPE_PATH.read_text(encoding="utf-8")
+    section = " ".join(
+        gfpe_text.split("## Derived Boundary Workflows", maxsplit=1)[1].split("##", maxsplit=1)[0].split()
+    )
+
+    assert "Bubble-pressure and dew-pressure routes are public" in section
+    assert "Bubble/dew temperature, cloud, and shadow workflows remain closed" in section
 
 
 def test_deterministic_screening_is_not_called_full_held() -> None:
@@ -286,9 +302,9 @@ def test_ce_family_is_homogeneous_speciation_with_explicit_gates() -> None:
     required_gates = set(ce["required_gates"])
 
     assert ce["family_kind"] == "chemical_equilibrium"
-    assert ce["activation_status"] == "standalone_ce_public_admitted"
-    assert ce["production_exposed"] is True
-    assert ce["existing_public_utility_routes"] == ["reactive_speciation"]
+    assert ce["activation_status"] == "active_validation_not_public"
+    assert ce["production_exposed"] is False
+    assert ce["existing_public_utility_routes"] == []
     assert ce["phase_discovery_status"] == "not_applicable_homogeneous_single_phase"
     assert {
         "homogeneous_single_phase_only",
@@ -320,23 +336,18 @@ def test_cpe_family_requires_simultaneous_phase_and_chemical_proof_chains() -> N
     assert "sequential_speciation_flash_as_simultaneous_cpe" in cpe["forbidden_shortcuts"]
 
 
-def test_electrolyte_family_records_public_admission_evidence() -> None:
+def test_electrolyte_family_retains_internal_repair_evidence() -> None:
     electrolyte = _family_by_label()["PE-Electrolyte LLE/TP Flash"]
-    evidence = {row["evidence_label"]: row for row in electrolyte["admission_evidence"]}
+    evidence = {row["evidence_label"]: row for row in electrolyte["diagnostic_evidence"]}
 
     gate = evidence["Khudaida electrolyte GFPE closed-admission gate"]
 
-    assert electrolyte["production_exposed"] is True
-    assert electrolyte["existing_public_utility_routes"] == ["electrolyte_lle"]
-    assert (
-        electrolyte["phase_discovery_status"]
-        == "held2_public_route_phase_discovery_and_scenario_validation_admitted_perdomo_figiel_validation_blocked_by_320"
-    )
+    assert electrolyte["production_exposed"] is False
+    assert electrolyte["existing_public_utility_routes"] == []
+    assert electrolyte["activation_status"] == "active_validation_not_public"
     assert "electrolyte_gfpe_closed_admission_source_gate" in electrolyte["required_gates"]
     assert "electrolyte_postsolve_phase_set_certification" in electrolyte["required_gates"]
-    assert "electrolyte_public_route_admission" in electrolyte["required_gates"]
-    assert "held2_public_route_scenario_validation" in electrolyte["required_gates"]
-    assert "held2_public_route_capability_admission" in electrolyte["required_gates"]
+    assert "electrolyte_public_route_admission" not in electrolyte["required_gates"]
     assert gate["evidence_tier"] == "T1"
     assert gate["command"] == (
         "uv run --no-sync python scripts/validation/check_electrolyte_gfpe_gate.py "
@@ -392,50 +403,25 @@ def test_electrolyte_family_records_public_admission_evidence() -> None:
     assert "neutral and mean-ionic transfer residuals" in postsolve["scope"]
     assert "phase and total charge residuals <= 1.0e-8" in postsolve["result_requirement"]
 
-    public = evidence["Electrolyte public route admission gate"]
-    assert public["evidence_tier"] == "T1"
-    assert public["command"] == (
-        "uv run --no-sync python scripts/validation/check_electrolyte_public_admission.py "
-        "--json --require-held2-stage-ii --require-stage-iii "
-        "--require-postsolve-certification --require-public-admission --require-complete"
-    )
-    assert "Equilibrium(..., route='electrolyte_lle')" in public["scope"]
-    assert "Stage II status is `dual_loop_verified`" in public["result_requirement"]
-    assert "Stage III consumes the Stage II replay payload" in public["result_requirement"]
-    assert "public route `electrolyte_lle`" in public["result_requirement"]
-    assert "reactive, CE, CPE, regression, and release claims remain closed" in public["result_requirement"]
-
-    scenario = evidence["Electrolyte HELD2 public-route scenario validation ladder"]
-    assert scenario["evidence_tier"] == "T1"
-    assert scenario["command"] == (
-        "uv run --no-sync python scripts/validation/check_electrolyte_held2_public_route_scenarios.py "
-        "--json --require-complete"
-    )
-    assert "stable feed" in scenario["scope"]
-    assert "mixed-salt/asymmetric electrolyte" in scenario["scope"]
-    assert "7 accepted scenarios" in scenario["result_requirement"]
-    assert "neutral-limit rows make no charged residual-family claim" in scenario["result_requirement"]
-
-    admission = evidence["Electrolyte HELD2 capability admission registry contract"]
-    assert admission["evidence_tier"] == "T1"
-    assert admission["command"] == (
-        "uv run --no-sync python -m pytest "
-        "tests\\native\\contracts\\test_equilibrium_benchmark_registry.py "
-        "tests\\native\\contracts\\test_generalized_equilibrium_registry.py -q"
-    )
-    assert "Issue #350 registry and capability-doc admission" in admission["scope"]
-    assert "#191 remains blocked by #320 and #343" in admission["result_requirement"]
+    assert "Electrolyte public route admission gate" not in evidence
+    assert "Electrolyte HELD2 public-route scenario validation ladder" not in evidence
 
 
-def test_generalized_multiphase_records_public_admission_evidence() -> None:
+def test_generalized_multiphase_retains_internal_diagnostic_evidence() -> None:
     generalized = _family_by_label()["PE-Generalized Multiphase"]
     evidence = {
         row["evidence_label"]: row
-        for row in generalized["admission_evidence"]
+        for row in generalized["diagnostic_evidence"]
     }
 
-    assert generalized["production_exposed"] is True
-    assert generalized["existing_public_utility_routes"] == ["multiphase"]
+    assert generalized["production_exposed"] is False
+    assert generalized["existing_public_utility_routes"] == []
+    audit = evidence["Neutral generalized sampled-candidate audit"]
+    assert "sampled_candidate_audit_complete_global_completeness_unproven" in audit[
+        "result_requirement"
+    ]
+    assert "global_phase_set_certified=false" in audit["result_requirement"]
+    assert "public route remains closed" in audit["result_requirement"]
     strict = evidence["Strict neutral multiphase fugacity-residual refinement"]
     assert strict["command"] == (
         "uv run --no-sync python scripts/validation/check_generalized_phase_set.py "
@@ -444,22 +430,18 @@ def test_generalized_multiphase_records_public_admission_evidence() -> None:
     )
     assert "strict_multiphase_fugacity_residual_route" in strict["result_requirement"]
     assert "exact_reduced_fugacity_residual_derivatives" in strict["result_requirement"]
-    assert "stage_ii_candidate_set_replay_consumed" in strict["result_requirement"]
-    assert "public_route_admission_closed" not in strict["result_requirement"]
-    public = evidence["Public neutral multiphase admission checker"]
-    assert public["command"] == (
-        "uv run --no-sync python scripts/validation/check_generalized_phase_set.py "
-        "--json --phase-kinds liquid,liquid,liquid --run-route-refinement "
-        "--require-route-refinement --require-public-admission --require-complete"
-    )
-    assert "public_multiphase_route" in public["result_requirement"]
-    assert "neutral_multiphase_nonassoc selector family" in public["result_requirement"]
-    assert "generalized_phase_set_public_admission_checker" in public["result_requirement"]
+    assert "sampled_candidate_set_replay_consumed" in strict["result_requirement"]
+    assert "global_phase_set_certified=false" in strict["result_requirement"]
+    assert "Public neutral multiphase admission checker" not in evidence
     assert "strict_multiphase_fugacity_residual_route" in generalized["required_gates"]
     assert "exact_reduced_fugacity_residual_derivatives" in generalized["required_gates"]
-    assert "stage_ii_candidate_set_replay_consumed" in generalized["required_gates"]
-    assert "public_multiphase_route" in generalized["required_gates"]
-    assert "generalized_phase_set_public_admission_checker" in generalized["required_gates"]
+    assert "sampled_candidate_set_replay_consumed" in generalized["required_gates"]
+    assert "public_multiphase_route" not in generalized["required_gates"]
+
+    serialized = str(generalized).lower()
+    assert re.search(r"(?<!global_)phase_set_certified", serialized) is None
+    assert "dual_loop_verified" not in serialized
+    assert "--require-public-admission" not in serialized
 
 
 def test_benchmark_cases_reference_descriptive_family_labels() -> None:

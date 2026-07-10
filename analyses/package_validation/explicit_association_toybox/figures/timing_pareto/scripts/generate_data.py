@@ -12,6 +12,8 @@ if str(REPO_ROOT) not in sys.path:
 
 from analyses.package_validation.explicit_association_toybox.scripts.run_topology_matrix import (
     DEFAULT_OUTPUT as TOPOLOGY_MATRIX,
+)
+from analyses.package_validation.explicit_association_toybox.scripts.run_topology_matrix import (
     run_topology_matrix,
 )
 

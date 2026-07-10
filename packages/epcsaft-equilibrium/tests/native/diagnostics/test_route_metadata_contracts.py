@@ -1,19 +1,13 @@
 from __future__ import annotations
 
-import pytest
 import numpy as np
+import pytest
 from epcsaft.state.native_adapter import ePCSAFTMixture
-
 from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
 from equilibrium_support.equilibrium_cases import (
-    GROSS_2002_LLE_FEED,
-    GROSS_2002_PRESSURE_PA,
-    GROSS_2002_TEMPERATURE_K,
     _neutral_binary_mixture,
-    _nonideal_lle_binary_mixture,
-    gross_2002_associating_public_mixture,
 )
 
 pytestmark = pytest.mark.native_contract
@@ -90,79 +84,16 @@ def test_deleted_native_equilibrium_route_entrypoints_are_absent() -> None:
     assert [name for name in sorted(deleted) if hasattr(_core, name)] == []
 
 
-def test_selector_contract_declares_neutral_lle_metadata_without_solving() -> None:
-    mix = _nonideal_lle_binary_mixture()
+def test_activation_matrix_retains_neutral_lle_as_closed_internal_inventory() -> None:
+    rows = {row["key"]: row for row in _core._native_equilibrium_activation_matrix()}
+    neutral_lle = rows["neutral_lle"]
 
-    payload = _core._native_equilibrium_selector_contract(
-        mix._native,
-        {
-            "route": "neutral_lle",
-            "temperature": 300.0,
-            "pressure": 1.0e6,
-            "composition": [0.5, 0.5],
-            "composition_role": "feed",
-        },
-    )
-
-    assert payload["selector_family"] == "neutral_lle"
-    assert payload["route"] == "neutral_lle"
-    assert payload["composition_role"] == "feed"
-    assert payload["problem_name"] == "neutral_lle_eos"
-    assert payload["variable_model"] == "phase_species_amounts_plus_phase_volume"
-    assert payload["density_backend"] == "explicit_phase_volume_pressure_constraint"
-    assert payload["residual_families"] == [
-        "material_balance",
-        "phase_pressure_consistency",
-        "phase_equilibrium",
-        "phase_distance",
-    ]
-    assert payload["constraint_families"] == [
-        "material_balance",
-        "phase_pressure_consistency",
-        "phase_distance",
-    ]
-    assert "phase_volume_gap" not in payload["constraint_families"]
-    assert payload["activation"]["proof_routes"] == [
-        "neutral_lle_binary_nonassociating_ipopt_exact_hessian",
-        "associating_neutral_lle_gross_2002_public_exact_hessian",
-    ]
-    assert payload["applicable_proof_routes"] == [
-        "neutral_lle_binary_nonassociating_ipopt_exact_hessian",
-    ]
-    assert payload["input_classification"]["nonassociating"] is True
-    assert payload["input_classification"]["associating_species_indices"] == []
-    assert payload["activation_plan"]["phase_keys"] == ["liquid1", "liquid2"]
-    assert payload["activation_plan"]["phase_kinds"] == ["liquid", "liquid"]
-
-
-def test_selector_contract_declares_associating_lle_request_proof_without_losing_inventory() -> None:
-    mix = gross_2002_associating_public_mixture()
-
-    payload = _core._native_equilibrium_selector_contract(
-        mix._native,
-        {
-            "route": "neutral_lle",
-            "temperature": GROSS_2002_TEMPERATURE_K,
-            "pressure": GROSS_2002_PRESSURE_PA,
-            "composition": GROSS_2002_LLE_FEED,
-            "composition_role": "feed",
-        },
-    )
-
-    assert payload["activation"]["proof_routes"] == [
-        "neutral_lle_binary_nonassociating_ipopt_exact_hessian",
-        "associating_neutral_lle_gross_2002_public_exact_hessian",
-    ]
-    assert payload["applicable_proof_routes"] == [
-        "associating_neutral_lle_gross_2002_public_exact_hessian",
-    ]
-    assert payload["parameter_readiness"]["associating_admission_proof_route"] == (
-        "associating_neutral_lle_gross_2002_public_exact_hessian"
-    )
-    assert payload["input_classification"]["nonassociating"] is False
-    assert payload["input_classification"]["associating_species_indices"] == [0]
-    assert payload["activation_plan"]["phase_keys"] == ["liquid1", "liquid2"]
-    assert payload["activation_plan"]["phase_kinds"] == ["liquid", "liquid"]
+    assert neutral_lle["production_exposed"] is False
+    assert neutral_lle["exposure_status"] == "declared_not_exposed"
+    assert neutral_lle["proof_routes"] == []
+    assert neutral_lle["public_routes"] == []
+    assert neutral_lle["variable_model"] == "phase_species_amounts_plus_phase_volume"
+    assert neutral_lle["density_backend"] == "explicit_phase_volume_pressure_constraint"
 
 
 def test_selector_contract_declares_single_component_vle_shared_pressure_route_metadata() -> None:

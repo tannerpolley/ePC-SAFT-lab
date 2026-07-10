@@ -15,7 +15,7 @@ EQUATION_FAMILY_COVERAGE = {
     "density closure / root solving": [
         "test_pressure_density_edge_cases_cover_vapor_and_liquid_extremes",
         "test_pressure_density_phase_branches_do_not_cross_at_two_phase_like_state",
-        "test_ionic_high_pressure_liquid_density_branch_remains_stable",
+        "test_ionic_high_pressure_ssm_ds_liquid_branch_remains_stable",
     ],
     "residual Helmholtz energy": [
         "test_native_residual_helmholtz_and_compressibility_contributions_match_neutral_contract"

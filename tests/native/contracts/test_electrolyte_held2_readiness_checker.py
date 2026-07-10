@@ -79,11 +79,15 @@ def _complete_payload() -> dict[str, Any]:
                 "public_routes": [],
                 "proof_routes": [],
             },
-            "capabilities_public_routes": ["bubble_pressure", "dew_pressure", "lle"],
-            "production_families": ["bubble_dew_derived_routes", "neutral_lle"],
+            "capabilities_public_routes": [
+                "bubble_pressure",
+                "dew_pressure",
+                "single_component_vle",
+            ],
+            "production_families": ["bubble_dew_derived_routes", "single_component_vle"],
             "route_derivative_evidence_quantities": [
                 "neutral_lle",
-                "associating_neutral_lle_gross_2002_public_exact_hessian",
+                "associating_neutral_lle_gross_2002_internal_exact_hessian",
             ],
         },
     }
@@ -168,7 +172,8 @@ def test_evaluate_readiness_uses_real_source_gate_and_provider_receipts() -> Non
     assert result["born_ssm_ds_exactness"]["finite_composition_derivatives"] is True
     assert result["born_ssm_ds_exactness"]["finite_parameter_derivatives"] is True
     assert result["held2_readiness"]["readiness_only"] is True
-    assert result["public_route_state"]["electrolyte_lle"]["production_exposed"] is True
+    assert result["public_route_state"]["electrolyte_lle"]["production_exposed"] is False
+    assert result["public_route_state"]["electrolyte_lle"]["public_routes"] == []
 
 
 def test_cli_requires_complete_readiness_evidence() -> None:

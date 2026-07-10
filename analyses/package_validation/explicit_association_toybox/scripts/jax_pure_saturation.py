@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import lru_cache
 from importlib.util import find_spec
-from typing import Mapping
 
 import jax
 import jax.numpy as jnp
@@ -76,7 +76,7 @@ def python_ipopt_availability() -> PythonIpoptStatus:
             message="cyipopt is not importable in this environment.",
         )
     try:
-        import cyipopt  # noqa: F401
+        import cyipopt
     except Exception as exc:
         return PythonIpoptStatus(
             status="python_ipopt_missing",

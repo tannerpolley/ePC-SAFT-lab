@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import pytest
-
 import epcsaft
+import pytest
 from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()

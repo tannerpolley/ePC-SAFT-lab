@@ -154,6 +154,20 @@ if(EPCSAFT_ENABLE_CERES)
                 add_subdirectory("${ceres_solver_SOURCE_DIR}" "${ceres_solver_BINARY_DIR}" EXCLUDE_FROM_ALL)
             endif()
         endif()
+        get_target_property(
+            EPCSAFT_CERES_INTERFACE_INCLUDE_DIRS
+            ceres
+            INTERFACE_INCLUDE_DIRECTORIES
+        )
+        if(NOT EPCSAFT_CERES_INTERFACE_INCLUDE_DIRS)
+            message(FATAL_ERROR "Fetched Ceres target must expose interface include directories.")
+        endif()
+        set_property(
+            TARGET ceres
+            APPEND
+            PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+            ${EPCSAFT_CERES_INTERFACE_INCLUDE_DIRS}
+        )
         if(TARGET ceres_internal AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
             target_compile_options(ceres_internal PRIVATE -include cstdint)
         endif()
@@ -307,36 +321,6 @@ int main()
     set(EPCSAFT_CPPAD_STATUS "enabled_available")
 endif()
 
-set(EPCSAFT_NATIVE_MODEL_SOURCES
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/model/parameter_setup.cpp
-)
-set(EPCSAFT_NATIVE_EOS_SOURCES
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/activity.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/chemical_potential.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/compressibility.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/density.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/fugacity.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/parameters/pure_neutral.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/implicit_association/sensitivities.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/helmholtz.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/parameters/phase_parameters.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/association_corrections.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/local_helmholtz_derivatives.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/pressure_derivatives.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/state_sensitivities.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/property_derivatives.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/thermodynamic_properties.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/state.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/association.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/born.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/dispersion.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/hard_chain.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/ion.cpp
-)
-set(EPCSAFT_NATIVE_AUTODIFF_SOURCES
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/autodiff/cppad_smoke_checks.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/autodiff/implicit_sensitivity.cpp
-)
 set(
     EPCSAFT_EQUILIBRIUM_PACKAGE_ROOT
     "${CMAKE_CURRENT_SOURCE_DIR}/packages/epcsaft-equilibrium"
@@ -353,6 +337,13 @@ set(EPCSAFT_EQUILIBRIUM_EXTENSION_NATIVE_ROOT "${EPCSAFT_EQUILIBRIUM_PACKAGE_ROO
 set(EPCSAFT_REGRESSION_EXTENSION_NATIVE_ROOT "${EPCSAFT_REGRESSION_PACKAGE_ROOT}/src/epcsaft_regression/native")
 set(EPCSAFT_EQUILIBRIUM_NATIVE_ROOT "${EPCSAFT_EQUILIBRIUM_EXTENSION_NATIVE_ROOT}/equilibrium")
 set(EPCSAFT_REGRESSION_NATIVE_ROOT "${EPCSAFT_REGRESSION_EXTENSION_NATIVE_ROOT}/regression")
+include("${EPCSAFT_EQUILIBRIUM_PACKAGE_ROOT}/cmake/EquilibriumNativeSourceIdentity.cmake")
+epcsaft_equilibrium_load_native_source_manifest(
+    "${EPCSAFT_EQUILIBRIUM_PACKAGE_ROOT}"
+    EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
+    EPCSAFT_NATIVE_EQUILIBRIUM_MODULE_SOURCES
+    EPCSAFT_NATIVE_EQUILIBRIUM_IDENTITY_FILES
+)
 set(EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/register_bindings.cpp")
 if(EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE AND NOT EXISTS "${EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE}")
     message(
@@ -368,57 +359,10 @@ if(EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE AND NOT EXISTS "${EPCSAFT_REGRESSION_N
         "${EPCSAFT_REGRESSION_PACKAGE_ROOT}."
     )
 endif()
-set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/association_block.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/chemical_equilibrium_block.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/electrolyte_block.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/eos_phase_block.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/gibbs_blocks.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/phase_equilibrium_residual_block.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/reaction_block.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/saturation_block.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activated_equilibrium_nlp.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activation_plan.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/chemical_equilibrium_nlp.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/chemical_equilibrium_objective.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/continuation_driver.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/feasible_initialization.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/helpers.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/nlp_problem.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/selector_core.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/second_order.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/two_phase_eos_route.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/variable_transform.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/variable_layout.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives/nlp_contract_snapshot.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives/phase_block_derivatives.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives/phase_system_derivatives.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives/route_second_order.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/results/result_builder.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/routes/derived/bubble_dew.cpp
-    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/solvers/ipopt_adapter.cpp
-)
 set(EPCSAFT_NATIVE_REGRESSION_SOURCES
     ${EPCSAFT_REGRESSION_NATIVE_ROOT}/ceres_regression.cpp
 )
-set(EPCSAFT_PROVIDER_NATIVE_SOURCES
-    ${EPCSAFT_NATIVE_MODEL_SOURCES}
-    ${EPCSAFT_NATIVE_EOS_SOURCES}
-    ${EPCSAFT_NATIVE_AUTODIFF_SOURCES}
-)
-if(EPCSAFT_CPPAD_SOURCE_FILE)
-    list(APPEND EPCSAFT_PROVIDER_NATIVE_SOURCES "${EPCSAFT_CPPAD_SOURCE_FILE}")
-endif()
-
-set(EPCSAFT_PROVIDER_NATIVE_INCLUDE_DIRS
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/autodiff"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/model"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/runtime"
-)
+include("${EPCSAFT_PROVIDER_SOURCE_ROOT}/native_sdk/provider_native_sdk_v1/epcsaft_provider_sdk.cmake")
 set(EPCSAFT_EQUILIBRIUM_NATIVE_INCLUDE_DIRS
     ${EPCSAFT_PROVIDER_NATIVE_INCLUDE_DIRS}
     "${EPCSAFT_EQUILIBRIUM_EXTENSION_NATIVE_ROOT}"
@@ -436,7 +380,7 @@ set(EPCSAFT_REGRESSION_NATIVE_INCLUDE_DIRS
     "${EPCSAFT_REGRESSION_NATIVE_ROOT}"
 )
 
-add_library(epcsaft_provider_native OBJECT ${EPCSAFT_PROVIDER_NATIVE_SOURCES})
+add_library(epcsaft_provider_native OBJECT ${EPCSAFT_PROVIDER_NATIVE_TARGET_SOURCES})
 add_library(epcsaft_native INTERFACE)
 
 set(EPCSAFT_NATIVE_OBJECT_TARGETS
@@ -519,8 +463,7 @@ if(EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE)
     pybind11_add_module(
         epcsaft_equilibrium_native_core
         NO_EXTRAS
-        "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/module.cpp"
-        "${EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE}"
+        ${EPCSAFT_NATIVE_EQUILIBRIUM_MODULE_SOURCES}
     )
     set_target_properties(
         epcsaft_equilibrium_native_core
@@ -545,6 +488,11 @@ if(EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE)
     if(EPCSAFT_ENABLE_IPOPT)
         target_compile_definitions(epcsaft_equilibrium_native_core PRIVATE EPCSAFT_HAS_IPOPT=1)
     endif()
+    epcsaft_equilibrium_apply_native_source_identity(
+        epcsaft_equilibrium_native_core
+        "${EPCSAFT_EQUILIBRIUM_PACKAGE_ROOT}"
+        "${EPCSAFT_PROVIDER_SOURCE_ROOT}"
+    )
     list(APPEND EPCSAFT_NATIVE_TARGETS epcsaft_equilibrium_native_core)
 endif()
 

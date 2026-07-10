@@ -121,7 +121,7 @@ def _select_source_rows(rows: list[dict[str, object]], source: Mapping[str, obje
     if count < 2:
         raise ValueError("retained_temperature_points must be at least 2 when provided.")
     indexes = np.linspace(0, len(filtered) - 1, count)
-    selected_indexes = sorted({int(round(index)) for index in indexes})
+    selected_indexes = sorted({round(index) for index in indexes})
     selected = [filtered[index] for index in selected_indexes]
     if len(selected) != count:
         raise ValueError("retained_temperature_points selection produced duplicate source rows.")

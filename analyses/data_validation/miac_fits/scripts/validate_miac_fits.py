@@ -16,12 +16,10 @@ import csv
 import math
 import os
 import sys
-
-
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from collections import OrderedDict
-from pathlib import Path
 import sys as _bootstrap_sys
+from collections import OrderedDict
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -31,11 +29,12 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-from typing import Dict, List, Literal, Tuple
+from typing import Literal
 
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT
 
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -45,8 +44,9 @@ from scripts._env import require_epcsaft_install
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
-from scripts.data.paper_validation_parameters import paper_validation_parameter_path
+
 from scripts._epcsaft_oop import as_mixture
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 from scripts.plot_outputs import fits_plot_path, save_plot_figure
 
 matplotlib.use("Agg")
@@ -104,7 +104,7 @@ SALT_CANONICAL = {k.lower(): k for k in SALT_SPECS}
 SALT_CANONICAL["li"] = "LiI"
 
 
-DATASET_VARIANTS: "OrderedDict[str, Dict[str, object]]" = OrderedDict(
+DATASET_VARIANTS: OrderedDict[str, dict[str, object]] = OrderedDict(
     [
         ("2005_Cameretti", {"label": "2005", "color": "black", "linestyle": "--", "lw": 1.6, "user_options": {}}),
         ("2008_Held", {"label": "2008", "color": "dimgray", "linestyle": "--", "lw": 1.6, "user_options": {}}),
@@ -118,21 +118,21 @@ DATASET_VARIANTS: "OrderedDict[str, Dict[str, object]]" = OrderedDict(
 AQUEOUS_ONLY_DATASETS = {"2005_Cameretti", "2008_Held"}
 
 
-def _variant_names_for_solvent_system(solvent_system: str) -> List[str]:
+def _variant_names_for_solvent_system(solvent_system: str) -> list[str]:
     if solvent_system == "water":
         # Water plots now compare modern sets only.
         return ["2012_Held", "2014_Held", "2020_Bulow", "2025_Figiel"]
     return [name for name in DATASET_VARIANTS if name not in AQUEOUS_ONLY_DATASETS]
 
 
-def _available_solvent_systems() -> List[str]:
+def _available_solvent_systems() -> list[str]:
     data_root = REPO_ROOT / "data" / "reference" / "MIAC"
     if not data_root.exists():
         return []
     return sorted(p.name.lower().replace("_", "-") for p in data_root.iterdir() if p.is_dir())
 
 
-def _requested_scope() -> Tuple[str, str]:
+def _requested_scope() -> tuple[str, str]:
     solvent = os.getenv("MIAC_SOLVENT", "all").strip().lower().replace("_", "-")
     available = set(_available_solvent_systems())
     if solvent != "all" and solvent not in available:
@@ -141,7 +141,7 @@ def _requested_scope() -> Tuple[str, str]:
     return solvent, salt
 
 
-def _requested_quantities() -> List[Literal["miac_m", "miac"]]:
+def _requested_quantities() -> list[Literal["miac_m", "miac"]]:
     token = os.getenv("MIAC_QUANTITY", "all").strip().lower()
     if token in {"all", "both", ""}:
         return ["miac_m", "miac"]
@@ -198,7 +198,7 @@ def _solvent_key_from_col(col: str) -> str | None:
     return None
 
 
-def _read_csv_rows(path: Path) -> Tuple[List[str], List[Dict[str, str]]]:
+def _read_csv_rows(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     with path.open("r", newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
         fields = [h.strip() for h in (reader.fieldnames or []) if h and h.strip()]
@@ -216,12 +216,12 @@ def _read_csv_rows(path: Path) -> Tuple[List[str], List[Dict[str, str]]]:
     return fields, rows
 
 
-def _extract_comp(row: Dict[str, str], solvent_system: str) -> Dict[str, float]:
+def _extract_comp(row: dict[str, str], solvent_system: str) -> dict[str, float]:
     solvents = [s for s in solvent_system.split("-") if s]
     if len(solvents) <= 1:
         return {solvents[0]: 1.0} if solvents else {}
 
-    comp: Dict[str, float] = {}
+    comp: dict[str, float] = {}
     for col, val in row.items():
         key = _solvent_key_from_col(col)
         if key is None:
@@ -237,7 +237,7 @@ def _extract_comp(row: Dict[str, str], solvent_system: str) -> Dict[str, float]:
 
     if len(solvents) == 2 and len(comp) == 1:
         s_known = next(iter(comp.keys()))
-        s_other = [s for s in solvents if s != s_known][0]
+        s_other = next(s for s in solvents if s != s_known)
         comp[s_other] = 1.0 - comp[s_known]
 
     if not comp:
@@ -251,25 +251,25 @@ def _extract_comp(row: Dict[str, str], solvent_system: str) -> Dict[str, float]:
     return {s: comp[s] / denom for s in solvents}
 
 
-def _comp_signature(comp: Dict[str, float], solvent_system: str) -> Tuple[Tuple[str, float], ...]:
+def _comp_signature(comp: dict[str, float], solvent_system: str) -> tuple[tuple[str, float], ...]:
     solvents = [s for s in solvent_system.split("-") if s]
     if len(solvents) <= 1:
         return tuple()
     return tuple((s, round(float(comp.get(s, 0.0)), 6)) for s in solvents)
 
 
-def _comp_suffix(comp: Dict[str, float], solvent_system: str) -> str:
+def _comp_suffix(comp: dict[str, float], solvent_system: str) -> str:
     sig = _comp_signature(comp, solvent_system)
     if not sig:
         return ""
     parts = []
     for s, x in sig:
         short = SOLVENT_SHORT.get(s, s[:4])
-        parts.append(f"{short}{int(round(100 * x)):02d}")
+        parts.append(f"{short}{round(100 * x):02d}")
     return "_".join(parts)
 
 
-def _comp_label(comp: Dict[str, float], solvent_system: str) -> str:
+def _comp_label(comp: dict[str, float], solvent_system: str) -> str:
     sig = _comp_signature(comp, solvent_system)
     if not sig:
         return ""
@@ -292,10 +292,10 @@ def _salt_rank(salt: str) -> int:
     return (c_rank - 1) * 3 + a_rank
 
 
-def _stoich_for_salt(salt: str) -> Tuple[int, int]:
+def _stoich_for_salt(salt: str) -> tuple[int, int]:
     spec = SALT_SPECS[salt]
-    zc = int(round(abs(spec["z_cation"])))
-    za = int(round(abs(spec["z_anion"])))
+    zc = round(abs(spec["z_cation"]))
+    za = round(abs(spec["z_anion"]))
     g = math.gcd(zc, za)
     nu_cat = za // g
     nu_an = zc // g
@@ -307,7 +307,7 @@ def _sum_nu_for_salt(salt: str) -> int:
     return int(nu_cat + nu_an)
 
 
-def _normalized_comp(solvent_system: str, comp: Dict[str, float]) -> Dict[str, float]:
+def _normalized_comp(solvent_system: str, comp: dict[str, float]) -> dict[str, float]:
     solvents = [s for s in solvent_system.split("-") if s]
     if not solvents:
         raise ValueError("Empty solvent system while normalizing composition.")
@@ -321,7 +321,7 @@ def _normalized_comp(solvent_system: str, comp: Dict[str, float]) -> Dict[str, f
     return {s: frac[s] / denom for s in solvents}
 
 
-def _mw_mix(solvent_system: str, comp: Dict[str, float]) -> float:
+def _mw_mix(solvent_system: str, comp: dict[str, float]) -> float:
     frac = _normalized_comp(solvent_system, comp)
     mw_mix = 0.0
     for solvent, x_solvent in frac.items():
@@ -333,14 +333,14 @@ def _mw_mix(solvent_system: str, comp: Dict[str, float]) -> float:
     return float(mw_mix)
 
 
-def _miac_conversion_factor(molality: np.ndarray, salt: str, solvent_system: str, comp: Dict[str, float]) -> np.ndarray:
+def _miac_conversion_factor(molality: np.ndarray, salt: str, solvent_system: str, comp: dict[str, float]) -> np.ndarray:
     mw_mix = _mw_mix(solvent_system, comp)
     sum_nu = _sum_nu_for_salt(salt)
     m = np.asarray(molality, dtype=float)
     return 1.0 + mw_mix * m * float(sum_nu)
 
 
-def _salt_mole_fraction_from_molality(molality: np.ndarray, solvent_system: str, comp: Dict[str, float]) -> np.ndarray:
+def _salt_mole_fraction_from_molality(molality: np.ndarray, solvent_system: str, comp: dict[str, float]) -> np.ndarray:
     mw_mix = _mw_mix(solvent_system, comp)
     m = np.asarray(molality, dtype=float)
     n_solv = 1.0 / mw_mix
@@ -352,7 +352,7 @@ def _salt_mole_fraction_from_molality(molality: np.ndarray, solvent_system: str,
 def _molality_axis_upper(max_molality: float) -> float:
     if max_molality < 1.0:
         return round(max(0.1, math.ceil(max_molality * 10.0) / 10.0), 1)
-    return float(min(10, int(math.ceil(max_molality))))
+    return float(min(10, math.ceil(max_molality)))
 
 
 def _mole_fraction_axis_upper(max_x: float) -> float:
@@ -399,14 +399,14 @@ def _high_outlier_mask(values: np.ndarray) -> np.ndarray:
     return keep
 
 
-def discover_combos(solvent_scope: str | None = None, salt_scope: str | None = None) -> List[Dict[str, object]]:
+def discover_combos(solvent_scope: str | None = None, salt_scope: str | None = None) -> list[dict[str, object]]:
     selected_solvent, selected_salt = _requested_scope()
     if solvent_scope is not None:
         selected_solvent = solvent_scope.strip().lower().replace("_", "-")
     if salt_scope is not None:
         selected_salt = salt_scope.strip()
 
-    combos: List[Dict[str, object]] = []
+    combos: list[dict[str, object]] = []
     data_root = REPO_ROOT / "data" / "reference" / "MIAC"
 
     for data_dir in sorted([p for p in data_root.iterdir() if p.is_dir()]):
@@ -424,7 +424,7 @@ def discover_combos(solvent_scope: str | None = None, salt_scope: str | None = N
             fields, rows = _read_csv_rows(path)
             comp_cols = [c for c in fields if _solvent_key_from_col(c) is not None]
 
-            comp_groups: Dict[Tuple[Tuple[str, float], ...], Dict[str, float]] = {}
+            comp_groups: dict[tuple[tuple[str, float], ...], dict[str, float]] = {}
             if comp_cols:
                 for row in rows:
                     comp = _extract_comp(row, solvent_system)
@@ -459,11 +459,11 @@ def discover_combos(solvent_scope: str | None = None, salt_scope: str | None = N
     return combos
 
 
-def _species_for_combo(salt: str, solvent_system: str) -> List[str]:
+def _species_for_combo(salt: str, solvent_system: str) -> list[str]:
     salt_spec = SALT_SPECS[salt]
     solvents = [s for s in solvent_system.split("-") if s]
 
-    solvent_species: List[str] = []
+    solvent_species: list[str] = []
     for s in solvents:
         if s == "water":
             solvent_species.append("H2O-2B-Li" if salt.startswith("Li") else "H2O-2B-NaCl")
@@ -483,7 +483,7 @@ def _pair_key(salt: str) -> str:
 
 
 def _molality_to_molefraction_combo(
-    molality: float, salt: str, solvent_system: str, comp: Dict[str, float]
+    molality: float, salt: str, solvent_system: str, comp: dict[str, float]
 ) -> np.ndarray:
     species = _species_for_combo(salt, solvent_system)
     solvents = [s for s in solvent_system.split("-") if s]
@@ -499,7 +499,7 @@ def _molality_to_molefraction_combo(
     m_mix = _mw_mix(solvent_system, frac)
     n_solv_total = 1.0 / m_mix
 
-    n_totals: Dict[str, float] = {sp: 0.0 for sp in species}
+    n_totals: dict[str, float] = {sp: 0.0 for sp in species}
     for s_key, sp_name in zip(solvents, solvent_species):
         n_totals[sp_name] += frac[s_key] * n_solv_total
 
@@ -514,9 +514,9 @@ def _molality_to_molefraction_combo(
 
 
 def load_exp_data(
-    combo: Dict[str, object],
+    combo: dict[str, object],
     quantity: Literal["miac_m", "miac"] = "miac_m",
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     path = Path(combo["data_path"])
     target_sig = tuple(combo.get("comp_signature", tuple()))
     solvent_system = str(combo["solvent_system"])
@@ -548,10 +548,10 @@ def load_exp_data(
     x_key = lookup.get("mole_fraction") if quantity == "miac" else None
     source_key = lookup.get("source")
 
-    molal: List[float] = []
-    values: List[float] = []
-    x_plot: List[float] = []
-    src_labels: List[str] = []
+    molal: list[float] = []
+    values: list[float] = []
+    x_plot: list[float] = []
+    src_labels: list[str] = []
 
     for row in rows:
         comp = _extract_comp(row, solvent_system)
@@ -607,7 +607,7 @@ def _filter_exp_series(
     values_exp_raw: np.ndarray,
     x_exp_raw: np.ndarray,
     source_exp_raw: np.ndarray,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     keep = _high_outlier_mask(values_exp_raw)
     removed = int(np.count_nonzero(~keep))
     if np.any(keep):
@@ -628,8 +628,8 @@ def _filter_exp_series(
 
 
 def build_params_for_variant(
-    dataset_name: str, combo: Dict[str, object], user_options: dict | None = None
-) -> Dict[str, object]:
+    dataset_name: str, combo: dict[str, object], user_options: dict | None = None
+) -> dict[str, object]:
     x_ref = _molality_to_molefraction_combo(
         1e-8, str(combo["salt"]), str(combo["solvent_system"]), dict(combo.get("comp", {}))
     )
@@ -638,7 +638,7 @@ def build_params_for_variant(
 
 
 def calc_gamma_m_curve(
-    combo: Dict[str, object],
+    combo: dict[str, object],
     dataset_name: str,
     molal_grid: np.ndarray,
 ) -> np.ndarray:
@@ -666,7 +666,7 @@ def calc_gamma_m_curve(
 
 
 def calc_curve(
-    combo: Dict[str, object],
+    combo: dict[str, object],
     dataset_name: str,
     molal_grid: np.ndarray,
     quantity: Literal["miac_m", "miac"] = "miac_m",
@@ -685,7 +685,7 @@ def calc_curve(
     return gamma
 
 
-def prepare_combo_payload(combo: Dict[str, object], grid_points: int = 701) -> Dict[str, object]:
+def prepare_combo_payload(combo: dict[str, object], grid_points: int = 701) -> dict[str, object]:
     salt = str(combo["salt"])
     solvent_system = str(combo["solvent_system"])
     comp = dict(combo.get("comp", {}))
@@ -701,9 +701,9 @@ def prepare_combo_payload(combo: Dict[str, object], grid_points: int = 701) -> D
     molal_grid = np.linspace(0.0, m_upper, grid_points)
     x_grid_miac = _salt_mole_fraction_from_molality(molal_grid, solvent_system, comp)
 
-    curves_gamma_m: Dict[str, np.ndarray] = {}
-    curves_miac: Dict[str, np.ndarray] = {}
-    active_variants: List[str] = []
+    curves_gamma_m: dict[str, np.ndarray] = {}
+    curves_miac: dict[str, np.ndarray] = {}
+    active_variants: list[str] = []
     for dataset_name in _variant_names_for_solvent_system(solvent_system):
         try:
             gamma_m = calc_gamma_m_curve(combo, dataset_name, molal_grid)
@@ -733,14 +733,14 @@ def prepare_combo_payload(combo: Dict[str, object], grid_points: int = 701) -> D
 
 
 def plot_combo(
-    combo: Dict[str, object],
+    combo: dict[str, object],
     output_path: Path | None = None,
     save: bool = True,
     close: bool = True,
     ax=None,
     show_legend: bool = True,
     quantity: Literal["miac_m", "miac"] = "miac_m",
-    payload: Dict[str, object] | None = None,
+    payload: dict[str, object] | None = None,
 ):
     salt = str(combo["salt"])
     solvent_system = str(combo["solvent_system"])
@@ -772,7 +772,7 @@ def plot_combo(
     visible_mask = x_exp <= (x_upper + 1e-12)
     if not np.any(visible_mask):
         visible_mask = np.ones_like(x_exp, dtype=bool)
-    ymax = float(max(1, int(math.ceil(float(np.max(values_exp[visible_mask]))))))
+    ymax = float(max(1, math.ceil(float(np.max(values_exp[visible_mask])))))
 
     curves = dict(payload["curves"][quantity])
     active_variants = list(payload["active_variants"])
@@ -898,9 +898,9 @@ def _grid_output_path(solvent_system: str) -> Path:
 
 def plot_single_solvent_grid(
     solvent_system: str,
-    combos: List[Dict[str, object]],
+    combos: list[dict[str, object]],
     close: bool = True,
-    payload_map: Dict[Tuple[str, str], Dict[str, object]] | None = None,
+    payload_map: dict[tuple[str, str], dict[str, object]] | None = None,
 ) -> Path:
     combo_map = {
         str(combo["salt"]): combo
@@ -970,10 +970,10 @@ def plot_single_solvent_grid(
 
 
 def _render_combo_outputs(
-    combo: Dict[str, object],
-    quantities: List[Literal["miac_m", "miac"]],
+    combo: dict[str, object],
+    quantities: list[Literal["miac_m", "miac"]],
     grid_points: int,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     payload = prepare_combo_payload(combo, grid_points=grid_points)
     generated = []
     for quantity in quantities:
@@ -988,13 +988,13 @@ def _render_combo_outputs(
     return {"generated": generated, "grid_payload": grid_payload}
 
 
-def run_validate_miac_fits_v2() -> List[Path]:
+def run_validate_miac_fits_v2() -> list[Path]:
     combos = discover_combos()
     quantities = _requested_quantities()
     grid_points = _requested_grid_points()
     workers = _requested_workers(len(combos))
-    generated: List[Path] = []
-    grid_payload_map: Dict[Tuple[str, str], Dict[str, object]] = {}
+    generated: list[Path] = []
+    grid_payload_map: dict[tuple[str, str], dict[str, object]] = {}
 
     if workers == 1:
         for combo in combos:

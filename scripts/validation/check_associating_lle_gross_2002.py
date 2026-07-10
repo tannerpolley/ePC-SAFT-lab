@@ -119,8 +119,14 @@ def _metadata_blockers(metadata: dict[str, Any]) -> list[str]:
         blockers.append("gross_2002_electrolyte_scope_mismatch")
     if metadata.get("reaction_active") is not False:
         blockers.append("gross_2002_reaction_scope_mismatch")
-    if metadata.get("public_admission_state") != "closed_until_issue_190":
+    if metadata.get("route") != "internal_associating_lle_source_pair":
+        blockers.append("gross_2002_internal_route_mismatch")
+    if metadata.get("evidence_scope") != "internal_exact_hessian_source_pair":
+        blockers.append("gross_2002_evidence_scope_mismatch")
+    if metadata.get("public_admission_state") != "closed":
         blockers.append("gross_2002_public_admission_state_mismatch")
+    if metadata.get("global_held_proof") is not False:
+        blockers.append("gross_2002_global_held_scope_mismatch")
     if metadata.get("expected_phase_count") != 2:
         blockers.append("gross_2002_expected_phase_count_mismatch")
     source_paths = metadata.get("source_paths")
@@ -377,7 +383,13 @@ def _association_hessian_payload(case_dir: Path, fixture: dict[str, Any]) -> dic
         )
         max_mass_action_residual = max(max_mass_action_residual, phase_system_residual)
 
-        all_site_fractions = np.asarray([*site_fractions.tolist(), *sum(phase_site_fractions, [])], dtype=float)
+        all_site_fractions = np.asarray(
+            [
+                *site_fractions.tolist(),
+                *(site for phase in phase_site_fractions for site in phase),
+            ],
+            dtype=float,
+        )
         blockers: list[str] = []
         if raw.get("backend") != "cppad_implicit" or raw.get("association_sensitivity_backend") != "cppad_implicit_association":
             blockers.append("exact_association_hessian_missing")
@@ -494,12 +506,13 @@ def _internal_route_payload(
         postsolve = {
             "accepted": not blockers,
             "neutral_held_tpd_contract_preserved": True,
-            "public_admission_state": "closed_until_issue_190",
-            "stability_certificate": "tpd_postsolve_contract_required_for_public_admission",
+            "public_admission_state": "closed",
+            "global_held_proof": False,
+            "stability_certificate": "sampled_candidate_source_pair_component_evidence",
             "phase_set_status": "source_pair_certified",
             "selected_candidate_count": 2,
             "phase_distance": phase_distance,
-            "held_stage_ii_status": "required_before_public_issue_190",
+            "held_stage_ii_status": "sampled_candidate_not_global_held",
             "held_stage_iii_status": "internal_source_pair_exact_hessian_certified",
             "association_hessian_status": association_hessian.get("status"),
         }
@@ -548,11 +561,22 @@ def _public_route_state_payload() -> dict[str, Any]:
         if bool(row.get("production_exposed")) or bool(row.get("public_routes"))
     ]
     neutral_lle_rows = [row for row in EQUILIBRIUM_ACTIVATION_MATRIX if row.get("key") == "neutral_lle"]
+    public_routes = sorted(
+        {
+            str(route)
+            for row in [*associating_rows, *neutral_lle_rows]
+            for route in row.get("public_routes", [])
+        }
+    )
+    production_exposed = bool(exposed_associating_rows) or any(
+        bool(row.get("production_exposed")) for row in neutral_lle_rows
+    )
     return {
-        "associating_lle": "public_route_open" if exposed_associating_rows else "closed_for_associating_inputs",
+        "public_route_admission": "open" if production_exposed or public_routes else "closed",
+        "production_exposed": production_exposed,
+        "public_routes": public_routes,
+        "global_phase_set_certified": False,
         "associating_rows": associating_rows,
-        "neutral_lle_public_routes": list(neutral_lle_rows[0].get("public_routes", [])) if neutral_lle_rows else [],
-        "neutral_lle_scope": "nonassociating_only",
     }
 
 
@@ -633,7 +657,11 @@ def evaluate_payload(
             blockers.append("internal_associating_lle_route_missing")
         blockers.extend(str(item) for item in route.get("blockers", []))
     public_route_state = payload.get("public_route_state", {})
-    if require_route_closed and public_route_state.get("associating_lle") != "closed_for_associating_inputs":
+    if require_route_closed and (
+        public_route_state.get("public_route_admission") != "closed"
+        or public_route_state.get("production_exposed") is not False
+        or public_route_state.get("public_routes")
+    ):
         blockers.append("public_route_open_too_early")
     result = dict(payload)
     result["blockers"] = sorted(set(blockers))
@@ -651,25 +679,20 @@ def evaluate_case_dir(
     require_route_closed: bool = False,
 ) -> dict[str, Any]:
     fixture = _fixture_payload(Path(case_dir))
-    association_hessian = (
-        _association_hessian_payload(Path(case_dir), fixture)
-        if require_exact_association_hessian or require_internal_route
-        else {"status": "pending_internal_proof_for_issue_145"}
-    )
-    internal_route = (
-        _internal_route_payload(Path(case_dir), fixture, association_hessian)
-        if require_internal_route
-        else {"status": "pending_internal_proof_for_issue_145"}
-    )
     payload = {
         "checker": "gross_2002_associating_lle_closed_admission_gate",
         "case_label": "Gross/Sadowski 2002 methanol/cyclohexane associating LLE",
         "fixture": fixture,
-        "association_hessian": association_hessian,
-        "internal_route": internal_route,
         "public_route_state": _public_route_state_payload(),
         "blockers": list(fixture["blockers"]),
     }
+    if require_exact_association_hessian or require_internal_route:
+        association_hessian = _association_hessian_payload(Path(case_dir), fixture)
+        payload["association_hessian"] = association_hessian
+    if require_internal_route:
+        payload["internal_route"] = _internal_route_payload(
+            Path(case_dir), fixture, association_hessian
+        )
     return _jsonable(
         evaluate_payload(
             payload,

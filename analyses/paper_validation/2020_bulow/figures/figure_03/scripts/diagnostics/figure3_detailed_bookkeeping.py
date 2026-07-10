@@ -3,10 +3,8 @@ from __future__ import annotations
 import csv
 import math
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -16,9 +14,9 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 FIGURE_DIR = SCRIPT_DIR.parent
@@ -36,8 +34,9 @@ require_epcsaft_install()
 import _model_overlay as overlay
 import _plot_common as common
 from epcsaft.parameters import get_prop_dict
-from scripts.data.paper_validation_parameters import paper_validation_parameter_path
+
 from scripts._epcsaft_oop import epcsaft_density, epcsaft_fugacity_coefficient_terms, epcsaft_pressure
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 DATA_PATH = common.analysis_data_path(FIGURE_DIR, "water_contributions.csv", kind="processed", category="figure_3")
 OUTPUT_BOOKKEEPING = common.analysis_runs_path(__file__, "figure3_detailed_bookkeeping.csv", category=("figure_3", "diagnostics"))

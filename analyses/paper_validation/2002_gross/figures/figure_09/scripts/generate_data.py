@@ -24,13 +24,12 @@ apply_to_current_process()
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
-from PIL import Image, ImageDraw
-
 import epcsaft
 import epcsaft_equilibrium
+import matplotlib.pyplot as plt
+import numpy as np
 from epcsaft_equilibrium._native import extension_native_core
+from PIL import Image, ImageDraw
 
 FIGURE_ID = "figure_09"
 SOURCE_SERIES = ("bubble_curve", "dew_curve")
@@ -109,6 +108,11 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+
+
+def _strip_trailing_whitespace(path: Path) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -568,6 +572,7 @@ def _write_plot(source_rows: list[dict[str, Any]], model_rows: list[dict[str, An
     )
     fig.savefig(PNG, dpi=180)
     fig.savefig(SVG)
+    _strip_trailing_whitespace(SVG)
     fig.savefig(PDF)
     plt.close(fig)
 
@@ -612,7 +617,7 @@ def _write_plotted_csv(source_rows: list[dict[str, Any]], model_rows: list[dict[
 
 
 def _native_receipt() -> dict[str, Any]:
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=extension_native_core(),
         checker_command=[
             "uv",
@@ -751,6 +756,7 @@ def main() -> int:
             "native_freshness_receipt": native_receipt,
         },
     }
+    _write_json(SUMMARY_JSON, summary)
     _update_manifest(score_payload, native_receipt)
     return 0 if score_payload["pass"] else 2
 

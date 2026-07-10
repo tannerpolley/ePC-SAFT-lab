@@ -3,57 +3,67 @@
 #include "equilibrium/core/two_phase_eos_route.h"
 
 #include <string>
-#include <vector>
-
-struct add_args;
 
 namespace epcsaft::native::equilibrium_nlp {
-
-struct NeutralTwoPhaseEosPhasePayload {
-    std::string label;
-    std::vector<double> composition;
-    std::vector<double> ln_fugacity_coefficient;
-    std::vector<double> fugacity_coefficient;
-    double density = 0.0;
-    double temperature = 0.0;
-    double pressure = 0.0;
-    double phase_fraction = 0.0;
-    double amount_total = 0.0;
-    double volume = 0.0;
-    double eos_pressure = 0.0;
-    double pressure_consistency_residual = 0.0;
-    double compressibility_factor = 0.0;
-};
-
-struct NeutralTwoPhaseEosResultPayload {
-    bool accepted = false;
-    bool stable = false;
-    bool split_detected = false;
-    std::string backend = "native_equilibrium_nlp";
-    std::string problem_kind = "neutral_two_phase_eos";
-    std::string derivative_backend;
-    std::string rejection_reason;
-    double objective = 0.0;
-    double material_balance_norm = 0.0;
-    double pressure_consistency_norm = 0.0;
-    double chemical_potential_consistency_norm = 0.0;
-    double ln_fugacity_consistency_norm = 0.0;
-    double phase_distance = 0.0;
-    std::vector<double> feed_amounts;
-    std::vector<double> constraints;
-    std::vector<NeutralTwoPhaseEosPhasePayload> phases;
-};
 
 enum class NeutralRouteCertificationLevel {
     LocalPostsolve,
     PhaseSetCertified,
 };
 
+enum class NeutralPhaseDiscoveryAcceptancePolicy {
+    CandidateMassBalanceOnly,
+    GeneralizedFeed,
+    AcceptedPhaseSet,
+    ElectrolyteDeterministic,
+    ElectrolyteContinuous,
+    ElectrolyteHeld2,
+};
+
+struct NeutralPostsolveAcceptanceCriteria {
+    double material_tolerance = 0.0;
+    double pressure_tolerance = 0.0;
+    double chemical_potential_tolerance = 0.0;
+    double phase_distance_tolerance = 0.0;
+    double charge_tolerance = 0.0;
+    double fixed_composition_tolerance = 0.0;
+    double phase_amount_total_tolerance = 0.0;
+    bool charged_system = false;
+    bool phase_distance_required = false;
+    bool phase_distance_strictly_greater = false;
+    bool charge_balance_required = false;
+    bool fixed_composition_required = false;
+    bool phase_amount_total_required = false;
+    bool stability_evidence_pending = false;
+    bool stability_certification_required = false;
+    bool stability_certification_unsupported = false;
+    bool ln_fugacity_consistency_required = true;
+};
+
+struct NeutralRouteAcceptablePointCriteria {
+    bool enabled = false;
+    double scaled_constraint_violation_limit = 0.0;
+    double scaled_stationarity_limit = 0.0;
+    double scaled_complementarity_limit = 0.0;
+};
+
 void mark_neutral_route_ipopt_dependency_required(NeutralTwoPhaseEosRouteResult& out);
+
+void mark_neutral_route_derivative_preflight_failed(
+    NeutralTwoPhaseEosRouteResult& out,
+    const NlpProblem& problem,
+    const std::string& message
+);
 
 bool apply_neutral_route_solve_result(
     NeutralTwoPhaseEosRouteResult& out,
     const IpoptSolveResult& solve
+);
+
+bool apply_neutral_route_solve_result(
+    NeutralTwoPhaseEosRouteResult& out,
+    const IpoptSolveResult& solve,
+    const NeutralRouteAcceptablePointCriteria& acceptable_point
 );
 
 void apply_neutral_route_postsolve(
@@ -61,6 +71,28 @@ void apply_neutral_route_postsolve(
     NeutralTwoPhaseEosPostsolve postsolve,
     NeutralRouteCertificationLevel certification_level
 );
+
+void certify_neutral_phase_discovery(
+    NeutralPhaseDiscoveryResult& discovery,
+    NeutralPhaseDiscoveryAcceptancePolicy policy,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance,
+    bool negative_novel_candidate = false
+);
+
+void copy_neutral_phase_discovery_evidence(
+    NeutralTwoPhaseEosPostsolve& postsolve,
+    const NeutralPhaseDiscoveryResult& discovery
+);
+
+void certify_neutral_postsolve(
+    NeutralTwoPhaseEosPostsolve& postsolve,
+    const NeutralPostsolveAcceptanceCriteria& criteria
+);
+
+void reject_neutral_postsolve(NeutralTwoPhaseEosPostsolve& postsolve, const std::string& reason);
+
+void certify_electrolyte_postsolve(ElectrolytePostsolveCertificationResult& result);
 
 int neutral_route_quality(const NeutralTwoPhaseEosRouteResult& result);
 
@@ -71,19 +103,5 @@ int neutral_boundary_route_quality(const NeutralTwoPhaseEosRouteResult& result);
 RouteSeedAttempt neutral_seed_attempt_from_result(const NeutralTwoPhaseEosRouteResult& result);
 
 RoutePhysicalEvidence build_neutral_route_physical_evidence(const NeutralTwoPhaseEosRouteResult& result);
-
-NeutralTwoPhaseEosResultPayload build_neutral_two_phase_eos_result(
-    const add_args& args,
-    double temperature,
-    double target_pressure,
-    const std::vector<std::vector<double>>& phase_amounts,
-    const std::vector<double>& volumes,
-    const std::vector<double>& feed_amounts,
-    double material_tolerance,
-    double pressure_tolerance,
-    double chemical_potential_tolerance,
-    double phase_distance_tolerance,
-    bool phase_distance_constraint = true
-);
 
 }  // namespace epcsaft::native::equilibrium_nlp

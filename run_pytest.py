@@ -1,5 +1,4 @@
 import argparse
-import importlib.util
 import os
 import shutil
 import sys
@@ -7,25 +6,11 @@ import uuid
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent
-CAPABILITY_EVIDENCE_PATH = REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft" / "runtime" / "capability_evidence.py"
 
 from scripts.dev.native_runtime_env import apply_native_runtime_env
+from scripts.dev.validation_registry import TEST_SLICES, registry_targets
 
 apply_native_runtime_env(os.environ)
-
-
-def _load_capability_evidence():
-    spec = importlib.util.spec_from_file_location("epcsaft_capability_evidence_for_runner", CAPABILITY_EVIDENCE_PATH)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"Unable to load capability evidence registry from {CAPABILITY_EVIDENCE_PATH}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-_capability_evidence = _load_capability_evidence()
-TEST_SLICES = _capability_evidence.TEST_SLICES
-registry_targets = _capability_evidence.registry_targets
 
 GENERIC_TEST_TARGETS = registry_targets("generic")
 FAST_TEST_TARGETS = GENERIC_TEST_TARGETS
@@ -37,7 +22,6 @@ REGRESSION_TEST_TARGETS = registry_targets("regression")
 INTEGRATION_TEST_TARGETS = registry_targets("integration")
 ALL_TEST_TARGETS = registry_targets("all")
 RUNTIME_TEST_TARGETS = registry_targets("runtime")
-API_TEST_TARGETS = registry_targets("api")
 NATIVE_TEST_TARGETS = registry_targets("native")
 NATIVE_CONTRACT_TEST_TARGETS = registry_targets("native-contracts")
 SLICE_TARGETS = {name: registry_targets(name) for name in TEST_SLICES}
@@ -51,7 +35,6 @@ PREDEFINED_TARGETS = {
     "integration": INTEGRATION_TEST_TARGETS,
     "generic": GENERIC_TEST_TARGETS,
     "runtime": RUNTIME_TEST_TARGETS,
-    "api": API_TEST_TARGETS,
     "native": NATIVE_TEST_TARGETS,
     "native_contracts": NATIVE_CONTRACT_TEST_TARGETS,
 }
@@ -164,12 +147,7 @@ def _pytest_env(pytest_temp: Path) -> dict[str, str]:
     env["TMP"] = str(pytest_temp.resolve())
     env["TEMP"] = str(pytest_temp.resolve())
     env["TMPDIR"] = str(pytest_temp.resolve())
-    try:
-        from scripts.dev.native_runtime_env import apply_native_runtime_env
-    except ModuleNotFoundError:
-        apply_native_runtime_env = None
-    if apply_native_runtime_env is not None:
-        apply_native_runtime_env(env)
+    apply_native_runtime_env(env)
     return env
 
 
@@ -189,7 +167,6 @@ def _pytest_args(
     regression: bool = False,
     integration: bool = False,
     runtime: bool = False,
-    api: bool = False,
     native: bool = False,
     native_contracts: bool = False,
     all_tests: bool = False,
@@ -206,7 +183,6 @@ def _pytest_args(
         regression,
         integration,
         runtime,
-        api,
         native,
         native_contracts,
         all_tests,
@@ -220,7 +196,6 @@ def _pytest_args(
         regression=regression,
         integration=integration,
         runtime=runtime,
-        api=api,
         native=native,
         native_contracts=native_contracts,
         all_tests=all_tests,
@@ -245,7 +220,6 @@ def _pytest_args(
         regression=regression,
         integration=integration,
         runtime=runtime,
-        api=api,
         native=native,
         native_contracts=native_contracts,
         all_tests=all_tests,
@@ -309,12 +283,11 @@ def _normalize_equilibrium_debug_selection(
     regression: bool,
     integration: bool,
     runtime: bool,
-    api: bool,
     native: bool,
     native_contracts: bool,
     all_tests: bool,
     equilibrium_debug: bool,
-) -> tuple[bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool]:
+) -> tuple[bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool]:
     if not equilibrium_debug:
         return (
             generic,
@@ -325,7 +298,6 @@ def _normalize_equilibrium_debug_selection(
             regression,
             integration,
             runtime,
-            api,
             native,
             native_contracts,
             all_tests,
@@ -339,7 +311,6 @@ def _normalize_equilibrium_debug_selection(
         or regression
         or integration
         or runtime
-        or api
         or native
         or native_contracts
         or all_tests
@@ -363,7 +334,6 @@ def _normalize_equilibrium_debug_selection(
         regression,
         integration,
         runtime,
-        api,
         native,
         native_contracts,
         all_tests,
@@ -469,7 +439,6 @@ def main() -> int:
         help="Run package-extension integration and ownership-boundary tests",
     )
     predefined.add_argument("--runtime", action="store_true", help="Run runtime API and native contract tests")
-    predefined.add_argument("--api", action="store_true", help="Run provider-owned API tests")
     predefined.add_argument("--native", action="store_true", help="Run native runtime contract tests")
     predefined.add_argument(
         "--native-contracts",
@@ -525,7 +494,6 @@ def main() -> int:
         regression=args.regression,
         integration=args.integration,
         runtime=args.runtime,
-        api=args.api,
         native=args.native,
         native_contracts=args.native_contracts,
         all_tests=args.all_tests,

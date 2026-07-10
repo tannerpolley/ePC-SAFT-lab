@@ -4,8 +4,8 @@ import csv
 import json
 import math
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -67,9 +67,8 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 def _phase_points(payload: dict[str, Any]) -> list[dict[str, Any]]:
     feed = _single_row(FIXTURE_DIR / "feed_compositions.csv")
     source = _single_row(FIXTURE_DIR / "experimental_tielines.csv")
-    postsolve = payload["route"]["postsolve"]
-    solved_compositions = postsolve["phase_compositions"]
-    solved_fractions = postsolve["selected_phase_fractions"]
+    sampled_compositions = payload["comparison"]["sampled_phase_compositions"]
+    sampled_fractions = payload["comparison"]["sampled_phase_fractions"]
     temperature = float(source["temperature_K"])
     pressure = float(source["pressure_Pa"])
     rows = [
@@ -92,16 +91,16 @@ def _phase_points(payload: dict[str, Any]) -> list[dict[str, Any]]:
             "phase_fraction": float(feed["liquid2_phase_fraction"]),
         },
     ]
-    for index, composition in enumerate(solved_compositions, start=1):
+    for index, composition in enumerate(sampled_compositions, start=1):
         rows.append(
             {
-                "role": f"solved_liquid{index}",
-                "series": "current_route",
+                "role": f"sampled_liquid{index}",
+                "series": "internal_sampled_candidate_diagnostic",
                 "temperature_K": temperature,
                 "pressure_Pa": pressure,
                 "x_perfluorohexane": float(composition[0]),
                 "x_hexane": float(composition[1]),
-                "phase_fraction": float(solved_fractions[index - 1]),
+                "phase_fraction": float(sampled_fractions[index - 1]),
             }
         )
     rows.append(
@@ -120,11 +119,10 @@ def _phase_points(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _component_errors(payload: dict[str, Any]) -> list[dict[str, Any]]:
     source = _single_row(FIXTURE_DIR / "experimental_tielines.csv")
-    postsolve = payload["route"]["postsolve"]
-    mapping = payload["comparison"]["phase_index_by_expected_label"]
+    sampled = payload["comparison"]["sampled_phase_compositions"]
     rows: list[dict[str, Any]] = []
     for label in ("liquid1", "liquid2"):
-        actual = postsolve["phase_compositions"][mapping[label]]
+        actual = sampled[0 if label == "liquid1" else 1]
         expected = [float(source[f"{label}_x1"]), float(source[f"{label}_x2"])]
         for component, expected_value, actual_value in zip(("perfluorohexane", "hexane"), expected, actual, strict=True):
             rows.append(
@@ -132,7 +130,7 @@ def _component_errors(payload: dict[str, Any]) -> list[dict[str, Any]]:
                     "phase": label,
                     "component": component,
                     "source_mole_fraction": expected_value,
-                    "solved_mole_fraction": float(actual_value),
+                    "sampled_mole_fraction": float(actual_value),
                     "absolute_error": abs(expected_value - float(actual_value)),
                 }
             )
@@ -141,8 +139,13 @@ def _component_errors(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _tolerance_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
     thresholds = _read_json(FIXTURE_DIR / "thresholds.json")
-    postsolve = payload["route"]["postsolve"]
+    diagnostic = payload["diagnostic"]
     comparison = payload["comparison"]
+    compositions = comparison["sampled_phase_compositions"]
+    phase_distance = max(
+        abs(left - right)
+        for left, right in zip(compositions[0], compositions[1], strict=True)
+    )
     rows = [
         {
             "metric": "composition_abs",
@@ -160,28 +163,14 @@ def _tolerance_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
         },
         {
             "metric": "material_balance_abs",
-            "observed_abs": postsolve["material_balance_norm"],
+            "observed_abs": diagnostic["candidate_mass_balance_norm"],
             "limit": thresholds["material_balance_abs"],
             "direction": "max",
             "unit": "mole_balance",
         },
         {
-            "metric": "pressure_abs_Pa",
-            "observed_abs": postsolve["pressure_consistency_norm"],
-            "limit": thresholds["pressure_abs_Pa"],
-            "direction": "max",
-            "unit": "Pa",
-        },
-        {
-            "metric": "ln_fugacity_abs",
-            "observed_abs": postsolve["ln_fugacity_consistency_norm"],
-            "limit": thresholds["ln_fugacity_abs"],
-            "direction": "max",
-            "unit": "ln_fugacity",
-        },
-        {
             "metric": "phase_distance_min",
-            "observed_abs": postsolve["phase_distance"],
+            "observed_abs": phase_distance,
             "limit": thresholds["phase_distance_min"],
             "direction": "min",
             "unit": "mole_fraction",
@@ -200,14 +189,18 @@ def _tolerance_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _held_stage_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    postsolve = payload["route"]["postsolve"]
+    diagnostic = payload["diagnostic"]
     receipt = payload["native_freshness_receipt"]
     gates = [
-        ("deterministic_screening", "Deterministic screening", postsolve["deterministic_screening_status"] == "completed"),
-        ("continuous_tpd_minimization", "Continuous TPD minimization", postsolve["continuous_tpd_status"] == "converged"),
-        ("held_stage_i_stability", "HELD Stage I stability", postsolve["held_stage_i_status"] in {"negative_tpd_candidate_found", "no_negative_tpd_candidate_found"}),
-        ("held_stage_ii_dual_phase_discovery", "HELD Stage II dual discovery", postsolve["held_stage_ii_status"] == "dual_loop_verified" and postsolve["held_stage_ii_replay_ready"] is True),
-        ("held_stage_iii_ipopt_refinement", "HELD Stage III Ipopt refinement", postsolve["held_stage_iii_status"] == "ipopt_refinement_completed_current_route" and postsolve["held_stage_iii_consumed_stage_ii_replay_metadata"] is True),
+        ("deterministic_screening", "Deterministic screening", diagnostic["deterministic_screening_status"] == "completed"),
+        ("continuous_tpd_minimization", "Continuous TPD minimization", diagnostic["continuous_tpd_status"] == "converged"),
+        ("held_stage_i_stability", "HELD Stage I stability", diagnostic["held_stage_i_status"] in {"negative_tpd_candidate_found", "no_negative_tpd_candidate_found"}),
+        (
+            "sampled_candidate_bound_audit",
+            "Sampled-candidate bound audit",
+            diagnostic["held_stage_ii_status"] == "sampled_candidate_audit_complete"
+            and diagnostic["held_stage_ii_dual_loop_status"] == "not_performed",
+        ),
     ]
     rows = []
     for order, (gate, label, accepted) in enumerate(gates, start=1):
@@ -216,7 +209,7 @@ def _held_stage_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
                 "order": order,
                 "gate": gate,
                 "label": label,
-                "status": "verified" if accepted else "blocked",
+                "status": "observed" if accepted else "missing",
                 "accepted": accepted,
                 "native_git_commit": receipt["git_commit"],
                 "native_module_path": receipt["native_module_path"],
@@ -249,12 +242,12 @@ def main() -> int:
             "case_label": payload["case_label"],
             "family_label": payload["family_label"],
             "complete": payload["complete"],
-            "route_status": payload["route"]["status"],
-            "solver_status": payload["route"]["solver_status"],
-            "application_status": payload["route"]["application_status"],
+            "diagnostic_status": payload["status"],
+            "production_route_admitted": payload["production_route_admitted"],
+            "global_phase_set_certified": payload["global_phase_set_certified"],
             "max_composition_abs_error": payload["comparison"]["max_composition_abs_error"],
             "max_phase_fraction_abs_error": payload["comparison"]["max_phase_fraction_abs_error"],
-            "scope": "neutral nonassociating binary LLE only",
+            "scope": "internal sampled-candidate validation for one neutral binary",
         },
     )
     _write_csv(
@@ -272,7 +265,7 @@ def main() -> int:
     )
     _write_csv(
         SHARED_RESULTS / "neutral_lle_component_errors.csv",
-        ["phase", "component", "source_mole_fraction", "solved_mole_fraction", "absolute_error"],
+        ["phase", "component", "source_mole_fraction", "sampled_mole_fraction", "absolute_error"],
         _component_errors(payload),
     )
     _write_csv(

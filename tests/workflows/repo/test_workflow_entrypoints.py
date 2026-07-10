@@ -514,14 +514,15 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "Current package version: ``0.2.0``" in release_installation
     assert "The ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel" in release_installation
     assert "Windows-first native-backed Python package release" in release_note
-    assert "neutral bubble/dew routes, neutral TP flash, and neutral nonassociating LLE" in release_note
-    assert "Electrolyte LLE, reactive speciation" in release_note
+    assert "The evidence-backed routes are `bubble_pressure`, `dew_pressure`, and scoped nonassociating hydrocarbon `single_component_vle`" in release_note
+    assert "Neutral LLE, electrolyte LLE, reactive speciation, reactive LLE, and reactive electrolyte LLE are declared not exposed" in release_note
     assert "Release assets are built for the Windows CPython 3.13" in release_note
     assert "PyPI publishing remains a manual Trusted Publishing action" in release_note
     assert "production-exposed" in overview
-    assert "neutral bubble/dew routes, neutral TP flash" in overview
-    assert "neutral nonassociating LLE" in overview
-    assert "source-backed Khudaida explicit-ion electrolyte" in overview
+    assert "bubble pressure, dew pressure" in overview
+    assert "and scoped nonassociating hydrocarbon single-component VLE." in overview
+    assert "Neutral LLE, bubble/dew temperature, neutral TP flash, neutral multiphase,\n  electrolyte LLE" in overview
+    assert "source-backed Khudaida explicit-ion electrolyte" not in overview
     assert "uv run python run_pytest.py --confidence -q" not in overview
     assert "run_pytest.py tests/test_runtime.py -q" not in overview
     assert "release_installation" in docs_index
@@ -679,12 +680,15 @@ def test_equilibrium_capability_docs_separate_exports_from_validated_production_
     assert 'assert equilibrium_caps["production_families"] == [' not in capabilities_docs
     assert "exported" in capabilities_docs
     assert "activation surface" in capabilities_docs
-    assert "does not prove" in capabilities_docs
-    assert "validated production behavior" in capabilities_docs
-    assert 'assert "reactive_speciation" in exported_routes' in capabilities_docs
+    assert "evidence-derived from" in capabilities_docs
+    assert "exported route surface is limited to" in capabilities_docs
+    assert 'assert exported_families == {' in capabilities_docs
+    assert '"single_component_vle",' in capabilities_docs
+    assert 'assert exported_routes == {' in capabilities_docs
+    assert '"reactive_speciation" in exported_routes' not in capabilities_docs
     assert "scripts/validation/check_standalone_ce_gate.py" in capabilities_docs
-    assert "production evidence is withheld" in capabilities_docs
-    assert "complete standalone CE gate fails" in capabilities_docs
+    assert "internal validation workflow" in capabilities_docs
+    assert "before any public route or capability claim is restored" in capabilities_docs
     assert "without being advertised as callable routes" not in capabilities_docs
 
 
@@ -769,8 +773,6 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     env_setup = _read(".codex/environments/setup.sh")
     env_readme = _read(".codex/environments/README.md")
     happy_path = _read("docs/agents/agent-happy-path.md")
-    build_owner = _read(".codex/agents/build_packaging_owner.toml")
-    command_runner = _read(".codex/agents/command_runner.toml")
 
     for token in (
         "docs/superpowers/PROJECT_CONTEXT.md",
@@ -899,35 +901,15 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     assert "--ceres-dir" in _read("scripts/dev/bootstrap.py")
     assert "Do not set `EPCSAFT_PEP517_CERES_DIR`" in env_readme
     assert "build_epcsaft.py --use-system-ceres" in env_readme
-    assert ".codex/environments/setup.sh builds or reuses scripts/dev/build_system_ceres.py output" in build_owner
-    assert "scripts/dev/build_dist.py builds the provider-only packages/epcsaft distribution" in command_runner
-    assert "plus EPCSAFT_PEP517_CERES_DIR" not in build_owner
-    assert (
-        "prefer a persistent EPCSAFT_PEP517_BUILD_DIR and prebuilt Ceres via EPCSAFT_PEP517_CERES_DIR"
-        not in command_runner
-    )
     assert not (REPO_ROOT / "docs" / "agents" / ("INTEL" + "LIJ.md")).exists()
     assert not (REPO_ROOT / "scripts" / "dev" / ("configure_" + "jet" + "brains_project.py")).exists()
     assert not (REPO_ROOT / "scripts" / "dev" / ("jet" + "brains_run_manifest.py")).exists()
     assert not (REPO_ROOT / ".run").exists()
 
 
-def test_repo_local_agent_roster_uses_supported_models_and_expected_scopes() -> None:
-    expected_agents = {
-        "build_packaging_owner.toml": ("gpt-5.4", "workspace-write"),
-        "command_runner.toml": ("gpt-5.4", "workspace-write"),
-        "native_equation_owner.toml": ("gpt-5.4", "read-only"),
-        "native_solver_backend_owner.toml": ("gpt-5.4", "workspace-write"),
-        "python_api_test_owner.toml": ("gpt-5.4", "workspace-write"),
-    }
-
+def test_repo_does_not_pin_a_custom_subagent_roster() -> None:
     agents_dir = REPO_ROOT / ".codex" / "agents"
-    for filename, (model, sandbox_mode) in expected_agents.items():
-        path = agents_dir / filename
-        assert path.is_file(), filename
-        data = tomllib.loads(path.read_text(encoding="utf-8"))
-        assert data["model"] == model
-        assert data["sandbox_mode"] == sandbox_mode
+    assert not agents_dir.exists() or not any(agents_dir.iterdir())
 
 
 def test_github_default_smoke_uses_downstream_path_install_not_wheel_build() -> None:

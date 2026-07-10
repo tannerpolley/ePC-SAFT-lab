@@ -99,9 +99,9 @@ Command matrix
    * - Equilibrium extension contracts
      - ``uv run python run_pytest.py --equilibrium-api -q``
      - Package-owned metadata/API check under ``packages/epcsaft-equilibrium/tests`` for neutral equilibrium route construction, solver-option validation, derivative-backend contracts, and capability reporting. This slice does not run the full route-solve file.
-   * - Standalone CE activation gate
+   * - Standalone CE internal validation gate
      - ``uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete`` then ``uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_standalone_ce_gate.py -q``
-     - Before claiming ``reactive_speciation(...)`` public standalone CE support. This gate does not admit reactive LLE, reactive electrolyte LLE, or CPE.
+     - Active repair gate for the closed reactive-speciation family. It must pass before a separate re-admission change can add any public route; it does not admit reactive LLE, reactive electrolyte LLE, or CPE.
    * - Regression extension tests
      - ``uv run python run_pytest.py --regression -q`` or ``uv run python scripts/dev/validate_project.py regression``
      - Regression-extension Ceres tests routed through ``epcsaft_regression``.
@@ -357,7 +357,7 @@ example, read ``docs/superpowers/milestones/M4-equilibrium/generalized-fluid-pha
 native/equilibrium route tests. If the right target is unclear, run
 ``uv run python run_pytest.py --list-slices`` before choosing a command.
 
-- Provider wrapper/API changes: ``uv run python run_pytest.py --provider-api -q`` first, then ``uv run python run_pytest.py --confidence -q``. The older ``--api`` shortcut is retained as a provider-owned API alias during the transition.
+- Provider wrapper/API changes: ``uv run python run_pytest.py --provider-api -q`` first, then ``uv run python run_pytest.py --confidence -q``.
 - Equilibrium extension API or native-contract changes: ``uv run python run_pytest.py --equilibrium-api -q`` first. Package-facing and native-equilibrium tests live under ``packages/epcsaft-equilibrium/tests``; root ``tests/`` retains only provider, repo/workflow, build/package, registry, integration, and boundary-governance tests.
 - Regression extension changes: ``uv run python run_pytest.py --regression -q`` first. Regression API, native, and Ceres contract tests live under ``packages/epcsaft-regression/tests`` and exercise the package through the provider contract and current native bridge.
 - Cross-package ownership changes: ``uv run python run_pytest.py --integration -q`` first, then the smallest package-specific slice that matches the edit.
@@ -377,9 +377,9 @@ native/equilibrium route tests. If the right target is unclear, run
 Keep generated plot assets and generated CSV workflows out of normal validation unless the task explicitly asks for them. There is no named plot validation slice; target the owning script or test file directly when plot output work is in scope.
 
 Use ``uv run python run_pytest.py --list-slices`` when you need to inspect what each named slice runs before choosing a validation command.
-The named slices and ``scripts/dev/validate_project.py`` modes are adapted from
-``epcsaft.runtime.capability_evidence``. Add new executable evidence there first, then
-let the CLI wrappers expose it through the existing command surfaces.
+The named slices and ``scripts/dev/validate_project.py`` modes are defined in
+``scripts.dev.validation_registry``. Scientific capability evidence remains in
+the owning package and must not be duplicated in the repository command registry.
 
 For parallel sessions, leave the default repo-local temp behavior alone unless it causes contention. When running concurrent pytest lanes, set ``EPCSAFT_PYTEST_TEMP_ROOT`` to an external temp root for the extra lanes so each run gets an isolated ``pytest-temp`` child.
 

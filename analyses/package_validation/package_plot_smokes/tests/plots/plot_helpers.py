@@ -14,6 +14,7 @@ matplotlib.rcParams["svg.fonttype"] = "none"
 matplotlib.rcParams["svg.hashsalt"] = "epcsaft-test-plots"
 
 from epcsaft.state.native_adapter import ePCSAFTMixture
+
 from scripts import plot_outputs
 
 MATPLOTLIB_COLORWAY = (

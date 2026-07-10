@@ -3,11 +3,10 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
+import epcsaft_regression
 import numpy as np
 
-import epcsaft_regression
 from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import save_comparison_plot
-from scripts import plot_outputs
 from packages.epcsaft.tests.support.regression_cases import (
     _load_workbook_reference_rows,
     _methane_like_records,
@@ -15,6 +14,7 @@ from packages.epcsaft.tests.support.regression_cases import (
     _neutral_fixed_parameters,
     _real_saturation_records,
 )
+from scripts import plot_outputs
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
 ETHANOL_WATER_VLE_CSV = REPO_ROOT / "data" / "reference" / "regression" / "binary" / "vle" / "ethanol_water" / "100kpa.csv"

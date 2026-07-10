@@ -1,0 +1,163 @@
+{
+  "artifacts": {
+    "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_02/results/fit_statistics.csv",
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_02/results/model_curve.csv",
+    "pdf": "analyses/paper_validation/2002_gross/figures/figure_02/results/figure_02.pdf",
+    "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_02/results/plotted_data.csv",
+    "png": "analyses/paper_validation/2002_gross/figures/figure_02/results/figure_02.png",
+    "source_csv": "analyses/paper_validation/2002_gross/figures/figure_02/source/source_points.csv",
+    "source_identity_csv": "analyses/paper_validation/2002_gross/figures/figure_02/source/source_identity.csv",
+    "source_notes_csv": "analyses/paper_validation/2002_gross/figures/figure_02/source/source_notes.csv",
+    "svg": "analyses/paper_validation/2002_gross/figures/figure_02/results/figure_02.svg",
+    "trace_summary_json": "analyses/paper_validation/2002_gross/shared/results/figure_02_trace_summary.json"
+  },
+  "figure_id": "figure_02",
+  "model_point_count": 45,
+  "native_route": {
+    "derivative_status": "verified_exact",
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_02/results/model_curve.csv",
+    "native_freshness_receipt": {
+      "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+      "checker_command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/validation/check_gross_2002_full_replication.py",
+        "--json",
+        "--require-exact-association-hessian",
+        "--require-fresh-native"
+      ],
+      "current_source_identity": "2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94",
+      "embedded_source_identity": "2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94",
+      "embedded_source_identity_algorithm": "sha256-relative-path-content-v1",
+      "embedded_source_identity_file_count": 110,
+      "embedded_source_identity_limit": "Covers the canonical equilibrium object/module/header manifest, every listed equilibrium file, this shared CMake loader/identity helper, the provider source manifest contract, the exact manifest-listed provider target .cpp files, and the .h/.hpp header contracts reachable from manifest include roots. Root/standalone target compile definitions, include/link flags, compiler identity, generated dependency sources, and dependency binaries are outside this source receipt.",
+      "embedded_source_identity_scope": "equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph",
+      "freshness_mode": "embedded_source_identity",
+      "git_commit": "162d32ba225a9fbe0f711b5c28985238589f2d10",
+      "native_module_name": "epcsaft_equilibrium._native_core",
+      "native_module_path": "/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/packages/epcsaft-equilibrium/src/epcsaft_equilibrium/_native_core.cpython-313-x86_64-linux-gnu.so",
+      "source_identity_algorithm": "sha256-relative-path-content-v1",
+      "source_identity_file_count": 110,
+      "source_identity_limit": "Covers the canonical equilibrium object/module/header manifest, every listed equilibrium file, this shared CMake loader/identity helper, the provider source manifest contract, the exact manifest-listed provider target .cpp files, and the .h/.hpp header contracts reachable from manifest include roots. Root/standalone target compile definitions, include/link flags, compiler identity, generated dependency sources, and dependency binaries are outside this source receipt.",
+      "source_identity_matches": true,
+      "source_identity_scope": "equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph"
+    },
+    "public_entrypoint": "epcsaft_equilibrium.Equilibrium(mixture, route='bubble_pressure'/'dew_pressure', T=..., x=.../y=...).solve()"
+  },
+  "score": {
+    "branch_coverage_score": 1.0,
+    "derivative_status": "verified_exact",
+    "max_axis_error": {
+      "P_bar": 0.8613971207410245,
+      "composition_component_1": 0.0
+    },
+    "model_point_count": 45,
+    "normalized_plot_score": 8.755679683182793,
+    "pass": true,
+    "rmse_axis": {
+      "P_bar": 0.36924715543383246,
+      "composition_component_1": 0.0
+    },
+    "score_basis": "pressure-coordinate RMSE against Leu and Robinson 1992 Table I literature P-x/y points retained for Gross 2002 Figure 2",
+    "series_scores": {
+      "bubble_line": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "P_bar": 0.5188771109532659,
+          "x_component_1": 0.0
+        },
+        "model_point_count": 24,
+        "normalized_plot_score": 9.176785172663063,
+        "pass": true,
+        "rmse_axis": {
+          "P_bar": 0.28812518956792776,
+          "x_component_1": 0.0
+        },
+        "source_point_count": 7
+      },
+      "dew_line": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "P_bar": 0.8613971207410245,
+          "y_component_1": 0.0
+        },
+        "model_point_count": 21,
+        "normalized_plot_score": 8.755679683182793,
+        "pass": true,
+        "rmse_axis": {
+          "P_bar": 0.43551211088602276,
+          "y_component_1": 0.0
+        },
+        "source_point_count": 7
+      }
+    },
+    "source_point_count": 14
+  },
+  "source_point_count": 14,
+  "source_provenance": {
+    "figure": "Figure 2",
+    "paper": "Gross and Sadowski 2002",
+    "parameter_provenance": {
+      "isobutane": "Gross2001 Table2",
+      "k_ij": "Gross2002 Figure 2 caption and retained identity artifact",
+      "methanol": "Gross2002 Table1"
+    },
+    "source_image": "analyses/paper_validation/2002_gross/figures/figure_02/source/figure_02.png",
+    "source_markers": "Leu and Robinson 1992 experimental data as reproduced in Gross 2002 Figure 2",
+    "source_pdf": "analyses/paper_validation/2002_gross/docs/pdf/source_01_gross_2002.pdf"
+  },
+  "status": "accepted",
+  "trace_summary": {
+    "figure_id": "figure_02",
+    "trace_contract": "m4_boundary_route_trace_v1",
+    "trace_options": {
+      "max_coordinate_gap": 0.075,
+      "max_interpolation_error": 0.35,
+      "max_points": 240,
+      "max_refinement_iterations": 8,
+      "requested_coordinate_tolerance": 0.0002
+    },
+    "trace_source_policy": {
+      "binary_branch_min_composition": 0.02,
+      "boundary_limit_coordinate_role": "y_component_1",
+      "boundary_limit_coordinates": [
+        1e-06,
+        0.999999
+      ],
+      "boundary_limit_route": "dew_pressure",
+      "reason": "finite binary dew-pressure limits provide both liquid and vapor compositions on the shared boundary without claiming unsupported public pure-component scope"
+    },
+    "traces": [
+      {
+        "accepted_point_count": 23,
+        "blockers": [],
+        "complete": true,
+        "exact_hessian_verified": true,
+        "max_coordinate_gap": 0.06851000000000007,
+        "max_interpolation_error": 0.0,
+        "postsolve_verified": true,
+        "required_anchor_count": 16,
+        "route": "bubble_pressure",
+        "series": "bubble_line",
+        "solved_required_anchor_count": 16
+      },
+      {
+        "accepted_point_count": 19,
+        "blockers": [],
+        "complete": true,
+        "exact_hessian_verified": true,
+        "max_coordinate_gap": 0.07000000000000006,
+        "max_interpolation_error": 0.0,
+        "postsolve_verified": true,
+        "required_anchor_count": 12,
+        "route": "dew_pressure",
+        "series": "dew_line",
+        "solved_required_anchor_count": 12
+      }
+    ]
+  }
+}

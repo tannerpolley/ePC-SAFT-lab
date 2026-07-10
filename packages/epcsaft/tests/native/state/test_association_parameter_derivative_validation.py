@@ -3,10 +3,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from copy import deepcopy
 
+import epcsaft._core as _core
 import numpy as np
 import pytest
-
-import epcsaft._core as _core
 from epcsaft.state.native_adapter import ePCSAFTMixture
 
 

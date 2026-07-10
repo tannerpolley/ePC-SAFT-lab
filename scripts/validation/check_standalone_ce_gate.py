@@ -39,13 +39,25 @@ REQUIRED_VALIDATION_FAMILIES = (
     "cantera_reference_oracle",
     "pope_reference_oracle",
 )
-REQUIRED_CLOSED_SURFACES = ["reactive_lle", "reactive_electrolyte_lle", "cpe"]
+REQUIRED_CLOSED_SURFACES = ["reactive_speciation", "reactive_lle", "reactive_electrolyte_lle", "cpe"]
+REQUIRED_VALIDATION_BOUNDARY = {
+    "status": "active_validation",
+    "activation_family": "reactive_speciation",
+    "closed_surfaces": REQUIRED_CLOSED_SURFACES,
+    "re_admission_limits": {
+        "balance_inf_norm_max": 1.0e-8,
+        "reaction_stationarity_inf_norm_max": 1.0e-6,
+    },
+}
 REQUIRED_MEA_RETAINED_SUMMARY_PATH = MEA_RETAINED_SUMMARY_PATH.relative_to(REPO_ROOT).as_posix()
 REQUIRED_MEA_SEED_POLICY = "max_min_feasible_interior_no_oracle"
 REQUIRED_MEA_TEMPERATURES_C = [20.0, 40.0]
 REQUIRED_MEA_LOADING_COUNT = 161
 REQUIRED_MEA_STATE_POINT_COUNT = 322
 REQUIRED_MEA_SPECIES_ROW_COUNT = 3220
+REQUIRED_MEA_REJECTED_STATE_POINT_COUNT = 8
+REQUIRED_MEA_ACCEPTED_STATE_POINT_COUNT = 314
+REQUIRED_MEA_FAILURE_CLASSES = ["accepted", "balance_failure", "stationarity_failure"]
 MEA_STRICT_TOLERANCES = {
     "balance_abs": 1.0e-8,
     "affinity_abs": 1.0e-6,
@@ -53,6 +65,10 @@ MEA_STRICT_TOLERANCES = {
     "loading_abs": 1.0e-8,
     "charge_abs": 1.0e-8,
 }
+MEA_LIVE_FAILURE_TEMPERATURE_C = 40.0
+MEA_LIVE_FAILURE_LOADING = 0.4
+MEA_LIVE_CROSSCHECK_REL_TOL = 1.0e-13
+MEA_LIVE_CROSSCHECK_ABS_TOL = 1.0e-12
 REQUIRED_MEA_ROBUSTNESS_FIELDS = [
     "activity_model",
     "solver_status",
@@ -76,17 +92,19 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 
 apply_native_runtime_env(os.environ)
 
-from epcsaft_equilibrium import EquilibriumSolverOptions, reactive_speciation
+from epcsaft import SolutionError
+from epcsaft_equilibrium import EquilibriumSolverOptions
 from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.chemical_equilibrium import (
     ChemicalReaction,
     ChemicalSpecies,
     EquilibriumConstantRecord,
     StandardStateRecord,
+    _solve_closed_chemical_equilibrium_nlp_activation,
     build_standard_state_registry,
     compile_reaction_set,
-    solve_chemical_equilibrium_nlp_activation,
 )
+from epcsaft_equilibrium.workflows import _run_standalone_ce_validation
 
 
 def _ideal_ab_problem() -> tuple[Any, Any]:
@@ -396,7 +414,7 @@ def reference_oracle_evidence() -> dict[str, Any]:
 
     for case in payload["cases"]:
         compiled, registry = _compiled_oracle_case(case)
-        result = solve_chemical_equilibrium_nlp_activation(
+        result = _solve_closed_chemical_equilibrium_nlp_activation(
             compiled,
             registry,
             initial_amounts=case["initial_amounts"],
@@ -571,63 +589,55 @@ def _mea_retained_artifact_review_digest(payload: Mapping[str, Any]) -> dict[str
     }
 
 
-def _mea_artifact_strict_gates_pass(payload: Mapping[str, Any]) -> bool:
-    pointwise = dict(payload.get("pointwise_unassisted") or {})
-    return (
-        payload.get("strict_gates_passed") is True
-        and payload.get("all_accepted") is True
-        and pointwise.get("all_accepted") is True
-        and pointwise.get("all_no_source_oracle_seed") is True
-        and pointwise.get("all_final_lambda_one") is True
-        and _as_float(payload, "max_abs_error") <= MEA_STRICT_TOLERANCES["mole_fraction_abs"]
-        and _as_float(payload, "max_balance_inf_norm") <= MEA_STRICT_TOLERANCES["balance_abs"]
-        and _as_float(payload, "max_reaction_stationarity_inf_norm") <= MEA_STRICT_TOLERANCES["affinity_abs"]
-    )
-
-
-def _mea_artifact_continuation_gates_pass(payload: Mapping[str, Any]) -> bool:
-    continuation = dict(payload.get("ce_owned_continuation_trace") or payload.get("continuation_evidence") or {})
-    return (
-        int(continuation.get("max_stage_count", -1)) == 3
-        and int(continuation.get("homotopy_point_count", -1)) == 12
-        and int(continuation.get("physical_proof_corrector_point_count", -1)) == REQUIRED_MEA_STATE_POINT_COUNT
-        and continuation.get("all_final_lambda_one") is True
-        and continuation.get("all_final_proof_accepted") is True
-    )
-
-
-def _mea_artifact_corrector_repair_gates_pass(payload: Mapping[str, Any]) -> bool:
-    continuation = dict(payload.get("ce_owned_continuation_trace") or payload.get("continuation_evidence") or {})
-    return (
-        int(continuation.get("corrected_stationarity_point_count", -1)) >= 1
-        and _as_float(continuation, "max_initial_physical_proof_corrector_reaction_stationarity_inf_norm")
-        > MEA_STRICT_TOLERANCES["affinity_abs"]
-        and _as_float(continuation, "max_final_physical_proof_corrector_reaction_stationarity_inf_norm")
-        <= MEA_STRICT_TOLERANCES["affinity_abs"]
-        and _as_float(continuation, "max_final_physical_proof_corrector_balance_inf_norm")
-        <= MEA_STRICT_TOLERANCES["balance_abs"]
-        and continuation.get("all_physical_proof_corrector_rejection_reasons_empty") is True
-    )
-
-
-def _mea_artifact_shuffled_subset_gates_pass(payload: Mapping[str, Any]) -> bool:
-    shuffled = dict(payload.get("shuffled_subset") or {})
-    return (
-        int(shuffled.get("attempt_count", -1)) >= 34
-        and shuffled.get("all_accepted") is True
-        and shuffled.get("all_no_source_oracle_seed") is True
-        and _as_float(shuffled, "max_abs_error") <= MEA_STRICT_TOLERANCES["mole_fraction_abs"]
-    )
-
-
 def mea_retained_summary_payload_blockers(payload: dict[str, Any]) -> list[str]:
     blockers: list[str] = []
     if payload.get("schema_version") != "epcsaft.standalone_ce.mea_speciation_oracle_comparison.v2":
         blockers.append("mea_retained_summary_schema_version_mismatch")
-    if payload.get("public_route") != "reactive_speciation":
-        blockers.append("mea_retained_summary_public_route_mismatch")
-    if payload.get("ce_workflow") != "epcsaft_equilibrium.reactive_speciation":
-        blockers.append("mea_retained_summary_workflow_mismatch")
+    if payload.get("validation_scope") != "internal_standalone_ce":
+        blockers.append("mea_retained_summary_validation_scope_mismatch")
+    if payload.get("validation_entrypoint") != "epcsaft_equilibrium.workflows._run_standalone_ce_validation":
+        blockers.append("mea_retained_summary_validation_entrypoint_mismatch")
+    if payload.get("validation_status") != "blocked_live_reproduction":
+        blockers.append("mea_retained_summary_live_status_mismatch")
+    live_failure = dict(payload.get("current_live_failure") or {})
+    if not math.isclose(
+        _as_float(live_failure, "temperature_C", -1.0),
+        MEA_LIVE_FAILURE_TEMPERATURE_C,
+        rel_tol=0.0,
+        abs_tol=MEA_LIVE_CROSSCHECK_ABS_TOL,
+    ):
+        blockers.append("mea_retained_summary_live_failure_temperature_mismatch")
+    if not math.isclose(
+        _as_float(live_failure, "loading_mol_co2_per_mol_mea", -1.0),
+        MEA_LIVE_FAILURE_LOADING,
+        rel_tol=0.0,
+        abs_tol=MEA_LIVE_CROSSCHECK_ABS_TOL,
+    ):
+        blockers.append("mea_retained_summary_live_failure_loading_mismatch")
+    if live_failure.get("accepted") is not False:
+        blockers.append("mea_retained_summary_live_failure_accepted_mismatch")
+    if live_failure.get("failure_class") != "balance_failure":
+        blockers.append("mea_retained_summary_live_failure_class_mismatch")
+    retained_balance = _as_float(live_failure, "balance_inf_norm")
+    if not math.isfinite(retained_balance) or retained_balance <= MEA_STRICT_TOLERANCES["balance_abs"]:
+        blockers.append("mea_retained_summary_live_balance_failure_missing")
+    retained_stationarity = _as_float(live_failure, "reaction_stationarity_inf_norm")
+    if (
+        not math.isfinite(retained_stationarity)
+        or retained_stationarity <= MEA_STRICT_TOLERANCES["affinity_abs"]
+    ):
+        blockers.append("mea_retained_summary_live_stationarity_failure_missing")
+    if _as_float(live_failure, "balance_inf_norm_max") != MEA_STRICT_TOLERANCES["balance_abs"]:
+        blockers.append("mea_retained_summary_live_balance_limit_mismatch")
+    if _as_float(live_failure, "reaction_stationarity_inf_norm_max") != MEA_STRICT_TOLERANCES["affinity_abs"]:
+        blockers.append("mea_retained_summary_live_stationarity_limit_mismatch")
+    if payload.get("all_accepted") is not False or payload.get("strict_gates_passed") is not False:
+        blockers.append("mea_retained_summary_live_failure_marked_accepted")
+    if (
+        payload.get("all_solver_status_success") is not False
+        or payload.get("all_application_status_succeeded") is not False
+    ):
+        blockers.append("mea_retained_summary_live_failure_marked_succeeded")
     if payload.get("temperature_C") != REQUIRED_MEA_TEMPERATURES_C:
         blockers.append("mea_retained_summary_temperature_grid_mismatch")
     if int(payload.get("loading_count", 0)) != REQUIRED_MEA_LOADING_COUNT:
@@ -644,19 +654,23 @@ def mea_retained_summary_payload_blockers(payload: dict[str, Any]) -> list[str]:
     solver_options = dict(payload.get("solver_options") or {})
     if solver_options.get("max_iterations") != 1000 or float(solver_options.get("tolerance", 1.0)) != 1.0e-8:
         blockers.append("mea_retained_summary_solver_options_mismatch")
-    if not _mea_artifact_strict_gates_pass(payload):
-        blockers.append("mea_retained_summary_strict_gates_missing")
-    if not _mea_artifact_continuation_gates_pass(payload):
-        blockers.append("mea_retained_summary_continuation_trace_missing")
-    if not _mea_artifact_corrector_repair_gates_pass(payload):
-        blockers.append("mea_retained_summary_physical_corrector_repair_evidence_missing")
-    if not _mea_artifact_shuffled_subset_gates_pass(payload):
-        blockers.append("mea_retained_summary_shuffled_subset_missing")
+    for section_name in (
+        "pointwise_unassisted",
+        "ce_owned_continuation_trace",
+        "robustness_diagnostics",
+        "shuffled_subset",
+    ):
+        section = payload.get(section_name)
+        if not isinstance(section, Mapping) or section.get("snapshot_status") != "superseded_by_current_live_failure":
+            blockers.append(f"mea_retained_summary_{section_name}_snapshot_status_mismatch")
     robustness = dict(payload.get("robustness_diagnostics") or {})
     if not robustness:
         blockers.append("mea_retained_summary_robustness_diagnostics_missing")
     else:
-        if robustness.get("artifact") != "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/mea_ce_unassisted_seed_audit.csv":
+        if (
+            robustness.get("artifact")
+            != "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/mea_ce_unassisted_seed_audit.csv"
+        ):
             blockers.append("mea_retained_summary_robustness_artifact_mismatch")
         if list(robustness.get("required_fields") or []) != REQUIRED_MEA_ROBUSTNESS_FIELDS:
             blockers.append("mea_retained_summary_robustness_fields_mismatch")
@@ -665,12 +679,14 @@ def mea_retained_summary_payload_blockers(payload: dict[str, Any]) -> list[str]:
         failure_classes = list(robustness.get("failure_classes") or [])
         if "unclassified_failure" in failure_classes:
             blockers.append("mea_retained_summary_unclassified_failure_class")
-        if failure_classes != ["accepted"]:
+        if failure_classes != REQUIRED_MEA_FAILURE_CLASSES:
             blockers.append("mea_retained_summary_failure_classes_mismatch")
         if int(robustness.get("state_point_count") or 0) != REQUIRED_MEA_STATE_POINT_COUNT:
             blockers.append("mea_retained_summary_robustness_state_point_count_mismatch")
-        if int(robustness.get("accepted_state_point_count") or 0) != REQUIRED_MEA_STATE_POINT_COUNT:
+        if int(robustness.get("accepted_state_point_count") or 0) != REQUIRED_MEA_ACCEPTED_STATE_POINT_COUNT:
             blockers.append("mea_retained_summary_robustness_accepted_count_mismatch")
+    if int(payload.get("rejected_state_point_count") or 0) != REQUIRED_MEA_REJECTED_STATE_POINT_COUNT:
+        blockers.append("mea_retained_summary_rejected_count_mismatch")
     if payload.get("load_error"):
         blockers.append("mea_retained_summary_fixture_missing")
     try:
@@ -696,18 +712,25 @@ def _mea_retained_artifact_evidence_from_payload(payload: dict[str, Any]) -> dic
         "blockers": blockers,
         "artifact_path": REQUIRED_MEA_RETAINED_SUMMARY_PATH,
         "schema_version": payload.get("schema_version"),
-        "public_route": payload.get("public_route"),
+        "validation_scope": payload.get("validation_scope"),
+        "validation_entrypoint": payload.get("validation_entrypoint"),
+        "validation_status": payload.get("validation_status"),
+        "current_live_failure": dict(payload.get("current_live_failure") or {}),
         "temperature_C": list(payload.get("temperature_C") or []),
         "loading_count": loading_count,
         "temperature_count": temperature_count,
         "state_point_count": state_point_count,
         "species_row_count": int(pointwise.get("row_count") or 0),
         "strict_gates_passed": payload.get("strict_gates_passed") is True,
+        "all_accepted": payload.get("all_accepted") is True,
         "seed_policy": payload.get("seed_policy"),
         "uses_source_oracle_initial_amounts": payload.get("uses_source_oracle_initial_amounts"),
-        "max_mole_fraction_abs_error": payload.get("max_abs_error"),
-        "max_balance_inf_norm": payload.get("max_balance_inf_norm"),
-        "max_reaction_stationarity_inf_norm": payload.get("max_reaction_stationarity_inf_norm"),
+        "historical_snapshot": {
+            "snapshot_status": pointwise.get("snapshot_status"),
+            "max_mole_fraction_abs_error": payload.get("max_abs_error"),
+            "max_balance_inf_norm": payload.get("max_balance_inf_norm"),
+            "max_reaction_stationarity_inf_norm": payload.get("max_reaction_stationarity_inf_norm"),
+        },
         "pointwise_unassisted": pointwise,
         "continuation_evidence": continuation,
         "robustness_diagnostics": robustness,
@@ -720,6 +743,62 @@ def mea_retained_artifact_evidence() -> dict[str, Any]:
     return _mea_retained_artifact_evidence_from_payload(_load_mea_retained_summary_payload())
 
 
+def retained_mea_live_comparison_blockers(
+    retained_evidence: Mapping[str, Any],
+    live_evidence: Mapping[str, Any],
+) -> list[str]:
+    retained_failure = dict(retained_evidence.get("current_live_failure") or {})
+    live_rows = [dict(row) for row in (live_evidence.get("rows") or []) if isinstance(row, Mapping)]
+    live_matches = [
+        row
+        for row in live_rows
+        if row.get("status") == "solver_rejected"
+        and math.isclose(
+            _as_float(row, "loading_mol_co2_per_mol_mea", -1.0),
+            MEA_LIVE_FAILURE_LOADING,
+            rel_tol=0.0,
+            abs_tol=MEA_LIVE_CROSSCHECK_ABS_TOL,
+        )
+    ]
+    if len(live_matches) != 1:
+        return ["mea_live_failure_reference_missing"]
+
+    live_failure = live_matches[0]
+    blockers: list[str] = []
+    if not math.isclose(
+        _as_float(retained_failure, "loading_mol_co2_per_mol_mea", -1.0),
+        _as_float(live_failure, "loading_mol_co2_per_mol_mea", -2.0),
+        rel_tol=0.0,
+        abs_tol=MEA_LIVE_CROSSCHECK_ABS_TOL,
+    ):
+        blockers.append("mea_retained_live_failure_loading_stale")
+    if retained_failure.get("failure_class") != live_failure.get("failure_class"):
+        blockers.append("mea_retained_live_failure_class_stale")
+    if retained_failure.get("accepted") is not False or live_failure.get("accepted") is not False:
+        blockers.append("mea_retained_live_failure_accepted_stale")
+    for field, blocker in (
+        ("balance_inf_norm", "mea_retained_live_failure_balance_stale"),
+        (
+            "reaction_stationarity_inf_norm",
+            "mea_retained_live_failure_stationarity_stale",
+        ),
+    ):
+        retained_value = _as_float(retained_failure, field)
+        live_value = _as_float(live_failure, field)
+        if (
+            not math.isfinite(retained_value)
+            or not math.isfinite(live_value)
+            or not math.isclose(
+                retained_value,
+                live_value,
+                rel_tol=MEA_LIVE_CROSSCHECK_REL_TOL,
+                abs_tol=MEA_LIVE_CROSSCHECK_ABS_TOL,
+            )
+        ):
+            blockers.append(blocker)
+    return sorted(set(blockers))
+
+
 def validation_ladder_payload_blockers(payload: dict[str, Any]) -> list[str]:
     blockers: list[str] = []
     if payload.get("schema_version") != "epcsaft.standalone_ce.validation_ladder.v1":
@@ -730,7 +809,7 @@ def validation_ladder_payload_blockers(payload: dict[str, Any]) -> list[str]:
         blockers.append("validation_ladder_claims_non_ce_scope")
     if payload.get("runtime_dependencies") != []:
         blockers.append("validation_ladder_runtime_dependency_present")
-    if payload.get("public_routes") != ["reactive_speciation"]:
+    if payload.get("public_routes") != []:
         blockers.append("validation_ladder_public_routes_mismatch")
     if payload.get("closed_surfaces") != REQUIRED_CLOSED_SURFACES:
         blockers.append("validation_ladder_closed_surfaces_mismatch")
@@ -777,8 +856,14 @@ def validation_ladder_payload_blockers(payload: dict[str, Any]) -> list[str]:
             blockers.append(f"validation_family_{family_id}_phase_scope_mismatch")
         if record.get("claimed_equilibrium_scopes") != ["standalone_chemical_equilibrium"]:
             blockers.append(f"validation_family_{family_id}_claims_non_ce_scope")
-        if record.get("status") not in {"complete", "retained_source_blocker_disclosed"}:
+        if record.get("status") not in {
+            "complete",
+            "retained_source_blocker_disclosed",
+            "blocked_live_reproduction",
+        }:
             blockers.append(f"validation_family_{family_id}_status_mismatch")
+        if family_id == "analytic_ideal" and record.get("status") != "complete":
+            blockers.append("validation_family_analytic_ideal_status_mismatch")
         if not isinstance(record.get("species_order"), list) or not record.get("species_order"):
             blockers.append(f"validation_family_{family_id}_species_order_missing")
         if not isinstance(record.get("tolerances"), dict) or not record.get("tolerances"):
@@ -786,7 +871,9 @@ def validation_ladder_payload_blockers(payload: dict[str, Any]) -> list[str]:
         if not isinstance(record.get("residuals"), dict) or not record.get("residuals"):
             blockers.append(f"validation_family_{family_id}_residuals_missing")
         if family_id == "mea_speciation":
-            if record.get("evidence_role") != "retained_no_oracle_public_reactive_speciation_sweep":
+            if record.get("status") != "blocked_live_reproduction":
+                blockers.append("validation_family_mea_speciation_live_status_mismatch")
+            if record.get("evidence_role") != "retained_no_oracle_standalone_ce_diagnostic_sweep":
                 blockers.append("validation_family_mea_speciation_evidence_role_mismatch")
             if record.get("source_path") != REQUIRED_MEA_RETAINED_SUMMARY_PATH:
                 blockers.append("validation_family_mea_speciation_source_path_mismatch")
@@ -806,34 +893,54 @@ def validation_ladder_payload_blockers(payload: dict[str, Any]) -> list[str]:
                 blockers.append("validation_family_mea_speciation_standard_state_mismatch")
             residuals = dict(record.get("residuals") or {})
             tolerances = dict(record.get("tolerances") or {})
-            strict_gates_pass = (
-                int(residuals.get("state_point_count", 0)) == REQUIRED_MEA_STATE_POINT_COUNT
-                and int(residuals.get("species_row_count", 0)) == REQUIRED_MEA_SPECIES_ROW_COUNT
-                and _as_float(residuals, "max_mole_fraction_abs_error") <= float(tolerances.get("mole_fraction_abs", 0.0))
-                and _as_float(residuals, "max_balance_inf_norm") <= float(tolerances.get("balance_abs", 0.0))
-                and _as_float(residuals, "max_reaction_stationarity_inf_norm")
-                <= float(tolerances.get("affinity_abs", 0.0))
-            )
-            if not strict_gates_pass:
-                blockers.append("validation_family_mea_speciation_strict_gates_missing")
+            if int(residuals.get("state_point_count", 0)) != REQUIRED_MEA_STATE_POINT_COUNT:
+                blockers.append("validation_family_mea_speciation_state_point_count_mismatch")
+            if int(residuals.get("species_row_count", 0)) != REQUIRED_MEA_SPECIES_ROW_COUNT:
+                blockers.append("validation_family_mea_speciation_species_row_count_mismatch")
+            if residuals.get("snapshot_status") != "superseded_by_current_live_failure":
+                blockers.append("validation_family_mea_speciation_residual_snapshot_status_mismatch")
+            if record.get("strict_gates_passed") is not False:
+                blockers.append("validation_family_mea_speciation_live_failure_marked_accepted")
+            live_failure = dict(record.get("current_live_failure") or {})
+            if not math.isclose(
+                _as_float(live_failure, "temperature_C", -1.0),
+                MEA_LIVE_FAILURE_TEMPERATURE_C,
+                rel_tol=0.0,
+                abs_tol=MEA_LIVE_CROSSCHECK_ABS_TOL,
+            ):
+                blockers.append("validation_family_mea_speciation_live_failure_temperature_mismatch")
+            if not math.isclose(
+                _as_float(live_failure, "loading_mol_co2_per_mol_mea", -1.0),
+                MEA_LIVE_FAILURE_LOADING,
+                rel_tol=0.0,
+                abs_tol=MEA_LIVE_CROSSCHECK_ABS_TOL,
+            ):
+                blockers.append("validation_family_mea_speciation_live_failure_loading_mismatch")
+            if live_failure.get("accepted") is not False:
+                blockers.append("validation_family_mea_speciation_live_failure_accepted_mismatch")
+            if live_failure.get("failure_class") != "balance_failure":
+                blockers.append("validation_family_mea_speciation_live_failure_class_mismatch")
+            live_balance = _as_float(live_failure, "balance_inf_norm")
+            if not math.isfinite(live_balance) or live_balance <= float(tolerances.get("balance_abs", 0.0)):
+                blockers.append("validation_family_mea_speciation_live_balance_failure_missing")
+            live_stationarity = _as_float(live_failure, "reaction_stationarity_inf_norm")
+            if (
+                not math.isfinite(live_stationarity)
+                or live_stationarity <= float(tolerances.get("affinity_abs", 0.0))
+            ):
+                blockers.append("validation_family_mea_speciation_live_stationarity_failure_missing")
+            if _as_float(live_failure, "balance_inf_norm_max") != float(tolerances.get("balance_abs", 0.0)):
+                blockers.append("validation_family_mea_speciation_live_balance_limit_mismatch")
+            if _as_float(live_failure, "reaction_stationarity_inf_norm_max") != float(
+                tolerances.get("affinity_abs", 0.0)
+            ):
+                blockers.append("validation_family_mea_speciation_live_stationarity_limit_mismatch")
             continuation = dict(record.get("continuation_evidence") or {})
-            if not (
-                int(continuation.get("max_stage_count", -1)) == 3
-                and int(continuation.get("homotopy_point_count", -1)) == 12
-                and int(continuation.get("physical_proof_corrector_point_count", -1))
-                == REQUIRED_MEA_STATE_POINT_COUNT
-                and continuation.get("all_final_lambda_one") is True
-                and continuation.get("all_final_proof_accepted") is True
-            ):
-                blockers.append("validation_family_mea_speciation_continuation_trace_missing")
+            if continuation.get("snapshot_status") != "superseded_by_current_live_failure":
+                blockers.append("validation_family_mea_speciation_continuation_snapshot_status_mismatch")
             shuffled_subset = dict(record.get("shuffled_subset") or {})
-            if not (
-                int(shuffled_subset.get("attempt_count", -1)) >= 34
-                and shuffled_subset.get("all_accepted") is True
-                and shuffled_subset.get("all_no_source_oracle_seed") is True
-                and _as_float(shuffled_subset, "max_abs_error") <= float(tolerances.get("mole_fraction_abs", 0.0))
-            ):
-                blockers.append("validation_family_mea_speciation_shuffled_subset_missing")
+            if shuffled_subset.get("snapshot_status") != "superseded_by_current_live_failure":
+                blockers.append("validation_family_mea_speciation_shuffled_snapshot_status_mismatch")
 
     derivative = dict(payload.get("derivative_evidence") or {})
     if derivative.get("status") != "complete":
@@ -850,20 +957,15 @@ def validation_ladder_payload_blockers(payload: dict[str, Any]) -> list[str]:
     if not derivative.get("source"):
         blockers.append("derivative_evidence_source_missing")
 
-    capability = dict(payload.get("capability_evidence") or {})
-    if capability.get("status") != "standalone_ce_open_cpe_closed":
-        blockers.append("capability_evidence_status_mismatch")
-    if capability.get("activation_gate") != "issue_0330_complete":
-        blockers.append("capability_activation_gate_mismatch")
-    if capability.get("production") is not True:
-        blockers.append("capability_production_missing")
-    public_routes = list(capability.get("public_routes") or [])
-    if public_routes != ["reactive_speciation"]:
-        blockers.append("capability_public_routes_mismatch")
-    if any(str(route) in REQUIRED_CLOSED_SURFACES for route in public_routes):
-        blockers.append("capability_reactive_phase_route_claimed")
-    if capability.get("closed_surfaces") != REQUIRED_CLOSED_SURFACES:
-        blockers.append("capability_closed_surfaces_mismatch")
+    boundary = dict(payload.get("validation_boundary") or {})
+    if boundary.get("status") != REQUIRED_VALIDATION_BOUNDARY["status"]:
+        blockers.append("validation_boundary_status_mismatch")
+    if boundary.get("activation_family") != REQUIRED_VALIDATION_BOUNDARY["activation_family"]:
+        blockers.append("validation_boundary_activation_family_mismatch")
+    if boundary.get("closed_surfaces") != REQUIRED_CLOSED_SURFACES:
+        blockers.append("validation_boundary_closed_surfaces_mismatch")
+    if boundary.get("re_admission_limits") != REQUIRED_VALIDATION_BOUNDARY["re_admission_limits"]:
+        blockers.append("validation_boundary_re_admission_limits_mismatch")
     return sorted(set(blockers))
 
 
@@ -872,9 +974,7 @@ def validation_ladder_evidence() -> dict[str, Any]:
     blockers = validation_ladder_payload_blockers(payload)
     records = payload.get("validation_families") if isinstance(payload.get("validation_families"), list) else []
     families = [
-        str(record.get("family_id"))
-        for record in records
-        if isinstance(record, dict) and record.get("family_id")
+        str(record.get("family_id")) for record in records if isinstance(record, dict) and record.get("family_id")
     ]
     return {
         "status": "complete" if not blockers else "blocked",
@@ -883,11 +983,11 @@ def validation_ladder_evidence() -> dict[str, Any]:
         "family_count": len(families),
         "families": families,
         "derivative_evidence": dict(payload.get("derivative_evidence") or {}),
-        "capability_evidence": dict(payload.get("capability_evidence") or {}),
+        "validation_boundary": dict(payload.get("validation_boundary") or {}),
     }
 
 
-def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
+def mea_speciation_validation_evidence() -> dict[str, Any]:
     species = _mea_species()
     reactions = _mea_reactions()
     constants = _mea_constants()
@@ -896,28 +996,55 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
     blockers: list[str] = []
     rows: list[dict[str, Any]] = []
     for loading, expected in _MEA_EXPECTED_MOLE_FRACTIONS.items():
-        result = reactive_speciation(
-            species=species,
-            reactions=reactions,
-            feed_amounts={"MEA": 1.0, "H2O": _MEA_WATER_PER_AMINE, "CO2": loading},
-            equilibrium_constants=constants,
-            initial_amounts=None,
-            solver_options=solver_options,
-        )
+        try:
+            result = _run_standalone_ce_validation(
+                species=species,
+                reactions=reactions,
+                feed_amounts={"MEA": 1.0, "H2O": _MEA_WATER_PER_AMINE, "CO2": loading},
+                equilibrium_constants=constants,
+                initial_amounts=None,
+                solver_options=solver_options,
+            )
+        except SolutionError as exc:
+            if len(exc.args) < 2 or not isinstance(exc.args[1], Mapping):
+                raise RuntimeError("standalone CE rejection omitted native diagnostics") from exc
+            diagnostics = dict(exc.args[1])
+            initialization = dict(diagnostics.get("initialization") or {})
+            continuation = dict(diagnostics.get("continuation") or {})
+            row = {
+                "loading_mol_co2_per_mol_mea": loading,
+                "status": "solver_rejected",
+                "failure_class": diagnostics.get("failure_class"),
+                "failure_gate": diagnostics.get("failure_gate"),
+                "balance_inf_norm": _as_float(diagnostics, "balance_inf_norm"),
+                "reaction_stationarity_inf_norm": _as_float(diagnostics, "reaction_stationarity_inf_norm"),
+                "solver_status": diagnostics.get("solver_status"),
+                "application_status": diagnostics.get("application_status"),
+                "accepted": diagnostics.get("accepted") is True,
+                "seed_policy": REQUIRED_MEA_SEED_POLICY,
+                "seed_source": initialization.get("seed_source"),
+                "uses_source_oracle_initial_amounts": initialization.get("source_oracle_initial_amounts"),
+                "final_proof_status": continuation.get("final_proof_status"),
+                "final_stage_id": continuation.get("final_stage_id"),
+                "final_lambda": continuation.get("final_lambda"),
+                "stage_count": continuation.get("stage_count"),
+            }
+            rows.append(row)
+            blockers.extend(
+                [
+                    f"mea_loading_{loading}_not_accepted",
+                    f"mea_loading_{loading}_{row['failure_class'] or 'unclassified_failure'}",
+                ]
+            )
+            continue
         diagnostics = dict(result.diagnostics)
         initialization = dict(diagnostics.get("initialization") or {})
         feasible_initialization = dict(initialization.get("feasible_initialization") or {})
         feasible_attempts = [
-            dict(item)
-            for item in (feasible_initialization.get("attempts") or [])
-            if isinstance(item, Mapping)
+            dict(item) for item in (feasible_initialization.get("attempts") or []) if isinstance(item, Mapping)
         ]
         extent_attempt = next(
-            (
-                item
-                for item in feasible_attempts
-                if str(item.get("initializer")) == "extent_nullspace_feasible"
-            ),
+            (item for item in feasible_attempts if str(item.get("initializer")) == "extent_nullspace_feasible"),
             {},
         )
         continuation = dict(diagnostics.get("continuation") or {})
@@ -925,9 +1052,9 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
         proof_metrics = dict(diagnostics.get("proof_metrics") or {})
         physical_corrector_metrics = dict(physical_corrector.get("proof_metrics") or {})
         amounts = result.species_amounts
-        reconstructed_loading = (
-            amounts["CO2"] + amounts["MEACOO-"] + amounts["HCO3-"] + amounts["CO3^2-"]
-        ) / (amounts["MEA"] + amounts["MEAH+"] + amounts["MEACOO-"])
+        reconstructed_loading = (amounts["CO2"] + amounts["MEACOO-"] + amounts["HCO3-"] + amounts["CO3^2-"]) / (
+            amounts["MEA"] + amounts["MEAH+"] + amounts["MEACOO-"]
+        )
         charge = (
             amounts["MEAH+"]
             + amounts["H3O+"]
@@ -950,9 +1077,7 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
             "reaction_scaling_min": _as_float(proof_metrics, "reaction_scaling_min"),
             "reaction_scaling_max": _as_float(proof_metrics, "reaction_scaling_max"),
             "reaction_basis_condition_estimate": _as_float(proof_metrics, "reaction_basis_condition_estimate"),
-            "scaled_reaction_stationarity_inf_norm": _as_float(
-                proof_metrics, "scaled_reaction_stationarity_inf_norm"
-            ),
+            "scaled_reaction_stationarity_inf_norm": _as_float(proof_metrics, "scaled_reaction_stationarity_inf_norm"),
             "unscaled_reaction_stationarity_inf_norm": _as_float(
                 proof_metrics, "unscaled_reaction_stationarity_inf_norm"
             ),
@@ -993,9 +1118,7 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
             "physical_proof_corrector_scaled_reaction_stationarity_inf_norm": _as_float(
                 physical_corrector_metrics, "scaled_reaction_stationarity_inf_norm"
             ),
-            "physical_proof_corrector_final_balance_inf_norm": _as_float(
-                physical_corrector, "final_balance_inf_norm"
-            ),
+            "physical_proof_corrector_final_balance_inf_norm": _as_float(physical_corrector, "final_balance_inf_norm"),
         }
         rows.append(row)
         if row["solver_status"] != "success":
@@ -1060,7 +1183,7 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
         "status": "complete" if not blockers else "blocked",
         "blockers": sorted(set(blockers)),
         "source": "MEA-Thermodynamics Smith-Missen Phase 1 retained fixture",
-        "public_route": "reactive_speciation",
+        "validation_scope": "internal_standalone_ce",
         "loading_grid": list(_MEA_EXPECTED_MOLE_FRACTIONS),
         "seed_policy": REQUIRED_MEA_SEED_POLICY,
         "uses_source_oracle_initial_amounts": False,
@@ -1090,7 +1213,7 @@ def evaluate_standalone_ce_gate(
         return report
 
     compiled, registry = _ideal_ab_problem()
-    result = solve_chemical_equilibrium_nlp_activation(
+    result = _solve_closed_chemical_equilibrium_nlp_activation(
         compiled,
         registry,
         initial_amounts=[0.5, 0.5],
@@ -1141,9 +1264,21 @@ def evaluate_standalone_ce_gate(
         retained_mea_evidence = mea_retained_artifact_evidence()
         report["mea_retained_artifact_evidence"] = retained_mea_evidence
         blockers.extend(str(blocker) for blocker in retained_mea_evidence["blockers"])
-        mea_evidence = mea_speciation_public_sweep_evidence()
+        mea_evidence = mea_speciation_validation_evidence()
         report["mea_speciation_evidence"] = mea_evidence
         blockers.extend(str(blocker) for blocker in mea_evidence["blockers"])
+        retained_live_blockers = retained_mea_live_comparison_blockers(
+            retained_mea_evidence,
+            mea_evidence,
+        )
+        report["mea_retained_live_crosscheck"] = {
+            "status": "complete" if not retained_live_blockers else "blocked",
+            "blockers": retained_live_blockers,
+            "loading_mol_co2_per_mol_mea": MEA_LIVE_FAILURE_LOADING,
+            "relative_tolerance": MEA_LIVE_CROSSCHECK_REL_TOL,
+            "absolute_tolerance": MEA_LIVE_CROSSCHECK_ABS_TOL,
+        }
+        blockers.extend(retained_live_blockers)
     report["blockers"] = sorted(set(blockers))
     report["status"] = "complete" if not report["blockers"] else "blocked"
     if require_single_nlp_path and report["blockers"]:

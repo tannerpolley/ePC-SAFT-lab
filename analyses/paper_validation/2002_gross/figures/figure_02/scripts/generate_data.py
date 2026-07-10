@@ -25,11 +25,9 @@ apply_to_current_process()
 import matplotlib
 
 matplotlib.use("Agg")
+import epcsaft
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image, ImageDraw
-
-import epcsaft
 from epcsaft_equilibrium import Equilibrium
 from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.branch_tracing import (
@@ -38,6 +36,7 @@ from epcsaft_equilibrium.branch_tracing import (
     BranchTraceResult,
     trace_equilibrium_boundary_route,
 )
+from PIL import Image, ImageDraw
 
 FIGURE_ID = "figure_02"
 TEMPERATURE_K = 373.15
@@ -52,6 +51,7 @@ SHARED_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "share
 MANIFEST_PATH = SHARED_DIR / "gross_2002_full_replication_manifest.json"
 SOURCE_IMAGE = SOURCE_DIR / f"{FIGURE_ID}.png"
 SOURCE_CSV = SOURCE_DIR / "source_points.csv"
+LITERATURE_CSV = SOURCE_DIR / "literature_points.csv"
 SOURCE_NOTES_CSV = SOURCE_DIR / "source_notes.csv"
 SOURCE_IDENTITY_CSV = SOURCE_DIR / "source_identity.csv"
 QA_OVERLAY = RESULTS_DIR / f"{FIGURE_ID}.png"
@@ -122,7 +122,8 @@ MIXTURE_METADATA = {
 SOURCE_PROVENANCE = {
     "paper": "Gross and Sadowski 2002",
     "figure": "Figure 2",
-    "source_image": "analyses/paper_validation/2002_gross/figures/figure_02/source/paper_source_01_figure_002.png",
+    "source_image": "analyses/paper_validation/2002_gross/figures/figure_02/source/figure_02.png",
+    "source_pdf": "analyses/paper_validation/2002_gross/docs/pdf/source_01_gross_2002.pdf",
     "source_markers": "Leu and Robinson 1992 experimental data as reproduced in Gross 2002 Figure 2",
     "parameter_provenance": {
         "methanol": "Gross2002 Table1",
@@ -154,6 +155,11 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+
+
+def _strip_trailing_whitespace(path: Path) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -240,7 +246,11 @@ def _write_source_notes_csv(metadata: dict[str, Any] | None = None) -> None:
         {"section": "provenance", "key": "paper", "value": "Gross and Sadowski 2002", "unit": "", "notes": ""},
         {"section": "provenance", "key": "figure", "value": FIGURE_ID, "unit": "", "notes": ""},
         {"section": "provenance", "key": "source_image", "value": _relative(SOURCE_IMAGE), "unit": "", "notes": ""},
+        {"section": "provenance", "key": "source_pdf", "value": SOURCE_PROVENANCE["source_pdf"], "unit": "", "notes": ""},
         {"section": "source_method", "key": "published_figure_curve_trace", "value": "retained visible PC-SAFT curve points from the published figure", "unit": "", "notes": ""},
+        {"section": "source_method", "key": "production_scoring", "value": "retained literature pressure-composition points", "unit": "", "notes": ""},
+        {"section": "data_file", "key": "literature_points", "value": _relative(LITERATURE_CSV), "unit": "", "notes": "Leu and Robinson 1992 Table I"},
+        {"section": "data_file", "key": "source_identity", "value": _relative(SOURCE_IDENTITY_CSV), "unit": "", "notes": "row-level literature provenance payload"},
     ]
     for key, value in sorted((metadata or {}).items()):
         _flatten_note("metadata", str(key), value, rows)
@@ -291,39 +301,57 @@ def _mixture() -> epcsaft.Mixture:
     return epcsaft.Mixture(parameter_set)
 
 
-def _pure_mixture(species: str, params: dict[str, Any]) -> epcsaft.Mixture:
-    payload: dict[str, Any] = {
-        "MW": np.asarray([params["MW"]]),
-        "m": np.asarray([params["m"]]),
-        "s": np.asarray([params["s"]]),
-        "e": np.asarray([params["e"]]),
-        "z": np.asarray([0.0]),
-        "dielc": np.asarray([1.0]),
-    }
-    if params.get("e_assoc", 0.0) or params.get("assoc_scheme"):
-        payload["e_assoc"] = np.asarray([params["e_assoc"]])
-        payload["vol_a"] = np.asarray([params["vol_a"]])
-        payload["assoc_scheme"] = [params["assoc_scheme"]]
-    parameter_set = epcsaft.ParameterSet.from_dict(
-        payload,
-        species=[species],
-        metadata={
-            "source": params.get("source", ""),
-            "paper": SOURCE_PROVENANCE["paper"],
-            "figure": SOURCE_PROVENANCE["figure"],
-            "source_path": SOURCE_PROVENANCE["source_image"],
-            "endpoint_role": "single_component_vle",
-        },
-    )
-    return epcsaft.Mixture(parameter_set)
-
-
 def _load_source_rows() -> list[dict[str, Any]]:
     with SOURCE_CSV.open(encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))
     if not rows:
         raise RuntimeError("Gross 2002 Figure 2 source CSV is empty.")
     return rows
+
+
+def _load_literature_rows() -> list[dict[str, Any]]:
+    with LITERATURE_CSV.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    if not rows:
+        raise RuntimeError("Gross 2002 Figure 2 literature CSV is empty.")
+    required_fields = {"series", "source_reference", "source_detail", "point_index", "x_axis"}
+    missing_fields = sorted(required_fields - set(rows[0]))
+    if missing_fields:
+        raise RuntimeError(
+            "Gross 2002 Figure 2 literature CSV is missing required fields: "
+            + ", ".join(missing_fields)
+        )
+    return rows
+
+
+def _write_source_identity_csv(literature_rows: list[dict[str, Any]]) -> None:
+    rows = [
+        {
+            "figure_id": row["figure_id"],
+            "dataset": row["dataset"],
+            "series": row["series"],
+            "point_index": row["point_index"],
+            "source_reference": row["source_reference"],
+            "source_detail": row["source_detail"],
+            "source_pdf": _relative(SHARED_DIR.parent / "docs" / "pdf" / "source_01_gross_2002.pdf"),
+            "source_data_file": _relative(LITERATURE_CSV),
+        }
+        for row in literature_rows
+    ]
+    _write_csv(
+        SOURCE_IDENTITY_CSV,
+        rows,
+        [
+            "figure_id",
+            "dataset",
+            "series",
+            "point_index",
+            "source_reference",
+            "source_detail",
+            "source_pdf",
+            "source_data_file",
+        ],
+    )
 
 
 def _source_curve_rows(source_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -414,25 +442,30 @@ def _model_rows_from_trace(trace: BranchTraceResult, series: str) -> list[dict[s
     return rows
 
 
-def _pure_endpoint_rows(source_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    endpoint_mixtures = {
-        0.0: ("methanol", _pure_mixture("Methanol", METHANOL_PARAMS)),
-        1.0: ("isobutane", _pure_mixture("Isobutane", ISOBUTANE_PARAMS)),
-    }
+def _boundary_limit_rows(
+    mixture: epcsaft.Mixture,
+    source_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     solved: dict[float, Any] = {}
     rows: list[dict[str, Any]] = []
     for source_row in _source_curve_rows(source_rows):
         series = source_row["series"]
         coordinate_key = "x_component_1" if series == "bubble_line" else "y_component_1"
         coordinate = float(source_row[coordinate_key])
-        if coordinate not in endpoint_mixtures:
+        if coordinate not in {0.0, 1.0}:
             continue
-        component, mixture = endpoint_mixtures[coordinate]
-        if coordinate not in solved:
-            solved[coordinate] = Equilibrium(mixture, route="single_component_vle", T=TEMPERATURE_K).solve(
+        limit_coordinate = MIN_COMPOSITION if coordinate == 0.0 else 1.0 - MIN_COMPOSITION
+        component = "methanol" if coordinate == 0.0 else "isobutane"
+        if limit_coordinate not in solved:
+            solved[limit_coordinate] = Equilibrium(
+                mixture,
+                route="dew_pressure",
+                T=TEMPERATURE_K,
+                y=[1.0 - limit_coordinate, limit_coordinate],
+            ).solve(
                 solver_options=EQUILIBRIUM_SOLVER_OPTIONS
             )
-        result = solved[coordinate]
+        result = solved[limit_coordinate]
         diagnostics = result.diagnostics
         payload = result.to_dict() if hasattr(result, "to_dict") else {}
         residuals = payload.get("saturation_residuals", {}) if isinstance(payload.get("saturation_residuals"), dict) else {}
@@ -443,8 +476,8 @@ def _pure_endpoint_rows(source_rows: list[dict[str, Any]]) -> list[dict[str, Any
         rows.append(
             {
                 "series": series,
-                "x_component_1": coordinate,
-                "y_component_1": coordinate,
+                "x_component_1": float(result.x[1]),
+                "y_component_1": float(result.y[1]),
                 "T_K": TEMPERATURE_K,
                 "P_bar": float(result.pressure) / 1.0e5,
                 "route": result.route,
@@ -464,9 +497,11 @@ def _pure_endpoint_rows(source_rows: list[dict[str, Any]]) -> list[dict[str, Any
                     "chemical_potential_consistency_norm",
                     diagnostics.get("chemical_potential_consistency_norm", ""),
                 ),
-                "trace_point_id": f"single_component_vle:{component}:{coordinate:.1f}",
-                "requested_coordinate": coordinate,
-                "source_anchor_id": f"pure_endpoint:{component}",
+                "trace_point_id": f"dew_pressure:binary_limit:{component}",
+                "requested_coordinate": limit_coordinate,
+                "requested_coordinate_role": "y_component_1",
+                "source_anchor_id": f"binary_limit:{component}",
+                "endpoint_limit_basis": "finite_binary_dew_pressure_limit",
             }
         )
     return rows
@@ -474,7 +509,7 @@ def _pure_endpoint_rows(source_rows: list[dict[str, Any]]) -> list[dict[str, Any
 
 def _solve_traces(mixture: epcsaft.Mixture, source_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, BranchTraceResult]]:
     trace_results = {series: _trace_series(mixture, source_rows, series) for series in SOURCE_SERIES}
-    rows: list[dict[str, Any]] = _pure_endpoint_rows(source_rows)
+    rows: list[dict[str, Any]] = _boundary_limit_rows(mixture, source_rows)
     for series, result in trace_results.items():
         rows.extend(_model_rows_from_trace(result, series))
     return rows, trace_results
@@ -484,12 +519,30 @@ def _interp_pressure(series_rows: list[dict[str, Any]], coordinate_key: str, com
     x = np.asarray([float(row[coordinate_key]) for row in series_rows], dtype=float)
     p = np.asarray([float(row["P_bar"]) for row in series_rows], dtype=float)
     order = np.argsort(x)
+    minimum = x[order[0]]
+    maximum = x[order[-1]]
+    if composition < minimum and 0.0 <= composition and minimum <= 1.01 * MIN_COMPOSITION:
+        composition = minimum
+    if composition > maximum and composition <= 1.0 and 1.0 - maximum <= 1.01 * MIN_COMPOSITION:
+        composition = maximum
+    if composition < minimum or composition > maximum:
+        raise RuntimeError(
+            f"Literature coordinate {composition} is outside the retained {coordinate_key} model branch."
+        )
     return float(np.interp(composition, x[order], p[order]))
 
 
-def _score(source_rows: list[dict[str, Any]], model_rows: list[dict[str, Any]]) -> dict[str, Any]:
-    source_curve_rows = _source_curve_rows(source_rows)
-    source_by_series = _sorted_source_series(source_curve_rows)
+def _score(
+    source_rows: list[dict[str, Any]],
+    model_rows: list[dict[str, Any]],
+    *,
+    scoring_rows: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    del source_rows
+    scoring_rows = _load_literature_rows() if scoring_rows is None else scoring_rows
+    if not scoring_rows:
+        raise RuntimeError("Gross 2002 Figure 2 production scoring requires literature points.")
+    source_by_series = _sorted_source_series(scoring_rows)
     model_by_series: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in model_rows:
         model_by_series[row["series"]].append(row)
@@ -527,7 +580,7 @@ def _score(source_rows: list[dict[str, Any]], model_rows: list[dict[str, Any]]) 
     all_max = max(abs(value) for value in all_errors)
     normalized_score = min(payload["normalized_plot_score"] for payload in series_scores.values())
     return {
-        "source_point_count": len(source_curve_rows),
+        "source_point_count": len(scoring_rows),
         "model_point_count": len(model_rows),
         "rmse_axis": {"P_bar": all_rmse, "composition_component_1": 0.0},
         "max_axis_error": {"P_bar": all_max, "composition_component_1": 0.0},
@@ -536,7 +589,10 @@ def _score(source_rows: list[dict[str, Any]], model_rows: list[dict[str, Any]]) 
         "derivative_status": "verified_exact",
         "pass": normalized_score >= 8.0,
         "series_scores": series_scores,
-        "score_basis": "pressure-coordinate RMSE against calibrated Gross 2002 Figure 2 retained P-x/y source points",
+        "score_basis": (
+            "pressure-coordinate RMSE against Leu and Robinson 1992 Table I "
+            "literature P-x/y points retained for Gross 2002 Figure 2"
+        ),
     }
 
 
@@ -598,16 +654,17 @@ def _write_plot(source_rows: list[dict[str, Any]], model_rows: list[dict[str, An
     )
     fig.savefig(PNG, dpi=180)
     fig.savefig(SVG)
+    _strip_trailing_whitespace(SVG)
     fig.savefig(PDF)
     plt.close(fig)
 
 
-def _write_plotted_csv(source_rows: list[dict[str, Any]], model_rows: list[dict[str, Any]]) -> None:
+def _write_plotted_csv(literature_rows: list[dict[str, Any]], model_rows: list[dict[str, Any]]) -> None:
     rows: list[dict[str, Any]] = []
-    for row in source_rows:
+    for row in literature_rows:
         rows.append(
             {
-                "dataset": "source_source_capture",
+                "dataset": "literature_experimental",
                 "series": row["series"],
                 "T_K": row["T_K"],
                 "P_bar": row["P_bar"],
@@ -663,15 +720,17 @@ def _trace_summary_payload(trace_results: dict[str, BranchTraceResult]) -> dict[
         "trace_options": dict(FIGURE_2_TRACE_OPTIONS),
         "trace_source_policy": {
             "binary_branch_min_composition": BINARY_BRANCH_MIN_COMPOSITION,
-            "pure_endpoints_route": "single_component_vle",
-            "reason": "pure-limit source points are represented by the single-component saturation route; finite binary branch anchors use bubble/dew pressure routes",
+            "boundary_limit_route": "dew_pressure",
+            "boundary_limit_coordinate_role": "y_component_1",
+            "boundary_limit_coordinates": [MIN_COMPOSITION, 1.0 - MIN_COMPOSITION],
+            "reason": "finite binary dew-pressure limits provide both liquid and vapor compositions on the shared boundary without claiming unsupported public pure-component scope",
         },
         "traces": traces,
     }
 
 
 def _native_receipt() -> dict[str, Any]:
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=extension_native_core(),
         checker_command=[
             "uv",
@@ -734,7 +793,11 @@ def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> 
                 "requires_branch_trace": True,
                 "artifacts": artifacts,
                 "remaining_work": [] if score_payload["pass"] else ["improve Figure 2 per-series replication score to the acceptance threshold"],
-                "source_data_basis": "calibrated Gross 2002 Figure 2 pressure-composition source points with figure-local parameter provenance resolution for methanol/isobutane",
+                "source_data_basis": (
+                    "Leu and Robinson 1992 Table I literature pressure-composition points "
+                    "retained in literature_points.csv; published Figure 2 PC-SAFT curve "
+                    "points are retained only for branch tracing"
+                ),
                 "trace_requirements": {
                     "max_coordinate_gap": FIGURE_2_TRACE_OPTIONS["max_coordinate_gap"],
                     "max_interpolation_error": FIGURE_2_TRACE_OPTIONS["max_interpolation_error"],
@@ -761,6 +824,8 @@ def main() -> int:
     render_only = "--render-only" in sys.argv[1:]
 
     source_rows = _load_source_rows()
+    literature_rows = _load_literature_rows()
+    _write_source_identity_csv(literature_rows)
     if render_only:
         if not MODEL_CSV.exists():
             raise RuntimeError(f"Retained model CSV is required for --render-only: {_relative(MODEL_CSV)}")
@@ -775,7 +840,7 @@ def main() -> int:
         trace_summary = _trace_summary_payload(trace_results)
         _write_json(TRACE_SUMMARY_JSON, trace_summary)
         receipt = _native_receipt()
-    score_payload = _score(source_rows, model_rows)
+    score_payload = _score(source_rows, model_rows, scoring_rows=literature_rows)
 
     _write_csv(
         MODEL_CSV,
@@ -799,13 +864,24 @@ def main() -> int:
             "chemical_potential_consistency_norm",
             "trace_point_id",
             "requested_coordinate",
+            "requested_coordinate_role",
             "source_anchor_id",
+            "endpoint_limit_basis",
         ],
     )
     _write_overlay(source_rows)
-    _write_plotted_csv(source_rows, model_rows)
+    _write_plotted_csv(literature_rows, model_rows)
     _write_fit_statistics_csv(score_payload)
-    _write_plot(source_rows, model_rows, score_payload)
+    _write_source_notes_csv(
+        {
+            "scoring_source": _relative(LITERATURE_CSV),
+            "scoring_source_reference": "Leu and Robinson 1992 Table I",
+            "source_point_count": score_payload["source_point_count"],
+            "normalized_plot_score": score_payload["normalized_plot_score"],
+            "score_basis": score_payload["score_basis"],
+        }
+    )
+    _write_plot(literature_rows, model_rows, score_payload)
 
     summary = {
         "figure_id": FIGURE_ID,
@@ -822,7 +898,7 @@ def main() -> int:
             "svg": SVG,
             "pdf": PDF,
         },
-        "source_point_count": len(source_rows),
+        "source_point_count": score_payload["source_point_count"],
         "model_point_count": len(model_rows),
         "score": score_payload,
         "trace_summary": trace_summary,
@@ -834,6 +910,7 @@ def main() -> int:
             "native_freshness_receipt": receipt,
         },
     }
+    _write_json(SUMMARY_JSON, summary)
     _update_manifest(score_payload, receipt)
     print(json.dumps(_jsonable(summary), indent=2, sort_keys=True))
     return 0 if score_payload["pass"] else 2

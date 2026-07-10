@@ -9,7 +9,6 @@ pytest.importorskip("epcsaft_equilibrium._native_core")
 
 from scripts.validation import check_neutral_tp_flash_fixture as checker
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CASE_DIR = (
     REPO_ROOT

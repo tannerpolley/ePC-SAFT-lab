@@ -48,7 +48,7 @@ Ipopt-backed production routes.
 - Description: Bridges the package NLP contract to Ipopt without owning route equations.
 - Change note: Initial algorithm-registry entry for native Ipopt dispatch.
 - LaTeX: `docs/latex/algorithms.tex:35`
-- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp:524` (class IpoptTnlpAdapter final : public Ipopt::TNLP {)
+- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp:517` (class IpoptTnlpAdapter final : public Ipopt::TNLP {)
 
 The Ipopt adapter owns solver invocation, option transfer, status mapping, and
 diagnostic capture for constrained NLP routes. Route-specific residuals and
@@ -95,7 +95,7 @@ regression routes. It is separate from Ipopt and does not call Ipopt routes.
 ### `bubble_dew_ipopt`
 - Family: Phase equilibrium
 - Status: Implemented
-- Public API: Equilibrium(mixture, route='bubble_pressure'|'bubble_temperature'|'dew_pressure'|'dew_temperature', ...).solve()
+- Public API: Equilibrium(mixture, route='bubble_pressure'|'dew_pressure', ...).solve()
 - Backend: Native C++ Ipopt equilibrium NLP
 - Dependency: Ipopt
 - Derivative backend: Exact native objective gradient, constraint Jacobian, and Hessian callbacks
@@ -103,113 +103,105 @@ regression routes. It is separate from Ipopt and does not call Ipopt routes.
 - Implementation owner: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
 - Validation: packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py; packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py
 - Capability key: bubble_dew_derived_routes
-- Description: Solves production neutral bubble/dew pressure and temperature route specs through the native selector core.
-- Change note: Neutral VLE selector expansion promotes bubble/dew pressure and temperature routes through the shared thermodynamic constrained core.
+- Description: Solves production neutral bubble/dew pressure route specs through the native selector core.
+- Change note: Bubble/dew temperature contracts remain closed because retained inverse-workbook points are not live literature-backed production proof.
 - LaTeX: `docs/latex/algorithms.tex:72`
-- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp:566` (SelectorContract evaluate_selector_contract(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp:626` (epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp:1250` (m.def("_native_equilibrium_selector_contract", [](), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp:1300` (m.def("_native_equilibrium_selector_route_result", [](), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:2543` (NeutralTwoPhaseEosRouteResult solve_pressure_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:2672` (NeutralTwoPhaseEosRouteResult solve_temperature_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py:442` (def _solve_selector_route()
+- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp:907` (SelectorContract evaluate_selector_contract(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp:980` (epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp:3024` (m.def("_native_equilibrium_selector_contract", [](), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp:3070` (m.def("_native_equilibrium_selector_route_result", [](), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:3969` (NeutralTwoPhaseEosRouteResult solve_pressure_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:4123` (NeutralTwoPhaseEosRouteResult solve_temperature_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py:985` (def _solve_selector_route()
 
-This entry exposes the trusted neutral bubble/dew proof set through route specs
+This entry exposes the trusted neutral bubble/dew pressure proof set through route specs
 configured by `Equilibrium(mixture, route=..., ...)` and executed by
 `solve()`. The selector core reads the
-native activation matrix, admits only neutral non-reactive non-electrolyte
-non-associating mixtures for the production contract, and requires exact
-derivatives plus postsolve certification.
+native activation matrix, admits neutral non-reactive non-electrolyte inputs,
+and requires exact derivatives plus postsolve certification. Associating inputs
+are restricted to the source-backed Gross/Sadowski 2002 Figures 2--9 proof
+fixtures; this is not generalized associating phase-equilibrium admission.
 
 **LaTeX source**
 
 ```tex
-This entry exposes the trusted neutral bubble/dew proof set through route specs
+This entry exposes the trusted neutral bubble/dew pressure proof set through route specs
 configured by \texttt{Equilibrium(mixture, route=..., ...)} and executed by
 \texttt{solve()}. The selector core reads the
-native activation matrix, admits only neutral non-reactive non-electrolyte
-non-associating mixtures for the production contract, and requires exact
-derivatives plus postsolve certification.
+native activation matrix, admits neutral non-reactive non-electrolyte inputs,
+and requires exact derivatives plus postsolve certification. Associating inputs
+are restricted to the source-backed Gross/Sadowski 2002 Figures 2--9 proof
+fixtures; this is not generalized associating phase-equilibrium admission.
 ```
 
 
 ### `neutral_tp_flash_ipopt`
 - Family: Phase equilibrium
-- Status: Implemented
-- Public API: Equilibrium(mixture, route='flash', ...).solve()
+- Status: Internal component diagnostic; declared not exposed
+- Public API: None; Equilibrium(mixture, route='flash', ...) is rejected before native dispatch
 - Backend: Native C++ Ipopt equilibrium NLP
 - Dependency: Ipopt
 - Derivative backend: Exact native objective gradient, constraint Jacobian, and Hessian callbacks
-- Solver role: Production selector-dispatched neutral two-phase TP flash route spec
+- Solver role: Internal neutral two-phase TP flash component diagnostics
 - Implementation owner: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
-- Validation: packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py; packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py
+- Validation: scripts/validation/check_neutral_tp_flash_fixture.py; packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py
 - Capability key: neutral_tp_flash
-- Description: Solves certified neutral two-phase TP flash through the native selector core.
-- Change note: Neutral VLE selector expansion exposes TP flash only after selector-owned seed generation, residual closure, and postsolve certification.
-- LaTeX: `docs/latex/algorithms.tex:93`
-- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:2797` (NeutralTwoPhaseEosRouteResult solve_flash_route()
+- Description: Retains neutral two-phase TP flash component diagnostics without public route admission.
+- Change note: TP flash remains closed because the retained workbook fixture is not live literature-backed production proof.
+- LaTeX: `docs/latex/algorithms.tex:94`
+- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:4282` (NeutralTwoPhaseEosRouteResult solve_flash_route()
 
-This entry exposes the trusted neutral two-phase TP flash proof through the
-`flash` route spec configured by
-`Equilibrium(mixture, route="flash", ...)` and executed by
-`solve()`. Flash is a route spec over the same native
-two-phase EOS constrained core as bubble and dew routes. The native
-selector owns deterministic seed generation, activation checks, exact
-derivative requirements, and postsolve certification. Gibbs/free-energy terms
-may shape the NLP or seed ranking, but solver success alone is not the
-acceptance criterion.
+This entry retains internal neutral two-phase TP flash component diagnostics
+over the shared two-phase EOS constrained core. The public `flash`
+route is rejected before native dispatch. Selector-owned seed generation,
+residual closure, and postsolve certification remain implementation evidence,
+but they do not replace a live literature-backed production proof.
 
 **LaTeX source**
 
 ```tex
-This entry exposes the trusted neutral two-phase TP flash proof through the
-\texttt{flash} route spec configured by
-\texttt{Equilibrium(mixture, route="flash", ...)} and executed by
-\texttt{solve()}. Flash is a route spec over the same native
-two-phase EOS constrained core as bubble and dew routes. The native
-selector owns deterministic seed generation, activation checks, exact
-derivative requirements, and postsolve certification. Gibbs/free-energy terms
-may shape the NLP or seed ranking, but solver success alone is not the
-acceptance criterion.
+This entry retains internal neutral two-phase TP flash component diagnostics
+over the shared two-phase EOS constrained core. The public \texttt{flash}
+route is rejected before native dispatch. Selector-owned seed generation,
+residual closure, and postsolve certification remain implementation evidence,
+but they do not replace a live literature-backed production proof.
 ```
 
 
 ### `neutral_lle_ipopt`
 - Family: Phase equilibrium
-- Status: Implemented
-- Public API: Equilibrium(mixture, route='lle', ...).solve()
+- Status: Internal validation; declared not exposed
+- Public API: None; Equilibrium(mixture, route='lle', ...) is rejected before native dispatch
 - Backend: Native C++ Ipopt equilibrium NLP
 - Dependency: Ipopt
 - Derivative backend: Exact native objective gradient, constraint Jacobian, and Hessian callbacks
-- Solver role: Production selector-dispatched neutral nonassociating LLE route spec
+- Solver role: Internal neutral LLE route refinement and certification diagnostics
 - Implementation owner: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
-- Validation: packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_lle_route_returns_named_liquid_phase_helpers; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py
+- Validation: scripts/validation/check_neutral_lle_showcase.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py
 - Capability key: neutral_lle
-- Description: Solves certified neutral nonassociating LLE through the native selector core.
-- Change note: Neutral LLE is production-exposed only for the current neutral nonassociating activation-row proof.
-- LaTeX: `docs/latex/algorithms.tex:117`
-- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:2690` (NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route()
+- Description: Retains source-backed neutral LLE refinement diagnostics without public route admission.
+- Change note: Neutral LLE is closed because the sampled-candidate Stage II audit is not a global HELD proof.
+- LaTeX: `docs/latex/algorithms.tex:114`
+- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:6454` (NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route()
 
-This entry exposes the trusted neutral nonassociating LLE proof through the
-`lle` route spec configured by
-`Equilibrium(mixture, route="lle", ...)` and executed by
-`solve()`. The route uses the activation-plan compiler and generic
-two-phase EOS NLP with liquid-liquid phase keys, exact derivative callbacks,
-postsolve certification, and a phase-distance anti-collapse gate. The
-phase-distance row is not a thermodynamic equilibrium equation. Associating
-LLE, electrolyte LLE, and reactive LLE remain out of scope for this entry.
+This entry retains the source-backed neutral LLE refinement path as internal
+validation. The generic two-phase EOS NLP uses liquid-liquid phase keys, exact
+derivative callbacks, postsolve checks, and a phase-distance anti-collapse
+gate. Those checks do not turn a finite sampled-candidate Stage II bound audit
+into the global HELD proof required for production admission, so the public
+`lle` route remains closed. Electrolyte and reactive LLE remain outside
+this entry.
 
 **LaTeX source**
 
 ```tex
-This entry exposes the trusted neutral nonassociating LLE proof through the
-\texttt{lle} route spec configured by
-\texttt{Equilibrium(mixture, route="lle", ...)} and executed by
-\texttt{solve()}. The route uses the activation-plan compiler and generic
-two-phase EOS NLP with liquid-liquid phase keys, exact derivative callbacks,
-postsolve certification, and a phase-distance anti-collapse gate. The
-phase-distance row is not a thermodynamic equilibrium equation. Associating
-LLE, electrolyte LLE, and reactive LLE remain out of scope for this entry.
+This entry retains the source-backed neutral LLE refinement path as internal
+validation. The generic two-phase EOS NLP uses liquid-liquid phase keys, exact
+derivative callbacks, postsolve checks, and a phase-distance anti-collapse
+gate. Those checks do not turn a finite sampled-candidate Stage II bound audit
+into the global HELD proof required for production admission, so the public
+\texttt{lle} route remains closed. Electrolyte and reactive LLE remain outside
+this entry.
 ```
 
 
 ### `neutral_tpd_stability`
 - Family: Phase discovery and certification
-- Status: Implemented for current neutral TP flash and neutral nonassociating LLE utility support; planned for generalized family admission after full HELD
+- Status: Internal utility support for neutral TP flash and neutral LLE; generalized admission requires global HELD proof
 - Public API: Internal route-discovery and certification infrastructure only
 - Backend: Native C++ equilibrium core
 - Dependency: None
@@ -218,14 +210,14 @@ LLE, electrolyte LLE, and reactive LLE remain out of scope for this entry.
 - Implementation owner: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.h; docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md
 - Validation: packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py
 - Capability key: internal:neutral_tpd_stability
-- Description: Defines neutral TPD stability checks for current neutral TP flash and neutral nonassociating LLE acceptance.
-- Change note: Current deterministic screening supports existing neutral routes but is not full HELD; generalized neutral, associating, electrolyte, and reactive families still require separate admission.
-- LaTeX: `docs/latex/algorithms.tex:140`
-- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:711` (void append_tpd_candidates_for_reference_block()
+- Description: Defines neutral TPD stability diagnostics for internal TP-flash and LLE validation.
+- Change note: Deterministic and sampled-candidate screening is not a global HELD proof and authorizes no public route by itself.
+- LaTeX: `docs/latex/algorithms.tex:136`
+- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:1680` (void append_tpd_candidates_for_reference_block()
 
 This algorithm evaluates neutral tangent-plane distance candidates for route
 discovery and certification in the current neutral two-phase TP flash and
-neutral nonassociating LLE routes. It is not a public route and must not change
+neutral LLE validation paths. It is not a public route and must not change
 capability exposure by itself. Accepted multiphase results require more than a
 per-phase local check: the phase set must be certified against missing
 lower-free-energy candidates and mass-balance incompleteness.
@@ -235,7 +227,7 @@ lower-free-energy candidates and mass-balance incompleteness.
 ```tex
 This algorithm evaluates neutral tangent-plane distance candidates for route
 discovery and certification in the current neutral two-phase TP flash and
-neutral nonassociating LLE routes. It is not a public route and must not change
+neutral LLE validation paths. It is not a public route and must not change
 capability exposure by itself. Accepted multiphase results require more than a
 per-phase local check: the phase set must be certified against missing
 lower-free-energy candidates and mass-balance incompleteness.
@@ -255,8 +247,8 @@ lower-free-energy candidates and mass-balance incompleteness.
 - Capability key: internal:neutral_continuous_tpd_minimization
 - Description: Adds continuous neutral TPD refinement diagnostics distinct from deterministic candidate screening.
 - Change note: This is the Stage 9 continuous-TPD layer. It does not satisfy the HELD Stage II dual cutting-plane requirement by itself.
-- LaTeX: `docs/latex/algorithms.tex:161`
-- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:570` (NeutralTpdCandidate refine_neutral_tpd_candidate()
+- LaTeX: `docs/latex/algorithms.tex:157`
+- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:1409` (NeutralTpdCandidate refine_neutral_tpd_candidate()
 
 This algorithm starts from deterministic neutral TPD trial compositions and
 performs a bounded coordinate search on the composition simplex. Each trial
@@ -288,19 +280,20 @@ TPD value, start source, iteration count, and convergence status.
 - Capability key: internal:neutral_held_stage_ladder_diagnostics
 - Description: Exposes Stage 9 phase-discovery status fields for deterministic screening, continuous TPD, HELD Stage I, HELD Stage II, and HELD Stage III.
 - Change note: Stage II now reports an executable candidate bound-gap audit; an open gap remains incomplete HELD evidence until the outer/inner dual loop converges. Stage III diagnostics require the current Ipopt route to report Ipopt success and solve_succeeded before postsolve certification can be counted.
-- LaTeX: `docs/latex/algorithms.tex:181`
-- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:990` (void finalize_stage9_phase_discovery()
+- LaTeX: `docs/latex/algorithms.tex:177`
+- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:2332` (void finalize_stage9_phase_discovery()
 
 This diagnostic layer makes the phase-discovery ladder auditable. Current
 deterministic screening remains seed and certification support. Continuous TPD
 and HELD Stage I can run from multiple starts, while Stage II reports a
-candidate lower/upper bound audit and fails open when the bound gap remains
-nonzero. Current Ipopt phase-amount/phase-volume solves are reported as
+candidate lower/upper bound audit and remains incomplete when the finite
+sampled-candidate gap closes without a global outer/inner HELD proof. Current
+Ipopt phase-amount/phase-volume solves are reported as
 current-route Stage III refinement only when the Ipopt solve itself reports
 success and solve_succeeded; acceptable-level status, finite variables, and
 postsolve acceptance are diagnostics, not proof that Stage II or Stage III has
 converged.
-The neutral LLE proof route uses the `held_refinement` Ipopt profile so the
+The internal neutral LLE refinement uses the `held_refinement` Ipopt profile so the
 Stage III diagnostic records an actual converged route solve before postsolve
 certification is evaluated.
 
@@ -310,13 +303,14 @@ certification is evaluated.
 This diagnostic layer makes the phase-discovery ladder auditable. Current
 deterministic screening remains seed and certification support. Continuous TPD
 and HELD Stage I can run from multiple starts, while Stage II reports a
-candidate lower/upper bound audit and fails open when the bound gap remains
-nonzero. Current Ipopt phase-amount/phase-volume solves are reported as
+candidate lower/upper bound audit and remains incomplete when the finite
+sampled-candidate gap closes without a global outer/inner HELD proof. Current
+Ipopt phase-amount/phase-volume solves are reported as
 current-route Stage III refinement only when the Ipopt solve itself reports
 success and solve_succeeded; acceptable-level status, finite variables, and
 postsolve acceptance are diagnostics, not proof that Stage II or Stage III has
 converged.
-The neutral LLE proof route uses the `held_refinement` Ipopt profile so the
+The internal neutral LLE refinement uses the `held_refinement` Ipopt profile so the
 Stage III diagnostic records an actual converged route solve before postsolve
 certification is evaluated.
 ```
@@ -324,7 +318,7 @@ certification is evaluated.
 
 ### `neutral_deterministic_phase_candidate_screening`
 - Family: Phase discovery and certification
-- Status: Implemented for current neutral TP flash and neutral nonassociating LLE utility support; supplemented by continuous TPD and HELD-stage diagnostics for generalized admission work
+- Status: Internal utility support for neutral TP flash and neutral LLE; supplemented by continuous TPD and HELD-stage diagnostics
 - Public API: Internal route-discovery infrastructure only
 - Backend: Native C++ equilibrium core
 - Dependency: None
@@ -333,10 +327,10 @@ certification is evaluated.
 - Implementation owner: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h; docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md
 - Validation: packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py
 - Capability key: internal:neutral_deterministic_phase_candidate_screening
-- Description: Adds deterministic neutral volume-composition candidate screening for the current neutral TP flash and neutral nonassociating LLE utility routes.
+- Description: Adds deterministic neutral volume-composition candidate screening for internal TP-flash and LLE validation.
 - Change note: Deterministic screening remains distinct from continuous TPD and must not be promoted as full HELD evidence.
-- LaTeX: `docs/latex/algorithms.tex:208`
-- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:2243` (NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery()
+- LaTeX: `docs/latex/algorithms.tex:205`
+- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:4947` (NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery()
 
 This algorithm reduces dependence on user-supplied phase guesses by using
 neutral TPD or volume-composition trial problems to generate deterministic
@@ -357,7 +351,7 @@ used as generalized production evidence by itself.
 
 ### `phase_candidate_mass_balance_selection`
 - Family: Phase discovery and certification
-- Status: Implemented for current neutral TP flash and neutral nonassociating LLE utility support; planned for generalized multiphase admission after full HELD
+- Status: Internal candidate-selection support for neutral TP flash and neutral LLE
 - Public API: Internal route-discovery infrastructure only
 - Backend: Native C++ equilibrium core
 - Dependency: None
@@ -367,9 +361,9 @@ used as generalized production evidence by itself.
 - Validation: packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py
 - Capability key: internal:phase_candidate_mass_balance_selection
 - Description: Filters deterministic or TPD phase candidates by mass-balance feasibility before Ipopt route assembly.
-- Change note: Current utility-route support prevents accepting locally stable but mass-balance-incomplete phase sets; among mass-feasible pairs it now chooses the pair that closes the finite candidate TPD bound audit before route assembly. Generalized admission still requires full HELD.
-- LaTeX: `docs/latex/algorithms.tex:228`
-- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:806` (void select_two_phase_candidate_set()
+- Change note: Mass-balance feasibility and a closed finite sampled-candidate bound are necessary diagnostics, not a global HELD proof or public admission.
+- LaTeX: `docs/latex/algorithms.tex:225`
+- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:1875` (void select_two_phase_candidate_set()
 
 This algorithm solves the small candidate phase-fraction feasibility problem
 before final route assembly. A candidate set that cannot reconstruct the feed
@@ -394,7 +388,7 @@ finite candidate bound gap open.
 
 ### `postsolve_tpd_certification`
 - Family: Phase discovery and certification
-- Status: Implemented for current neutral TP flash and neutral nonassociating LLE utility support; planned for generalized families after full HELD
+- Status: Internal postsolve support for neutral TP flash and neutral LLE; generalized admission requires global HELD proof
 - Public API: Internal postsolve certification infrastructure only
 - Backend: Native C++ equilibrium core
 - Dependency: None
@@ -404,13 +398,14 @@ finite candidate bound gap open.
 - Validation: packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py
 - Capability key: internal:postsolve_tpd_certification
 - Description: Adds phase-set stability certification after current neutral Ipopt solves.
-- Change note: Establishes optimizer success as insufficient for generalized phase-equilibrium acceptance; current implementation is limited to neutral TP flash and neutral nonassociating LLE.
-- LaTeX: `docs/latex/algorithms.tex:250`
-- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:2432` (NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve()
+- Change note: Establishes optimizer success as insufficient for public phase-equilibrium admission; current implementation remains internal TP-flash and LLE evidence.
+- LaTeX: `docs/latex/algorithms.tex:247`
+- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:6067` (NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve()
 
 This algorithm runs after an Ipopt route returns finite variables. It checks
 stability, phase distinctness, candidate completeness, and route certification
 blocks before assigning a production-accepted status.
+That internal status label does not expose a public selector route.
 
 **LaTeX source**
 
@@ -418,6 +413,7 @@ blocks before assigning a production-accepted status.
 This algorithm runs after an Ipopt route returns finite variables. It checks
 stability, phase distinctness, candidate completeness, and route certification
 blocks before assigning a production-accepted status.
+That internal status label does not expose a public selector route.
 ```
 
 
@@ -434,7 +430,7 @@ blocks before assigning a production-accepted status.
 - Capability key: docs:generalized_equilibrium_activation_registry
 - Description: Defines collapsed generalized phase-only, chemical-only, and combined phase-chemical family registry.
 - Change note: Bubble/dew/cloud/shadow routes are derived subworkflows outside the main family rows; generalized rows stay planned until HELD and derivative gates pass.
-- LaTeX: `docs/latex/algorithms.tex:268`
+- LaTeX: `docs/latex/algorithms.tex:266`
 - Code owners: Documentation-only or planned entry; no current owner expected.
 
 The generalized equilibrium activation registry records descriptive family
@@ -469,7 +465,7 @@ planned until HELD and derivative gates pass.
 - Capability key: planned:explicit_association_closure_diagnostics
 - Description: Records explicit association closures as approximate Helmholtz diagnostics, not production exact association.
 - Change note: Keeps explicit association closures out of production acceptance unless a route is deliberately exposed as approximate.
-- LaTeX: `docs/latex/algorithms.tex:289`
+- LaTeX: `docs/latex/algorithms.tex:287`
 - Code owners: Documentation-only or planned entry; no current owner expected.
 
 This planned diagnostic family may use explicit algebraic association closures
@@ -506,8 +502,8 @@ same tolerance as the exact solve.
 - Capability key: regression:pure_neutral
 - Description: Fits currently supported pure-neutral parameter targets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-neutral regression.
-- LaTeX: `docs/latex/algorithms.tex:312`
-- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2404` (def fit_pure_neutral(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2739` (def fit_pure_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:524` (class PureNeutralCeresCostFunction final : public ceres::CostFunction {)
+- LaTeX: `docs/latex/algorithms.tex:310`
+- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2402` (def fit_pure_neutral(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2737` (def fit_pure_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:524` (class PureNeutralCeresCostFunction final : public ceres::CostFunction {)
 
 This entry covers the implemented nonassociating pure-neutral native Ceres route
 for `m`, `\sigma`, and `\epsilon/k_B`. It is not a production Ceres
@@ -551,8 +547,8 @@ $$
 - Capability key: regression:pure_ion
 - Description: Fits currently supported pure-ion and Born-related target sets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits.
-- LaTeX: `docs/latex/algorithms.tex:331`
-- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2787` (def fit_pure_ion(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2990` (def fit_liquid_electrolyte_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:1464` (class PureIonCeresCostFunction final : public ceres::CostFunction {)
+- LaTeX: `docs/latex/algorithms.tex:329`
+- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2785` (def fit_pure_ion(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2988` (def fit_liquid_electrolyte_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:1464` (class PureIonCeresCostFunction final : public ceres::CostFunction {)
 
 This entry is limited to the currently implemented pure-ion target surface. It
 does not claim support for association-affecting target kinds merely because the
@@ -580,8 +576,8 @@ native target-kind registry knows their labels.
 - Capability key: regression:binary_pair
 - Description: Fits the currently implemented constant-k_ij binary parameter route through native Ceres.
 - Change note: Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists.
-- LaTeX: `docs/latex/algorithms.tex:349`
-- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2816` (def fit_binary_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:1601` (class BinaryKijCeresCostFunction final : public ceres::CostFunction {)
+- LaTeX: `docs/latex/algorithms.tex:347`
+- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2814` (def fit_binary_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:1601` (class BinaryKijCeresCostFunction final : public ceres::CostFunction {)
 
 This entry intentionally does not claim native optimizer support for every
 binary parameter family. It is not a production Ceres optimizer for `l_{ij}`

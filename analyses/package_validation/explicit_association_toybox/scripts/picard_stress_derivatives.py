@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys
 from collections.abc import Mapping
+from pathlib import Path
 
 if __package__ in {None, ""}:
     REPO_ROOT = Path(__file__).resolve().parents[4]
     if str(REPO_ROOT) not in sys.path:
         sys.path.insert(0, str(REPO_ROOT))
-    from analyses.package_validation.explicit_association_toybox.scripts.hessian_agreement import run_hessian_agreement_cases
+    from analyses.package_validation.explicit_association_toybox.scripts.hessian_agreement import (
+        run_hessian_agreement_cases,
+    )
     from analyses.package_validation.explicit_association_toybox.scripts.jax_picard_derivatives import (
         run_jax_picard_derivative_cases,
     )

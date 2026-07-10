@@ -10,7 +10,6 @@ from analyses.package_validation.explicit_association_toybox.scripts.public_prop
     write_public_saturation_csv,
 )
 
-
 NIST_SATURATION_HTML = """
 <html>
   <body>

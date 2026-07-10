@@ -126,7 +126,7 @@ std::vector<std::string> phase_keys_for_kinds(const std::vector<std::string>& ph
     return out;
 }
 
-const ProblemFamilyActivation& activation_row_for_key(const std::string& key) {
+const ProblemFamilyActivation& activation_row_for_key(std::string_view key) {
     const auto& matrix = problem_family_activation_matrix();
     const auto found = std::find_if(
         matrix.begin(),
@@ -134,7 +134,9 @@ const ProblemFamilyActivation& activation_row_for_key(const std::string& key) {
         [&](const ProblemFamilyActivation& row) { return row.key == key; }
     );
     if (found == matrix.end()) {
-        throw ValueError("activation-plan-ineligible: activation row is missing for " + key + ".");
+        throw ValueError(
+            "activation-plan-ineligible: activation row is missing for " + std::string(key) + "."
+        );
     }
     return *found;
 }

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import argparse
-from collections import defaultdict
 import difflib
 import json
 import re
 import shutil
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -142,9 +142,7 @@ def require_equations_tex(tex_path: Path = TEX_PATH) -> None:
     except ValueError:
         rel_path = tex_path.as_posix()
     print(
-        "{} is missing; docs/latex is tracked repo content. Restore the file from git or refresh the checkout and retry.".format(
-            rel_path,
-        ),
+        f"{rel_path} is missing; docs/latex is tracked repo content. Restore the file from git or refresh the checkout and retry.",
         file=sys.stderr,
     )
     raise SystemExit(1)

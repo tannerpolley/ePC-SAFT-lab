@@ -3,10 +3,8 @@ from __future__ import annotations
 import csv
 import math
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -16,10 +14,10 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT
 
 THIS_DIR = Path(__file__).resolve().parent
 FIGURE_DIR = THIS_DIR.parent
@@ -36,10 +34,11 @@ from scripts.plot_outputs import paper_validation_dir
 
 require_epcsaft_install()
 
+from _plot_common import configure_style, save_figure  # type: ignore
 from plot_figure_7 import (  # type: ignore
+    P_REF,
     PANELS,
     T_REF,
-    P_REF,
     _build_params,
     _molality_for_salt_mole_fraction,
     _molality_to_species_molefraction,
@@ -47,7 +46,7 @@ from plot_figure_7 import (  # type: ignore
     _resolve_pair_key,
     _species_for_combo,
 )
-from _plot_common import configure_style, save_figure  # type: ignore
+
 from scripts._epcsaft_oop import epcsaft_activity_coefficient, epcsaft_density
 
 matplotlib.use("Agg")

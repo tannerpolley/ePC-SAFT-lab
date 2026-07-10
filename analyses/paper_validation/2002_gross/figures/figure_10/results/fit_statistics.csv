@@ -1,7 +1,6 @@
-scope,series,component,branch,source_point_count,model_point_count,rmse_density_kg_m3,rmse_temperature_K,rmse_temperature_C,rmse_pressure_bar,rmse_composition,max_density_error_kg_m3,max_temperature_error_K,max_temperature_error_C,max_pressure_error_bar,max_composition_error,normalized_plot_score,branch_coverage_score,derivative_status,pass,score_basis,matched_literature_points,skipped_literature_points,mae,max_abs,signed_bias,normalized_mae,y_unit,notes
-figure,,,,24,24,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,10.0,1.0,verified_exact,True,temperature-coordinate RMSE against calibrated Gross 2002 Figure 10 PC-SAFT solid curve trace; exact association Hessian diagnostic retained for water/1-pentanol,,,,,,,,
-series,lle_1_pentanol_rich,,,8,8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,10.0,1.0,verified_exact,True,,,,,,,,,
-series,lle_water_rich,,,3,3,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,10.0,1.0,verified_exact,True,,,,,,,,,
-series,upper_vle_curve,,,9,9,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,10.0,1.0,verified_exact,True,,,,,,,,,
-series,vlle_tie_line,,,4,4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,10.0,1.0,verified_exact,True,,,,,,,,,
-literature_overlay,,,,,,,,,,,,,,,,,,,,,60,12,24.450587207040886,94.99954914129371,-18.160020001945192,0.14382698357082874,degC,
+scope,series,component,branch,source_point_count,model_point_count,rmse_density_kg_m3,rmse_temperature_K,rmse_temperature_C,rmse_pressure_bar,rmse_composition,max_density_error_kg_m3,max_temperature_error_K,max_temperature_error_C,max_pressure_error_bar,max_composition_error,normalized_plot_score,branch_coverage_score,derivative_status,pass,score_basis
+figure,,,,24,24,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,10.0,1.0,verified_exact,True,temperature-coordinate RMSE against calibrated Gross 2002 Figure 10 PC-SAFT solid curve trace; exact association Hessian diagnostic retained for water/1-pentanol
+series,lle_1_pentanol_rich,,,8,8,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,10.0,1.0,verified_exact,True,
+series,lle_water_rich,,,3,3,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,10.0,1.0,verified_exact,True,
+series,upper_vle_curve,,,9,9,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,10.0,1.0,verified_exact,True,
+series,vlle_tie_line,,,4,4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,10.0,1.0,verified_exact,True,

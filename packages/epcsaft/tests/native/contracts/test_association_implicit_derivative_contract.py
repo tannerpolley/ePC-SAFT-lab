@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import epcsaft._core as _core
 import numpy as np
 import pytest
-
-import epcsaft._core as _core
 from epcsaft.state.native_adapter import create_struct
 from support.native_cases import _ionic_state
 
@@ -59,8 +58,8 @@ def test_association_site_fraction_nonconvergence_raises_with_diagnostics() -> N
     with pytest.raises(
         _core.NativeSolutionError,
         match=(
-            "association site-fraction solve did not converge.*"
-            "iteration_count=.*max_iterations=.*update_norm=.*residual_norm=.*min_XA=.*max_XA=.*relaxation_policy="
+            r"association site-fraction solve did not converge.*"
+            r"iteration_count=.*max_iterations=.*update_norm=.*residual_norm=.*min_XA=.*max_XA=.*relaxation_policy="
         ),
     ):
         _core._native_association_site_fraction_solve(

@@ -18,9 +18,11 @@ for import_root in (REPO_ROOT, SRC_ROOT, EQUILIBRIUM_SRC_ROOT):
     if import_path not in sys.path:
         sys.path.insert(0, import_path)
 
-from scripts.validation import check_electrolyte_held2_readiness
-from scripts.validation import check_electrolyte_gfpe_gate
-from scripts.validation import check_electrolyte_tpd_gate
+from scripts.validation import (
+    check_electrolyte_gfpe_gate,
+    check_electrolyte_held2_readiness,
+    check_electrolyte_tpd_gate,
+)
 
 ALGORITHM_SCOPE = "held2_continuous_reduced_electroneutral_tpd_minimizer_only"
 COORDINATE_BASIS = "reduced_electroneutral_modified_mole_fractions"
@@ -145,6 +147,7 @@ def _native_continuous_tpd_payload(checker_command: list[str] | None) -> dict[st
 
     apply_native_runtime_env(os.environ)
     from epcsaft_equilibrium._native import extension_native_core
+
     from scripts.validation import native_freshness
 
     mixture, feed, temperature, pressure = check_electrolyte_tpd_gate._khudaida_mixture_and_feed(
@@ -215,7 +218,7 @@ def _native_continuous_tpd_payload(checker_command: list[str] | None) -> dict[st
     if discovery.get("held_stage_iii_status") == "complete":
         blockers.append("stage_iii_claimed_complete_by_continuous_tpd_gate")
 
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=core,
         checker_command=checker_command
         or [

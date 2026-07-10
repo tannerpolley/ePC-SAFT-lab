@@ -155,25 +155,24 @@ workflows:
    assert provider_caps["owner"] == "core_provider"
    exported_families = set(equilibrium_caps["production_families"])
    exported_routes = set(equilibrium_caps["public_routes"])
-   assert {
-       "neutral_tp_flash",
-       "neutral_lle",
+   assert exported_families == {
        "bubble_dew_derived_routes",
-   } <= exported_families
-   assert "bubble_pressure" in exported_routes
-   assert "flash" in exported_routes
-   assert "reactive_speciation" in exported_routes
+       "single_component_vle",
+   }
+   assert exported_routes == {
+       "bubble_pressure",
+       "dew_pressure",
+       "single_component_vle",
+   }
 
 Native EOS/property calls and native regression helpers are available. The
-``production_families`` and ``public_routes`` fields describe the exported
-activation surface for the current build; that metadata does not prove
-validated production behavior. The exported route surface includes neutral
-bubble/dew, flash, LLE, single-component VLE, neutral multiphase,
-fixture-limited electrolyte LLE, and reactive speciation routes. Apply the
-route-specific proof gate before making a production claim.
+``production_families`` and ``public_routes`` fields are evidence-derived from
+the current activation surface. The exported route surface is limited to
+pressure-boundary bubble/dew and scoped nonassociating hydrocarbon
+single-component VLE.
 
-Reactive speciation remains exported, but its production evidence is withheld
-while the complete standalone CE gate fails:
+Standalone CE remains an internal validation workflow. Its re-admission gate
+must pass before any public route or capability claim is restored:
 
 .. code-block:: bash
 
@@ -192,55 +191,30 @@ Capability status summary
      - Status
      - Notes
    * - Neutral TP flash
-     - Production selector-backed native Ipopt route when compiled
-     - Certified two-phase flash only; Python does not provide an alternate solve loop.
+     - Internal validation only
+     - The retained workbook is not a literature benchmark, so ``flash`` is not a public route.
    * - Neutral LLE
+     - Internal validation only
+     - Retained Matsuda/NIST and Gross/Sadowski artifacts do not replace a global HELD Stage II proof.
+   * - Neutral bubble/dew pressure
+     - Production selector-backed native Ipopt routes when compiled
+     - Temperature-boundary routes remain internal component diagnostics.
+   * - Single-component VLE
      - Production selector-backed native Ipopt route when compiled
-     - Neutral nonassociating LLE only.
-   * - Neutral bubble/dew pressure and temperature
-     - Native Ipopt route when compiled
-     - Requires an Ipopt-enabled build; Python does not provide an alternate solve loop.
-   * - Neutral stability
-     - Native Ipopt route when compiled
-     - Uses native TPD route builders; Python does not provide an alternate solve loop.
-   * - Electrolyte stability
-     - Native Ipopt route when compiled
-     - Uses native charge-constrained TPD route builders; Python does not provide an alternate solve loop.
-   * - Electrolyte LLE
-     - Native Ipopt route when compiled
-     - Public package route is limited to the retained source-backed
-       H2O/Ethanol/Butanol/Na+/Cl- NaCl mixed-solvent fixture through
-       ``route="electrolyte_lle"``; generic salt/solvent, reactive, CE/CPE,
-       and regression claims remain downstream or future-gate work.
-   * - Reactive speciation
-     - Exported Ipopt route; production proof withheld
-     - The activation surface exports homogeneous reactive speciation when
-       compiled, but production evidence is withheld while the complete
-       standalone CE gate fails.
-   * - Electrolyte bubble pressure
-     - Native Ipopt route when compiled
-     - Fixed liquid composition with neutral vapor species; ions remain liquid-only.
-   * - Reactive electrolyte bubble
-     - Staged native route when compiled
-     - Requires native speciation followed by the native Ipopt fixed-liquid electrolyte bubble route.
+     - Nonassociating methane, ethane, and propane within the retained NIST ranges.
+   * - Multiphase, electrolyte LLE, and reactive speciation
+     - Internal validation only
+     - These activation families publish no public or proof routes.
    * - IPOPT
      - Optional native NLP backend
      - Owns production equilibrium solves as route builders land; Python does not provide an alternate optimizer path.
 
-Package-side generic contract smoke coverage
---------------------------------------------
+Closed-family validation evidence
+---------------------------------
 
-The upstream package tests cover three downstream-shaped generic API contracts
-without adding downstream-specific public APIs:
-
-* Reactive speciation with generic target rows for speciation, volatile partial
-  pressure, and activity observations.
-* Electrolyte LLE with generic solvent-feed, salt-molality, phase-composition,
-  mean-ionic-activity, and regularization row shapes. This smoke coverage does
-  not broaden the admitted ``electrolyte_lle`` route beyond the retained
-  source-backed package fixture.
-* Reactive electrolyte bubble pressure with generic speciation, fugacity, and
-  partial-pressure rows.
+Source-backed electrolyte and reactive calculations are retained only as
+internal repair diagnostics. They are not package API smoke tests and do not
+admit an equilibrium route.
 
 Downstream projects should build their own project-specific metrics outside
 ``epcsaft``. The package boundary is the generic problem, result, capability,

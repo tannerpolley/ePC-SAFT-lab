@@ -28,6 +28,8 @@ import numpy as np
 
 from .sources import (
     deep_update_parameter_mapping as _deep_update,
+)
+from .sources import (
     load_canonical_user_options as _load_canonical_user_options,
 )
 

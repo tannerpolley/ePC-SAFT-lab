@@ -69,5 +69,5 @@ def test_native_continuation_driver_rejects_incompatible_initial_state() -> None
         "constraint_multipliers": [0.0],
     }
 
-    with pytest.raises(Exception, match="continuation_state.variables"):
+    with pytest.raises(Exception, match=r"continuation_state.variables"):
         _core._native_continuation_driver_smoke(continuation_state=bad_state)

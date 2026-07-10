@@ -6,9 +6,7 @@ from typing import Any
 
 import pytest
 
-from analyses.package_validation.issue_0188_neutral_tp_flash.scripts import generate_data
-from analyses.package_validation.issue_0188_neutral_tp_flash.scripts import render_figures
-
+from analyses.package_validation.issue_0188_neutral_tp_flash.scripts import generate_data, render_figures
 
 VERIFIED_STATUS = {
     "deterministic_screening": "verified_not_full_held",

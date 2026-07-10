@@ -10,7 +10,6 @@ import pytest
 
 from scripts.validation import check_boundary_workflows as checker
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CASE_DIR = (
     REPO_ROOT

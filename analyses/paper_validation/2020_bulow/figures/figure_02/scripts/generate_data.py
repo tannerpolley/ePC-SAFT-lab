@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys
-
-
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -14,9 +12,9 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import figure_root_dir
 import shutil
 
+from scripts.plot_outputs import figure_root_dir
 
 REFERENCE_INPUTS = (("water_comparisons.csv", Path("data/reference/G_solv/water_comparisons.csv")),)
 

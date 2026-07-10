@@ -6,10 +6,8 @@ import argparse
 import csv
 import math
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -57,7 +55,7 @@ def _load_bookkeeping(path: Path) -> tuple[list[float], dict[str, list[float]]]:
     rows = _read_csv_rows(path)
     header = rows[0]
     idx = {name: i for i, name in enumerate(header)}
-    needed = ["x_salt", "z_correction"] + CONTRIBUTIONS
+    needed = ["x_salt", "z_correction", *CONTRIBUTIONS]
     for key in needed:
         if key not in idx:
             raise ValueError(f"Missing column '{key}' in bookkeeping CSV {path}")

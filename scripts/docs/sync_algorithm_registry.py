@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import argparse
-from collections import defaultdict
 import difflib
 import json
 import re
 import shutil
 import sys
+from collections import defaultdict
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:

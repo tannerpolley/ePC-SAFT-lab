@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import sys
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-import sys
 
 import numpy as np
 
@@ -86,7 +86,7 @@ def _case_rows(
     rows: list[dict[str, object]] = []
     targets = ("density_density", "density_strength", "strength_strength")
     if system.component_count == 2:
-        targets = targets + ("composition_composition",)
+        targets = (*targets, "composition_composition")
     for target in targets:
         exact_value = exact_hessian_target(
             target,

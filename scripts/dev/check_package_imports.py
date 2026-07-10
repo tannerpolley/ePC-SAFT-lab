@@ -5,7 +5,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ROOTS = (
     REPO_ROOT / "packages" / "epcsaft" / "src",
@@ -38,7 +37,7 @@ def _assert_module_location(module_name: str, expected_root: Path) -> None:
 
 def _assert_capabilities(module_name: str) -> dict[str, Any]:
     module = importlib.import_module(module_name)
-    capabilities = getattr(module, "capabilities")
+    capabilities = module.capabilities
     result = capabilities()
     if not isinstance(result, dict):
         raise RuntimeError(f"{module_name}.capabilities() returned {type(result).__name__}, expected dict")

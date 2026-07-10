@@ -48,7 +48,9 @@ class Regression:
 
 
 def _reject_backend_options(options: Mapping[str, Any], *, context: str) -> dict[str, Any]:
-    blocked = sorted(set(options) & {"backend", "derivative_backend", "jacobian_backend", "solver_backend", "hessian_mode"})
+    blocked = sorted(
+        set(options) & {"backend", "derivative_backend", "jacobian_backend", "solver_backend", "hessian_mode"}
+    )
     if blocked:
         raise InputError(f"{context} does not expose backend-selection option(s): {', '.join(blocked)}.")
     return dict(options)

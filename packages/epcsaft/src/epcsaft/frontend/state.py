@@ -8,8 +8,8 @@ from typing import Any
 import numpy as np
 
 from .._types import InputError
-from ..state.eos_views import CONTRIBUTION_PUBLIC_NAMES
 from ..model.options import as_float_array, require_cppad_backend
+from ..state.eos_views import CONTRIBUTION_PUBLIC_NAMES
 from .mixture import Mixture
 
 R_GAS = 8.31446261815324

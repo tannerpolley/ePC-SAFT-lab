@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import pytest
 
+from analyses.package_validation.explicit_association_toybox.figures.pure_saturation_validation.scripts.generate_data import (
+    REQUIRED_RETAINED_COLUMNS,
+    build_pure_saturation_validation_rows,
+)
+from analyses.package_validation.explicit_association_toybox.figures.pure_saturation_validation.scripts.render_figure import (
+    build_plotted_rows,
+)
 from analyses.package_validation.explicit_association_toybox.scripts.closure_models import (
     EXACT_MASS_ACTION_BASELINE,
     PICARD7_CLOSURE,
-)
-from analyses.package_validation.explicit_association_toybox.scripts.pure_saturation import (
-    solve_pure_saturation,
 )
 from analyses.package_validation.explicit_association_toybox.scripts.jax_pure_saturation import (
     JAX_AUTODIFF_BACKEND,
@@ -16,12 +20,8 @@ from analyses.package_validation.explicit_association_toybox.scripts.jax_pure_sa
     pure_jax_parameters_from_case,
     solve_jax_picard_pure_saturation,
 )
-from analyses.package_validation.explicit_association_toybox.figures.pure_saturation_validation.scripts.generate_data import (
-    REQUIRED_RETAINED_COLUMNS,
-    build_pure_saturation_validation_rows,
-)
-from analyses.package_validation.explicit_association_toybox.figures.pure_saturation_validation.scripts.render_figure import (
-    build_plotted_rows,
+from analyses.package_validation.explicit_association_toybox.scripts.pure_saturation import (
+    solve_pure_saturation,
 )
 
 

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 
+from epcsaft_equilibrium import workflows as equilibrium_workflows
 from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
@@ -61,17 +63,23 @@ def test_package_runtime_has_no_external_optimizer_dependency_or_imports() -> No
 
 def test_public_equilibrium_does_not_expose_python_backend_tokens() -> None:
     source = (PROVIDER_MODULE_ROOT / "__init__.py").read_text(encoding="utf-8")
-    equilibrium_source = "\n".join(
+    public_equilibrium_source = "\n".join(
         path.read_text(encoding="utf-8")
         for path in (
             EQUILIBRIUM_MODULE_ROOT / "equilibrium.py",
-            EQUILIBRIUM_MODULE_ROOT / "workflows.py",
         )
     )
+    public_equilibrium_source += inspect.getsource(equilibrium_workflows.configure_equilibrium_problem)
+    public_equilibrium_source += inspect.getsource(equilibrium_workflows._solve_selector_route)
 
     assert '"python"' not in source
-    assert "Python-first" not in equilibrium_source
-    assert "np.linalg." + "lstsq" not in equilibrium_source
+    assert "Python-first" not in public_equilibrium_source
+    assert "np.linalg." + "lstsq" not in public_equilibrium_source
+    assert set(equilibrium_workflows._EQUILIBRIUM_ROUTE_SPECS) == {
+        "bubble_pressure",
+        "dew_pressure",
+        "single_component_vle",
+    }
 
 
 def test_native_route_result_serialization_uses_bridge_module() -> None:
@@ -98,11 +106,9 @@ def test_selector_core_and_two_phase_support_have_dedicated_owners() -> None:
     assert "solve_seeded_neutral_two_phase_route" not in source
 
 
-def test_figure10_water_rich_seed_gate_does_not_depend_on_generic_problem_name() -> None:
+def test_two_phase_seed_logic_has_no_figure_specific_branch() -> None:
     source = (EQUILIBRIUM_NATIVE_ROOT / "core" / "two_phase_eos_route.cpp").read_text(encoding="utf-8")
 
-    assert 'route_label == "neutral_lle" && feed_amounts.size() == 2 && is_gross_2002_figure10_water_pentanol_case(args)' not in source
+    assert "figure10" not in source.lower()
+    assert "water_pentanol" not in source.lower()
     assert 'phase_kinds.size() == 2' in source
-    assert 'phase_kinds[0] == 0' in source
-    assert 'phase_kinds[1] == 0' in source
-    assert 'is_gross_2002_figure10_water_pentanol_case(args)' in source

@@ -36,14 +36,14 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Single-component VLE route plan](../../plans/2026-06-04-m4-equilibrium-single-component-vle-route-plan.md) | `vle` | Implement production pure-component saturation solving in `epcsaft-equilibrium` as an independent M4 route plan. |
 | [Fresh-native HELD/GFPE validation receipts plan](../../plans/2026-06-12-m4-equilibrium-fresh-native-held-gfpe-validation-receipts-plan.md) | `lle` | Add receipt-backed validation evidence so stale native artifacts cannot misreport HELD Stage II/III status. |
 | [Pereira-style HELD neutral LLE reliability plan](../../plans/2026-06-12-m4-equilibrium-pereira-held-neutral-lle-reliability-plan.md) | `lle` | Retains the full-campaign neutral LLE reliability gate before associating GFPE borrows the neutral HELD path. |
-| [Neutral nonassociating LLE source-backed showcase plan](../../plans/2026-06-13-m4-equilibrium-neutral-nonassociating-lle-source-backed-showcase-plan.md) | `lle` | Adds the first source-backed neutral nonassociating LLE fixture, checker, retained figures, and registry evidence for the current `lle` utility route. |
+| [Neutral nonassociating LLE source-backed showcase plan](../../plans/2026-06-13-m4-equilibrium-neutral-nonassociating-lle-source-backed-showcase-plan.md) | `lle` | Historical plan for the first source-backed neutral nonassociating LLE fixture, checker, and retained figures. The evidence is now internal because the public `lle` route is closed. |
 | [Issue #189 generalized phase-set diagnostics plan](../../plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md) | `lle` | Splits #189 into an umbrella plus the first AFK child issue for internal neutral generalized phase-set diagnostics. |
 | [Issue #189 boundary workflow trace plan](../../plans/2026-06-13-m4-equilibrium-issue-0189-boundary-workflow-trace-contracts-plan.md) | `lle` | Defines the next #189 child for retained bubble/dew boundary traces and stricter generalized phase-set rejection diagnostics after #252. |
 | [Issue #189 cloud/shadow boundary gate plan](../../plans/2026-06-15-m4-equilibrium-issue-0189-cloud-shadow-boundary-gate-plan.md) | `lle` | Defines the next #189 child for a retained Matsuda/NIST cloud/shadow source-data gate without native route admission. |
 | [Issue #189 native cloud/shadow isobaric route evidence plan](../../plans/2026-06-15-m4-equilibrium-issue-0189-native-cloud-shadow-isobaric-route-admission-plan.md) | `lle` | Defines the next #189 child for checker-gated native Matsuda/NIST isobaric cloud/shadow route evidence without public route-key exposure. |
-| [Issue #189 generalized phase-set certification gate plan](../../plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md) | `lle` | Defines the next #189 child after #260 for Stage II candidate-set replay and strict Stage III Ipopt refinement of the generalized neutral multiphase phase set. |
-| [Issue #189 strict multiphase fugacity-residual refinement plan](../../plans/2026-06-16-m4-equilibrium-issue-0189-strict-multiphase-fugacity-residual-refinement-plan.md) | `lle` | Defines #263: exact reduced fugacity-residual Stage III refinement for the generalized neutral multiphase candidate-set replay before #261 resumes. |
-| [Issue #189 generalized neutral multiphase admission plan](../../plans/2026-06-16-m4-equilibrium-issue-0189-generalized-neutral-multiphase-admission-plan.md) | `lle` | Defines #264: public `Equilibrium(..., route="multiphase", phase_kinds=[...]).solve()` admission for the certified neutral generalized multiphase phase set after #261 closed. |
+| [Issue #189 generalized phase-set certification gate plan](../../plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md) | `lle` | Historical #189 child plan retained for the finite sampled-candidate replay and strict local Ipopt refinement. Its former global-certification interpretation is superseded. |
+| [Issue #189 strict multiphase fugacity-residual refinement plan](../../plans/2026-06-16-m4-equilibrium-issue-0189-strict-multiphase-fugacity-residual-refinement-plan.md) | `lle` | Defines #263: exact reduced fugacity-residual local refinement for the generalized neutral multiphase sampled-candidate replay. |
+| [Issue #189 generalized neutral multiphase admission plan](../../plans/2026-06-16-m4-equilibrium-issue-0189-generalized-neutral-multiphase-admission-plan.md) | `lle` | Historical #264 admission plan retained as internal implementation context. Its public claim is superseded until native-selector ownership and fresh evidence pass. |
 | [Issue #279 Gross 2002 full-replication foundation plan](../../plans/2026-06-19-m4-equilibrium-issue-0279-gross-2002-full-replication-checker-scoring-schema-plan.md) | `association` | Defines the strict full-replication checker, source metadata schema, score schema, manifest contract, and foundation/complete gate split before figure-family replication issues execute. |
 | [Pure 2B associating single-component VLE prerequisite plan](../../plans/2026-06-19-m4-equilibrium-pure-2b-associating-single-component-vle-prerequisite-plan.md) | `association` | Splits the native pure associating `single_component_vle` route admission out of Figure 1 replication so #280 can stay focused on paper-figure artifacts. |
 | [Issue #281 Gross 2002 Figures 2-5 VLE replication plan](../../plans/2026-06-20-m4-equilibrium-issue-0281-gross-2002-figures-2-5-vle-curves-plan.md) | `association` | Defines the Figure 2 identity gate plus source/model/plot/score tasks for Gross 2002 Figures 2-5 while keeping native route gaps as separate prerequisites. |
@@ -55,18 +55,17 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Issue #306 electrolyte HELD2 counterion-pair phase-discovery gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0306-electrolyte-held2-counterion-pair-phase-discovery-gate-plan.md) | `electrolyte` | Closed #191 child gate for independent counterion-pair matrix construction, reduced electroneutral HELD2 phase-discovery diagnostics, and mean-ionic residual bookkeeping. |
 | [Issue #312 electrolyte HELD2 Stage III refinement gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md) | `electrolyte` | Closed #191 child gate for consuming the #306 candidate set in local reduced-variable Stage III electrolyte refinement while keeping postsolve certification and public admission separate. |
 | [Issue #313 electrolyte postsolve phase-set certification gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0313-electrolyte-postsolve-phase-set-certification-gate-plan.md) | `electrolyte` | Closed #191 child gate for explicit-ion reconstruction, charge, transfer, pressure, amount, and domain-margin certification after #312. |
-| [Issue #314 electrolyte public route admission gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0314-electrolyte-public-route-admission-gate-plan.md) | `electrolyte` | Adds the final #191 child gate for source-backed public electrolyte GFPE route admission after Stage III and postsolve certification close. |
-| [Full HELD2 public-route phase discovery adoption plan](../../plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md) | `electrolyte` | Adds #343 through #350 for full HELD2-style public-route phase discovery: doctrine, continuous TPD, Stage I, Stage II, public route orchestration, scenario validation, and capability admission. |
+| [Issue #314 electrolyte public route admission gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0314-electrolyte-public-route-admission-gate-plan.md) | `electrolyte` | Historical admission work retained as an internal repair gate. The public route is closed until native-selector integration and renewed evidence pass together. |
+| [Full HELD2 public-route phase discovery adoption plan](../../plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md) | `electrolyte` | Historical #343 through #350 discovery work retained as internal component evidence; it no longer authorizes public route or capability claims. |
 
 ## Retained Evidence
 
 | Evidence | Capability | Scope |
 | --- | --- | --- |
 | [HELD LLE reliability campaign](../../../../analyses/package_validation/held_lle_reliability/README.md) | `lle` | Synthetic neutral LLE algorithm reliability evidence: 100 accepted two-phase conditions, 10,000 independent route-refinement repeats, zero failed repeats. This is not source-backed public LLE showcase evidence, generalized phase-set completion, or associating GFPE admission. |
-| [Neutral nonassociating LLE showcase](../../../../analyses/package_validation/neutral_nonassociating_lle_showcase/README.md) | `lle` | Source-backed Matsuda/NIST perfluorohexane + hexane LLE evidence for the current neutral `route="lle"` utility. This is one binary source-backed showcase, not generalized phase-set completion or associating GFPE admission. |
-| `scripts/validation/check_generalized_phase_set.py --json --require-complete` | `lle` | Retained neutral generalized phase-set diagnostic record evidence for #252: three selected candidate rows, rejected candidate rows, mass-balance feasibility, and noncollapsed selected compositions. This is historical internal certification evidence, not the public-admission gate. |
-| `scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete` | `lle` | Generalized phase-set certification evidence for #261 using the #263 `strict_fugacity_residual` Stage III refinement: consumes the Stage II candidate-set replay, selects 3 of 6 candidates for requested `liquid,liquid,liquid`, reports exact reduced fugacity-residual derivative metadata, and accepts the postsolve with ln-fugacity consistency <= `1.0e-6`. |
-| `scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-public-admission --require-complete` | `lle` | Public generalized neutral multiphase admission evidence for #264: proves `Equilibrium(..., route="multiphase", phase_kinds=[...]).solve()` maps to `neutral_multiphase_nonassoc`, returns three named phases, reports exact Hessian evidence, accepts the postsolve, and completes with no checker blockers. |
+| [Neutral nonassociating LLE showcase](../../../../analyses/package_validation/neutral_nonassociating_lle_showcase/README.md) | `lle` | Source-backed Matsuda/NIST perfluorohexane + hexane internal LLE sampled-candidate evidence. The public `lle` route is closed, and one binary showcase does not establish globally complete phase discovery. |
+| `scripts/validation/check_generalized_phase_set.py --json --require-complete` | `lle` | Retained neutral generalized sampled-candidate audit for #252: three selected rows, rejected rows, mass-balance feasibility, and noncollapsed selected compositions. It explicitly leaves global phase-set completeness unproven and the public route closed. |
+| `scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete` | `lle` | Internal strict local refinement evidence for #261/#263: consumes the finite sampled-candidate replay, selects 3 of 6 candidates for requested `liquid,liquid,liquid`, reports exact reduced fugacity-residual derivative metadata, and accepts the local postsolve with ln-fugacity consistency <= `1.0e-6`. It does not certify global candidate completeness. |
 | `scripts/validation/check_boundary_workflows.py --json --run-current-boundary-route --allow-route-sweep --route-point-count 1 --require-complete` | `lle` | Retained derived-boundary evidence for #256: current bubble/dew `P-x` and `T-x` route points emit complete `boundary_trace` records with route, DOF swap, source fixture, selector family, shared NLP families, strict Ipopt convergence, finite residuals, and no iteration-limit seed path. Cloud and shadow remain planned-only. |
 | `scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` | `lle` | Retained cloud/shadow source-data gate for #258: 14 Matsuda/NIST cloud-point binodal rows, one paired cloud/shadow source branch, and empty source-data blockers. |
 | `scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route` | `lle` | Checker-gated native cloud/shadow route evidence for #260: derives the model-refined Matsuda branch pair from certified `neutral_lle`, fixes the parent branch in the private `neutral_cloud_t_eos` cloud-temperature route, solves with strict Ipopt, reports source/model parent and shadow errors, and keeps public cloud/shadow route admission closed. |
@@ -76,11 +75,9 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | `scripts/validation/check_electrolyte_held2_phase_discovery.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-native-held2-discovery --require-complete` | `electrolyte` | HELD2 counterion-pair phase-discovery gate for #306: consumes #269/#300/#302, calls native `_native_electrolyte_held2_phase_discovery`, proves full-rank `N_ch - 1` counterion-pair matrices for NaCl, Na/K/Cl, and K/Cl/Na/SO4 cases, reports charge-neutral lifted candidate diagnostics, finite reduced-TPD metrics, pair-based mean-ionic bookkeeping, and a Stage III handoff record. |
 | `scripts/validation/check_electrolyte_stage_iii_refinement.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-held2-discovery --require-native-stage-iii --require-complete` | `electrolyte` | Stage III refinement gate for #312: consumes #269/#300/#302/#306, calls native `_native_electrolyte_stage_iii_refinement`, records #306 candidate-set seed provenance, reduced counterion-pair residual variables/equations/scaling/bounds, exact reduced Jacobian/Hessian receipts, strict Ipopt success, and finite local phase compositions. |
 | `scripts/validation/check_electrolyte_postsolve_certification.py --json --require-stage-iii --require-postsolve-certification --require-complete` | `electrolyte` | Postsolve phase-set certification gate for #313: consumes #312, calls native `_native_electrolyte_postsolve_certification`, and retains explicit-ion feed reconstruction, per-phase and total charge residuals, neutral and mean-ionic transfer residuals, pressure consistency, phase amounts, composition normalization, and domain margins. |
-| `scripts/validation/check_electrolyte_public_admission.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-held2-discovery --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete` | `electrolyte` | Public electrolyte admission gate for #314: consumes #269/#300/#302/#306/#312/#313, proves `Equilibrium(..., route="electrolyte_lle")` maps to the source-backed Khudaida explicit-ion NaCl mixed-solvent LLE route, returns `liquid1` and `liquid2`, retains charge, pressure, transfer, phase-distance, exact reduced-derivative, and unsupported-surface evidence, and completes with no checker blockers. |
-| `scripts/validation/check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete` | `electrolyte` | Public-route orchestration proof for #348: proves `Equilibrium(..., route="electrolyte_lle")` retains Stage I/II discovery provenance, Stage II `dual_loop_verified` replay, Stage III replay consumption, exact-Hessian receipts, and postsolve certification through the public route while unsupported surfaces remain closed. |
-| `scripts/validation/check_electrolyte_held2_public_route_scenarios.py --json --require-complete` | `electrolyte` | Scenario validation ladder for #349: accepts stable, unstable, boundary, phase-label permutation, neutral-limit parity, common-ion, and mixed-salt/asymmetric cases with retained Stage I/II, Stage III, postsolve, reduced-basis, charge, transfer, phase-distance, and no-charged-residual neutral-limit diagnostics. |
+| `scripts/validation/check_electrolyte_public_admission.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-held2-discovery --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete` | `electrolyte` | Explicit re-admission repair gate for #314. It is expected to return nonzero while `electrolyte_lle` remains outside the public route map; prerequisite source, discovery, refinement, charge and postsolve evidence stays available for repair. |
 | `scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete` | `lle` | Internal exact-Hessian prerequisite proof for #145: retains Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE branch rows, Table 1 methanol 2B association parameters, the retained cyclohexane PC-SAFT row, Table 2 `k_ij = 0.051`, verifies bounded site fractions, low mass-action residuals, exact association first/second sensitivities, objective/pressure/mass-action/Lagrangian Hessian symmetry, and certifies the source-backed internal two-liquid pair consumed by #190. |
-| `scripts/validation/check_associating_gfpe_gate.py --json --require-source-data --require-public-admission --require-exact-association-hessian --require-complete` | `lle` | Public associating GFPE admission evidence for #190: consumes the #145 Gross/Sadowski 2002 proof, admits only `Equilibrium(..., route="lle")` for the source-backed methanol/cyclohexane two-phase neutral associating fixture, names `Gross2002 Figure8 methanol-cyclohexane`, `assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`, and keeps missing-proof, reactive, TP-flash, and generalized associating phase-set surfaces outside the admitted scope. |
+| `scripts/validation/check_associating_gfpe_gate.py --json --require-source-data --require-internal-evidence --require-route-closed --require-exact-association-hessian --require-complete` | `lle` | Internal associating GFPE component evidence for #190: consumes the #145 Gross/Sadowski 2002 proof for methanol/cyclohexane, records `assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`, and requires the public `lle` route to remain closed because global phase discovery is unproven. |
 | `scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native` | `association` | Gross/Sadowski 2002 paper-validation acceptance campaign for #275: retains Figure 1 pure-association AAD sanity evidence, connects Figure 8 methanol/cyclohexane source rows and exact-Hessian proof to campaign summaries, adds Figure 10 water/1-pentanol cross-association stress evidence with `k_ij = 0.016` and `cppad_implicit_association`, records Figures 2-7 and 9 as source-requirement records with no completion credit, and keeps electrolyte/reactive/generalized associating claims outside this evidence. |
 | `scripts/validation/check_gross_2002_full_replication.py --json --require-foundation` | `association` | Gross/Sadowski 2002 full-replication foundation for #279: validates the Figure 1-10 manifest, required source/digitization artifact contract, score schema, source metadata schema, and planned blocker readout. This is not full figure replication until #280-#286 close. |
 | `scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native --write-summary` | `association` | Gross/Sadowski 2002 complete full-replication proof with #298 Figure 2 branch tracing: all ten figures are accepted, Figure 2 records `requires_branch_trace`, the retained trace summary proves complete `bubble_line` and `dew_line` traces, exact Hessian and postsolve receipts, max coordinate gaps of `0.06851` and `0.07000`, and no checker blockers. |
@@ -106,7 +103,7 @@ failures and shared contract gates are resolved.
 | [#368](../../issues/2026-06-29-m4-equilibrium-issue-0368-separate-associating-proof-applicability-from-global-route-metadata.md) | `lle`/`association` | `closed` | `complete` | Split request-specific proof applicability from global route-family proof metadata by PR #379. |
 | [#369](../../issues/2026-06-30-m4-equilibrium-issue-0369-integrate-gross-2002-associating-lle-tolerance-evidence.md) | `lle`/`association` | `closed` | `complete` | Connected Gross 2002 associating LLE evidence to the shared contract by PR #383. |
 | [#370](../../issues/2026-06-29-m4-equilibrium-issue-0370-govern-electrolyte-lle-certification.md) | `closed` | `Ipopt` | `complete` | Parent electrolyte LLE certification closes after closed sub-issues #191 and #371 by this proof/sync PR. |
-| [#371](../../issues/2026-06-30-m4-equilibrium-issue-0371-integrate-reduced-electroneutral-electrolyte-residual-blocks.md) | `closed` | `Ipopt` | `complete` | Attached reduced-electroneutral electrolyte residual blocks to the shared contract for the retained public `electrolyte_lle` route. |
+| [#371](../../issues/2026-06-30-m4-equilibrium-issue-0371-integrate-reduced-electroneutral-electrolyte-residual-blocks.md) | `closed` | `Ipopt` | `complete` | Attached reduced-electroneutral electrolyte residual blocks to the internal validation contract; public selector admission remains separate. |
 | [#372](../../issues/2026-06-29-m4-equilibrium-issue-0372-govern-reactive-electrolyte-lle-certification-boundary.md) | `electrolyte`/`reactive` | `Ipopt` | `blocked` | Boundary parent for future reactive electrolyte LLE after CE/CPE prerequisites. |
 | [#373](../../issues/2026-06-29-m4-equilibrium-issue-0373-govern-vle-family-certification.md) | `closed` | `Ipopt` | `complete` | Parent VLE family certification closes after assigning VLE residual ownership under #361 by this proof/sync PR. |
 | [#374](../../issues/2026-06-29-m4-equilibrium-issue-0374-govern-flash-and-multiphase-certification.md) | `closed` | `Ipopt` | `complete` | Parent flash/multiphase certification closes after assigning phase-set and postsolve ownership under #361 by this proof/sync PR. |
@@ -115,10 +112,11 @@ failures and shared contract gates are resolved.
 
 ### Electrolyte HELD2 Closeout State
 
-#314 remains retained representative public-admission evidence only; #320
-retains Perdomo/Figiel validation, #343 retains full HELD2-style public-route
-discovery, #191 is closed under #370, and #371 retains the shared-contract
-electrolyte residual block required by the electrolyte LLE parent closeout.
+#314 and #343 are historical admission records now used as repair inputs only;
+#320 retains Perdomo/Figiel validation, #191 is closed under #370, and #371
+retains the internal shared-contract electrolyte residual block. The
+`electrolyte_lle` public route and proof routes are closed until a new
+native-selector admission change passes the complete gate.
 
 ### CE / CPE Open Issues
 
@@ -139,12 +137,12 @@ algorithm reliability only; it still does not replace source-backed public LLE
 showcase evidence, generalized phase-set completion, or associating GFPE
 admission.
 
-#250 adds the first source-backed neutral nonassociating LLE showcase fixture:
+#250 added the first source-backed neutral nonassociating LLE showcase fixture:
 Matsuda/NIST perfluorohexane + hexane paired binodal branch rows, Tihic-derived
-pure parameters, a source-fitted binary interaction for the current route, a
-checker requiring HELD Stage II replay plus Stage III accepted-seed provenance, and
-retained PNG/SVG figures. This closes the public source-backed neutral LLE
-showcase gap only.
+pure parameters, a source-fitted binary interaction, finite sampled-candidate
+diagnostics, and retained PNG/SVG figures. The repository truth audit
+supersedes the former public-admission interpretation: this fixture remains
+internal and does not prove global phase-set completeness.
 
 #252 closed through #255 with internal neutral generalized phase-set diagnostic
 records and the retained `check_generalized_phase_set.py` checker. This remains
@@ -164,27 +162,26 @@ certified neutral LLE source showcase, solves the private cloud-temperature
 route from that parent branch, compares back to the raw source-pair tolerances,
 and keeps public cloud/shadow route keys closed.
 
-#263 closed through #265 with the strict reduced fugacity-residual Stage III
-route for the generalized neutral multiphase candidate-set replay. Its checker
-proof requires exact residual derivative metadata, accepted postsolve, Stage II
-replay consumption, and no Gibbs-objective-only certification shortcut.
+#263 closed through #265 with the strict reduced fugacity-residual local route
+for the generalized neutral multiphase sampled-candidate replay. Its checker
+requires exact residual derivative metadata, accepted local postsolve, replay
+consumption, and no Gibbs-objective-only shortcut.
 
-#261 closed through #266 with generalized phase-set certification proof. The
+#261 closed through #266 with a generalized sampled-candidate audit. The
 retained checker reports `complete: true`, `blockers: []`,
 `selected_candidate_count: 3`, `rejected_candidate_count: 3`, strict Stage III
-replay consumption of `held_stage_ii_dual_loop_candidate_set`, exact residual
-Jacobian/Hessian evidence, and accepted postsolve. This closes the internal
-certification child only; final public generalized multiphase admission remains
-separate under #189.
+replay consumption of `sampled_candidate_set_replay`, exact residual
+Jacobian/Hessian evidence, and accepted local postsolve. It also records
+`global_phase_set_certified: false`; the finite replay is not global phase-set
+proof. The former public generalized multiphase admission claim under #189 is
+closed; any future admission requires globally complete discovery plus the
+current native-selector and canonical-result contracts.
 
-#264 closed through #268 with public neutral generalized multiphase admission.
-The retained public-admission checker reports `complete: true`, `blockers: []`,
-public route `multiphase`, selector family `neutral_multiphase_nonassoc`, exact
-Jacobian/Hessian evidence, accepted postsolve, and positive three-phase
-fractions for the requested `liquid,liquid,liquid` phase-kind list.
-
-#189 closed through #268 after the final public neutral generalized multiphase
-admission child merged.
+#264 and #189 retain historical multiphase implementation context, but their
+former public-admission claim is superseded by the repository truth audit. The
+native work remains internal diagnostic evidence; `multiphase` is absent from
+the public route map until the solve and canonical result acceptance are owned
+by the native selector and a fresh source-backed admission gate passes.
 
 #275 closed through #278 with the strengthened Gross/Sadowski 2002
 paper-validation association acceptance campaign under
@@ -224,7 +221,7 @@ correction before normalized explicit-ion expansion, verifies path-based
 paper-validation parameter-bundle execution, and runs native
 electrolyte/charge diagnostics. It is prerequisite evidence for electrolyte
 TPD, HELD2 phase discovery, postsolve electrolyte phase-set certification, and
-public electrolyte route admission.
+future re-admission work.
 
 #300 closed through #301 with the readiness gate needed before electrolyte
 HELD2 implementation: exact reduced electroneutral amount lifting for the
@@ -239,8 +236,8 @@ then reports three finite source-backed TPD candidates, selected candidate count
 `2`, minimum TPD `-0.010922388988229025`, maximum charge residual `0.0`,
 and readiness-only HELD2 status. The
 negative TPD candidate is instability-screening evidence only; HELD2 dual
-discovery, Stage III electrolyte refinement, postsolve electrolyte phase-set
-certification, and public route admission remain pending.
+discovery, Stage III electrolyte refinement and postsolve electrolyte phase-set
+certification remain internal; public route admission remains closed.
 
 #306 closed on 2026-06-25 with native independent counterion-pair matrix
 construction, reduced electroneutral phase-discovery diagnostics,
@@ -271,19 +268,18 @@ consistency norm `6.984919309616089e-10`, phase distance
 with minimum amount `0.43529509750292383`, separate neutral and mean-ionic
 transfer residual families, and domain-margin evidence.
 
-#314 is retained representative public electrolyte GFPE admission evidence. It
-consumes #269/#300/#302/#306/#312/#313 and exposes only the source-backed
-Khudaida explicit-ion NaCl mixed-solvent `electrolyte_lle` route, but it is not
-full electrolyte LLE model reproduction.
+#314 retains historical electrolyte GFPE implementation evidence. It consumes
+#269/#300/#302/#306/#312/#313, but the former public claim is superseded and
+the `electrolyte_lle` route is closed pending native-selector integration and a
+fresh admission proof.
 
-#320 closed by PR #341 with Perdomo/Figiel HELD2 electrolyte flash evidence
-through the public package route.
+#320 closed by PR #341 with Perdomo/Figiel HELD2 electrolyte flash evidence that
+is now retained as internal validation evidence.
 
-#343 closed by PR #359 with the full HELD2 public-route discovery parent proof
-for #191. #344 through #350 retain doctrine, continuous reduced-electroneutral
-TPD, Stage I stability, Stage II dual discovery, public-route orchestration,
-scenario validation, registry evidence, and capability admission. #191 final
-closeout now depends only on the retained proof oracle passing.
+#343 closed by PR #359 with historical HELD2 discovery work for #191. #344
+through #350 retain doctrine, continuous reduced-electroneutral TPD, Stage I
+stability, Stage II dual discovery, orchestration and scenario diagnostics as
+internal evidence; they no longer authorize capability admission.
 
 #145 closed through #273 with its internal exact-Hessian proof gate:
 Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table
@@ -292,15 +288,14 @@ Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table
 --require-complete`. The proof stays the internal prerequisite receipt consumed
 by #190.
 
-#190 public admission evidence is now the retained
+#190 is retained only as internal associating component evidence through the
 `check_associating_gfpe_gate.py --require-source-data
---require-public-admission --require-exact-association-hessian
---require-complete` gate. It admits only the source-backed Gross/Sadowski 2002
-methanol/cyclohexane two-phase neutral LLE
-configuration with `assoc_scheme=2B`, `k_ij=0.051`, and
-`cppad_implicit_association`; missing-proof, ionic/electrolyte, reactive,
-TP-flash, and generalized associating phase-set inputs remain outside that
-associating admission. #190 does not claim electrolyte, reactive, LLLE,
+--require-internal-evidence --require-route-closed
+--require-exact-association-hessian --require-complete` gate. It records the
+source-backed Gross/Sadowski 2002 methanol/cyclohexane two-phase fixture with
+`assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`. Global phase
+discovery is unproven, so the checker requires public `lle` admission to remain
+closed. #190 does not claim electrolyte, reactive, LLLE,
 two-associating-component, or generalized associating phase-set support.
 
 ## Closed Issues

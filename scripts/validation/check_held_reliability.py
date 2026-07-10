@@ -5,11 +5,8 @@ import csv
 import json
 import os
 import sys
-from concurrent.futures import ProcessPoolExecutor
-from concurrent.futures import as_completed
-from dataclasses import asdict
-from dataclasses import dataclass
-from dataclasses import field
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +25,7 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 apply_native_runtime_env(os.environ)
 
 from epcsaft_equilibrium._native import extension_native_core
+
 from scripts.validation import equilibrium_validation_runtime as runtime
 from scripts.validation import native_freshness
 
@@ -213,7 +211,7 @@ def run_campaign(
     output_dir: Path,
     jobs: int = DEFAULT_JOBS,
 ) -> dict[str, Any]:
-    receipt = native_freshness.build_receipt(native_module=_core, checker_command=checker_command)
+    receipt = native_freshness.build_equilibrium_native_receipt(native_module=_core, checker_command=checker_command)
     results: list[ConditionResult] = []
     accepted_by_index: dict[int, ConditionResult] = {}
     accepted_count = 0

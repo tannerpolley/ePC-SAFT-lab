@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import argparse
 import statistics
+import sys
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-import sys
 
 import numpy as np
 
@@ -13,7 +13,9 @@ if __package__ in {None, ""}:
     if str(REPO_ROOT) not in sys.path:
         sys.path.insert(0, str(REPO_ROOT))
     from analyses.package_validation.explicit_association_toybox.scripts.closure_models import CANDIDATE_CLOSURES
-    from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import solve_exact_site_fractions
+    from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import (
+        solve_exact_site_fractions,
+    )
     from analyses.package_validation.explicit_association_toybox.scripts.propagation_evidence import (
         evaluate_named_closure,
         timed_closure,
@@ -86,7 +88,7 @@ def run_amortized_timings(
         delta = system.delta_matrix(strength)
         for _ in range(repeat_count):
             exact, exact_elapsed = timed_closure(
-                lambda: solve_exact_site_fractions(
+                lambda system=system, density=density, composition=composition, delta=delta: solve_exact_site_fractions(
                     density=density,
                     x_assoc=system.x_assoc(composition),
                     delta=delta,
@@ -94,7 +96,7 @@ def run_amortized_timings(
             )
             for closure_name in closure_names:
                 _, closure_elapsed = timed_closure(
-                    lambda closure_name=closure_name: evaluate_named_closure(
+                    lambda closure_name=closure_name, system=system, density=density, composition=composition, delta=delta: evaluate_named_closure(
                         closure_name,
                         system=system,
                         density=density,

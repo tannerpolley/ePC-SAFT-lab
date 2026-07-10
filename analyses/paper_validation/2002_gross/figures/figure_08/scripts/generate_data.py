@@ -26,34 +26,24 @@ apply_to_current_process()
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
-from epcsaft._types import SolutionError
-from PIL import Image, ImageDraw
-
 import epcsaft
 import epcsaft_equilibrium
+import matplotlib.pyplot as plt
+import numpy as np
 from epcsaft_equilibrium._native import extension_native_core
+from PIL import Image, ImageDraw
 
 FIGURE_ID = "figure_08"
 PRESSURE_BAR = 1.013
 MIN_COMPOSITION = 1.0e-6
-LLE_FEED = [0.4685, 0.5315]
-LLE_SOLVER_OPTIONS = {
-    "max_iterations": 320,
-    "tolerance": 1.0e-6,
-    "ipopt_iteration_history_limit": 12,
-    "ipopt_acceptable_tolerance": 1.0e-7,
-    "ipopt_constraint_violation_tolerance": 1.0e-7,
-    "ipopt_dual_infeasibility_tolerance": 1.0e-8,
-    "ipopt_complementarity_tolerance": 1.0e-8,
-}
+LLE_FEED = [0.5, 0.5]
+LLE_TPD_TOLERANCE = 1.0e-6
+LLE_CANDIDATE_MASS_BALANCE_TOLERANCE = 1.0e-6
 VLE_SOLVER_OPTIONS = {
     "max_iterations": 320,
     "tolerance": 1.0e-6,
     "ipopt_iteration_history_limit": 12,
 }
-LLE_MODEL_TEMPERATURES_K = [280.75, 289.65, 299.65, 309.65, 317.15, 319.15]
 AXIS = {
     "x1_pixel": (120.0, 919.0),
     "x2_pixel": (800.0, 919.0),
@@ -147,6 +137,11 @@ def _jsonable(value: Any) -> Any:
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _strip_trailing_whitespace(path: Path) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
 
 
 
@@ -440,25 +435,31 @@ def _solve_upper_branch(mixture: epcsaft.Mixture, series: str, composition: floa
 
 
 def _solve_lower_temperatures(mixture: epcsaft.Mixture, temperatures_k: list[float]) -> list[dict[str, Any]]:
+    core = extension_native_core()
     rows: list[dict[str, Any]] = []
     for temperature_k in temperatures_k:
-        try:
-            result = epcsaft_equilibrium.Equilibrium(
-                mixture,
-                route="lle",
-                T=temperature_k,
-                P=PRESSURE_BAR * 1.0e5,
-                z=LLE_FEED,
-            ).solve(solver_options=LLE_SOLVER_OPTIONS)
-            diagnostics = result.diagnostics
-            phase_compositions = [list(map(float, composition)) for composition in result.phase_compositions.values()]
-            native_status = "public_route_admitted"
-        except SolutionError as exc:
-            diagnostics = dict(exc.args[1])
-            phase_compositions = [list(map(float, composition)) for composition in diagnostics.get("phase_compositions", [])]
-            native_status = "postsolve_rejected_exact_raw"
-        if len(phase_compositions) != 2:
-            raise RuntimeError(f"Figure 8 lower branch at T={temperature_k} K did not return two phase compositions.")
+        diagnostics = dict(
+            core._native_neutral_tpd_phase_discovery(
+                mixture.native._native,
+                temperature_k,
+                PRESSURE_BAR * 1.0e5,
+                LLE_FEED,
+                [0, 0],
+                LLE_TPD_TOLERANCE,
+                LLE_CANDIDATE_MASS_BALANCE_TOLERANCE,
+                True,
+            )
+        )
+        phase_compositions = [
+            list(map(float, composition))
+            for composition in diagnostics.get("selected_phase_compositions", [])
+        ]
+        if diagnostics.get("selected_candidate_count") != 2 or len(phase_compositions) != 2:
+            raise RuntimeError(
+                f"Figure 8 internal lower-branch diagnostic at T={temperature_k} K did not select two candidates."
+            )
+        if diagnostics.get("deterministic_screening_is_full_held") is not False:
+            raise RuntimeError("Figure 8 internal lower-branch diagnostic must not claim global HELD coverage.")
         phase_compositions.sort(key=lambda composition: composition[0])
         for series, composition in zip(("lle_methanol_lean", "lle_methanol_rich"), phase_compositions, strict=True):
             rows.append(
@@ -469,17 +470,24 @@ def _solve_lower_temperatures(mixture: epcsaft.Mixture, temperatures_k: list[flo
                     "T_K": temperature_k,
                     "x_methanol": float(composition[0]),
                     "y_methanol": "",
-                    "route": "lle",
-                    "problem_kind": "neutral_lle",
-                    "route_status": diagnostics.get("route_status", ""),
-                    "solver_status": diagnostics.get("solver_status", ""),
-                    "hessian_approximation": diagnostics.get("hessian_approximation", ""),
-                    "exact_hessian_available": bool(diagnostics.get("exact_hessian_available")),
-                    "postsolve_accepted": bool(diagnostics.get("postsolve_accepted")),
-                    "hessian_backend": diagnostics.get("hessian_backend", ""),
-                    "native_status": native_status,
-                    "chemical_potential_consistency_norm": diagnostics.get("chemical_potential_consistency_norm", ""),
+                    "route": "internal_neutral_lle_tpd_diagnostic",
+                    "problem_kind": "neutral_lle_sampled_candidate_diagnostic",
+                    "route_status": "internal_component_diagnostic",
+                    "solver_status": diagnostics.get("continuous_tpd_status", ""),
+                    "hessian_approximation": "phase_discovery_only",
+                    "exact_hessian_available": False,
+                    "postsolve_accepted": False,
+                    "hessian_backend": "phase_discovery_only",
+                    "native_status": "internal_sampled_candidate_diagnostic",
+                    "chemical_potential_consistency_norm": "",
                     "phase_distance": diagnostics.get("phase_distance", ""),
+                    "phase_discovery_backend": diagnostics.get("phase_discovery_backend", ""),
+                    "held_stage_ii_status": diagnostics.get("held_stage_ii_status", ""),
+                    "held_stage_iii_status": diagnostics.get("held_stage_iii_status", ""),
+                    "selected_candidate_count": diagnostics.get("selected_candidate_count", ""),
+                    "candidate_mass_balance_norm": diagnostics.get("candidate_mass_balance_norm", ""),
+                    "public_route_admission": "closed",
+                    "global_held_proof": False,
                 }
             )
     return rows
@@ -494,7 +502,10 @@ def _solve_model_rows(source_rows: list[dict[str, Any]]) -> list[dict[str, Any]]
         composition = float(row["x_methanol"] or row["y_methanol"])
         rows.append(_solve_upper_branch(mixture, series, composition, float(row["T_K"])))
 
-    rows.extend(_solve_lower_temperatures(mixture, LLE_MODEL_TEMPERATURES_K))
+    lower_temperatures_k = sorted(
+        {float(row["T_K"]) for row in source_rows if str(row["series"]).startswith("lle_")}
+    )
+    rows.extend(_solve_lower_temperatures(mixture, lower_temperatures_k))
     return rows
 
 
@@ -523,41 +534,61 @@ def _score(source_rows: list[dict[str, Any]], model_rows: list[dict[str, Any]], 
         model_coords = np.asarray([float(row[coordinate_key] or row["x_methanol"]) for row in model_series], dtype=float)
         model_t = np.asarray([float(row["T_C"]) for row in model_series], dtype=float)
         model_order = np.argsort(model_coords)
+        model_min = float(np.min(model_coords))
+        model_max = float(np.max(model_coords))
+        covered_source_points = [
+            model_min - float(row.get("uncertainty_x") or 0.0)
+            <= float(row[coordinate_key] or row["x_methanol"])
+            <= model_max + float(row.get("uncertainty_x") or 0.0)
+            for row in source_series
+        ]
+        branch_coverage_score = sum(covered_source_points) / len(covered_source_points)
         errors: list[float] = []
         for coord, temperature_c in zip(source_coords, source_t, strict=True):
             model_temperature_c = float(np.interp(coord, model_coords[model_order], model_t[model_order]))
             errors.append(model_temperature_c - float(temperature_c))
         rmse = math.sqrt(sum(value * value for value in errors) / len(errors))
         max_error = max(abs(value) for value in errors)
-        score = max(0.0, min(10.0, 10.0 - rmse / 0.8))
+        fit_score = max(0.0, min(10.0, 10.0 - rmse / 0.8))
+        score = fit_score if branch_coverage_score == 1.0 else 0.0
         series_scores[series] = {
             "source_point_count": len(source_series),
             "model_point_count": len(model_series),
             "rmse_axis": {"T_C": rmse, coordinate_key: 0.0},
             "max_axis_error": {"T_C": max_error, coordinate_key: 0.0},
             "normalized_plot_score": score,
-            "branch_coverage_score": 1.0,
+            "branch_coverage_score": branch_coverage_score,
+            "uncovered_source_point_count": covered_source_points.count(False),
+            "model_coordinate_range": {"minimum": model_min, "maximum": model_max},
             "derivative_status": "verified_exact",
+            "derivative_status_scope": "association_components_only" if series.startswith("lle_") else "route",
             "native_freshness": "fresh_native",
-            "pass": score >= 8.0,
+            "evidence_scope": "internal_sampled_candidate_diagnostic" if series.startswith("lle_") else "public_boundary_route",
+            "global_held_proof": False if series.startswith("lle_") else "outside_route_scope",
+            "pass": score >= 8.0 and branch_coverage_score == 1.0,
         }
         all_errors.extend(errors)
 
     all_rmse = math.sqrt(sum(value * value for value in all_errors) / len(all_errors))
     all_max = max(abs(value) for value in all_errors)
     normalized_score = min(item["normalized_plot_score"] for item in series_scores.values())
+    branch_coverage_score = min(item["branch_coverage_score"] for item in series_scores.values())
     return {
         "source_point_count": len(source_rows),
         "model_point_count": len(model_rows),
         "rmse_axis": {"T_C": all_rmse, "composition_component_1": 0.0},
         "max_axis_error": {"T_C": all_max, "composition_component_1": 0.0},
         "normalized_plot_score": normalized_score,
-        "branch_coverage_score": 1.0,
+        "branch_coverage_score": branch_coverage_score,
         "derivative_status": "verified_exact",
+        "derivative_status_scope": "association_components_only_for_lower_lle",
         "native_freshness": "fresh_native",
-        "pass": normalized_score >= 8.0,
+        "lower_lle_evidence_scope": "internal_sampled_candidate_diagnostic",
+        "public_route_admission": "closed",
+        "global_held_proof": False,
+        "pass": normalized_score >= 8.0 and branch_coverage_score == 1.0,
         "series_scores": series_scores,
-        "score_basis": "temperature-coordinate RMSE against retained Figure 8 lower LLE source rows and calibrated upper PC-SAFT VLE curve source_capture",
+        "score_basis": "temperature-coordinate RMSE against retained Figure 8 lower LLE source rows using internal sampled-candidate diagnostics and calibrated upper PC-SAFT VLE curve source_capture",
         "native_freshness_receipt": native_receipt,
     }
 
@@ -599,16 +630,16 @@ def _write_plot(source_rows: list[dict[str, Any]], model_rows: list[dict[str, An
     ax.set_ylabel(r"$T$ / $^{\circ}$C")
     ax.grid(True, color="#d9d9d9", linewidth=0.7)
     ax.legend(loc="upper right", fontsize=8, frameon=False, ncols=2)
-    ax.set_title("Gross/Sadowski 2002 Figure 8 PC-SAFT replication", fontsize=11)
-    fig.text(
-        0.02,
-        0.01,
-        f"minimum branch score: {score_payload['normalized_plot_score']:.2f}; lower LLE via public lle with near-plait caveat",
-        fontsize=8,
+    ax.set_title(
+        "Gross/Sadowski 2002 Figure 8 PC-SAFT replication\n"
+        f"Minimum branch score: {score_payload['normalized_plot_score']:.2f}; "
+        "lower LLE is an internal sampled-candidate diagnostic",
+        fontsize=10,
     )
     fig.savefig(PNG, dpi=180)
     fig.savefig(SVG)
     fig.savefig(PDF)
+    _strip_trailing_whitespace(SVG)
     plt.close(fig)
 
 
@@ -646,12 +677,19 @@ def _write_plotted_csv(source_rows: list[dict[str, Any]], model_rows: list[dict[
             "native_status",
             "chemical_potential_consistency_norm",
             "phase_distance",
+            "phase_discovery_backend",
+            "held_stage_ii_status",
+            "held_stage_iii_status",
+            "selected_candidate_count",
+            "candidate_mass_balance_norm",
+            "public_route_admission",
+            "global_held_proof",
         ],
     )
 
 
 def _native_receipt() -> dict[str, Any]:
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=extension_native_core(),
         checker_command=[
             "uv",
@@ -663,6 +701,13 @@ def _native_receipt() -> dict[str, Any]:
             "--require-exact-association-hessian",
             "--require-fresh-native",
         ],
+    )
+    receipt.update(
+        {
+            "generation_evidence_scope": "public_vle_plus_internal_neutral_lle_sampled_candidate_diagnostic",
+            "neutral_lle_public_route_admission": "closed",
+            "neutral_lle_global_held_proof": False,
+        }
     )
     return native_freshness.receipt_to_jsonable(receipt)
 
@@ -712,6 +757,9 @@ def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> 
                 "artifacts": artifacts,
                 "remaining_work": [] if score_payload["pass"] else ["improve Figure 8 replication score to the acceptance threshold"],
                 "source_data_basis": "retained Figure 8 LLE source fixture plus calibrated source_capture of the upper PC-SAFT VLE envelope on the shared paper axis",
+                "evidence_scope": "public_vle_plus_internal_neutral_lle_sampled_candidate_diagnostic",
+                "public_route_admission": "closed",
+                "global_held_proof": False,
                 "score": {
                     "normalized_plot_score": score_payload["normalized_plot_score"],
                     "branch_coverage_score": score_payload["branch_coverage_score"],
@@ -761,6 +809,13 @@ def main() -> int:
             "native_status",
             "chemical_potential_consistency_norm",
             "phase_distance",
+            "phase_discovery_backend",
+            "held_stage_ii_status",
+            "held_stage_iii_status",
+            "selected_candidate_count",
+            "candidate_mass_balance_norm",
+            "public_route_admission",
+            "global_held_proof",
         ],
     )
     _write_plotted_csv(source_rows, model_rows)
@@ -775,12 +830,18 @@ def main() -> int:
         "score": score_payload,
         "native_route": {
             "upper_vle_entrypoints": "public bubble_pressure and dew_pressure with scalar inversion to P = 1.013 bar",
-            "lower_lle_entrypoint": "public lle with the Gross 2002 source-backed feed composition from the existing admission proof",
-            "near_plait_caveat": "the last coalescing lower-branch points collapse near the plait region and are excluded from the native lower-envelope model rows once phase distance falls below the public postsolve acceptance gate",
+            "lower_lle_entrypoint": "private _native_neutral_tpd_phase_discovery sampled-candidate diagnostic",
+            "lower_lle_evidence_scope": "internal_component_diagnostic",
+            "lower_lle_diagnostic_feed_composition": LLE_FEED,
+            "public_route_admission": "closed",
+            "global_held_proof": False,
+            "lower_lle_limitation": "sampled-candidate Stage II diagnostics do not establish global HELD phase-set completeness or Stage III postsolve certification",
+            "near_plait_caveat": "the last coalescing lower-branch points remain sparse near the plait region",
             "derivative_status": score_payload["derivative_status"],
             "native_freshness_receipt": native_receipt,
         },
     }
+    _write_json(SUMMARY_JSON, summary)
     _update_manifest(score_payload, native_receipt)
     return 0 if score_payload["pass"] else 2
 

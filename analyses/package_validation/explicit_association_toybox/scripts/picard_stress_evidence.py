@@ -3,11 +3,14 @@ from __future__ import annotations
 import argparse
 import csv
 import statistics
+import sys
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
-import sys
+from typing import TypeVar
 
 import numpy as np
+
+T = TypeVar("T")
 
 if __package__ in {None, ""}:
     REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -23,7 +26,9 @@ if __package__ in {None, ""}:
         PicardPolicy,
         evaluate_picard_policy,
     )
-    from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import solve_exact_site_fractions
+    from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import (
+        solve_exact_site_fractions,
+    )
     from analyses.package_validation.explicit_association_toybox.scripts.metrics import timed_closure
     from analyses.package_validation.explicit_association_toybox.scripts.picard_stress_cases import (
         PicardStressCase,
@@ -296,7 +301,7 @@ def _base_row(case: PicardStressCase) -> dict[str, object]:
     }
 
 
-def _timed_repeat[T](function: Callable[[], T], *, repeat_count: int) -> tuple[T, list[float]]:
+def _timed_repeat(function: Callable[[], T], *, repeat_count: int) -> tuple[T, list[float]]:
     result: T | None = None
     timings: list[float] = []
     for _ in range(repeat_count):

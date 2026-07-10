@@ -5,7 +5,6 @@ from pathlib import Path
 
 from scripts.validation import check_associating_lle_gross_2002 as checker
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CASE_DIR = (
     REPO_ROOT
@@ -65,7 +64,15 @@ def test_gross_2002_fixture_reports_source_backed_closed_admission_complete() ->
     assert payload["fixture"]["parameter_bundle"]["methanol_assoc_scheme"] == "2B"
     assert payload["fixture"]["parameter_bundle"]["cyclohexane_association_site_count"] == 0
     assert payload["fixture"]["binary_interaction"]["k_ij"] == 0.051
-    assert payload["public_route_state"]["associating_lle"] == "closed_for_associating_inputs"
+    assert payload["public_route_state"] == {
+        "public_route_admission": "closed",
+        "production_exposed": False,
+        "public_routes": [],
+        "global_phase_set_certified": False,
+        "associating_rows": [],
+    }
+    assert "internal_route" not in payload
+    assert "pending_internal_proof" not in json.dumps(payload)
 
 
 def test_gross_2002_checker_reports_exact_association_hessian_evidence() -> None:

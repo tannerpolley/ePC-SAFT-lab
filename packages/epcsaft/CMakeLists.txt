@@ -151,47 +151,9 @@ int main()
 endif()
 
 set(EPCSAFT_PROVIDER_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft")
-set(EPCSAFT_PROVIDER_NATIVE_ROOT "${EPCSAFT_PROVIDER_SOURCE_ROOT}/native")
-set(EPCSAFT_PROVIDER_NATIVE_SOURCES
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/model/parameter_setup.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/activity.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/chemical_potential.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/compressibility.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/density.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/fugacity.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/parameters/pure_neutral.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/implicit_association/sensitivities.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/helmholtz.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/parameters/phase_parameters.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/association_corrections.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/local_helmholtz_derivatives.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/pressure_derivatives.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/state_sensitivities.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/property_derivatives.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/thermodynamic_properties.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/state.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/association.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/born.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/dispersion.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/hard_chain.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/ion.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/autodiff/cppad_smoke_checks.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/autodiff/implicit_sensitivity.cpp
-)
-if(EPCSAFT_CPPAD_SOURCE_FILE)
-    list(APPEND EPCSAFT_PROVIDER_NATIVE_SOURCES "${EPCSAFT_CPPAD_SOURCE_FILE}")
-endif()
+include("${EPCSAFT_PROVIDER_SOURCE_ROOT}/native_sdk/provider_native_sdk_v1/epcsaft_provider_sdk.cmake")
 
-set(EPCSAFT_PROVIDER_NATIVE_INCLUDE_DIRS
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/autodiff"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions"
-    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/model"
-)
-
-add_library(epcsaft_provider_native OBJECT ${EPCSAFT_PROVIDER_NATIVE_SOURCES})
+add_library(epcsaft_provider_native OBJECT ${EPCSAFT_PROVIDER_NATIVE_TARGET_SOURCES})
 target_include_directories(epcsaft_provider_native
     PUBLIC
         ${EPCSAFT_PROVIDER_NATIVE_INCLUDE_DIRS}

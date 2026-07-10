@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 from epcsaft._types import InputError
 from epcsaft_regression.native_adapter import _fit_generic_native_ceres
 

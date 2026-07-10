@@ -43,14 +43,7 @@ def test_runtime_capabilities_report_public_ipopt_routes() -> None:
     assert ipopt["public_routes"] == equilibrium["activation_matrix"]["public_routes"]
     assert equilibrium["activation_matrix"]["public_route_family_map"] == {
         "bubble_pressure": "bubble_dew_derived_routes",
-        "bubble_temperature": "bubble_dew_derived_routes",
         "dew_pressure": "bubble_dew_derived_routes",
-        "dew_temperature": "bubble_dew_derived_routes",
-        "electrolyte_lle": "electrolyte_lle",
-        "flash": "neutral_tp_flash",
-        "lle": "neutral_lle",
-        "multiphase": "neutral_multiphase_nonassoc",
-        "reactive_speciation": "reactive_speciation",
         "single_component_vle": "single_component_vle",
     }
 

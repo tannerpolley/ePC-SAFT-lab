@@ -12,7 +12,6 @@ from analyses.package_validation.explicit_association_toybox.scripts.metrics imp
 from analyses.package_validation.explicit_association_toybox.scripts.run_grid import run_grid
 from analyses.package_validation.explicit_association_toybox.scripts.summarize_results import summarize_rows
 
-
 REQUIRED_COLUMNS = {
     "system",
     "closure",

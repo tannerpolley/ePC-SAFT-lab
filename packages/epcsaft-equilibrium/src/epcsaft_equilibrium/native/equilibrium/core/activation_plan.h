@@ -3,6 +3,7 @@
 #include "equilibrium/core/activation_matrix.h"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 struct add_args;
@@ -30,7 +31,7 @@ struct ActivationPlan {
     double pressure = 0.0;
 };
 
-const ProblemFamilyActivation& activation_row_for_key(const std::string& key);
+const ProblemFamilyActivation& activation_row_for_key(std::string_view key);
 
 ActivationPlan build_activation_plan(
     const add_args& args,

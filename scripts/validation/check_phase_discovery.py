@@ -1,3 +1,5 @@
+"""Audit internal neutral phase discovery without claiming global HELD proof."""
+
 from __future__ import annotations
 
 import argparse
@@ -19,8 +21,9 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 
 apply_native_runtime_env(os.environ)
 
-from epcsaft_equilibrium._native import extension_native_core
 from epcsaft.state.native_adapter import ePCSAFTMixture
+from epcsaft_equilibrium._native import extension_native_core
+
 from scripts.validation import equilibrium_validation_runtime as runtime
 from scripts.validation import native_freshness
 
@@ -34,9 +37,9 @@ PHASE_DISCOVERY_REQUIREMENTS = (
     "held_stage_iii_ipopt_refinement",
 )
 
-STAGE_II_REPLAY_SOURCE = "stage_ii_dual_loop_selected_candidates"
-STAGE_II_REPLAY_SEED_NAME = "held_stage_ii_dual_loop_candidate_pair"
-STAGE_III_REPLAY_SOURCE = "stage_ii_dual_loop_candidate_seed"
+STAGE_II_REPLAY_SOURCE = "sampled_candidate_audit_selected_candidates"
+STAGE_II_REPLAY_SEED_NAME = "sampled_candidate_pair_replay"
+STAGE_III_REPLAY_SOURCE = "sampled_candidate_set_replay"
 
 
 def _equilibrium_debug_enabled() -> bool:
@@ -231,20 +234,25 @@ def evaluate_phase_discovery(
         and int(discovery.get("held_stage_ii_rejected_candidate_count", 0)) == len(rejected_reasons)
         and (
             not rejected_reasons
-            or set(rejected_reasons) == {"not_selected_by_dual_loop_mass_balance_gate"}
+            or set(rejected_reasons) == {
+                "not_selected_by_sampled_candidate_mass_balance_gate"
+            }
         )
     )
     if (
-        discovery.get("held_stage_ii_status") == "dual_loop_verified"
+        discovery.get("held_stage_ii_status") == "sampled_candidate_audit_complete"
         and discovery.get("held_stage_ii_candidate_bound_audit_status") == "candidate_bound_gap_closed"
-        and discovery.get("held_stage_ii_dual_loop_status") == "verified"
-        and discovery.get("held_stage_ii_stopping_reason") == "bound_gap_closed"
+        and discovery.get("held_stage_ii_dual_loop_status") == "not_performed"
+        and discovery.get("held_stage_ii_stopping_reason")
+        == "sampled_candidate_bound_gap_closed"
         and stage_ii_bound_tolerance > 0.0
         and stage_ii_bound_gap <= stage_ii_bound_tolerance
         and stage_ii_history_complete
         and stage_ii_replay_ready
     ):
-        requirement_status["held_stage_ii_dual_phase_discovery"] = "verified_dual_loop_replayable"
+        requirement_status["held_stage_ii_dual_phase_discovery"] = (
+            "sampled_candidate_audit_complete_not_global_held"
+        )
     elif discovery.get("held_stage_ii_candidate_bound_audit_status") == "candidate_bound_gap_open":
         requirement_status["held_stage_ii_dual_phase_discovery"] = "incomplete_candidate_bound_gap_open"
     elif discovery.get("held_stage_ii_status") == "candidate_bound_gap_closed":
@@ -306,7 +314,7 @@ def evaluate_phase_discovery(
         if not str(requirement_status[key]).startswith("verified")
     ]
 
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=_core,
         checker_command=checker_command
         or ["uv", "run", "--no-sync", "python", "scripts/validation/check_phase_discovery.py"],
@@ -315,6 +323,9 @@ def evaluate_phase_discovery(
         "case_label": case["case_label"],
         "family_label": case["family_label"],
         "evidence_scope": case["evidence_scope"],
+        "claim_scope": "internal_sampled_candidate_diagnostic",
+        "production_route_admitted": False,
+        "global_held_complete": False,
         "complete": complete,
         "native_freshness_receipt": native_freshness.receipt_to_jsonable(receipt),
         "requirement_status": requirement_status,
@@ -489,7 +500,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     if args.require_complete:
         try:
-            native_freshness.require_receipt(dict(payload.get("native_freshness_receipt", {})))
+            native_freshness.require_equilibrium_native_fresh(dict(payload.get("native_freshness_receipt", {})))
         except ValueError as exc:
             print(str(exc), file=sys.stderr)
             return 2

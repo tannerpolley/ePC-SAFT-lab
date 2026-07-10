@@ -8,7 +8,6 @@ if __package__ in {None, ""}:
 
 import _common as common
 
-
 ROOT = Path(__file__).resolve().parent
 
 

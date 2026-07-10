@@ -211,7 +211,27 @@ def test_cli_requires_complete_electrolyte_stage_iii_refinement() -> None:
         text=True,
     )
 
-    assert result.returncode == 0, result.stderr
+    assert result.returncode == 2, result.stderr
     payload = json.loads(result.stdout)
-    assert payload["complete"] is True
-    assert payload["blockers"] == []
+    assert payload["complete"] is False
+    assert payload["blockers"] == [
+        "held2_phase_discovery_incomplete",
+        "held2_phase_discovery_status_incomplete",
+        "stage_iii_active_bound_violation",
+        "stage_iii_application_status_mismatch",
+        "stage_iii_equation_labels_missing",
+        "stage_iii_handoff_status_mismatch",
+        "stage_iii_hessian_structure_missing",
+        "stage_iii_ipopt_status_mismatch",
+        "stage_iii_jacobian_structure_missing",
+        "stage_iii_phase_collapse",
+        "stage_iii_reduced_hessian_receipt_missing",
+        "stage_iii_reduced_jacobian_receipt_missing",
+        "stage_iii_refinement_incomplete",
+        "stage_iii_residual_norm_exceeds_tolerance",
+        "stage_iii_solver_rejected",
+        "stage_iii_solver_residual_norm_exceeds_tolerance",
+        "stage_iii_source_phase_discovery_incomplete",
+        "stage_iii_status_incomplete",
+        "stage_iii_variable_labels_missing",
+    ]

@@ -26,11 +26,13 @@ reporting, and validation lanes.
 
 ## Source Hierarchy And Current Boundary
 
-The current public package still exposes the existing selector-backed neutral
-utility routes such as `bubble_pressure`, `bubble_temperature`,
-`dew_pressure`, `dew_temperature`, `flash`, and neutral nonassociating `lle`.
-This plan does not remove those routes and does not change their runtime
-behavior.
+The current public package exposes only the evidence-backed selector routes
+`bubble_pressure`, `dew_pressure`, and scoped nonassociating hydrocarbon
+`single_component_vle`. Neutral LLE remains internal because its
+sampled-candidate Stage II audit is not a global HELD proof.
+Temperature-boundary VLE and neutral TP flash also remain internal component
+diagnostics: their route contracts are closed because the retained inverse
+workbook points do not establish literature-backed live solver evidence.
 
 The generalized equilibrium plan is stricter than the current public
 surface. A route family is not generalized-production-ready until it has:
@@ -56,12 +58,12 @@ The collapsed plan has six visible family labels:
 
 | Planning label | Scope | Current generalized status |
 | --- | --- | --- |
-| `PE-Neutral TP Flash` | Neutral, nonelectrolyte, nonreactive TP flash and neutral VLE/LLE validation ladder | `planned_not_public` |
-| `PE-Associating TP Flash` | Neutral associating TP flash/VLE/LLE after exact association derivatives | `source_backed_associating_lle_public_admitted` |
-| `PE-Electrolyte LLE/TP Flash` | Strong-electrolyte LLE and TP flash with charge-neutral reduced variables | `held2_public_route_phase_discovery_admitted_blocked_by_perdomo_figiel_validation` |
-| `PE-Generalized Multiphase` | More-than-two-phase phase discovery and phase-set certification | `neutral_public_admitted` |
-| `CE Standalone Reactive Speciation` | Homogeneous single-phase chemical/speciation equilibrium without phase split | `standalone_ce_public_admitted` |
-| `CPE Simultaneous Phase-Chemistry Contract` | Simultaneous phase split and reaction/speciation equilibrium after PE and CE proof chains | `planned_not_public` |
+| `PE-Neutral TP Flash` | Neutral, nonelectrolyte, nonreactive TP flash and neutral VLE/LLE validation ladder | `partial_selector_production`; bubble/dew pressure exposed, neutral LLE and TP flash internal |
+| `PE-Associating TP Flash` | Neutral associating TP flash/VLE/LLE after exact association derivatives | `internal_validation`; source-backed component evidence does not establish global HELD |
+| `PE-Electrolyte LLE/TP Flash` | Strong-electrolyte LLE and TP flash with charge-neutral reduced variables | `internal_validation` |
+| `PE-Generalized Multiphase` | More-than-two-phase sampled-candidate diagnostics pending globally complete phase discovery | `internal_validation`; global candidate completeness unproven |
+| `CE Standalone Reactive Speciation` | Homogeneous single-phase chemical/speciation equilibrium without phase split | `active_validation_failure` |
+| `CPE Simultaneous Phase-Chemistry Contract` | Simultaneous phase split and reaction/speciation equilibrium after PE and CE proof chains | `planning` |
 
 The family labels are deliberately descriptive. They replace the old numeric
 PE/CE/CPE row identifiers in the plan and registry. They are stable enough
@@ -181,10 +183,10 @@ acceptance is diagnostic, not convergence proof. The current neutral LLE proof
 fixture uses the route-owned `held_refinement` Ipopt profile and reports Stage
 III only when the same route converges before postsolve certification.
 
-Current public utility `flash` calls keep deterministic TPD postsolve
-certification but do not request continuous TPD by default. Continuous TPD and
-HELD Stage I diagnostics are proof-path evidence, not a hidden cost on every
-public flash solve.
+Internal `neutral_tp_flash` component diagnostics keep deterministic TPD
+postsolve certification but do not request continuous TPD by default. The
+public `flash` route is closed. Continuous TPD and HELD Stage I diagnostics are
+proof-path evidence, not a hidden cost on ordinary admitted route solves.
 
 Runtime diagnosis must stay narrow. Use
 `uv run python run_pytest.py --equilibrium-debug -q -s <one equilibrium
@@ -377,9 +379,9 @@ Implementation must proceed in this order:
    bubble, dew, cloud, and shadow workflows as DOF swaps over the shared phase
    NLP, then `T-x` and `P-x` diagram generation.
 5. Neutral generalized multiphase:
-   Stage II candidate-set replay, strict Stage III residual refinement, and
-   public neutral nonassociating `multiphase` admission beyond two selected
-   phases.
+   finite sampled-candidate replay and strict local residual refinement as
+   internal diagnostics. Globally complete phase discovery and postsolve
+   certification remain required before any future native-selector admission.
 6. Associating PE:
    exact association derivative coverage or lifted mass-action variables before
    Gross/Sadowski validation cases.
@@ -399,8 +401,10 @@ it defines order; the companion plan defines work packages and exit evidence.
 ## Derived Boundary Workflows
 
 Bubble, dew, cloud, and shadow workflows are derived subworkflows, not main
-activation families. They are still planned implementation work because they
-are the route to `T-x` and `P-x` diagrams after the main neutral TP flash proof.
+activation families. Bubble-pressure and dew-pressure routes are public under
+the scoped bubble/dew production family. Bubble/dew temperature, cloud, and
+shadow workflows remain closed; their future admission requires source-backed
+route evidence without broadening the closed neutral TP-flash surface.
 
 | Workflow | Fixed variables | Free variables | Boundary meaning |
 | --- | --- | --- | --- |
@@ -418,15 +422,15 @@ source-backed ePC-SAFT-compatible neutral TP flash mixture unless a later
 implementation proves it physically unsuitable; it must not invent a synthetic
 validation fixture. Do not add VLLE-specific tests in this step.
 
-Current bubble/dew runtime routes are validated only through the
-derived-boundary checker, not by ad hoc public-route success. Boundary workflow
-completion requires strict Ipopt convergence for every requested boundary
-point: `solver_status == success`, `application_status == solve_succeeded`,
-and no selected seed attempt ending in `max_iterations_exceeded`.
-Acceptable-level points, tiny steps, feasible points, postsolve-accepted finite
-variables, or any iteration-limit seed path remain diagnostic evidence only.
-The current hydrocarbon-workbook fixture now verifies strict bubble/dew `P-x`
-and `T-x` route points when the checker is run with explicit sweep opt-in.
+The current public bubble/dew surface contains only the pressure-boundary
+routes. Their production evidence is the source-backed Gross/Sadowski campaign;
+the hydrocarbon-workbook derived-boundary checker remains component evidence
+and does not admit bubble/dew temperature routes. Boundary workflow completion
+requires strict Ipopt convergence for every requested boundary point:
+`solver_status == success`, `application_status == solve_succeeded`, and no
+selected seed attempt ending in `max_iterations_exceeded`. Acceptable-level
+points, tiny steps, feasible points, postsolve-accepted finite variables, or
+any iteration-limit seed path remain diagnostic evidence only.
 Routine validation must stay contract-only unless a single named debug route
 point is requested; multi-point `T-x` or `P-x` route points require
 `--allow-route-sweep` and an explicit `--route-point-count`.
@@ -441,8 +445,8 @@ the cloud/shadow source-data contract is retained.
 The checker-gated native cloud/shadow route-evidence command is
 `uv run python scripts/validation/check_boundary_workflows.py --json
 --run-cloud-shadow-route --require-cloud-shadow-route`. It first obtains the
-model-refined Matsuda branch pair from the existing certified `neutral_lle`
-showcase at 293.895 K and 101300 Pa, then fixes the model-refined parent-liquid
+model-refined Matsuda branch pair from the internal `neutral_lle` showcase at
+293.895 K and 101300 Pa, then fixes the model-refined parent-liquid
 composition in the private `neutral_cloud_t_eos` route and solves the
 cloud-temperature plus shadow-liquid composition. Passing this gate means one
 internal native isobaric cloud/shadow route point is strict-Ipopt verified
@@ -546,17 +550,14 @@ iteration-limit seed path are failed boundary evidence.
   --require-source-data --require-exact-association-hessian
   --require-route-closed --require-complete` proves the source fixture, exact
   association site sensitivities, objective/pressure/mass-action/Lagrangian
-  Hessian evidence, and the source-pair internal LLE certification that #190
-  consumes for public admission;
-- current public admission proof: `uv run python
-  scripts/validation/check_associating_gfpe_gate.py --json
-  --require-source-data --require-public-admission
-  --require-exact-association-hessian --require-complete` admits only
-  `Equilibrium(..., route="lle")` for the source-backed Gross/Sadowski 2002
-  methanol/cyclohexane two-phase neutral associating fixture, names
-  `assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`, and keeps
-  missing-proof, reactive, TP-flash, and generalized associating phase-set
-  surfaces outside that admission;
+  Hessian evidence, and source-pair internal LLE component certification. It
+  does not establish global phase-set discovery and therefore does not admit a
+  public LLE route;
+- retained associating GFPE evidence: the Gross/Sadowski 2002
+  methanol/cyclohexane two-phase fixture names `assoc_scheme=2B`, `k_ij=0.051`,
+  and `cppad_implicit_association`. This is source-backed internal component
+  evidence only; missing-proof, reactive, TP-flash, generalized associating
+  phase-set, and public `lle` surfaces remain closed;
 - current paper-validation acceptance proof: `uv run --no-sync python
   scripts/validation/check_gross_2002_association_acceptance.py --json
   --require-complete --require-exact-association-hessian --require-fresh-native`
@@ -575,52 +576,40 @@ iteration-limit seed path are failed boundary evidence.
 `PE-Electrolyte LLE/TP Flash`
 
 - first validation target: Khudaida 2026 electrolyte LLE case;
-- representative public admission proof: `uv run --no-sync python
+- explicit re-admission repair gate: `uv run --no-sync python
   scripts/validation/check_electrolyte_public_admission.py --json
   --require-source-gate --require-readiness-gate --require-tpd-gate
   --require-held2-discovery --require-stage-iii
   --require-postsolve-certification --require-public-admission
-  --require-complete` consumes #269/#300/#302/#306/#312/#313 and admits only
-  `Equilibrium(..., route="electrolyte_lle")` for the source-backed explicit-ion
-  H2O/Ethanol/Butanol/Na+/Cl- NaCl mixed-solvent LLE fixture;
-- full HELD2 public-route discovery proof: `uv run --no-sync python
-  scripts/validation/check_electrolyte_public_admission.py --json
-  --require-held2-stage-ii --require-stage-iii
-  --require-postsolve-certification --require-public-admission
-  --require-complete` plus `uv run --no-sync python
-  scripts/validation/check_electrolyte_held2_public_route_scenarios.py
-  --json --require-complete` admit only the same retained public
-  `electrolyte_lle` scope after Stage I/II discovery, Stage III replay
-  consumption, postsolve certification, and stable/unstable/boundary/
-  phase-label/neutral-limit/common-ion/mixed-salt scenario checks;
+  --require-complete` consumes #269/#300/#302/#306/#312/#313 and returns
+  nonzero while the route is closed. Source, discovery, Stage III, postsolve
+  and scenario records remain internal repair evidence;
 - Perdomo/Figiel HELD2 validation remains tracked by #320, and fitted
   Khudaida model reproduction remains M5 regression work;
-- required before broader exposure: additional source-backed electrolyte
-  systems, generic salt/solvent coverage, reactive/speciation coupling, CE/CPE
-  routes, regression evidence, and release documentation.
+- required before any exposure: native-selector solve ownership, canonical
+  result acceptance, fresh source-backed admission evidence and the complete
+  repair gate; broader exposure additionally needs generic salt/solvent and
+  reactive/speciation coverage.
 
 `PE-Generalized Multiphase`
 
 - current retained internal diagnostic: `uv run --no-sync python
   scripts/validation/check_generalized_phase_set.py --json --require-complete`
-  proves neutral three-candidate phase-set records, selected/rejected row
+  audits neutral finite sampled-candidate records, selected/rejected row
   reasons including duplicate/collapsed, infeasible, lower-free-energy omitted,
-  uncertified, and generic unselected rejected candidates, mass-balance
-  feasibility, and noncollapsed selected compositions;
+  uncertified, and generic unselected rejected candidates, plus mass-balance
+  feasibility and noncollapsed selected compositions. It explicitly records
+  `global_phase_set_certified: false` because this finite set cannot prove
+  global phase-set completeness;
 - current retained strict route proof: `uv run --no-sync python
   scripts/validation/check_generalized_phase_set.py --json --phase-kinds
   liquid,liquid,liquid --run-route-refinement --require-route-refinement
-  --require-complete` proves Stage III
-  `strict_fugacity_residual` refinement for the Stage II candidate-set replay,
-  exact reduced fugacity-residual derivative metadata, accepted postsolve,
-  and reduced ln-fugacity consistency <= `1.0e-6`;
-- current public admission proof: `uv run --no-sync python
-  scripts/validation/check_generalized_phase_set.py --json --phase-kinds
-  liquid,liquid,liquid --run-route-refinement --require-route-refinement
-  --require-public-admission --require-complete` proves the public
-  `Equilibrium(..., route="multiphase", phase_kinds=[...]).solve()` workflow
-  maps to `neutral_multiphase_nonassoc`, returns three named phases, reports
-  exact Hessian evidence, and accepts the postsolve;
+  --require-complete` proves local `strict_fugacity_residual` refinement for the
+  same sampled-candidate replay, exact reduced fugacity-residual derivative
+  metadata, accepted local postsolve, and reduced ln-fugacity consistency <=
+  `1.0e-6`; it does not upgrade the finite replay into global phase discovery;
+- current exposure: none. The public `multiphase` route is removed while the
+  retained sampled-candidate and strict-refinement diagnostics remain internal;
 - remaining validation target: replay associating and electrolyte cases through
   their own exact-derivative and chemistry-specific phase-set contracts;
 - required before broader exposure: complete candidate phase set,
@@ -630,10 +619,9 @@ iteration-limit seed path are failed boundary evidence.
 
 `CE Standalone Reactive Speciation`
 
-- admitted only for homogeneous single-phase reaction/speciation through
-  `reactive_speciation(...)` after reaction-set schema, standard-state
-  conventions, exact chemical-potential derivatives, reaction-affinity
-  certification, and standalone CE validation tests passed;
+- retained only as the internal homogeneous single-phase validation workflow.
+  The package-root helper and production claim are removed because the live MEA
+  proof fails the required balance and reaction-stationarity limits;
 - CE has no phase-discovery status because it has no phase split. Its closure
   gates are the standard-state registry, equilibrium-constant convention,
   reaction-affinity residuals, conservation basis, and derivative evidence.
@@ -672,15 +660,15 @@ Registry acceptance rules:
 
 - no visible old numeric row identifiers;
 - every family row marked `production_exposed: true` must carry a matching
-  checker command and acceptance evidence; currently this is limited to
-  neutral nonassociating `PE-Generalized Multiphase` public `multiphase`
-  admission;
+  checker command and acceptance evidence; the current exposed set is
+  bubble/dew pressure and scoped nonassociating hydrocarbon single-component
+  VLE;
 - bubble/dew/cloud/shadow appear only under `derived_subworkflows`;
 - reference cases use descriptive family labels;
 - deterministic screening is not called full HELD;
 - raw `docs/ChatGPT_Gemini_Responses/*` files remain uncited input artifacts.
 
-The current admitted public generalized route is neutral nonassociating
-`Equilibrium(..., route="multiphase", phase_kinds=[...]).solve()`. Do not
-broaden that claim to associating, electrolyte, reactive, CE, CPE, LLLE, or
-VLLE without their own exact-derivative and source-backed proof gates.
+No generalized multiphase public route is currently admitted. Do not restore
+multiphase, electrolyte, reactive, CE, CPE, LLLE or VLLE claims without native
+selector ownership, canonical result acceptance, exact derivatives and an
+independent source-backed proof gate.

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import sys as _bootstrap_sys
 from functools import lru_cache
 from pathlib import Path
-import sys as _bootstrap_sys
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -12,12 +12,11 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import analysis_root
 import sys
 
-
-
 import matplotlib.pyplot as plt
+
+from scripts.plot_outputs import analysis_root
 
 ANALYSIS_ROOT = analysis_root(__file__)
 if str(ANALYSIS_ROOT) not in sys.path:
@@ -87,7 +86,7 @@ def _plot_panel(ax, label: str, salt: str, solvent_system: str, m_max: float) ->
                 label=data_label_text,
             )
 
-    organic = [s for s in solvent_system.split("-") if s != "water"][0]
+    organic = next(s for s in solvent_system.split("-") if s != "water")
     organic_label = "methanol" if organic == "methanol" else "ethanol"
     ax.set_xlim(0.0, m_max)
     ax.set_ylim(0.0, 1.125)

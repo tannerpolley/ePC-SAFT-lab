@@ -196,28 +196,22 @@ parameter data and pass thermodynamic conditions to ``State(...)`` or workflow
 defaults to ``Equilibrium(...)`` from ``epcsaft_equilibrium`` and
 ``Regression(...)`` from ``epcsaft_regression``.
 
-Equilibrium and speciation
---------------------------
+Equilibrium
+-----------
 
 Use ``epcsaft_equilibrium.capabilities()`` and the cookbook before wiring a
 high-level equilibrium workflow. The extension includes native-backed paths for
 neutral phase equilibrium through constructor-configured ``Equilibrium(...)``
-objects. The production-exposed families are neutral bubble/dew routes, neutral TP flash,
-neutral nonassociating LLE, the source-backed methanol/cyclohexane
-associating LLE fixture, the source-backed Khudaida explicit-ion electrolyte
-LLE fixture, and standalone homogeneous ``reactive_speciation(...)`` when the
-native Ipopt dependency is compiled.
+objects. The production-exposed routes are bubble pressure, dew pressure,
+and scoped nonassociating hydrocarbon single-component VLE.
 
 Important boundaries:
 
-- The public electrolyte route is limited to
-  ``Equilibrium(..., route="electrolyte_lle")`` for the retained
-  H2O/Ethanol/Butanol/Na+/Cl- NaCl mixed-solvent LLE fixture and its
-  source-backed parameter bundle. Generic electrolyte GFPE, reactive
-  LLE, reactive electrolyte LLE, CPE, parameter regression, and release-wheel
-  claims remain outside the admitted scope. Standalone
-  ``reactive_speciation(...)`` is admitted only for homogeneous CE and does not
-  claim phase splitting or CPE evidence.
+- Neutral LLE, bubble/dew temperature, neutral TP flash, neutral multiphase,
+  electrolyte LLE, standalone reactive speciation, reactive LLE, reactive electrolyte LLE,
+  and CPE remain closed validation families. They publish no public or proof
+  routes. Neutral LLE's sampled-candidate Stage II audit is not a global HELD
+  proof.
 - The GitHub release wheel is built without a local Ipopt runtime dependency.
   Ipopt-backed equilibrium routes require an Ipopt-enabled source or editable
   build.

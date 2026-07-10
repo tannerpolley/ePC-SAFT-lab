@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 from epcsaft import SolutionError
 from support.native_cases import _ionic_state
 

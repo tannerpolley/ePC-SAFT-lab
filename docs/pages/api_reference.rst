@@ -45,11 +45,11 @@ Equilibrium
 
 The trusted public neutral two-phase proof set is
 ``Equilibrium(mixture, route=..., ...).solve()`` with route specs
-``bubble_pressure``, ``bubble_temperature``, ``dew_pressure``,
-``dew_temperature``, certified two-phase ``flash``, and neutral nonassociating
-``lle`` with native Ipopt and exact Hessian callbacks. ``route="lle"`` returns
-``liquid1`` and ``liquid2`` phases; the VLE ``x`` and ``y`` conveniences remain
-limited to liquid/vapor routes.
+``bubble_pressure``, ``dew_pressure``, and scoped nonassociating hydrocarbon
+``single_component_vle`` with native Ipopt and exact Hessian callbacks. Neutral
+LLE remains internal because its sampled-candidate Stage II audit is not a
+global HELD proof. The VLE ``x`` and ``y`` conveniences remain limited to
+liquid/vapor routes.
 
 Regression
 ----------

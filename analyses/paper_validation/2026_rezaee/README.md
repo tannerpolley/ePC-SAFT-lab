@@ -1,70 +1,41 @@
-# Rezaee 2025/2026 Paper Validation
+# Rezaee 2025/2026 Source Evidence
 
-This analysis validates the package-facing Rezaee lithium-extraction paper workflow from the local source transcriptions. It is not a surrogate-generation, PrOMMiS/IDAES, slide-deck, or downstream process-design workflow.
+This is a source-evidence-only lane for the Rezaee lithium-extraction papers.
+It preserves the transcribed literature rows and basis diagnostics without
+claiming a current package-model reproduction.
 
 ## Boundary
 
-- Active objective: run the Rezaee 2025/2026 source-data checks and Section 3.2 reaction-coordinate replication with the local `epcsaft` package.
-- Not claimed: a direct published-constant closure of the reported extraction percentages, a calibrated distribution surrogate, PrOMMiS/IDAES transfer variables, costing rows, or deck-ready process outputs.
-- Source rows: the local machine-readable supporting-information table contains 26 designed-experiment equilibrium-composition rows. The 2026 paper text also says 36 equilibrium data points; this workflow treats that as a source-text mismatch unless a new source-backed table is supplied.
+- Retained evidence: 26 supporting-information equilibrium rows, the reported
+  extraction targets, and deterministic basis-inference diagnostics.
+- Closed surface: the current package exposes no reactive-electrolyte
+  equilibrium route.
+- Excluded claim: provider-era equilibrium and regression calculations are not
+  current package evidence and do not establish phase-model support.
+- Source mismatch: the 2026 paper text mentions 36 equilibrium points, while
+  the retained machine-readable supporting-information table contains 26.
 
-## Source Assets
+## Command
 
-Paper markdown used for source checking is stored under `docs/papers/md/`:
-
-- `Rezaee et al. - 2025 - Application of Response Surface Methodology for Selective Extraction of Lithium Using a Hydrophobic DES.md`
-- `Rezaee et al. - 2025 - Supporting information - Application of Response Surface Methodology for Selective Extraction of Lithium.md`
-- `Rezaee et al. - 2026 - Thermodynamic modeling of lithium extraction from synthetic brine using deep eutectic solvents A PC.md`
-- `Rezaee et al. - 2026 - Supplementary material - Thermodynamic modeling of lithium extraction from synthetic brine using deep eutectic solvents.md`
-
-Machine-readable source inputs are in `analyses/paper_validation/2026_rezaee/shared/source/`.
-
-## Paper-Validation Commands
-
-Run these from the repository root:
+Run from the repository root:
 
 ```bash
-uv run python analyses/paper_validation/2026_rezaee/scripts/run_all.py
+uv run --no-sync python analyses/paper_validation/2026_rezaee/scripts/run_all.py
 ```
 
-Surrogate, downstream bridge, PrOMMiS/IDAES, and deck scripts are intentionally not included in this package-validation lane.
+The command regenerates only source-derived target and basis summaries. It
+fails if the retained source-row counts no longer match their contract.
 
-## Generated Evidence
-
-The strict pre-surrogate evidence bundle is:
+## Retained Outputs
 
 - `shared/results/processed/rezaee_2025_extraction_target_summary.csv`
 - `shared/results/processed/rezaee_2025_extraction_equilibrium_summary.csv`
-- `results/targets/rezaee_2025_extraction_target_summary.md`
 - `shared/results/processed/rezaee_2026_section32_basis_inference_rows.csv`
 - `shared/results/reaction_equilibrium/rezaee_2026_section32_basis_inference_summary.json`
 - `shared/results/reaction_equilibrium/rezaee_2026_section32_basis_inference.md`
-- `shared/results/processed/rezaee_2026_section32_equilibrium_replication_rows.csv`
-- `shared/results/reaction_equilibrium/rezaee_2026_section32_equilibrium_replication_summary.json`
-- `shared/results/reaction_equilibrium/rezaee_2026_section32_equilibrium_replication.md`
-- `shared/results/processed/rezaee_2026_calibrated_native_ipopt_attempt_rows.csv`
-- `shared/results/processed/rezaee_2026_calibrated_separate_phase_residual_rows.csv`
-- `shared/results/reaction_equilibrium/rezaee_2026_calibrated_native_ipopt_attempt_summary.json`
+- `shared/results/reaction_equilibrium/summary.json`
 
-Additional guardrail outputs in `shared/results/reaction_equilibrium/` record replay, convention-scan, ePC-SAFT option-scan, calibrated public native Ipopt route attempts, and paper-basis reaction-coordinate diagnostics.
-The lane-level gate summary is `shared/results/reaction_equilibrium/summary.json`.
-
-The figure comparison outputs are package-owned overlays, not downstream screenshots:
-
-- `figures/figure_07/results/figure_7_package_vs_paper.png`
-- `figures/figure_08/results/figure_8_package_vs_paper.png`
-- `figures/figure_10/results/figure_10_package_vs_paper.png`
-- `figures/figure_11/results/figure_11_package_vs_paper.png`
-
-Each plot shows the digitized Rezaee paper-model points and the current in-worktree `epcsaft` package-model results from the Section 3.2 replication rows.
-
-## Current Result
-
-The package can run the paper-validation workflow from this copied application folder. The validation does not support claiming a direct published-constant Rezaee Section 3.2 closure:
-
-- The source-supported Eq. 14/15 activity variant has a large combined median absolute log residual.
-- No simple sign, reciprocal constant, activity on/off, water/OH, H+/NH4+, TOPO, Born, or dielectric option scan closes the gap.
-- The public `mix.equilibrium(kind="reactive_electrolyte_lle", phase_models={"aq": aqueous_mix, "org": organic_mix})` route now reaches the native liquid-root Ipopt solver with separate phase models, but the retained Rezaee attempt is still postsolve-rejected on charge balance and reaction stationarity.
-- The 26-row Section 3.2 replication runs and writes the pre-surrogate result table, but the direct source-aligned case predicts essentially zero Li extraction and about 100% Li-extraction AARD against the paper's reported 7.89% post-Table-9 benchmark.
-
-The honest completion state is a reproducible paper-validation result with a documented source/reference-state gap and a blocked native solver route, not a promoted direct reactive-LLE surrogate basis.
+The lane retains no current model-prediction plot because no supported package
+route computes this reactive-electrolyte application. The summary therefore
+reports `model_validation_complete: false`, `phase_models_supported: false`,
+and `public_route_admitted: false`.

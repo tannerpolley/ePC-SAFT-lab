@@ -4,10 +4,8 @@ import csv
 import json
 import math
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -17,13 +15,13 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import analysis_root
-from scripts.plot_outputs import REPO_ROOT
-from scripts.dev.native_runtime_env import apply_to_current_process
-from typing import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
+
+from scripts.dev.native_runtime_env import apply_to_current_process
+from scripts.plot_outputs import REPO_ROOT, analysis_root
 
 apply_to_current_process()
 from scripts._epcsaft_oop import epcsaft_relative_permittivity
@@ -843,7 +841,7 @@ def _read_weight_fraction_dataset(path: Path, solvent_system: str) -> list[dict[
     gamma_key = next((lookup[c] for c in ("miac_m", "gamma") if c in lookup), None)
     if molality_key is None or gamma_key is None:
         raise ValueError(f"Missing columns in {path}")
-    organic = [s for s in solvent_system.split("-") if s != "water"][0]
+    organic = next(s for s in solvent_system.split("-") if s != "water")
     w_org_key = lookup.get(f"w_{organic}_salt_free".lower()) or lookup.get(f"w_{organic}".lower())
     w_water_key = (
         lookup.get("w_h2o_salt_free") or lookup.get("w_water_salt_free") or lookup.get("w_h2o") or lookup.get("w_water")

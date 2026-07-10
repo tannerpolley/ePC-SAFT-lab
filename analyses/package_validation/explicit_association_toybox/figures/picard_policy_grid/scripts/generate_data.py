@@ -14,6 +14,5 @@ from analyses.package_validation.explicit_association_toybox.scripts.picard_poli
     generate_picard_policy_grid,
 )
 
-
 if __name__ == "__main__":
     print(generate_picard_policy_grid(output_path=DEFAULT_OUTPUT, handoff_path=DEFAULT_HANDOFF))

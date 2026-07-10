@@ -14,8 +14,8 @@ from .implicit_sensitivity import (
 )
 from .propagation_evidence import (
     closure_association_value,
-    exact_association_value,
     evaluate_named_closure,
+    exact_association_value,
     relative_error,
     write_rows_csv,
 )
@@ -105,7 +105,7 @@ def _case_samples(case: Mapping[str, object], closure_name: str) -> list[dict[st
     rows: list[dict[str, object]] = []
     targets = ("a_assoc_density", "a_assoc_strength", "pressure_proxy_density")
     if system.component_count == 2:
-        targets = targets + ("a_assoc_composition_0", "mu_proxy_composition_0", "fugacity_proxy_composition_0")
+        targets = (*targets, "a_assoc_composition_0", "mu_proxy_composition_0", "fugacity_proxy_composition_0")
     for target in targets:
         exact_derivative = _target_derivative(
             target,

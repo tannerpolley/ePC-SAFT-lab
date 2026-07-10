@@ -24,14 +24,14 @@ apply_to_current_process()
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
-
 import epcsaft
 import epcsaft_equilibrium
+import matplotlib.pyplot as plt
+import numpy as np
 from epcsaft_equilibrium._native import extension_native_core
 
 FIGURE_ID = "figure_03"
+MIN_COMPOSITION = 1.0e-6
 SERIES_CONFIG = {
     "pressure_series_high": {"P_bar": 1.013, "color": "#111111"},
     "pressure_series_low": {"P_bar": 0.4, "color": "#2c7fb8"},
@@ -77,6 +77,11 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+
+
+def _strip_trailing_whitespace(path: Path) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -207,34 +212,6 @@ def _mixture() -> epcsaft.Mixture:
     )
 
 
-def _pure_mixture(component: str) -> epcsaft.Mixture:
-    if component == "1-Propanol":
-        payload = {
-            "MW": np.asarray([60.096e-3]),
-            "m": np.asarray([2.9997]),
-            "s": np.asarray([3.2522]),
-            "e": np.asarray([233.40]),
-            "e_assoc": np.asarray([2276.8]),
-            "vol_a": np.asarray([0.015268]),
-            "assoc_scheme": ["2B"],
-        }
-    elif component == "Ethylbenzene":
-        payload = {
-            "MW": np.asarray([106.167e-3]),
-            "m": np.asarray([3.0799]),
-            "s": np.asarray([3.7974]),
-            "e": np.asarray([287.35]),
-            "e_assoc": np.asarray([0.0]),
-            "vol_a": np.asarray([0.0]),
-            "assoc_scheme": [None],
-        }
-    else:
-        raise ValueError(component)
-    return epcsaft.Mixture(
-        epcsaft.ParameterSet.from_dict(payload, species=[component], metadata={"source": f"Gross/Sadowski 2002 Figure 3 pure {component}", "source_backed": True})
-    )
-
-
 def _role_coordinate_key(role: str) -> str:
     return "x_1_propanol" if role == "bubble_curve" else "y_1_propanol"
 
@@ -250,46 +227,46 @@ def _solve_pressure(mixture: epcsaft.Mixture, role: str, temperature_k: float, c
     )
 
 
-def _solve_temperature_for_row(mixture: epcsaft.Mixture, row: dict[str, Any], pure_cache: dict[str, dict[float, epcsaft_equilibrium.EquilibriumResult]]) -> dict[str, Any]:
+def _solve_temperature_for_row(
+    mixture: epcsaft.Mixture,
+    row: dict[str, Any],
+) -> dict[str, Any]:
     role = row["source_role"]
     composition = float(row[_role_coordinate_key(role)])
     target_pressure_bar = float(row["P_bar"])
     target_pressure_pa = target_pressure_bar * 1.0e5
     source_temperature_k = float(row["T_K"])
-    if composition <= 1.0e-9 or composition >= 1.0 - 1.0e-9:
-        component = "1-Propanol" if composition >= 1.0 - 1.0e-9 else "Ethylbenzene"
-        cache = pure_cache.setdefault(component, {})
+    is_boundary_limit = composition in {0.0, 1.0}
+    solve_role = "dew_curve" if is_boundary_limit else role
+    solve_composition = (
+        MIN_COMPOSITION
+        if composition == 0.0
+        else 1.0 - MIN_COMPOSITION
+        if composition == 1.0
+        else composition
+    )
 
-        def pure_pressure(temperature_k: float) -> tuple[float, epcsaft_equilibrium.EquilibriumResult]:
-            rounded = round(temperature_k, 6)
-            if rounded not in cache:
-                cache[rounded] = epcsaft_equilibrium.Equilibrium(_pure_mixture(component), route="single_component_vle", T=temperature_k).solve(
-                    solver_options={"max_iterations": 220, "tolerance": 1.0e-8, "ipopt_print_level": 0}
-                )
-            result = cache[rounded]
-            return float(result.P_sat), result
-    else:
-        def pure_pressure(temperature_k: float) -> tuple[float, epcsaft_equilibrium.EquilibriumResult]:
-            result = _solve_pressure(mixture, role, temperature_k, composition)
-            return float(result.pressure), result
+    def boundary_pressure(temperature_k: float) -> tuple[float, epcsaft_equilibrium.EquilibriumResult]:
+        result = _solve_pressure(mixture, solve_role, temperature_k, solve_composition)
+        return float(result.pressure), result
 
     guess_1 = source_temperature_k
     guess_2 = source_temperature_k + 4.0
-    pressure_1, result_1 = pure_pressure(guess_1)
+    pressure_1, result_1 = boundary_pressure(guess_1)
     if abs(pressure_1 - target_pressure_pa) <= 120.0:
         final_temperature_k = guess_1
         final_result = result_1
     else:
-        pressure_2, result_2 = pure_pressure(guess_2)
+        pressure_2, _result_2 = boundary_pressure(guess_2)
         slope = (pressure_2 - pressure_1) / (guess_2 - guess_1)
         if not np.isfinite(slope) or abs(slope) < 1.0e-9:
             raise RuntimeError(f"Figure 3 temperature inversion slope collapsed for {row['series']} {role} at composition={composition:.3f}.")
         guess_3 = guess_1 + (target_pressure_pa - pressure_1) / slope
         guess_3 = min(max(guess_3, source_temperature_k - 25.0), source_temperature_k + 25.0)
-        pressure_3, result_3 = pure_pressure(guess_3)
+        pressure_3, result_3 = boundary_pressure(guess_3)
         if abs(pressure_3 - target_pressure_pa) > 250.0:
             guess_4 = 0.5 * (guess_1 + guess_3)
-            pressure_4, result_4 = pure_pressure(guess_4)
+            _pressure_4, result_4 = boundary_pressure(guess_4)
             final_temperature_k, final_result = guess_4, result_4
         else:
             final_temperature_k, final_result = guess_3, result_3
@@ -299,11 +276,12 @@ def _solve_temperature_for_row(mixture: epcsaft.Mixture, row: dict[str, Any], pu
         "source_role": role,
         "system": row["system"],
         "P_bar": target_pressure_bar,
+        "solved_pressure_bar": float(final_result.pressure) / 1.0e5,
         "T_K": final_temperature_k,
         "T_C": final_temperature_k - 273.15,
-        "x_1_propanol": composition if role == "bubble_curve" else float(getattr(final_result, "x", [composition])[0]),
-        "y_1_propanol": composition if role == "dew_curve" else float(getattr(final_result, "y", [composition])[0]),
-        "route": getattr(final_result, "route", "single_component_vle"),
+        "x_1_propanol": float(final_result.x[0]),
+        "y_1_propanol": float(final_result.y[0]),
+        "route": final_result.route,
         "problem_kind": final_result.problem_kind,
         "route_status": diagnostics.get("route_status", ""),
         "solver_status": diagnostics.get("solver_status", ""),
@@ -312,6 +290,9 @@ def _solve_temperature_for_row(mixture: epcsaft.Mixture, row: dict[str, Any], pu
         "postsolve_accepted": bool(diagnostics.get("postsolve_accepted")),
         "hessian_backend": diagnostics.get("hessian_backend", ""),
         "iteration_count": diagnostics.get("iteration_count", ""),
+        "requested_coordinate": solve_composition,
+        "requested_coordinate_role": _role_coordinate_key(solve_role),
+        "endpoint_limit_basis": "finite_binary_dew_pressure_limit" if is_boundary_limit else "",
     }
 
 
@@ -384,6 +365,7 @@ def _write_plot(source_rows: list[dict[str, Any]], model_rows: list[dict[str, An
     fig.text(0.02, 0.01, f"minimum series score: {score_payload['normalized_plot_score']:.2f}; pressure-route inversion with exact Hessian solves", fontsize=8)
     fig.savefig(PNG, dpi=180)
     fig.savefig(SVG)
+    _strip_trailing_whitespace(SVG)
     fig.savefig(PDF)
     plt.close(fig)
 
@@ -394,11 +376,11 @@ def _write_plotted_csv(source_rows: list[dict[str, Any]], model_rows: list[dict[
         rows.append({"dataset": "paper_curve", **row})
     for row in model_rows:
         rows.append({"dataset": "package_model", **row})
-    _write_csv(PLOTTED_CSV, rows, ["dataset", "series", "source_role", "system", "P_bar", "T_C", "T_K", "x_1_propanol", "y_1_propanol", "route", "source_kind", "source_reference", "problem_kind", "route_status", "solver_status", "hessian_approximation", "exact_hessian_available", "postsolve_accepted", "hessian_backend", "iteration_count"])
+    _write_csv(PLOTTED_CSV, rows, ["dataset", "series", "source_role", "system", "P_bar", "solved_pressure_bar", "T_C", "T_K", "x_1_propanol", "y_1_propanol", "route", "source_kind", "source_reference", "problem_kind", "route_status", "solver_status", "hessian_approximation", "exact_hessian_available", "postsolve_accepted", "hessian_backend", "iteration_count", "requested_coordinate", "requested_coordinate_role", "endpoint_limit_basis"])
 
 
 def _native_receipt() -> dict[str, Any]:
-    receipt = native_freshness.build_receipt(native_module=extension_native_core(), checker_command=["uv", "run", "--no-sync", "python", "scripts/validation/check_gross_2002_full_replication.py", "--json", "--require-exact-association-hessian", "--require-fresh-native"])
+    receipt = native_freshness.build_equilibrium_native_receipt(native_module=extension_native_core(), checker_command=["uv", "run", "--no-sync", "python", "scripts/validation/check_gross_2002_full_replication.py", "--json", "--require-exact-association-hessian", "--require-fresh-native"])
     return native_freshness.receipt_to_jsonable(receipt)
 
 
@@ -449,15 +431,15 @@ def main() -> int:
         receipt = _retained_native_receipt()
     else:
         mixture = _mixture()
-        pure_cache: dict[str, dict[float, epcsaft_equilibrium.EquilibriumResult]] = {}
-        model_rows = [_solve_temperature_for_row(mixture, row, pure_cache) for row in source_rows]
+        model_rows = [_solve_temperature_for_row(mixture, row) for row in source_rows]
         receipt = _native_receipt()
     score_payload = _score(source_rows, model_rows)
-    _write_csv(MODEL_CSV, model_rows, ["series", "source_role", "system", "P_bar", "T_C", "T_K", "x_1_propanol", "y_1_propanol", "route", "problem_kind", "route_status", "solver_status", "hessian_approximation", "exact_hessian_available", "postsolve_accepted", "hessian_backend", "iteration_count"])
+    _write_csv(MODEL_CSV, model_rows, ["series", "source_role", "system", "P_bar", "solved_pressure_bar", "T_C", "T_K", "x_1_propanol", "y_1_propanol", "route", "problem_kind", "route_status", "solver_status", "hessian_approximation", "exact_hessian_available", "postsolve_accepted", "hessian_backend", "iteration_count", "requested_coordinate", "requested_coordinate_role", "endpoint_limit_basis"])
     _write_plotted_csv(source_rows, model_rows)
     _write_fit_statistics_csv(score_payload)
     _write_plot(source_rows, model_rows, score_payload)
     summary = {"figure_id": FIGURE_ID, "status": "accepted" if score_payload["pass"] else "blocked", "artifacts": {"source_csv": SOURCE_CSV, "source_notes_csv": SOURCE_NOTES_CSV, "model_csv": MODEL_CSV, "plotted_csv": PLOTTED_CSV, "fit_statistics_csv": FIT_STATISTICS_CSV, "png": PNG, "svg": SVG, "pdf": PDF}, "source_point_count": len(source_rows), "model_point_count": len(model_rows), "score": score_payload, "native_route": {"public_entrypoint": "epcsaft_equilibrium.Equilibrium(mixture, route='bubble_pressure'/'dew_pressure', T=..., x=.../y=...).solve()", "derivative_status": score_payload["derivative_status"], "model_csv": MODEL_CSV, "native_freshness_receipt": receipt}}
+    _write_json(SUMMARY_JSON, summary)
     _update_manifest(score_payload, receipt)
     print(json.dumps(_jsonable(summary), indent=2, sort_keys=True))
     return 0 if score_payload["pass"] else 2

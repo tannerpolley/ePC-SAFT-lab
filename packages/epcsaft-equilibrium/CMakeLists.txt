@@ -197,35 +197,12 @@ include("${EPCSAFT_PROVIDER_SDK_CMAKE_CONFIG}")
 epcsaft_provider_sdk_add_provider_native(epcsaft_provider_native)
 
 set(EPCSAFT_EQUILIBRIUM_NATIVE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft_equilibrium/native/equilibrium")
-set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/association_block.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/chemical_equilibrium_block.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/electrolyte_block.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/eos_phase_block.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/gibbs_blocks.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/phase_equilibrium_residual_block.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/reaction_block.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/saturation_block.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activated_equilibrium_nlp.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activation_plan.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/chemical_equilibrium_nlp.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/chemical_equilibrium_objective.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/continuation_driver.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/feasible_initialization.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/helpers.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/nlp_problem.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/selector_core.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/second_order.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/two_phase_eos_route.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/variable_transform.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/variable_layout.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives/nlp_contract_snapshot.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives/phase_block_derivatives.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives/phase_system_derivatives.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives/route_second_order.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/results/result_builder.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/routes/derived/bubble_dew.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/solvers/ipopt_adapter.cpp"
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/EquilibriumNativeSourceIdentity.cmake")
+epcsaft_equilibrium_load_native_source_manifest(
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
+    EPCSAFT_NATIVE_EQUILIBRIUM_MODULE_SOURCES
+    EPCSAFT_NATIVE_EQUILIBRIUM_IDENTITY_FILES
 )
 set(EPCSAFT_EQUILIBRIUM_NATIVE_INCLUDE_DIRS
     ${EPCSAFT_PROVIDER_NATIVE_INCLUDE_DIRS}
@@ -253,8 +230,7 @@ target_compile_definitions(epcsaft_equilibrium_native PUBLIC EPCSAFT_HAS_IPOPT=1
 pybind11_add_module(
     epcsaft_equilibrium_native_core
     NO_EXTRAS
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/module.cpp"
-    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/register_bindings.cpp"
+    ${EPCSAFT_NATIVE_EQUILIBRIUM_MODULE_SOURCES}
 )
 set_target_properties(
     epcsaft_equilibrium_native_core
@@ -272,6 +248,11 @@ target_include_directories(epcsaft_equilibrium_native_core
 )
 target_compile_features(epcsaft_equilibrium_native_core PRIVATE cxx_std_17)
 target_compile_definitions(epcsaft_equilibrium_native_core PRIVATE EPCSAFT_HAS_IPOPT=1)
+epcsaft_equilibrium_apply_native_source_identity(
+    epcsaft_equilibrium_native_core
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${EPCSAFT_PROVIDER_SDK_PACKAGE_ROOT}"
+)
 
 set(EPCSAFT_NATIVE_TARGETS epcsaft_provider_native epcsaft_equilibrium_native epcsaft_equilibrium_native_core)
 foreach(target_name IN LISTS EPCSAFT_NATIVE_TARGETS)

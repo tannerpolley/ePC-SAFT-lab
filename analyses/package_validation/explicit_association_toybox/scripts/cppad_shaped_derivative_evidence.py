@@ -3,9 +3,10 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+from collections.abc import Mapping
 from functools import lru_cache
 from pathlib import Path
-from typing import Callable, Mapping
+from typing import Callable
 
 import numpy as np
 

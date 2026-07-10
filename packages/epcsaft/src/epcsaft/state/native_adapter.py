@@ -6,18 +6,40 @@ from .. import _core
 from .._types import ActivityCoefficientResult, InputError, SolutionError, phase_to_int, vector_to_array
 from .eos_views import (
     CONTRIBUTION_NAMES as _CONTRIBUTION_NAMES,
+)
+from .eos_views import (
     GAS_CONSTANT as _GAS_CONSTANT,
+)
+from .eos_views import (
     STATE_METHOD_ALIAS_LOOKUP as _STATE_METHOD_ALIAS_LOOKUP,
+)
+from .eos_views import (
     STATE_METHOD_ALIAS_MAP,
     StateDiagnosticsView,
-    backend_from_contribution_details as _backend_from_contribution_details,
-    composition_derivative_residual_helmholtz_result as _composition_derivative_residual_helmholtz_result_payload,
-    derivative_result_payload as _derivative_result_payload,
-    fugacity_coefficient_term_result as _fugacity_coefficient_term_result_payload,
-    public_contribution_terms as _public_contribution_terms,
-    scalar_terms_dict as _scalar_terms_dict,
     state_diagnostics_payload,
+)
+from .eos_views import (
+    backend_from_contribution_details as _backend_from_contribution_details,
+)
+from .eos_views import (
+    composition_derivative_residual_helmholtz_result as _composition_derivative_residual_helmholtz_result_payload,
+)
+from .eos_views import (
+    derivative_result_payload as _derivative_result_payload,
+)
+from .eos_views import (
+    fugacity_coefficient_term_result as _fugacity_coefficient_term_result_payload,
+)
+from .eos_views import (
+    public_contribution_terms as _public_contribution_terms,
+)
+from .eos_views import (
+    scalar_terms_dict as _scalar_terms_dict,
+)
+from .eos_views import (
     unsupported_derivative as _unsupported_derivative,
+)
+from .eos_views import (
     vector_terms_dict as _vector_terms_dict,
 )
 from .native_payload import (

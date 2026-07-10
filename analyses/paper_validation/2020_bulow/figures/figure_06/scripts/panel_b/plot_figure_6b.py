@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -25,8 +23,9 @@ if str(REPO_ROOT) not in sys.path:
 if str(DIAGNOSTICS_DIR) not in sys.path:
     sys.path.insert(0, str(DIAGNOSTICS_DIR))
 
-from scripts.plot_outputs import paper_validation_path
 from figure6b_libr_ethanol_contributions import run_analysis
+
+from scripts.plot_outputs import paper_validation_path
 
 
 def main() -> None:

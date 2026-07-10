@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -11,17 +11,15 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import analysis_scripts_dir
-from scripts.plot_outputs import REPO_ROOT
-from copy import deepcopy
 import csv
 import math
 import sys
-
-
+from copy import deepcopy
 
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT, analysis_scripts_dir
 
 ANALYSIS_SCRIPTS = analysis_scripts_dir(__file__)
 if str(ANALYSIS_SCRIPTS) not in sys.path:
@@ -34,6 +32,7 @@ from scripts._env import require_epcsaft_install
 require_epcsaft_install()
 
 from _common import build_params
+
 from scripts._epcsaft_oop import epcsaft_density, epcsaft_fugacity_coefficient_terms
 from scripts.plot_outputs import analysis_data_path, paper_validation_path, save_plot_figure
 

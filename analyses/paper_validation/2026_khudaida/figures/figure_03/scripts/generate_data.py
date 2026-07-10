@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
-import sys
-
-
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -14,14 +11,19 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import figure_root_dir
+import sys
+
+from scripts.plot_outputs import analysis_scripts_dir
+
+ANALYSIS_SCRIPTS = analysis_scripts_dir(__file__)
+if str(ANALYSIS_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(ANALYSIS_SCRIPTS))
+
+import _common as common
 
 
 def main() -> None:
-    figure_root = figure_root_dir(__file__)
-    (figure_root / "source").mkdir(parents=True, exist_ok=True)
-    (figure_root / "results").mkdir(parents=True, exist_ok=True)
-    print(f"[skip] no standalone data-generation step for {figure_root.parent.name}/{figure_root.name}.")
+    common.write_lle_figure_data(Path(__file__).resolve().parent, 3, 303.15, 0.05, force_recompute=True)
 
 
 if __name__ == "__main__":

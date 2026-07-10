@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import epcsaft
@@ -60,14 +61,22 @@ def test_provider_local_phase_derivative_contract_is_objective_free() -> None:
     for token in forbidden_provider_tokens:
         assert token not in provider_eos_text
 
-    provider_sdk_manifest = (
-        PROVIDER_NATIVE_ROOT.parent / "native_sdk" / "provider_native_sdk_v1" / "provider_sources.json"
-    ).read_text(encoding="utf-8")
+    provider_sdk_manifest = json.loads(
+        (
+            PROVIDER_NATIVE_ROOT.parent
+            / "native_sdk"
+            / "provider_native_sdk_v1"
+            / "provider_sources.json"
+        ).read_text(encoding="utf-8")
+    )
     provider_sdk_cmake = (
         PROVIDER_NATIVE_ROOT.parent / "native_sdk" / "provider_native_sdk_v1" / "epcsaft_provider_sdk.cmake"
     ).read_text(encoding="utf-8")
 
-    assert "eos/derivatives/phase/local_helmholtz_derivatives.cpp" in provider_sdk_manifest
-    assert "eos/derivatives/phase/local_helmholtz_derivatives.cpp" in provider_sdk_cmake
-    assert "eos/derivatives/phase/objective_derivatives.cpp" not in provider_sdk_manifest
+    sources = set(provider_sdk_manifest["sources"])
+    assert "native/eos/derivatives/phase/local_helmholtz_derivatives.cpp" in sources
+    assert "native/eos/derivatives/phase/objective_derivatives.cpp" not in sources
+    assert "provider_sources.json" in provider_sdk_cmake
+    assert "epcsaft_provider_sdk_load_source_manifest" in provider_sdk_cmake
+    assert "eos/derivatives/phase/local_helmholtz_derivatives.cpp" not in provider_sdk_cmake
     assert "eos/derivatives/phase/objective_derivatives.cpp" not in provider_sdk_cmake

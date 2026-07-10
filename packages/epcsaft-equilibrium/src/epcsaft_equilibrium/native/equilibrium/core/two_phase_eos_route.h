@@ -3,6 +3,7 @@
 #include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/solvers/ipopt_adapter.h"
 
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -319,7 +320,7 @@ struct ElectrolyteHeld2PhaseDiscoveryResult {
     double mean_ionic_residual_scale = 1.0;
     double mean_ionic_max_abs_residual = 0.0;
     std::string mean_ionic_status = "bookkeeping_only_until_stage_iii";
-    std::string phase_discovery_status = "complete";
+    std::string phase_discovery_status = "incomplete";
     std::string stage_iii_refinement_status = "pending";
     std::string postsolve_certification_status = "pending";
     std::string public_route_admission_status = "separate_public_admission_gate";
@@ -510,8 +511,8 @@ struct NeutralTwoPhaseEosRouteResult {
 struct ElectrolyteStageIIIRefinementResult {
     std::string algorithm_scope = "held2_stage_iii_reduced_variable_refinement_only";
     std::string status = "incomplete";
-    std::string phase_discovery_status = "complete";
-    std::string stage_iii_refinement_status = "complete";
+    std::string phase_discovery_status = "incomplete";
+    std::string stage_iii_refinement_status = "incomplete";
     std::string postsolve_certification_status = "pending";
     std::string public_route_admission_status = "separate_public_admission_gate";
     std::string source_gate = "electrolyte_held2_counterion_pair_phase_discovery";
@@ -530,11 +531,11 @@ struct ElectrolyteStageIIIRefinementResult {
     std::vector<std::string> equation_labels;
     std::vector<double> residual_values;
     std::vector<double> residual_scaling;
-    double residual_inf_norm = 0.0;
+    double residual_inf_norm = std::numeric_limits<double>::infinity();
     double residual_tolerance = 1.0e-6;
     double phase_distance = 0.0;
     double phase_distance_tolerance = 1.0e-8;
-    double active_bound_violation = 0.0;
+    double active_bound_violation = std::numeric_limits<double>::infinity();
     double active_bound_tolerance = 1.0e-8;
     bool exact_reduced_jacobian_available = false;
     bool exact_reduced_hessian_available = false;
@@ -548,43 +549,43 @@ struct ElectrolyteStageIIIRefinementResult {
 struct ElectrolytePostsolveCertificationResult {
     std::string algorithm_scope = "held2_electrolyte_postsolve_phase_set_certification_only";
     std::string status = "incomplete";
-    std::string phase_discovery_status = "complete";
-    std::string stage_iii_refinement_status = "complete";
+    std::string phase_discovery_status = "incomplete";
+    std::string stage_iii_refinement_status = "incomplete";
     std::string postsolve_certification_status = "incomplete";
     std::string public_route_admission_status = "separate_public_admission_gate";
     std::vector<std::string> component_labels;
     std::vector<double> feed_composition;
     std::vector<double> reconstructed_feed_composition;
     std::vector<double> feed_reconstruction_residuals;
-    double feed_reconstruction_inf_norm = 0.0;
+    double feed_reconstruction_inf_norm = std::numeric_limits<double>::infinity();
     double feed_reconstruction_tolerance = 1.0e-6;
-    double component_nonnegativity_margin = 0.0;
+    double component_nonnegativity_margin = -std::numeric_limits<double>::infinity();
     std::vector<double> charge_vector;
     std::vector<double> phase_charge_residuals;
-    double max_phase_charge_residual = 0.0;
-    double total_charge_residual = 0.0;
+    double max_phase_charge_residual = std::numeric_limits<double>::infinity();
+    double total_charge_residual = std::numeric_limits<double>::infinity();
     double phase_charge_tolerance = 1.0e-10;
     double total_charge_tolerance = 1.0e-10;
     std::vector<std::string> neutral_species_labels;
     std::vector<double> neutral_transfer_residuals;
-    double neutral_transfer_max_abs_residual = 0.0;
+    double neutral_transfer_max_abs_residual = std::numeric_limits<double>::infinity();
     double neutral_transfer_tolerance = 1.0e-6;
     std::vector<std::string> mean_ionic_pair_labels;
     std::vector<double> mean_ionic_transfer_residuals;
-    double mean_ionic_transfer_max_abs_residual = 0.0;
+    double mean_ionic_transfer_max_abs_residual = std::numeric_limits<double>::infinity();
     double mean_ionic_transfer_tolerance = 1.0e-6;
-    double pressure_consistency_norm = 0.0;
+    double pressure_consistency_norm = std::numeric_limits<double>::infinity();
     double pressure_tolerance = 1.0e-6;
     int phase_count = 0;
     std::vector<double> phase_amount_totals;
     std::vector<double> phase_fractions;
     std::vector<std::vector<double>> phase_compositions;
     std::vector<double> composition_sum_residuals;
-    double phase_fraction_sum_residual = 0.0;
+    double phase_fraction_sum_residual = std::numeric_limits<double>::infinity();
     double phase_fraction_sum_tolerance = 1.0e-8;
     double composition_sum_tolerance = 1.0e-8;
-    double minimum_component_mole_fraction = 0.0;
-    double minimum_phase_amount = 0.0;
+    double minimum_component_mole_fraction = -std::numeric_limits<double>::infinity();
+    double minimum_phase_amount = -std::numeric_limits<double>::infinity();
     double phase_distance = 0.0;
     double phase_distance_tolerance = 1.0e-8;
     bool explicit_ion_reconstruction_accepted = false;

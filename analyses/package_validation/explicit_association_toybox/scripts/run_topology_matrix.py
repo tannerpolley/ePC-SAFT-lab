@@ -16,9 +16,13 @@ if __package__ in {None, ""}:
         EXACT_2B_REDUCTION,
         PICARD7_CLOSURE,
     )
-    from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import solve_exact_site_fractions
+    from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import (
+        solve_exact_site_fractions,
+    )
     from analyses.package_validation.explicit_association_toybox.scripts.metrics import metric_row, timed_closure
-    from analyses.package_validation.explicit_association_toybox.scripts.propagation_evidence import evaluate_named_closure
+    from analyses.package_validation.explicit_association_toybox.scripts.propagation_evidence import (
+        evaluate_named_closure,
+    )
     from analyses.package_validation.explicit_association_toybox.scripts.topology_reductions import (
         HUANG_RADOSZ_TOPOLOGIES,
         evaluate_topology_reduction,
@@ -99,7 +103,7 @@ def run_topology_matrix(
             for strength in strengths:
                 delta = system.delta_matrix(strength)
                 exact, exact_elapsed = timed_closure(
-                    lambda density=density, composition=composition, delta=delta: solve_exact_site_fractions(
+                    lambda system=system, density=density, composition=composition, delta=delta: solve_exact_site_fractions(
                         density=density,
                         x_assoc=system.x_assoc(composition),
                         delta=delta,
@@ -135,7 +139,7 @@ def run_topology_matrix(
                     if closure_name == EXACT_2B_REDUCTION and topology_type != "2B":
                         continue
                     closure, elapsed = timed_closure(
-                        lambda closure_name=closure_name: evaluate_named_closure(
+                        lambda closure_name=closure_name, system=system, density=density, composition=composition, delta=delta: evaluate_named_closure(
                             closure_name,
                             system=system,
                             density=density,

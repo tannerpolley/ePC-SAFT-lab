@@ -41,6 +41,18 @@
         "source_notes_csv": "analyses/paper_validation/2002_gross/figures/figure_01/source/source_notes.csv",
         "svg": "analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.svg"
       },
+      "association_derivative_evidence": {
+        "backend": "cppad_implicit_association",
+        "exact_site_fraction_hessian_available": true,
+        "exact_site_fraction_jacobian_available": true,
+        "global_phase_set_certified": false,
+        "mass_action_residual_tolerance": 1e-10,
+        "max_mass_action_residual": 4.551914400963142e-15,
+        "maximum_site_fraction": 0.9999987577653519,
+        "minimum_site_fraction": 0.014443032874463656,
+        "phase_receipts_per_solve": 2,
+        "returned_hessian_symmetry_scope": "returned_post_symmetrization_matrices"
+      },
       "counts_toward_completion": true,
       "figure_id": "figure_01",
       "near_critical_connectors": {
@@ -63,7 +75,7 @@
       "near_critical_exclusions": [
         {
           "component": "methanol",
-          "reason": "single_component_vle postsolve phase-distance gate rejects phase coalescence near the visible critical tip",
+          "reason": "internal associating saturation validation rejects phase coalescence near the visible critical tip",
           "temperature_window_K": "485-512"
         }
       ],
@@ -84,10 +96,10 @@
       "score": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "normalized_plot_score": 9.636849139450382,
+        "normalized_plot_score": 9.636849139450407,
         "pass": true
       },
-      "source_data_basis": "retained Gross 2002 Figure 1 PC-SAFT curve points plus visible experimental markers",
+      "source_data_basis": "calibrated Gross 2002 Figure 1 PC-SAFT curve points plus visible experimental markers",
       "source_data_home": {
         "association_aad": [
           "data/reference/pure_component/association_aad/methanol/association_aad.csv",
@@ -101,7 +113,13 @@
         ]
       },
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_01/source/figure_01.png",
-      "system": "methanol, 1-pentanol, 1-nonanol"
+      "system": "methanol, 1-pentanol, 1-nonanol",
+      "validation_scope": {
+        "classification": "internal_validation_evidence",
+        "native_binding": "_native_associating_single_component_vle_validation_result",
+        "production_exposed": false,
+        "public_route_admission": "closed"
+      }
     },
     {
       "acceptance_threshold": 8.0,
@@ -133,10 +151,10 @@
       "score": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "normalized_plot_score": 8.95236231311544,
+        "normalized_plot_score": 8.755679683182793,
         "pass": true
       },
-      "source_data_basis": "calibrated Gross 2002 Figure 2 pressure-composition source points with figure-local parameter provenance resolution for methanol/isobutane",
+      "source_data_basis": "Leu and Robinson 1992 Table I literature pressure-composition points retained in literature_points.csv; published Figure 2 PC-SAFT curve points are retained only for branch tracing",
       "source_identity_status": "resolved",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_02/source/figure_02.png",
       "system": "methanol/isobutane",
@@ -153,7 +171,6 @@
       "acceptance_threshold": 8.0,
       "artifacts": {
         "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_03/results/fit_statistics.csv",
-        "literature_points_csv": "analyses/paper_validation/2002_gross/figures/figure_03/source/literature_points.csv",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_03/results/model_curve.csv",
         "pdf": "analyses/paper_validation/2002_gross/figures/figure_03/results/figure_03.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_03/results/plotted_data.csv",
@@ -177,10 +194,10 @@
       "score": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "normalized_plot_score": 8.69530260974624,
+        "normalized_plot_score": 8.695291771809828,
         "pass": true
       },
-      "source_data_basis": "retained Gross 2002 Figure 3 solid-curve source traces with pressure-route inversion over admitted public pressure solves",
+      "source_data_basis": "calibrated Gross 2002 Figure 3 solid-curve source traces with pressure-route inversion over admitted public pressure solves",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_03/source/figure_03.png",
       "system": "1-propanol/ethylbenzene"
     },
@@ -188,7 +205,6 @@
       "acceptance_threshold": 8.0,
       "artifacts": {
         "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/fit_statistics.csv",
-        "literature_points_csv": "analyses/paper_validation/2002_gross/figures/figure_04/source/literature_points.csv",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/model_curve.csv",
         "pdf": "analyses/paper_validation/2002_gross/figures/figure_04/results/figure_04.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/plotted_data.csv",
@@ -212,10 +228,10 @@
       "score": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "normalized_plot_score": 8.022280537231941,
+        "normalized_plot_score": 8.022280518543198,
         "pass": true
       },
-      "source_data_basis": "retained Gross 2002 Figure 4 pressure-composition source points with retained reference-25 marker overlays",
+      "source_data_basis": "calibrated Gross 2002 Figure 4 pressure-composition source points with retained reference-25 marker overlays",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_04/source/figure_04.png",
       "system": "1-pentanol/benzene"
     },
@@ -223,7 +239,6 @@
       "acceptance_threshold": 8.0,
       "artifacts": {
         "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_05/results/fit_statistics.csv",
-        "literature_points_csv": "analyses/paper_validation/2002_gross/figures/figure_05/source/literature_points.csv",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_05/results/model_curve.csv",
         "pdf": "analyses/paper_validation/2002_gross/figures/figure_05/results/figure_05.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_05/results/plotted_data.csv",
@@ -247,10 +262,10 @@
       "score": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "normalized_plot_score": 9.435218700621311,
+        "normalized_plot_score": 9.435223864187655,
         "pass": true
       },
-      "source_data_basis": "retained Gross 2002 Figure 5 solid-curve source traces retained separately for 1-propanol/benzene and 2-propanol/benzene",
+      "source_data_basis": "calibrated Gross 2002 Figure 5 solid-curve source traces retained separately for 1-propanol/benzene and 2-propanol/benzene",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_05/source/figure_05.png",
       "system": "1-propanol/benzene and 2-propanol/benzene"
     },
@@ -258,7 +273,6 @@
       "acceptance_threshold": 8.0,
       "artifacts": {
         "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_06/results/fit_statistics.csv",
-        "literature_points_csv": "analyses/paper_validation/2002_gross/figures/figure_06/source/literature_points.csv",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_06/results/model_curve.csv",
         "pdf": "analyses/paper_validation/2002_gross/figures/figure_06/results/figure_06.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_06/results/plotted_data.csv",
@@ -284,10 +298,10 @@
       "score": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "normalized_plot_score": 8.923142039800089,
+        "normalized_plot_score": 8.92314203978835,
         "pass": true
       },
-      "source_data_basis": "retained Gross 2002 Figure 6 pressure-composition source points retained for all four temperature series",
+      "source_data_basis": "calibrated Gross 2002 Figure 6 pressure-composition source points retained for all four temperature series",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_06/source/figure_06.png",
       "system": "1-butanol/n-butane"
     },
@@ -295,7 +309,6 @@
       "acceptance_threshold": 8.0,
       "artifacts": {
         "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_07/results/fit_statistics.csv",
-        "literature_points_csv": "analyses/paper_validation/2002_gross/figures/figure_07/source/literature_points.csv",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_07/results/model_curve.csv",
         "pdf": "analyses/paper_validation/2002_gross/figures/figure_07/results/figure_07.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_07/results/plotted_data.csv",
@@ -321,10 +334,10 @@
       "score": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "normalized_plot_score": 8.442866866419665,
+        "normalized_plot_score": 8.323266071643346,
         "pass": true
       },
-      "source_data_basis": "retained Gross 2002 Figure 7 pressure-composition source points retained for four temperature series with the supercritical-partner caveat",
+      "source_data_basis": "calibrated Gross 2002 Figure 7 pressure-composition source points retained for four temperature series with the supercritical-partner caveat",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_07/source/figure_07.png",
       "system": "ethanol/n-butane"
     },
@@ -332,7 +345,6 @@
       "acceptance_threshold": 8.0,
       "artifacts": {
         "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/fit_statistics.csv",
-        "literature_points_csv": "analyses/paper_validation/2002_gross/figures/figure_08/source/literature_points.csv",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/model_curve.csv",
         "pdf": "analyses/paper_validation/2002_gross/figures/figure_08/results/figure_08.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/plotted_data.csv",
@@ -342,20 +354,23 @@
         "svg": "analyses/paper_validation/2002_gross/figures/figure_08/results/figure_08.svg"
       },
       "counts_toward_completion": true,
+      "evidence_scope": "public_vle_plus_internal_neutral_lle_sampled_candidate_diagnostic",
       "figure_id": "figure_08",
+      "global_held_proof": false,
       "paper_plot_type": "isobaric VLE and LLE T-x",
       "planned_artifact_stem": "figure_08",
       "plot_family": "phase_boundary",
+      "public_route_admission": "closed",
       "remaining_work": [],
       "replication_status": "accepted",
       "requires_exact_association_hessian": true,
       "score": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "normalized_plot_score": 9.9082422421564,
+        "normalized_plot_score": 8.785919134651888,
         "pass": true
       },
-      "source_data_basis": "retained Figure 8 LLE source fixture plus calibrated published figure trace of the upper PC-SAFT VLE envelope on the shared paper axis",
+      "source_data_basis": "retained Figure 8 LLE source fixture plus calibrated source_capture of the upper PC-SAFT VLE envelope on the shared paper axis",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_08/source/figure_08.png",
       "system": "methanol/cyclohexane"
     },
@@ -363,7 +378,6 @@
       "acceptance_threshold": 8.0,
       "artifacts": {
         "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_09/results/fit_statistics.csv",
-        "literature_points_csv": "analyses/paper_validation/2002_gross/figures/figure_09/source/literature_points.csv",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_09/results/model_curve.csv",
         "pdf": "analyses/paper_validation/2002_gross/figures/figure_09/results/figure_09.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_09/results/plotted_data.csv",
@@ -387,10 +401,10 @@
       "score": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "normalized_plot_score": 8.848154979228916,
+        "normalized_plot_score": 8.848154979228989,
         "pass": true
       },
-      "source_data_basis": "retained Gross 2002 Figure 9 retained PC-SAFT solid-curve published figure trace with public pressure-route inversion over source-backed associating VLE pressure solves",
+      "source_data_basis": "calibrated Gross 2002 Figure 9 retained PC-SAFT solid-curve source_capture with public pressure-route inversion over source-backed associating VLE pressure solves",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_09/source/figure_09.png",
       "system": "methanol/1-octanol"
     },
@@ -398,8 +412,6 @@
       "acceptance_threshold": 8.0,
       "artifacts": {
         "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_10/results/fit_statistics.csv",
-        "hessian_diagnostic_csv": "analyses/paper_validation/2002_gross/figures/figure_10/source/hessian_diagnostic_points.csv",
-        "literature_points_csv": "analyses/paper_validation/2002_gross/figures/figure_10/source/literature_points.csv",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_10/results/model_curve.csv",
         "pdf": "analyses/paper_validation/2002_gross/figures/figure_10/results/figure_10.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_10/results/plotted_data.csv",
@@ -409,10 +421,13 @@
         "svg": "analyses/paper_validation/2002_gross/figures/figure_10/results/figure_10.svg"
       },
       "counts_toward_completion": true,
+      "evidence_scope": "internal_cross_association_component_diagnostic",
       "figure_id": "figure_10",
+      "global_held_proof": false,
       "paper_plot_type": "isobaric VLLE/LLE T-x",
       "planned_artifact_stem": "figure_10",
       "plot_family": "phase_boundary",
+      "public_route_admission": "closed",
       "remaining_work": [],
       "replication_status": "accepted",
       "required_series": [
@@ -428,7 +443,7 @@
         "normalized_plot_score": 10.0,
         "pass": true
       },
-      "source_data_basis": "retained Gross 2002 Figure 10 visible PC-SAFT VLLE/LLE envelope trace with retained exact association Hessian diagnostic for water/1-pentanol",
+      "source_data_basis": "calibrated Gross 2002 Figure 10 visible PC-SAFT VLLE/LLE envelope trace with retained exact association Hessian diagnostic for water/1-pentanol",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_10/source/figure_10.png",
       "system": "water/1-pentanol"
     }
@@ -447,9 +462,24 @@
       "--require-exact-association-hessian",
       "--require-fresh-native"
     ],
-    "git_commit": "c2abffda4ad2b63a965fee1d3736a4e9741d8486",
+    "current_source_identity": "2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94",
+    "embedded_source_identity": "2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94",
+    "embedded_source_identity_algorithm": "sha256-relative-path-content-v1",
+    "embedded_source_identity_file_count": 110,
+    "embedded_source_identity_limit": "Covers the canonical equilibrium object/module/header manifest, every listed equilibrium file, this shared CMake loader/identity helper, the provider source manifest contract, the exact manifest-listed provider target .cpp files, and the .h/.hpp header contracts reachable from manifest include roots. Root/standalone target compile definitions, include/link flags, compiler identity, generated dependency sources, and dependency binaries are outside this source receipt.",
+    "embedded_source_identity_scope": "equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph",
+    "freshness_mode": "embedded_source_identity",
+    "generation_evidence_scope": "internal_cross_association_component_diagnostic",
+    "git_commit": "162d32ba225a9fbe0f711b5c28985238589f2d10",
     "native_module_name": "epcsaft_equilibrium._native_core",
-    "native_module_path": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+    "native_module_path": "/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/packages/epcsaft-equilibrium/src/epcsaft_equilibrium/_native_core.cpython-313-x86_64-linux-gnu.so",
+    "neutral_lle_global_held_proof": false,
+    "neutral_lle_public_route_admission": "closed",
+    "source_identity_algorithm": "sha256-relative-path-content-v1",
+    "source_identity_file_count": 110,
+    "source_identity_limit": "Covers the canonical equilibrium object/module/header manifest, every listed equilibrium file, this shared CMake loader/identity helper, the provider source manifest contract, the exact manifest-listed provider target .cpp files, and the .h/.hpp header contracts reachable from manifest include roots. Root/standalone target compile definitions, include/link flags, compiler identity, generated dependency sources, and dependency binaries are outside this source receipt.",
+    "source_identity_matches": true,
+    "source_identity_scope": "equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph"
   },
   "planned_figures": [],
   "required_figures": [

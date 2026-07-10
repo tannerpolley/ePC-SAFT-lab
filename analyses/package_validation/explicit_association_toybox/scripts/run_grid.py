@@ -18,12 +18,16 @@ if __package__ in {None, ""}:
     from analyses.package_validation.explicit_association_toybox.scripts.dispersion import (
         mixed_dispersion_moments,
     )
-    from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import solve_exact_site_fractions
+    from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import (
+        solve_exact_site_fractions,
+    )
     from analyses.package_validation.explicit_association_toybox.scripts.hard_chain import ares_hc as hard_chain_ares
     from analyses.package_validation.explicit_association_toybox.scripts.hard_chain import hard_chain_state
     from analyses.package_validation.explicit_association_toybox.scripts.metrics import metric_row, timed_closure
     from analyses.package_validation.explicit_association_toybox.scripts.pcsaft_inputs import state_from_config
-    from analyses.package_validation.explicit_association_toybox.scripts.propagation_evidence import evaluate_named_closure
+    from analyses.package_validation.explicit_association_toybox.scripts.propagation_evidence import (
+        evaluate_named_closure,
+    )
 else:
     from .association_models import AssociationSystem
     from .dispersion import ares_disp as dispersion_ares
@@ -93,7 +97,7 @@ def run_grid(
                 for strength in raw_system_config["strength_grid"]:
                     delta = system.delta_matrix(float(strength))
                     exact, exact_elapsed = timed_closure(
-                        lambda density=float(density), composition=composition, delta=delta: solve_exact_site_fractions(
+                        lambda system=system, density=float(density), composition=composition, delta=delta: solve_exact_site_fractions(
                             density=density,
                             x_assoc=system.x_assoc(composition),
                             delta=delta,
@@ -118,7 +122,7 @@ def run_grid(
                         if not _closure_applies(closure_name, system):
                             continue
                         closure, elapsed = timed_closure(
-                            lambda closure_name=closure_name: evaluate_named_closure(
+                            lambda closure_name=closure_name, system=system, density=density, composition=composition, delta=delta: evaluate_named_closure(
                                 closure_name,
                                 system=system,
                                 density=float(density),

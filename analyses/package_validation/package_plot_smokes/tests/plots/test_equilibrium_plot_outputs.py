@@ -5,15 +5,17 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
+import epcsaft
 import matplotlib.pyplot as plt
 import numpy as np
 
-import epcsaft
+from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import (
+    assert_plot_with_data,
+    hydrocarbon_basis_mixture,
+    methanol_cyclohexane_mixture,
+    save_comparison_plot,
+)
 from scripts import plot_outputs
-from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import assert_plot_with_data
-from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import hydrocarbon_basis_mixture
-from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import methanol_cyclohexane_mixture
-from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import save_comparison_plot
 
 
 def _ascani_electrolyte_lle_result() -> tuple[epcsaft.ePCSAFTMixture, epcsaft.EquilibriumResult]:

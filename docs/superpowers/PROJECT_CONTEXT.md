@@ -16,7 +16,7 @@ This document is authoritative over older planning language that allowed audit-o
 
 `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md` is the canonical architecture contract, mathematical doctrine, activation policy, and staged implementation plan for generalized fluid-phase equilibrium. It defines the shared equilibrium-core structure, thermodynamic constrained NLP form, Ipopt/numerics layer, staged HELD requirements, postsolve certification, and collapsed family labels. Those labels are planning labels only, not runtime route keys.
 
-`docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml` is the executable registry for the collapsed generalized equilibrium plan. It uses descriptive `family_label` values, derived subworkflows, and PE-focused benchmark cases. Current deterministic TPD/candidate screening is not full HELD, so generalized family rows stay `planned_not_public` until full HELD-stage phase discovery, exact derivatives, and postsolve certification gates pass. Bubble/dew/cloud/shadow are derived boundary workflows planned after the neutral TP flash fixture for `T-x` and `P-x` diagrams; do not delete existing bubble/dew code or tests.
+`docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml` is the executable registry for the collapsed generalized equilibrium plan. It uses descriptive `family_label` values, derived subworkflows, and PE-focused benchmark cases. Runtime exposure is narrower and is derived from the native selector activation contract plus complete evidence records: bubble pressure, dew pressure, and scoped nonassociating hydrocarbon single-component VLE. Neutral LLE remains internal because its sampled-candidate Stage II audit is not a global HELD proof. Bubble/dew temperature, neutral TP flash, neutral multiphase, electrolyte LLE, and reactive families remain closed until their own live literature-backed proof, exact-derivative, global phase-discovery, and postsolve-certification gates pass.
 
 `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md` is the GFPE-first execution overlay for generalized fluid-phase equilibrium. It uses this master context as package context and completion standard, but GFPE doctrine is the organizing spine for its stages.
 Its Stage 8 gate must complete route-owned user scaling, Ipopt option profiles,
@@ -24,16 +24,17 @@ scaled numerical acceptance diagnostics, barrier/active-bound diagnostics, and
 exact-Hessian profile gating before Stage 9 real-mixture HELD validation work starts.
 Stage 9 and Stage 10 convergence diagnosis must stay narrow: use the phase-discovery
 checker or one explicit `--equilibrium-debug` test node, not broad
-equilibrium route/result sweeps. Stage 10 currently uses the
-hydrocarbon-workbook-derived PC-SAFT TP flash fixture as the executable neutral
-validation target; Pereira 2012 System III remains SAFT-VR/HELD context until model
-parity or a source-backed ePC-SAFT reparameterization exists.
+equilibrium route/result sweeps. Stage 10 retains the
+hydrocarbon-workbook-derived PC-SAFT TP flash fixture as an internal
+characterization target; it does not admit the public TP-flash route. Pereira
+2012 System III remains SAFT-VR/HELD context until model parity or a
+source-backed ePC-SAFT reparameterization exists.
 Stage 11 boundary diagnostics follow the same rule: routine checks are
 contract-only, one named route point is the debug unit, and any Ipopt
 acceptable-point, tiny-step, feasible-point, or iteration-limit seed path is
-not completion evidence. Current bubble/dew `P-x` and `T-x` route-point validation is
-available only through the explicit Stage 11 checker sweep opt-in, not through
-routine validation.
+not completion evidence. Bubble/dew pressure routes are admitted only through
+their live Gross/Sadowski proof nodes. Bubble/dew temperature sweeps remain
+internal validation and do not authorize public exposure.
 
 `docs/superpowers/specs/2026-05-27-m4-equilibrium-gfpe-package-cleanup-plan.md` is the module cleanup overlay for
 that same GFPE doctrine. It keeps selector admission, shared NLP ownership,
@@ -111,11 +112,9 @@ TargetDataset(...)
 TargetDataset.target_family_summaries()
 Equilibrium(mixture, route=..., ...)
 Equilibrium(mixture, route="bubble_pressure", T=..., x=...).solve()
-Equilibrium(mixture, route="bubble_temperature", P=..., x=...).solve()
 Equilibrium(mixture, route="dew_pressure", T=..., y=...).solve()
-Equilibrium(mixture, route="dew_temperature", P=..., y=...).solve()
-Equilibrium(mixture, route="flash", T=..., P=..., z=...).solve()
 Equilibrium(mixture, route="lle", T=..., P=..., z=...).solve()
+Equilibrium(mixture, route="single_component_vle", T=...).solve()
 fit_pure_parameters(...)
 fit_binary_parameters(...)
 fit_liquid_electrolyte_parameters(...)
@@ -136,10 +135,12 @@ Current API orientation for agents:
 - Prefer the constructor-configured `Equilibrium(mixture, route=..., ...)` workflow object for public equilibrium calls.
 - The current production neutral equilibrium surface is one
   `Equilibrium(mixture, route=..., ...).solve()` workflow with route specs
-  `bubble_pressure`, `bubble_temperature`, `dew_pressure`, `dew_temperature`,
-  `flash`, and neutral nonassociating `lle`; route-specific public methods,
-  route-family dataclasses, and private native request payloads are not
-  exported compatibility surfaces.
+  `bubble_pressure`, `dew_pressure`, and scoped nonassociating hydrocarbon
+  `single_component_vle`; route-specific public methods, route-family
+  dataclasses, and private native request payloads are not exported surfaces.
+- Treat neutral LLE as internal component evidence, not a public route. Its
+  sampled-candidate Stage II audit does not establish global HELD phase-set
+  completeness, so `Equilibrium(..., route="lle")` remains rejected.
 - Treat the native activation matrix and selector core as the source of truth for which route families are production exposed versus declared-not-exposed.
 - Treat current neutral deterministic TPD/candidate screening and postsolve
   certification as useful existing route support, not as full HELD. Any
@@ -150,8 +151,8 @@ Current API orientation for agents:
 - Treat `TargetDataset.target_family_summaries()` as the shared target-family summary shape across retained regression evidence.
 - During the monorepo transition, treat `epcsaft.capabilities()` as the
   provider capability contract and `epcsaft_equilibrium.capabilities()` as the
-  equilibrium capability contract. The retained `capability_evidence` registry
-  still owns test-slice routing for source-checkout validation.
+  equilibrium capability contract. `scripts.dev.validation_registry` owns
+  source-checkout test slices; scientific evidence remains package-owned.
 - Treat `epcsaft.provider_native_sdk()` as the provider-owned native SDK
   discovery surface for future extension builds. It does not make
   `epcsaft._core` a stable extension ABI.
@@ -558,7 +559,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 - GFPE infrastructure gate: sparse NLP contracts, route scaling, domain bounds, smooth variable maps, Ipopt barrier constraints, diagnostics, and exact derivative policy
 - staged HELD phase discovery and postsolve phase-set certification before generalized neutral production admission
-- neutral multiphase phase-set discovery extension after the neutral TP flash proof; VLLE-specific tests are not the immediate priority
+- neutral TP flash and neutral multiphase phase-set discovery remain separate closed re-admission targets; VLLE-specific tests are not the immediate priority
 - native coupled activity speciation
 - native derivative-backed neutral LLE
 - native electrolyte LLE with distributed ions

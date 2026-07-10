@@ -25,8 +25,8 @@ SOURCE_REQUIREMENT_FIGURES = ("figure_02", "figure_03", "figure_04", "figure_05"
 VISUAL_ARTIFACT_KEYS = ("source_csv", "model_csv", "plotted_csv", "fit_statistics_csv", "png", "svg", "pdf")
 FIGURE01_ARTIFACT_KEYS = ("source_csv", "fit_statistics_csv")
 ASSOCIATING_LLE_EVIDENCE_QUANTITIES = (
-    "associating_neutral_lle_gross_2002_public_exact_hessian",
-    "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian",
+    "associating_neutral_lle_gross_2002_internal_exact_hessian",
+    "associating_neutral_lle_gross_2002_figure_10_internal_exact_hessian",
 )
 MIN_NORMALIZED_PLOT_SCORE = 7.0
 MIN_BRANCH_COVERAGE_SCORE = 1.0
@@ -172,62 +172,75 @@ def _shared_certification_payload() -> dict[str, Any]:
 
     certification = epcsaft_equilibrium.capabilities()["phase_equilibrium_certification"]
     validation_blockers = list(validate_phase_equilibrium_certification_contracts(certification))
-    contract = next(
+    closed_family = next(
         (
             row
-            for row in certification["production_route_contracts"]
+            for row in certification["planned_route_families"]
             if row.get("selector_family") == "neutral_lle"
         ),
         {},
     )
     evidence_rows = [
         row
-        for row in contract.get("evidence_rows", [])
+        for row in certification.get("evidence_rows", [])
         if row.get("quantity") in ASSOCIATING_LLE_EVIDENCE_QUANTITIES
     ]
     evidence_by_quantity = {row.get("quantity"): row for row in evidence_rows}
     blockers = list(validation_blockers)
+    if not closed_family:
+        blockers.append("gross_2002_neutral_lle_closed_family_missing")
+    else:
+        if closed_family.get("production_exposed") is not False:
+            blockers.append("gross_2002_neutral_lle_family_exposed")
+        if closed_family.get("exposure_status") != "declared_not_exposed":
+            blockers.append("gross_2002_neutral_lle_exposure_status_mismatch")
+        if list(closed_family.get("public_routes", [])):
+            blockers.append("gross_2002_neutral_lle_public_routes_open")
+        if list(closed_family.get("proof_routes", [])):
+            blockers.append("gross_2002_neutral_lle_public_proof_routes_open")
+    if "neutral_lle" in certification.get("production_families", []):
+        blockers.append("gross_2002_neutral_lle_production_family_open")
+    if "lle" in certification.get("public_routes", []):
+        blockers.append("gross_2002_public_lle_route_open")
     for quantity in ASSOCIATING_LLE_EVIDENCE_QUANTITIES:
         row = evidence_by_quantity.get(quantity)
         if row is None:
             blockers.append(f"gross_2002_shared_evidence_missing:{quantity}")
             continue
-        if row.get("classification") != "production_supported":
+        if row.get("classification") != "internal_validation_evidence":
             blockers.append(f"gross_2002_shared_evidence_classification_rejected:{quantity}")
-        if row.get("public_admission_state") != "public_route_open":
-            blockers.append(f"gross_2002_shared_evidence_public_route_closed:{quantity}")
-        if row.get("public_route") != "lle":
-            blockers.append(f"gross_2002_shared_evidence_public_route_mismatch:{quantity}")
+        if row.get("supported") is not True:
+            blockers.append(f"gross_2002_shared_evidence_support_rejected:{quantity}")
         if row.get("backend") != "cppad_implicit_association":
             blockers.append(f"gross_2002_shared_evidence_backend_rejected:{quantity}")
         if row.get("selector_family") != "neutral_lle":
             blockers.append(f"gross_2002_shared_evidence_selector_mismatch:{quantity}")
+        if not str(row.get("source_fixture", "")).strip():
+            blockers.append(f"gross_2002_shared_evidence_source_fixture_missing:{quantity}")
 
     return {
-        "status": "accepted" if contract and not blockers else "blocked",
-        "selector_family": contract.get("selector_family", ""),
-        "family_residual_block": contract.get("family_residual_block", ""),
-        "public_routes": list(contract.get("public_routes", [])),
-        "proof_routes": list(contract.get("proof_routes", [])),
-        "residual_families": list(contract.get("residual_families", [])),
-        "constraint_families": list(contract.get("constraint_families", [])),
-        "variable_model": contract.get("variable_model", ""),
-        "density_backend": contract.get("density_backend", ""),
-        "derivative_requirement": contract.get("derivative_requirement", ""),
-        "stability_prelayer": contract.get("stability_prelayer", ""),
-        "postsolve_certification": contract.get("postsolve_certification", ""),
-        "acceptance_diagnostics_required": list(contract.get("acceptance_diagnostics_required", [])),
-        "production_evidence_quantities": list(contract.get("production_evidence_quantities", [])),
+        "status": "accepted" if closed_family and not blockers else "blocked",
+        "selector_family": closed_family.get("selector_family", ""),
+        "family_residual_block": "lle",
+        "production_exposed": bool(closed_family.get("production_exposed", False)),
+        "exposure_status": closed_family.get("exposure_status", ""),
+        "public_routes": list(closed_family.get("public_routes", [])),
+        "proof_routes": list(closed_family.get("proof_routes", [])),
+        "public_route_admission": "closed",
+        "global_held_proof": False,
+        "internal_evidence_quantities": sorted(
+            str(row.get("quantity", "")) for row in evidence_rows
+        ),
         "required_associating_evidence_quantities": list(ASSOCIATING_LLE_EVIDENCE_QUANTITIES),
         "associating_evidence_rows": [
             {
                 "quantity": row.get("quantity", ""),
                 "backend": row.get("backend", ""),
                 "classification": row.get("classification", ""),
-                "public_admission_state": row.get("public_admission_state", ""),
-                "public_route": row.get("public_route", ""),
                 "selector_family": row.get("selector_family", ""),
                 "component_pair": list(row.get("component_pair", [])),
+                "public_route_admission": "closed",
+                "global_held_proof": False,
                 "k_ij": row.get("k_ij"),
                 "source_fixture": row.get("source_fixture", ""),
             }
@@ -352,6 +365,41 @@ def evaluate_payload(
                 blockers.extend(_figure_artifact_blockers(record))
             if figure_id == "figure_01" and record.get("pure_association_sanity", {}).get("status") != "verified":
                 blockers.append("gross_2002_figure_01_pure_association_statistics_missing")
+            if figure_id == "figure_01":
+                validation_scope = record.get("validation_scope", {})
+                if not isinstance(validation_scope, dict) or validation_scope != {
+                    "classification": "internal_validation_evidence",
+                    "native_binding": "_native_associating_single_component_vle_validation_result",
+                    "public_route_admission": "closed",
+                    "production_exposed": False,
+                }:
+                    blockers.append("gross_2002_figure_01_internal_validation_scope_missing")
+                association_evidence = record.get("association_derivative_evidence", {})
+                mass_action_residual = (
+                    _as_float(association_evidence.get("max_mass_action_residual"))
+                    if isinstance(association_evidence, dict)
+                    else math.nan
+                )
+                mass_action_tolerance = (
+                    _as_float(association_evidence.get("mass_action_residual_tolerance"))
+                    if isinstance(association_evidence, dict)
+                    else math.nan
+                )
+                if (
+                    not isinstance(association_evidence, dict)
+                    or association_evidence.get("backend") != "cppad_implicit_association"
+                    or association_evidence.get("exact_site_fraction_jacobian_available") is not True
+                    or association_evidence.get("exact_site_fraction_hessian_available") is not True
+                    or association_evidence.get("phase_receipts_per_solve") != 2
+                    or not math.isfinite(mass_action_residual)
+                    or not math.isfinite(mass_action_tolerance)
+                    or mass_action_tolerance <= 0.0
+                    or mass_action_residual > mass_action_tolerance
+                    or association_evidence.get("returned_hessian_symmetry_scope")
+                    != "returned_post_symmetrization_matrices"
+                    or association_evidence.get("global_phase_set_certified") is not False
+                ):
+                    blockers.append("gross_2002_figure_01_association_derivative_evidence_rejected")
             if figure_id == "figure_10" and record.get("cross_association_stress", {}).get("status") != "verified":
                 blockers.append("gross_2002_figure_10_cross_association_stress_missing")
 
@@ -385,7 +433,7 @@ def evaluate_payload(
         try:
             from scripts.validation import native_freshness
 
-            native_freshness.require_receipt(dict(receipt))
+            native_freshness.require_equilibrium_native_fresh(dict(receipt))
         except Exception:
             blockers.append("gross_2002_native_freshness_receipt_missing")
 
@@ -455,6 +503,8 @@ def _figure01_record(row: dict[str, Any]) -> dict[str, Any]:
             "components": sorted(components),
             "source": row.get("parameter_sources", []),
         },
+        "validation_scope": row.get("validation_scope", {}),
+        "association_derivative_evidence": row.get("association_derivative_evidence", {}),
     }
 
 
@@ -747,10 +797,11 @@ def _build_payload(
 
             apply_native_runtime_env(os.environ)
             from epcsaft_equilibrium._native import extension_native_core
+
             from scripts.validation import native_freshness
 
             receipt = native_freshness.receipt_to_jsonable(
-                native_freshness.build_receipt(
+                native_freshness.build_equilibrium_native_receipt(
                     native_module=extension_native_core(),
                     checker_command=checker_command
                     or [

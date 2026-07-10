@@ -103,6 +103,9 @@ def test_extension_package_manifests_depend_on_provider_workspace_source() -> No
         sdist_include = set(pyproject["tool"]["scikit-build"]["sdist"]["include"])
         assert f"src/{metadata['module']}/native/**/*.cpp" in sdist_include
         assert f"src/{metadata['module']}/native/**/*.h" in sdist_include
+        if package_name == "epcsaft-equilibrium":
+            assert "cmake/**/*.cmake" in sdist_include
+            assert "cmake/**/*.json" in sdist_include
 
 
 def test_extension_package_shells_do_not_reexport_transition_core_objects() -> None:

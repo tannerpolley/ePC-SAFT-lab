@@ -91,8 +91,8 @@ PAPER_VALIDATION_DOC_ROOTS = {
     "analyses/paper_validation/2026_khudaida",
     "analyses/paper_validation/2024_hubach",
     "analyses/paper_validation/2024_yu",
-    "analyses/paper_validation/2026_rezaee",
 }
+PAPER_SOURCE_EVIDENCE_ROOTS = {"analyses/paper_validation/2026_rezaee"}
 PAPER_VALIDATION_INFRA_ROOTS = {
     "analyses/paper_validation/scripts",
     "analyses/paper_validation/tests",
@@ -918,14 +918,18 @@ def test_production_equilibrium_routes_delegate_ipopt_acceptance_to_adapter() ->
     assert "_resolved_ipopt_" not in workflow
 
 
-def test_equilibrium_routes_delegate_result_acceptance_to_result_builder() -> None:
+def test_equilibrium_routes_delegate_result_acceptance_to_result_owners() -> None:
     route_sources = [
         EQUILIBRIUM_NATIVE_ROOT / "core" / "two_phase_eos_route.cpp",
+        EQUILIBRIUM_NATIVE_ROOT / "core" / "two_phase_eos_route.h",
         EQUILIBRIUM_NATIVE_ROOT / "routes" / "derived" / "bubble_dew.cpp",
     ]
     result_builder = (EQUILIBRIUM_NATIVE_ROOT / "results" / "result_builder.cpp").read_text(
         encoding="utf-8", errors="ignore"
     )
+    held_certification = (
+        EQUILIBRIUM_NATIVE_ROOT / "results" / "held_certification.cpp"
+    ).read_text(encoding="utf-8", errors="ignore")
 
     forbidden_fragments = (
         ".solver_accepted =",
@@ -938,6 +942,44 @@ def test_equilibrium_routes_delegate_result_acceptance_to_result_builder() -> No
         ".status = certified_postsolve_status",
         "certified_postsolve_status(",
         "apply_ipopt_solve_metadata(",
+        "discovery.held_stage_ii_bound_gap <= tpd_tolerance",
+        "const bool continuous_tpd_complete =",
+        "selected_upper_bound = 0.0;",
+        "discovery.held_stage_ii_replay_ready =",
+        "discovery.held_stage_ii_status =",
+        "discovery.held_stage_ii_candidate_bound_audit_status =",
+        "discovery.held_stage_ii_dual_loop_status =",
+        "discovery.held_stage_ii_stopping_reason =",
+        "discovery.held_stage_ii_replay_source =",
+        "discovery.held_stage_ii_replay_seed_name =",
+        "const bool solver_success =",
+        "const bool finite_compositions =",
+        "const bool residuals_pass =",
+        "const bool phase_distance_pass =",
+        "const bool bounds_pass =",
+        "const bool derivative_pass =",
+        "out.residual_inf_norm <= residual_tolerance",
+        "out.phase_distance > phase_distance_tolerance",
+        "out.active_bound_violation <= active_bound_tolerance",
+        "phase_compositions = out.selected_phase_compositions;",
+        "stage_ii.held_stage_ii_replay_ready",
+        'out.held2_discovery.phase_discovery_status == "complete"',
+        'out.phase_discovery_status = "complete";',
+        'out.stage_iii_refinement_status = "pending";',
+        'out.stage_iii_refinement_status = out.status == "complete"',
+        'std::string stage_iii_refinement_status = "complete";',
+    )
+    acceptance_write_pattern = re.compile(
+        r"\.(?:[A-Za-z_]*accepted|rejection_reason|phase_set_mass_balance_feasible)\s*="
+    )
+    held_policy_write_pattern = re.compile(
+        r"\b[A-Za-z_][A-Za-z0-9_.]*\.held_stage_"
+        r"(?:i_(?:status|negative_tpd_found)|ii_(?:status|candidate_bound_audit_status|"
+        r"dual_loop_status|stopping_reason|replay_ready|replay_source|replay_seed_name))\s*="
+    )
+    electrolyte_policy_write_pattern = re.compile(
+        r"\b[A-Za-z_][A-Za-z0-9_.]*\."
+        r"(?:phase_discovery_status|stage_iii_refinement_status|postsolve_certification_status)\s*="
     )
     offenders: list[str] = []
     for path in route_sources:
@@ -946,11 +988,51 @@ def test_equilibrium_routes_delegate_result_acceptance_to_result_builder() -> No
         for fragment in forbidden_fragments:
             if fragment in text:
                 offenders.append(f"{rel}: {fragment}")
+        for match in acceptance_write_pattern.finditer(text):
+            offenders.append(f"{rel}: {match.group(0)}")
+        for match in held_policy_write_pattern.finditer(text):
+            offenders.append(f"{rel}: {match.group(0)}")
+        for match in electrolyte_policy_write_pattern.finditer(text):
+            offenders.append(f"{rel}: {match.group(0)}")
 
     assert offenders == []
     assert "apply_neutral_route_solve_result" in result_builder
     assert "apply_neutral_route_postsolve" in result_builder
+    assert "certify_neutral_postsolve" in result_builder
+    assert "certify_neutral_phase_discovery" in result_builder
+    assert "certify_electrolyte_postsolve" in result_builder
     assert "neutral_route_postsolve_status" in result_builder
+    assert "certify_held_stage_i_evidence" in held_certification
+    assert "complete_sampled_candidate_bound_audit" in held_certification
+    assert "certify_held_stage_ii_bound_audit" in held_certification
+    assert "held_stage_ii_replay_evidence_complete" in held_certification
+    assert "sampled_candidate_replay_is_valid" in held_certification
+    assert "held_stage_ii_replay_is_certified" in held_certification
+    assert "certify_electrolyte_held2_phase_discovery" in held_certification
+    assert "certify_electrolyte_stage_iii_refinement" in held_certification
+    assert "certify_refined_neutral_postsolve" in held_certification
+    assert 'postsolve.rejection_reason = "stage_ii_replay_not_consumed"' in held_certification
+
+
+def test_neutral_lle_route_uses_only_the_sampled_candidate_pair() -> None:
+    route_source = (
+        EQUILIBRIUM_NATIVE_ROOT / "core" / "two_phase_eos_route.cpp"
+    ).read_text(encoding="utf-8", errors="ignore")
+    neutral_lle_route = route_source.split(
+        "NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(",
+        maxsplit=1,
+    )[1]
+
+    assert 'out.initial_point_strategy = "sampled_candidate_pair_replay";' in neutral_lle_route
+    assert "sampled_candidate_replay_is_valid(discovery)" in neutral_lle_route
+    assert "build_two_phase_eos_initial_point_from_candidate_set(" in neutral_lle_route
+    assert "sampled_candidate_pair_replay_unavailable" in neutral_lle_route
+    assert "neutral_two_phase_seed_candidates" not in neutral_lle_route
+    assert "append_phase_discovery_seed_candidates" not in neutral_lle_route
+    assert "canonical_shifted_feed" not in neutral_lle_route
+    assert "mirrored_shifted_feed" not in neutral_lle_route
+    assert "binary_extreme_component_" not in neutral_lle_route
+    assert "deterministic_seed_sweep" not in neutral_lle_route
 
 
 def test_native_equilibrium_python_diagnostics_bridge_stays_centralized() -> None:
@@ -983,15 +1065,16 @@ def test_selector_request_pretreatment_and_phase_labels_stay_in_shared_bridges()
         'composition_role="feed"',
         "route_tolerances = (",
         "phase_labels=expected_phase_keys",
+        "native_route_phase_labels(",
     )
     offenders = [fragment for fragment in forbidden_workflow_fragments if fragment in workflows]
     assert offenders == []
     assert "selector_request_payload(" in workflows
     assert "selector_route_solver_tolerances(options)" in workflows
-    assert "phase_labels=native_route_phase_labels(route, route_label)" in workflows
     assert "NativeSelectorRouteSpec(" in requests
     assert "def selector_route_solver_tolerances(" in requests
     assert "def native_route_phase_labels(" in results
+    assert "labels = native_route_phase_labels(route, route_label)" in results
     assert "physical_evidence" in results
 
 
@@ -1042,6 +1125,73 @@ def test_equilibrium_route_solve_and_contract_owners_stay_in_shared_core_files()
         if matches:
             route_api_offenders.append(f"{rel}: {', '.join(matches)}")
     assert route_api_offenders == []
+
+    activated_header = (
+        EQUILIBRIUM_NATIVE_ROOT / "core" / "activated_equilibrium_nlp.h"
+    ).read_text(encoding="utf-8", errors="ignore")
+    activated_source = (
+        EQUILIBRIUM_NATIVE_ROOT / "core" / "activated_equilibrium_nlp.cpp"
+    ).read_text(encoding="utf-8", errors="ignore")
+    chemical_header = (
+        EQUILIBRIUM_NATIVE_ROOT / "core" / "chemical_equilibrium_nlp.h"
+    ).read_text(encoding="utf-8", errors="ignore")
+    chemical_source = (
+        EQUILIBRIUM_NATIVE_ROOT / "core" / "chemical_equilibrium_nlp.cpp"
+    ).read_text(encoding="utf-8", errors="ignore")
+    activated_ce_symbols = (
+        "evaluate_activated_chemical_equilibrium_nlp_contract",
+        "solve_activated_chemical_equilibrium_nlp",
+    )
+    for symbol in activated_ce_symbols:
+        assert symbol in activated_header
+        assert symbol in activated_source
+        assert symbol not in chemical_header
+        assert symbol not in chemical_source
+
+    obsolete_ce_indirection_symbols = (
+        "build_homogeneous_chemical_equilibrium_contract",
+        "solve_homogeneous_chemical_equilibrium",
+    )
+    combined_core_sources = "\n".join(
+        (activated_header, activated_source, chemical_header, chemical_source)
+    )
+    assert [
+        symbol for symbol in obsolete_ce_indirection_symbols if symbol in combined_core_sources
+    ] == []
+    assert "solve_max_min_feasible_initialization(" in activated_source
+    assert "run_continuation_plan(" in activated_source
+
+    assert "struct ChemicalEquilibriumNlpResult" in activated_header
+    assert "struct ChemicalEquilibriumNlpResult" not in chemical_header
+    forbidden_chemical_header_fragments = (
+        '#include "equilibrium/core/continuation_driver.h"',
+        '#include "equilibrium/core/two_phase_eos_route.h"',
+        '#include "equilibrium/solvers/ipopt_adapter.h"',
+        "IpoptSolveResult",
+        "ContinuationTraceResult",
+        "accepted_seed_source",
+        "seed_attempt_order",
+        "caller_seed_attempted",
+    )
+    assert [
+        fragment for fragment in forbidden_chemical_header_fragments if fragment in chemical_header
+    ] == []
+
+    assert "struct ChemicalEquilibriumProofEvaluation" in chemical_header
+    assert "evaluate_physical_proof(" in chemical_header
+    assert "evaluate_physical_proof(" in chemical_source
+    assert "const ChemicalEquilibriumProofEvaluation proof" in activated_source
+    assert "proof.thermodynamically_accepted" in activated_source
+    forbidden_activated_proof_policy = (
+        "vector_inf_norm(",
+        "postsolve.balance_residuals",
+        "postsolve.reaction_affinities",
+        "balance_inf_norm <= balance_tolerance",
+        "reaction_stationarity_inf_norm <= reaction_stationarity_tolerance",
+    )
+    assert [
+        fragment for fragment in forbidden_activated_proof_policy if fragment in activated_source
+    ] == []
 
 
 def test_equilibrium_python_surface_has_one_public_solve_lane_and_no_route_helpers() -> None:
@@ -1184,7 +1334,7 @@ def test_equilibrium_constructor_configured_api_has_no_legacy_kwargs_or_setup_he
 
     assert constructor.args.vararg is None
     assert constructor.args.kwarg is None
-    assert constructor_kwargs == ["route", "T", "P", "x", "y", "z", "phase_kinds"]
+    assert constructor_kwargs == ["route", "T", "P", "x", "y", "z"]
     assert solve.args.vararg is None
     assert solve.args.kwarg is None
     assert solve_kwargs == ["solver_options"]
@@ -1294,6 +1444,18 @@ def test_public_equilibrium_workflows_dispatch_only_through_selector_binding() -
 
     assert required_selector_calls == 1
     assert [token for token in forbidden_direct_route_bindings if token in workflows] == []
+    assert "_native_neutral_two_phase_eos_result" not in workflows
+
+
+def test_obsolete_second_pass_result_binding_is_not_registered_or_required() -> None:
+    obsolete_binding = "_native_neutral_two_phase_eos_result"
+    bindings = (EQUILIBRIUM_NATIVE_ROOT / "register_bindings.cpp").read_text(encoding="utf-8")
+    native_loader = (EQUILIBRIUM_PACKAGE_ROOT / "_native.py").read_text(encoding="utf-8")
+    native_stub = (EQUILIBRIUM_PACKAGE_ROOT / "_native_core.pyi").read_text(encoding="utf-8")
+
+    assert obsolete_binding not in bindings
+    assert obsolete_binding not in native_loader
+    assert obsolete_binding not in native_stub
 
 
 def test_public_equilibrium_callers_do_not_pass_removed_route_controls() -> None:
@@ -1488,11 +1650,24 @@ def test_paper_validation_parameter_bundles_are_complete_and_uniform() -> None:
 
         binary_root = parameter_root / "mixed" / "binary_interaction"
         assert binary_root.is_dir(), analysis_rel
-        assert {path.name for path in binary_root.glob("*.csv")} >= PAPER_VALIDATION_BINARY_FILES | {
-            "source_manifest.csv"
-        }
+        source_manifest = binary_root / "source_manifest.csv"
+        assert source_manifest.is_file(), analysis_rel
+        with source_manifest.open(encoding="utf-8-sig", newline="") as handle:
+            manifest_rows = list(csv.DictReader(handle))
         for filename in sorted(PAPER_VALIDATION_BINARY_FILES):
             matrix_file = binary_root / filename
+            parameter_family = matrix_file.stem
+            unresolved_rows = [
+                row
+                for row in manifest_rows
+                if row.get("parameter") == parameter_family
+                and row.get("provenance_status") == "unresolved_parameter_family"
+            ]
+            if unresolved_rows:
+                assert not matrix_file.exists(), matrix_file
+                assert all(not row.get("value", "").strip() for row in unresolved_rows), source_manifest
+                continue
+            assert matrix_file.is_file(), matrix_file
             with matrix_file.open(encoding="utf-8-sig", newline="") as handle:
                 reader = csv.reader(handle)
                 header = next(reader)
@@ -1537,7 +1712,7 @@ def test_analysis_category_roots_exist() -> None:
 def test_paper_validation_uses_flat_paper_roots() -> None:
     paper_root = REPO_ROOT / "analyses" / "paper_validation"
     actual = {path.relative_to(REPO_ROOT).as_posix() for path in paper_root.iterdir() if path.is_dir()}
-    assert actual == PAPER_VALIDATION_DOC_ROOTS | PAPER_VALIDATION_INFRA_ROOTS
+    assert actual == PAPER_VALIDATION_DOC_ROOTS | PAPER_SOURCE_EVIDENCE_ROOTS | PAPER_VALIDATION_INFRA_ROOTS
     assert not (paper_root / "native").exists()
     assert not (paper_root / "application").exists()
     for old_domain in ("co2_solubility", "eos", "equilibrium", "extraction"):
@@ -1570,6 +1745,46 @@ def test_paper_validation_docs_are_local_source_snapshots() -> None:
         assert list((docs_root / "md").glob("*.md")), analysis_rel
         assert any(path.is_file() for path in (docs_root / "pdf").iterdir()), analysis_rel
         assert any(path.is_file() for path in shared_source.iterdir()), analysis_rel
+
+
+def test_paper_source_evidence_lanes_have_no_model_artifact_skeletons() -> None:
+    for analysis_rel in sorted(PAPER_SOURCE_EVIDENCE_ROOTS):
+        analysis_root = REPO_ROOT / analysis_rel
+        metadata = yaml.safe_load((analysis_root / "analysis.yaml").read_text(encoding="utf-8"))
+        assert metadata["status"] == "internal_source_evidence_only", analysis_rel
+        assert metadata["expected"]["model_validation_complete"] is False, analysis_rel
+        assert metadata["expected"]["phase_models_supported"] is False, analysis_rel
+        assert metadata["expected"]["public_route_admitted"] is False, analysis_rel
+        assert {path.name for path in analysis_root.iterdir() if path.is_dir()} == {
+            "docs",
+            "figures",
+            "scripts",
+            "shared",
+        }, analysis_rel
+        assert not (analysis_root / "parameters").exists(), analysis_rel
+        assert not (analysis_root / "tables").exists(), analysis_rel
+
+        script_names = {
+            path.name for path in (analysis_root / "scripts").glob("*.py")
+        }
+        assert script_names == {
+            "_paths.py",
+            "rezaee_2025_target_summary.py",
+            "rezaee_section32_basis_inference.py",
+            "run_all.py",
+        }, analysis_rel
+        assert not list(analysis_root.rglob("_placeholder.md")), analysis_rel
+
+        figure_roots = sorted(
+            path for path in (analysis_root / "figures").iterdir() if path.is_dir()
+        )
+        assert figure_roots, analysis_rel
+        for figure_root in figure_roots:
+            assert re.fullmatch(r"figure_\d{2,}", figure_root.name), figure_root
+            assert {path.name for path in figure_root.iterdir() if path.is_dir()} == {
+                "source"
+            }, figure_root
+            assert any((figure_root / "source").iterdir()), figure_root
 
 
 def test_paper_validation_tables_use_table_subfolders() -> None:

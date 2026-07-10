@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import csv
+import sys as _bootstrap_sys
 from functools import lru_cache
 from pathlib import Path
-import sys as _bootstrap_sys
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -13,12 +13,11 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
 import sys
 
-
-
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT
 
 ANALYSIS_SCRIPTS = Path(__file__).resolve().parent
 if str(ANALYSIS_SCRIPTS) not in sys.path:
@@ -27,6 +26,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 import _common as common
+
 from scripts._env import require_epcsaft_install
 from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 

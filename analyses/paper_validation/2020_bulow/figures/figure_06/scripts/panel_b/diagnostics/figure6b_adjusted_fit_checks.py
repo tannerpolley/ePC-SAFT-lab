@@ -5,10 +5,8 @@ from __future__ import annotations
 import argparse
 import csv
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -18,12 +16,11 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-
 import matplotlib
 import numpy as np
-
 from figure6b_digitized_reference_replica import SERIES_STYLES, _load_digitized_curves
+
+from scripts.plot_outputs import REPO_ROOT
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt

@@ -3,9 +3,9 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+from collections.abc import Iterable, Mapping
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterable, Mapping
 
 import numpy as np
 

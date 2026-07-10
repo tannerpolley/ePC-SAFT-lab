@@ -173,7 +173,7 @@ def test_checker_consumes_prerequisite_gates() -> None:
     assert "electrolyte_tpd_gate_incomplete" in result["blockers"]
 
 
-def test_phase_discovery_defers_public_admission_to_separate_gate() -> None:
+def test_phase_discovery_retains_internal_evidence_while_route_is_closed() -> None:
     checker = _load_checker()
 
     payload = checker.evaluate_held2_phase_discovery(
@@ -183,8 +183,8 @@ def test_phase_discovery_defers_public_admission_to_separate_gate() -> None:
         require_native_held2_discovery=True,
     )
 
-    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is True
-    assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == ["electrolyte_lle"]
+    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is False
+    assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == []
     assert (
         payload["held2_phase_discovery"]["stage_statuses"]["public_route_admission"]
         == "separate_public_admission_gate"
@@ -222,7 +222,11 @@ def test_cli_requires_complete_electrolyte_held2_phase_discovery() -> None:
         text=True,
     )
 
-    assert result.returncode == 0, result.stderr
+    assert result.returncode == 2, result.stderr
     payload = json.loads(result.stdout)
-    assert payload["complete"] is True
-    assert payload["blockers"] == []
+    assert payload["complete"] is False
+    assert payload["blockers"] == [
+        "held2_phase_discovery_incomplete",
+        "held2_phase_discovery_status_incomplete",
+        "stage_iii_handoff_status_mismatch",
+    ]

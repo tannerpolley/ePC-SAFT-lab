@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-
 from epcsaft.state.native_adapter import ePCSAFTMixture
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

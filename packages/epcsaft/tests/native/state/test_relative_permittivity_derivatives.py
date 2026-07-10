@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import numpy as np
-
 from support.native_cases import _ionic_state
 from support.numeric import assert_allclose
 

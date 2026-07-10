@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import numpy as np
-
 from epcsaft import InputError
 from epcsaft.state.native_adapter import ePCSAFTMixture, ePCSAFTState
 

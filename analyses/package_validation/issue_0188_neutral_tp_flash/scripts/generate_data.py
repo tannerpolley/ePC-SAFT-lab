@@ -4,8 +4,8 @@ import csv
 import json
 import math
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -44,8 +44,8 @@ from equilibrium_support.hydrocarbon_cases import (
     HYDROCARBON_VAPOR_Y,
     hydrocarbon_parameter_set,
 )
-from scripts.validation import check_phase_discovery
 
+from scripts.validation import check_phase_discovery
 
 COMPONENTS = ("Methane", "Ethane", "Propane")
 HELD_GATE_NATIVE_RECEIPT_FIELDS = [

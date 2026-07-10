@@ -83,16 +83,16 @@ def test_certification_phase_equilibrium_rejects_planned_public_route_overclaim(
 
 def test_certification_phase_equilibrium_rejects_missing_production_evidence() -> None:
     payload = deepcopy(epcsaft_equilibrium.capabilities()["phase_equilibrium_certification"])
-    neutral_lle = next(
+    single_component_vle = next(
         contract
         for contract in payload["production_route_contracts"]
-        if contract["selector_family"] == "neutral_lle"
+        if contract["selector_family"] == "single_component_vle"
     )
-    neutral_lle["production_evidence_quantities"] = []
+    single_component_vle["production_evidence_quantities"] = []
 
     blockers = validate_phase_equilibrium_certification_contracts(payload)
 
-    assert "neutral_lle_production_evidence_quantities_missing" in blockers
+    assert "single_component_vle_production_evidence_quantities_missing" in blockers
 
 
 def test_certification_phase_equilibrium_rejects_evidence_for_private_family() -> None:
@@ -100,12 +100,13 @@ def test_certification_phase_equilibrium_rejects_evidence_for_private_family() -
     evidence = next(
         row
         for row in payload["evidence_rows"]
-        if row["quantity"] == "electrolyte_lle_khudaida_public_admission"
+        if row["quantity"] == "electrolyte_lle_khudaida_repair_evidence"
     )
+    evidence["classification"] = "production_supported"
     evidence["selector_family"] = "reactive_electrolyte_lle"
     evidence["public_route"] = "reactive_electrolyte_lle"
 
     blockers = validate_phase_equilibrium_certification_contracts(payload)
 
-    assert "electrolyte_lle_khudaida_public_admission_production_evidence_family_not_exposed" in blockers
-    assert "electrolyte_lle_khudaida_public_admission_reactive_electrolyte_lle_evidence_route_not_public" in blockers
+    assert "electrolyte_lle_khudaida_repair_evidence_production_evidence_family_not_exposed" in blockers
+    assert "electrolyte_lle_khudaida_repair_evidence_reactive_electrolyte_lle_evidence_route_not_public" in blockers

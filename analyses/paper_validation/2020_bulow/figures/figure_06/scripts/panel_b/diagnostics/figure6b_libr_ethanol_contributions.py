@@ -10,10 +10,8 @@ import argparse
 import csv
 import math
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -23,12 +21,11 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import figure_root_dir
-from scripts.plot_outputs import REPO_ROOT
-from typing import Dict, List, Tuple
 
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT, figure_root_dir
 
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -39,8 +36,9 @@ from scripts.plot_outputs import paper_validation_dir, save_plot_figure
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
-from scripts.data.paper_validation_parameters import paper_validation_parameter_path
+
 from scripts._epcsaft_oop import epcsaft_density, epcsaft_fugacity_coefficient_terms, epcsaft_pressure
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -76,13 +74,13 @@ LEGACY_TERM_KEY_MAP = {
 }
 
 
-def _read_csv_rows(path: Path) -> Tuple[List[str], List[Dict[str, str]]]:
+def _read_csv_rows(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     with path.open("r", newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
         fields = [h.strip() for h in (reader.fieldnames or []) if h and h.strip()]
         rows = []
         for row in reader:
-            clean: Dict[str, str] = {}
+            clean: dict[str, str] = {}
             for k, v in row.items():
                 if not k:
                     continue
@@ -122,7 +120,7 @@ def _molality_to_species_molefraction(molality: float) -> np.ndarray:
     return np.asarray([n_cat / n_total, n_an / n_total, n_solv / n_total], dtype=float)
 
 
-def _load_exp_data(path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _load_exp_data(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     fields, rows = _read_csv_rows(path)
     lookup = {f.lower(): f for f in fields}
 
@@ -143,9 +141,9 @@ def _load_exp_data(path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     if miac_key is None and miac_m_key is None:
         raise ValueError(f"Missing MIAC columns in {path}. Need one of 'miac' or 'miac_m'.")
 
-    molality: List[float] = []
-    x_salt: List[float] = []
-    ln_miac: List[float] = []
+    molality: list[float] = []
+    x_salt: list[float] = []
+    ln_miac: list[float] = []
 
     for row in rows:
         src = str(row.get(source_key, "") if source_key else "").strip()
@@ -203,7 +201,7 @@ def _load_exp_data(path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     return m_arr[order], x_arr[order], y_arr[order]
 
 
-def _build_params(user_options: Dict[str, object] | None = None) -> Dict[str, object]:
+def _build_params(user_options: dict[str, object] | None = None) -> dict[str, object]:
     x_ref = _molality_to_species_molefraction(1e-8)
     return get_prop_dict(
         paper_validation_parameter_path("2020_Bulow"),
@@ -214,7 +212,7 @@ def _build_params(user_options: Dict[str, object] | None = None) -> Dict[str, ob
     )
 
 
-def _inf_dilution_state(x: np.ndarray, rho: float, params: Dict[str, object]) -> Tuple[np.ndarray, float]:
+def _inf_dilution_state(x: np.ndarray, rho: float, params: dict[str, object]) -> tuple[np.ndarray, float]:
     eps = 1e-12
     x_inf = np.full_like(x, eps)
     idx_solvent = 2
@@ -226,7 +224,7 @@ def _inf_dilution_state(x: np.ndarray, rho: float, params: Dict[str, object]) ->
     return x_inf, float(rho_inf)
 
 
-def _term_lnphi(terms: Dict[str, object], contribution: str, method: str) -> np.ndarray:
+def _term_lnphi(terms: dict[str, object], contribution: str, method: str) -> np.ndarray:
     if method == "lnphi":
         return np.asarray(terms[TERM_KEY_MAP[contribution]], dtype=float)
 
@@ -247,9 +245,9 @@ def _term_lnphi(terms: Dict[str, object], contribution: str, method: str) -> np.
 
 def _calc_ln_miac_contributions(
     m_grid: np.ndarray,
-    params: Dict[str, object],
+    params: dict[str, object],
     method: str = "lnphi",
-) -> Dict[str, np.ndarray]:
+) -> dict[str, np.ndarray]:
     out = {
         "total": np.empty_like(m_grid, dtype=float),
         "born": np.empty_like(m_grid, dtype=float),
@@ -296,7 +294,7 @@ def run_analysis(
     y_max: float,
     grid_points: int,
     max_molality: float | None,
-    user_options: Dict[str, object] | None = None,
+    user_options: dict[str, object] | None = None,
     plot_title: str | None = None,
     method: str = "lnphi",
 ) -> Path:

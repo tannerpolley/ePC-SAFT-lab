@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 import epcsaft
+import pytest
 from epcsaft._types import InputError
 from support.native_cases import _neutral_state
 

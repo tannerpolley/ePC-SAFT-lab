@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import epcsaft
 import numpy as np
 import pytest
-
-import epcsaft
 from support.hydrocarbon_cases import (
     HYDROCARBON_BUBBLE_P,
     HYDROCARBON_COMPONENTS,

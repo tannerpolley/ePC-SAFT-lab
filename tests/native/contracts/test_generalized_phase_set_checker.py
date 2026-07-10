@@ -4,6 +4,8 @@ from typing import Any
 
 from scripts.validation import check_generalized_phase_set as checker
 
+AUDIT_STATUS = "sampled_candidate_audit_complete_global_completeness_unproven"
+
 
 def _record(index: int, *, selected: bool, composition: list[float] | None = None) -> dict[str, Any]:
     return {
@@ -12,7 +14,7 @@ def _record(index: int, *, selected: bool, composition: list[float] | None = Non
         "phase_index": index,
         "phase_kind": "liquid",
         "phase_role": "accepted_phase" if selected else "candidate_phase",
-        "source": "deterministic_tpd_candidate_screening",
+        "source": "continuous_tpd_sampled_candidate_audit",
         "phase_amount_total": 0.2,
         "phase_fraction": 0.2,
         "volume": 1.0e-5,
@@ -23,10 +25,10 @@ def _record(index: int, *, selected: bool, composition: list[float] | None = Non
         "feasibility_status": "accepted" if selected else "candidate_generated",
         "selection_status": "selected" if selected else "rejected",
         "rejection_reason": "accepted" if selected else "duplicate_or_collapsed",
-        "phase_set_status": "phase_set_certified",
+        "phase_set_status": AUDIT_STATUS,
         "mass_balance_feasible": True,
-        "stability_accepted": True,
-        "candidate_completeness_accepted": True,
+        "stability_accepted": False,
+        "candidate_completeness_accepted": False,
     }
 
 
@@ -38,13 +40,14 @@ def _payload(*, records: list[dict[str, Any]] | None = None, public_routes: list
         _record(3, selected=False),
     ]
     return {
-        "public_routes": public_routes or ["flash", "lle"],
+        "public_routes": public_routes or ["bubble_pressure", "dew_pressure", "single_component_vle"],
         "postsolve": {
             "phase_count": 3,
-            "phase_set_status": "phase_set_certified",
+            "phase_set_status": AUDIT_STATUS,
             "phase_set_mass_balance_feasible": True,
-            "candidate_completeness_accepted": True,
-            "stability_accepted": True,
+            "candidate_completeness_accepted": False,
+            "stability_accepted": False,
+            "deterministic_screening_is_full_held": False,
             "phase_distance": 0.1,
             "phase_set_records": records if records is not None else default_records,
         },
@@ -90,12 +93,12 @@ def test_checker_rejects_infeasible_or_collapsed_phase_sets() -> None:
     assert "duplicate_selected_phase_compositions" in result["blockers"]
 
 
-def test_checker_reports_public_route_exposure_without_blocking_internal_records() -> None:
-    result = checker.evaluate_payload(_payload(public_routes=["flash", "multiphase"]))
+def test_checker_rejects_public_multiphase_exposure() -> None:
+    result = checker.evaluate_payload(_payload(public_routes=["bubble_pressure", "multiphase"]))
 
-    assert result["complete"] is True
+    assert result["complete"] is False
     assert result["public_route_exposure"] is True
-    assert result["blockers"] == []
+    assert "public_multiphase_route_exposed" in result["blockers"]
 
 
 def test_checker_rejects_lower_free_energy_omitted_candidate_without_distinct_diagnostic() -> None:
@@ -119,19 +122,24 @@ def test_checker_rejects_lower_free_energy_omitted_candidate_without_distinct_di
     assert "lower_free_energy_omitted_candidate" in result["blockers"]
 
 
-def test_checker_rejects_uncertified_phase_set_records_with_named_blocker() -> None:
-    records = [_record(0, selected=True), _record(1, selected=True), _record(2, selected=True), _record(3, selected=False)]
+def test_checker_rejects_global_phase_set_claim_with_named_blocker() -> None:
+    records = [
+        _record(0, selected=True),
+        _record(1, selected=True),
+        _record(2, selected=True),
+        _record(3, selected=False),
+    ]
     for record in records:
-        record["phase_set_status"] = "stability_uncertified"
-        record["stability_accepted"] = False
-        record["candidate_completeness_accepted"] = False
+        record["phase_set_status"] = "phase_set_certified"
+        record["stability_accepted"] = True
+        record["candidate_completeness_accepted"] = True
 
     payload = _payload(records=records)
-    payload["postsolve"]["phase_set_status"] = "stability_uncertified"
-    payload["postsolve"]["stability_accepted"] = False
-    payload["postsolve"]["candidate_completeness_accepted"] = False
+    payload["postsolve"]["phase_set_status"] = "phase_set_certified"
+    payload["postsolve"]["stability_accepted"] = True
+    payload["postsolve"]["candidate_completeness_accepted"] = True
 
     result = checker.evaluate_payload(payload)
 
     assert result["complete"] is False
-    assert "uncertified_phase_set_record" in result["blockers"]
+    assert "global_phase_set_claim_present" in result["blockers"]

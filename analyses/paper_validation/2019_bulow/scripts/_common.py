@@ -3,10 +3,8 @@ from __future__ import annotations
 import os
 import platform
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -16,9 +14,9 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT
 
 # Avoid WMI stalls from platform.machine() during native extension imports.
 platform.machine = lambda: os.environ.get("PROCESSOR_ARCHITECTURE", "AMD64")
@@ -33,6 +31,7 @@ from scripts._env import require_epcsaft_install
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
+
 from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 P_REF = 1.0e5

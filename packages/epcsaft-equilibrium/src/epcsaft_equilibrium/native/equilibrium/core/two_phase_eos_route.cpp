@@ -13,6 +13,7 @@
 #include "equilibrium/blocks/reaction_block.h"
 #include "equilibrium/core/route_metadata.h"
 #include "equilibrium/core/second_order.h"
+#include "equilibrium/results/held_certification.h"
 #include "equilibrium/results/result_builder.h"
 
 #include <algorithm>
@@ -36,46 +37,8 @@ constexpr double kContractPhaseDistance = 1.0e-8;
 constexpr double kCompositionFloor = 1.0e-12;
 constexpr double kCandidateCompositionTolerance = 1.0e-6;
 constexpr double kCandidateLogVolumeTolerance = 1.0e-5;
-constexpr std::size_t kContinuousTpdMaxStartsPerPhaseKind = 2;
+constexpr std::size_t kElectrolyteContinuousTpdMaxStartsPerPhaseKind = 2;
 constexpr double kProjectedResidualObjectiveRegularization = 1.0e-14;
-const std::string kHeldStageIIDualLoopSeedName = "held_stage_ii_dual_loop_candidate_pair";
-const std::string kHeldStageIIDualLoopCandidateSetName = "held_stage_ii_dual_loop_candidate_set";
-
-bool vector_close_to(
-    const std::vector<double>& values,
-    const std::vector<double>& expected,
-    double tolerance = 1.0e-10
-) {
-    if (values.size() != expected.size()) {
-        return false;
-    }
-    for (std::size_t index = 0; index < expected.size(); ++index) {
-        if (!std::isfinite(values[index]) || std::abs(values[index] - expected[index]) > tolerance) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool is_gross_2002_figure10_water_pentanol_case(const add_args& args) {
-    return args.parameter_source_label == "Gross/Sadowski 2002 Figure 10"
-        && args.parameter_provenance_status == "source_backed_parameter_metadata"
-        && args.binary_interaction_provenance_status == "explicit_binary_records"
-        && vector_close_to(args.m, {1.0656, 3.6260})
-        && vector_close_to(args.s, {3.0007, 3.4508})
-        && vector_close_to(args.e, {366.51, 247.28})
-        && vector_close_to(args.e_assoc, {2500.7, 2252.1})
-        && vector_close_to(args.vol_a, {0.034868, 0.010319})
-        && args.assoc_num == std::vector<int>({2, 2})
-        && vector_close_to(
-            std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()),
-            {0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0},
-            1.0e-12
-        )
-        && args.k_ij.size() == 4
-        && std::abs(args.k_ij[1] - 0.016) <= 1.0e-12
-        && std::abs(args.k_ij[2] - 0.016) <= 1.0e-12;
-}
 
 std::string equilibrium_debug_env_value() {
 #ifdef _MSC_VER
@@ -558,6 +521,27 @@ std::vector<std::vector<double>> neutral_tpd_trial_compositions(
         }
     }
     return out;
+}
+
+std::vector<std::vector<double>> neutral_continuous_tpd_start_compositions(
+    const std::vector<double>& reference
+) {
+    const std::vector<double> normalized = normalized_trial_composition(reference, "Neutral TPD reference");
+    if (normalized.size() == 2) {
+        const std::vector<std::vector<double>> trials = neutral_tpd_trial_compositions(normalized);
+        return {
+            trials[0],
+            trials[1],
+            trials[2],
+            {5.0e-2, 9.5e-1},
+            {9.5e-1, 5.0e-2},
+        };
+    }
+    std::vector<std::vector<double>> trials = neutral_tpd_trial_compositions(normalized);
+    if (trials.size() > 2) {
+        trials.resize(2);
+    }
+    return trials;
 }
 
 double charge_residual_abs(
@@ -1291,13 +1275,15 @@ std::vector<std::vector<double>> electrolyte_tpd_trial_compositions(
     return out;
 }
 
-std::vector<std::string> stage9_phase_discovery_steps() {
+std::vector<std::string> stage9_phase_discovery_steps(bool sampled_candidate_audit) {
     return {
         "deterministic_screening",
         "continuous_tpd_minimization",
         "held_stage_i_stability",
         "held_stage_ii_candidate_bound_audit",
-        "held_stage_ii_dual_loop_verification",
+        sampled_candidate_audit
+            ? "sampled_candidate_bound_audit"
+            : "held_stage_ii_dual_loop_verification",
         "held_stage_iii_ipopt_refinement",
     };
 }
@@ -1445,7 +1431,7 @@ NeutralTpdCandidate refine_neutral_tpd_candidate(
         0,
         0.0
     );
-    double step = 2.5e-1;
+    double step = 5.0e-2;
     int iteration = 0;
     constexpr int kMaxIterations = 48;
     constexpr double kStepFloor = 1.0e-8;
@@ -1710,7 +1696,6 @@ void append_tpd_candidates_for_reference_block(
     const std::vector<std::vector<double>> trial_compositions =
         neutral_tpd_trial_compositions(reference.composition);
     for (int phase_kind : trial_phase_kinds) {
-        std::size_t continuous_start_count = 0;
         for (std::size_t index = 0; index < trial_compositions.size(); ++index) {
             const std::string deterministic_source = source_prefix + "_trial_" + std::to_string(index);
             try {
@@ -1736,28 +1721,30 @@ void append_tpd_candidates_for_reference_block(
             } catch (const std::exception&) {
                 continue;
             }
-            if (!continuous_tpd_required) {
-                continue;
-            }
-            if (continuous_start_count >= kContinuousTpdMaxStartsPerPhaseKind) {
-                continue;
-            }
-            ++continuous_start_count;
+        }
+        if (!continuous_tpd_required) {
+            continue;
+        }
+        const std::vector<std::vector<double>> continuous_starts =
+            neutral_continuous_tpd_start_compositions(reference.composition);
+        for (std::size_t index = 0; index < continuous_starts.size(); ++index) {
             if (discovery != nullptr) {
                 ++discovery->continuous_tpd_start_count;
             }
             const std::string continuous_source =
                 source_prefix + "_continuous_tpd_" + std::to_string(index);
+            const std::string start_source =
+                source_prefix + "_continuous_start_" + std::to_string(index);
             try {
                 NeutralTpdCandidate refined = refine_neutral_tpd_candidate(
                     args,
                     temperature,
                     target_pressure,
                     reference,
-                    trial_compositions[index],
+                    continuous_starts[index],
                     phase_kind,
                     continuous_source,
-                    deterministic_source
+                    start_source
                 );
                 ++valid_candidate_count;
                 record_continuous_tpd_candidate(discovery, refined);
@@ -1814,7 +1801,7 @@ void append_electrolyte_reduced_tpd_candidates_for_reference_block(
             } catch (const std::exception&) {
                 continue;
             }
-            if (continuous_start_count >= kContinuousTpdMaxStartsPerPhaseKind) {
+            if (continuous_start_count >= kElectrolyteContinuousTpdMaxStartsPerPhaseKind) {
                 continue;
             }
             ++continuous_start_count;
@@ -1903,7 +1890,8 @@ void select_two_phase_candidate_set(
     rank_tpd_candidates(discovery);
     const std::vector<double> z = normalized_trial_composition(feed_composition, "Neutral TPD feed");
     double best_norm = std::numeric_limits<double>::infinity();
-    double best_selected_bound = std::numeric_limits<double>::infinity();
+    double best_worst_tpd = std::numeric_limits<double>::infinity();
+    double best_total_tpd = std::numeric_limits<double>::infinity();
     double best_fraction = 0.0;
     int best_first = -1;
     int best_second = -1;
@@ -1948,28 +1936,42 @@ void select_two_phase_candidate_set(
                 second.composition,
                 fraction
             );
-            const double selected_bound = std::min(first.tpd, second.tpd);
+            const double worst_tpd = std::max(first.tpd, second.tpd);
+            const double total_tpd = first.tpd + second.tpd;
             const bool norm_feasible = norm <= candidate_mass_balance_tolerance;
             const bool best_norm_feasible = best_norm <= candidate_mass_balance_tolerance;
             bool better_pair = best_first < 0;
             if (!better_pair && norm_feasible != best_norm_feasible) {
                 better_pair = norm_feasible;
             } else if (!better_pair && norm_feasible && best_norm_feasible) {
-                better_pair = selected_bound + kTpdTieTolerance < best_selected_bound
+                better_pair = worst_tpd + kTpdTieTolerance < best_worst_tpd
                     || (
-                        std::abs(selected_bound - best_selected_bound) <= kTpdTieTolerance
-                        && norm + norm_tie_tolerance < best_norm
+                        std::abs(worst_tpd - best_worst_tpd) <= kTpdTieTolerance
+                        && (
+                            total_tpd + kTpdTieTolerance < best_total_tpd
+                            || (
+                                std::abs(total_tpd - best_total_tpd) <= kTpdTieTolerance
+                                && norm + norm_tie_tolerance < best_norm
+                            )
+                        )
                     );
             } else if (!better_pair) {
                 better_pair = norm + norm_tie_tolerance < best_norm
                     || (
                         std::abs(norm - best_norm) <= norm_tie_tolerance
-                        && selected_bound + kTpdTieTolerance < best_selected_bound
+                        && (
+                            worst_tpd + kTpdTieTolerance < best_worst_tpd
+                            || (
+                                std::abs(worst_tpd - best_worst_tpd) <= kTpdTieTolerance
+                                && total_tpd + kTpdTieTolerance < best_total_tpd
+                            )
+                        )
                     );
             }
             if (better_pair) {
                 best_norm = norm;
-                best_selected_bound = selected_bound;
+                best_worst_tpd = worst_tpd;
+                best_total_tpd = total_tpd;
                 best_fraction = fraction;
                 best_first = static_cast<int>(first_index);
                 best_second = static_cast<int>(second_index);
@@ -1977,8 +1979,12 @@ void select_two_phase_candidate_set(
         }
     }
     discovery.candidate_mass_balance_norm = best_norm;
-    discovery.phase_set_mass_balance_feasible = best_norm <= candidate_mass_balance_tolerance;
-    discovery.candidate_completeness_accepted = discovery.phase_set_mass_balance_feasible;
+    certify_neutral_phase_discovery(
+        discovery,
+        NeutralPhaseDiscoveryAcceptancePolicy::CandidateMassBalanceOnly,
+        0.0,
+        candidate_mass_balance_tolerance
+    );
     if (!discovery.phase_set_mass_balance_feasible) {
         discovery.phase_set_status = "candidate_mass_balance_incomplete";
         for (NeutralTpdCandidate& candidate : discovery.candidates) {
@@ -2203,8 +2209,12 @@ void select_generalized_phase_candidate_set(
     visit(0);
 
     discovery.candidate_mass_balance_norm = best_norm;
-    discovery.phase_set_mass_balance_feasible = best_norm <= candidate_mass_balance_tolerance;
-    discovery.candidate_completeness_accepted = discovery.phase_set_mass_balance_feasible;
+    certify_neutral_phase_discovery(
+        discovery,
+        NeutralPhaseDiscoveryAcceptancePolicy::CandidateMassBalanceOnly,
+        0.0,
+        candidate_mass_balance_tolerance
+    );
     if (!discovery.phase_set_mass_balance_feasible) {
         discovery.phase_set_status = "candidate_mass_balance_incomplete";
         for (NeutralTpdCandidate& candidate : discovery.candidates) {
@@ -2236,8 +2246,16 @@ void select_generalized_phase_candidate_set(
 void evaluate_held_stage_ii_candidate_bounds(
     NeutralPhaseDiscoveryResult& discovery,
     double tpd_tolerance,
-    bool continuous_tpd_required
+    bool continuous_tpd_required,
+    bool sampled_candidate_audit
 ) {
+    const auto complete_bound_audit = [&]() {
+        if (sampled_candidate_audit) {
+            complete_sampled_candidate_bound_audit(discovery, continuous_tpd_required);
+        } else {
+            certify_held_stage_ii_bound_audit(discovery, continuous_tpd_required);
+        }
+    };
     discovery.held_stage_ii_major_iterations = 0;
     discovery.held_stage_ii_candidate_count = discovery.unique_candidate_count;
     discovery.held_stage_ii_lower_bound = 0.0;
@@ -2247,9 +2265,6 @@ void evaluate_held_stage_ii_candidate_bounds(
     discovery.held_stage_ii_lower_bound_history.clear();
     discovery.held_stage_ii_upper_bound_history.clear();
     discovery.held_stage_ii_bound_gap_history.clear();
-    discovery.held_stage_ii_replay_ready = false;
-    discovery.held_stage_ii_replay_source.clear();
-    discovery.held_stage_ii_replay_seed_name.clear();
     discovery.held_stage_ii_replay_candidate_count = 0;
     discovery.held_stage_ii_replay_candidate_ranks.clear();
     discovery.held_stage_ii_replay_phase_fractions.clear();
@@ -2258,30 +2273,13 @@ void evaluate_held_stage_ii_candidate_bounds(
     discovery.held_stage_ii_rejected_candidate_count = 0;
     discovery.held_stage_ii_rejected_candidate_ranks.clear();
     discovery.held_stage_ii_rejected_candidate_reasons.clear();
-    discovery.held_stage_ii_stopping_reason.clear();
 
     if (!continuous_tpd_required) {
-        discovery.held_stage_ii_status = "not_requested";
-        discovery.held_stage_ii_candidate_bound_audit_status = "not_requested";
-        discovery.held_stage_ii_dual_loop_status = "not_requested";
-        discovery.held_stage_ii_stopping_reason = "not_requested";
-        return;
-    }
-    const bool continuous_tpd_complete =
-        discovery.continuous_tpd_status == "converged"
-        || discovery.continuous_tpd_status == "complete_with_rejected_starts";
-    if (!continuous_tpd_complete) {
-        discovery.held_stage_ii_status = "incomplete_stage_i_evidence";
-        discovery.held_stage_ii_candidate_bound_audit_status = "incomplete_stage_i_evidence";
-        discovery.held_stage_ii_dual_loop_status = "incomplete_stage_i_evidence";
-        discovery.held_stage_ii_stopping_reason = "stage_i_incomplete";
+        complete_bound_audit();
         return;
     }
     if (discovery.candidates.empty()) {
-        discovery.held_stage_ii_status = "inconclusive_no_candidates";
-        discovery.held_stage_ii_candidate_bound_audit_status = "inconclusive_no_candidates";
-        discovery.held_stage_ii_dual_loop_status = "inconclusive_no_candidates";
-        discovery.held_stage_ii_stopping_reason = "no_candidates";
+        complete_bound_audit();
         return;
     }
 
@@ -2297,33 +2295,16 @@ void evaluate_held_stage_ii_candidate_bounds(
         }
     }
     if (!std::isfinite(lower_bound)) {
-        discovery.held_stage_ii_status = "inconclusive_no_finite_candidate_bound";
-        discovery.held_stage_ii_candidate_bound_audit_status = "inconclusive_no_finite_candidate_bound";
-        discovery.held_stage_ii_dual_loop_status = "inconclusive_no_finite_candidate_bound";
-        discovery.held_stage_ii_stopping_reason = "no_finite_candidate_bound";
+        complete_bound_audit();
         return;
     }
 
     discovery.held_stage_ii_major_iterations = 1;
     discovery.held_stage_ii_lower_bound = lower_bound;
-    if (!discovery.phase_set_mass_balance_feasible || discovery.selected_candidate_count < 2) {
-        discovery.held_stage_ii_upper_bound = lower_bound;
-        discovery.held_stage_ii_status = "candidate_simplex_mass_balance_incomplete";
-        discovery.held_stage_ii_candidate_bound_audit_status = "candidate_simplex_mass_balance_incomplete";
-        discovery.held_stage_ii_dual_loop_status = "candidate_simplex_mass_balance_incomplete";
-        discovery.held_stage_ii_stopping_reason = "candidate_simplex_mass_balance_incomplete";
-        discovery.held_stage_ii_lower_bound_history = {discovery.held_stage_ii_lower_bound};
-        discovery.held_stage_ii_upper_bound_history = {discovery.held_stage_ii_upper_bound};
-        discovery.held_stage_ii_bound_gap_history = {discovery.held_stage_ii_bound_gap};
-        return;
-    }
-    if (!std::isfinite(selected_upper_bound)) {
-        selected_upper_bound = 0.0;
-    }
-
-    discovery.held_stage_ii_upper_bound = std::max(selected_upper_bound, lower_bound);
-    discovery.held_stage_ii_bound_gap =
-        std::max(0.0, discovery.held_stage_ii_upper_bound - discovery.held_stage_ii_lower_bound);
+    discovery.held_stage_ii_upper_bound = selected_upper_bound;
+    discovery.held_stage_ii_bound_gap = std::isfinite(selected_upper_bound)
+        ? std::max(0.0, selected_upper_bound - lower_bound)
+        : std::numeric_limits<double>::infinity();
     discovery.held_stage_ii_lower_bound_history = {discovery.held_stage_ii_lower_bound};
     discovery.held_stage_ii_upper_bound_history = {discovery.held_stage_ii_upper_bound};
     discovery.held_stage_ii_bound_gap_history = {discovery.held_stage_ii_bound_gap};
@@ -2335,41 +2316,31 @@ void evaluate_held_stage_ii_candidate_bounds(
             ++discovery.held_stage_ii_rejected_candidate_count;
             discovery.held_stage_ii_rejected_candidate_ranks.push_back(candidate.candidate_rank);
             discovery.held_stage_ii_rejected_candidate_reasons.push_back(
-                "not_selected_by_dual_loop_mass_balance_gate"
+                sampled_candidate_audit
+                    ? "not_selected_by_sampled_candidate_mass_balance_gate"
+                    : "not_selected_by_dual_loop_mass_balance_gate"
             );
         }
     }
     discovery.held_stage_ii_replay_phase_fractions = discovery.selected_phase_fractions;
     discovery.held_stage_ii_replay_phase_kinds = discovery.selected_phase_kinds;
     discovery.held_stage_ii_replay_phase_compositions = discovery.selected_phase_compositions;
-    if (discovery.held_stage_ii_bound_gap <= tpd_tolerance) {
-        discovery.held_stage_ii_candidate_bound_audit_status = "candidate_bound_gap_closed";
-        discovery.held_stage_ii_status = "dual_loop_verified";
-        discovery.held_stage_ii_dual_loop_status = "verified";
-        discovery.held_stage_ii_stopping_reason = "bound_gap_closed";
-        discovery.held_stage_ii_replay_ready = true;
-        discovery.held_stage_ii_replay_source = "stage_ii_dual_loop_selected_candidates";
-        discovery.held_stage_ii_replay_seed_name = discovery.selected_candidate_count == 2
-            ? kHeldStageIIDualLoopSeedName
-            : kHeldStageIIDualLoopCandidateSetName;
-    } else {
-        discovery.held_stage_ii_candidate_bound_audit_status = "candidate_bound_gap_open";
-        discovery.held_stage_ii_status = "dual_loop_incomplete";
-        discovery.held_stage_ii_dual_loop_status = "incomplete_candidate_bound_gap_open";
-        discovery.held_stage_ii_stopping_reason = "bound_gap_open";
-    }
+    complete_bound_audit();
 }
 
 // AlgID: neutral_held_stage_ladder_diagnostics
 void finalize_stage9_phase_discovery(
     NeutralPhaseDiscoveryResult& discovery,
     double tpd_tolerance,
-    bool continuous_tpd_required = true
+    bool continuous_tpd_required,
+    bool sampled_candidate_audit
 ) {
-    discovery.stage9_phase_discovery_steps = stage9_phase_discovery_steps();
-    discovery.phase_discovery_backend = continuous_tpd_required
-        ? "continuous_tpd_held_dual_phase_discovery"
-        : "deterministic_tpd_candidate_screening";
+    discovery.stage9_phase_discovery_steps = stage9_phase_discovery_steps(sampled_candidate_audit);
+    discovery.phase_discovery_backend = !continuous_tpd_required
+        ? "deterministic_tpd_candidate_screening"
+        : sampled_candidate_audit
+            ? "continuous_tpd_sampled_candidate_audit"
+            : "continuous_tpd_held_dual_phase_discovery";
     discovery.deterministic_screening_is_full_held = false;
     discovery.deterministic_screening_status =
         discovery.deterministic_candidate_count > 0 ? "completed" : "inconclusive";
@@ -2386,158 +2357,17 @@ void finalize_stage9_phase_discovery(
     if (discovery.continuous_tpd_best_source.empty()) {
         discovery.continuous_tpd_min = discovery.min_tpd;
     }
-    discovery.held_stage_i_start_count = discovery.continuous_tpd_start_count;
-    discovery.held_stage_i_min_tpd = discovery.continuous_tpd_min;
-    discovery.held_stage_i_negative_tpd_found =
-        discovery.continuous_tpd_status == "converged" && discovery.continuous_tpd_min < -tpd_tolerance;
-    if (!continuous_tpd_required) {
-        discovery.held_stage_i_status = "not_requested";
-    } else if (discovery.continuous_tpd_solve_count == 0) {
-        discovery.held_stage_i_status = "inconclusive_no_continuous_tpd_solution";
-    } else if (discovery.continuous_tpd_status != "converged") {
-        discovery.held_stage_i_status = "inconclusive_continuous_tpd_iteration_limit";
-    } else if (discovery.held_stage_i_negative_tpd_found) {
-        discovery.held_stage_i_status = "negative_tpd_candidate_found";
-    } else {
-        discovery.held_stage_i_status = "no_negative_tpd_candidate_found";
-    }
-    evaluate_held_stage_ii_candidate_bounds(discovery, tpd_tolerance, continuous_tpd_required);
+    certify_held_stage_i_evidence(discovery, tpd_tolerance, continuous_tpd_required);
+    evaluate_held_stage_ii_candidate_bounds(
+        discovery,
+        tpd_tolerance,
+        continuous_tpd_required,
+        sampled_candidate_audit
+    );
     discovery.held_stage_iii_status = "pending_ipopt_refinement";
     discovery.held_stage_iii_refined_phase_count = 0;
 }
 
-void copy_discovery_to_postsolve(
-    NeutralTwoPhaseEosPostsolve& postsolve,
-    const NeutralPhaseDiscoveryResult& discovery
-) {
-    postsolve.stability_checked = discovery.stability_checked;
-    postsolve.stability_accepted = discovery.stability_accepted;
-    postsolve.candidate_completeness_accepted = discovery.candidate_completeness_accepted;
-    postsolve.phase_set_mass_balance_feasible = discovery.phase_set_mass_balance_feasible;
-    postsolve.phase_discovery_backend = discovery.phase_discovery_backend;
-    postsolve.stability_certificate = discovery.stability_certificate;
-    postsolve.phase_set_status = discovery.phase_set_status;
-    postsolve.stage9_phase_discovery_steps = discovery.stage9_phase_discovery_steps;
-    postsolve.deterministic_screening_status = discovery.deterministic_screening_status;
-    postsolve.deterministic_screening_is_full_held = discovery.deterministic_screening_is_full_held;
-    postsolve.continuous_tpd_status = discovery.continuous_tpd_status;
-    postsolve.continuous_tpd_backend = discovery.continuous_tpd_backend;
-    postsolve.continuous_tpd_best_source = discovery.continuous_tpd_best_source;
-    postsolve.deterministic_candidate_count = discovery.deterministic_candidate_count;
-    postsolve.continuous_tpd_start_count = discovery.continuous_tpd_start_count;
-    postsolve.continuous_tpd_solve_count = discovery.continuous_tpd_solve_count;
-    postsolve.continuous_tpd_converged_count = discovery.continuous_tpd_converged_count;
-    postsolve.continuous_tpd_iteration_count_total = discovery.continuous_tpd_iteration_count_total;
-    postsolve.continuous_tpd_iteration_count_max = discovery.continuous_tpd_iteration_count_max;
-    postsolve.continuous_tpd_min = discovery.continuous_tpd_min;
-    postsolve.continuous_tpd_step_final_max = discovery.continuous_tpd_step_final_max;
-    postsolve.continuous_tpd_best_phase_kind = discovery.continuous_tpd_best_phase_kind;
-    postsolve.continuous_tpd_best_density = discovery.continuous_tpd_best_density;
-    postsolve.continuous_tpd_best_molar_volume = discovery.continuous_tpd_best_molar_volume;
-    postsolve.continuous_tpd_best_composition = discovery.continuous_tpd_best_composition;
-    postsolve.held_stage_i_status = discovery.held_stage_i_status;
-    postsolve.held_stage_i_start_count = discovery.held_stage_i_start_count;
-    postsolve.held_stage_i_negative_tpd_found = discovery.held_stage_i_negative_tpd_found;
-    postsolve.held_stage_i_min_tpd = discovery.held_stage_i_min_tpd;
-    postsolve.held_stage_ii_status = discovery.held_stage_ii_status;
-    postsolve.held_stage_ii_candidate_bound_audit_status = discovery.held_stage_ii_candidate_bound_audit_status;
-    postsolve.held_stage_ii_dual_loop_status = discovery.held_stage_ii_dual_loop_status;
-    postsolve.held_stage_ii_major_iterations = discovery.held_stage_ii_major_iterations;
-    postsolve.held_stage_ii_candidate_count = discovery.held_stage_ii_candidate_count;
-    postsolve.held_stage_ii_lower_bound = discovery.held_stage_ii_lower_bound;
-    postsolve.held_stage_ii_upper_bound = discovery.held_stage_ii_upper_bound;
-    postsolve.held_stage_ii_bound_gap = discovery.held_stage_ii_bound_gap;
-    postsolve.held_stage_ii_bound_tolerance = discovery.held_stage_ii_bound_tolerance;
-    postsolve.held_stage_ii_stopping_reason = discovery.held_stage_ii_stopping_reason;
-    postsolve.held_stage_ii_lower_bound_history = discovery.held_stage_ii_lower_bound_history;
-    postsolve.held_stage_ii_upper_bound_history = discovery.held_stage_ii_upper_bound_history;
-    postsolve.held_stage_ii_bound_gap_history = discovery.held_stage_ii_bound_gap_history;
-    postsolve.held_stage_ii_replay_ready = discovery.held_stage_ii_replay_ready;
-    postsolve.held_stage_ii_replay_source = discovery.held_stage_ii_replay_source;
-    postsolve.held_stage_ii_replay_seed_name = discovery.held_stage_ii_replay_seed_name;
-    postsolve.held_stage_ii_replay_candidate_count = discovery.held_stage_ii_replay_candidate_count;
-    postsolve.held_stage_ii_replay_candidate_ranks = discovery.held_stage_ii_replay_candidate_ranks;
-    postsolve.held_stage_ii_replay_phase_fractions = discovery.held_stage_ii_replay_phase_fractions;
-    postsolve.held_stage_ii_replay_phase_kinds = discovery.held_stage_ii_replay_phase_kinds;
-    postsolve.held_stage_ii_replay_phase_compositions = discovery.held_stage_ii_replay_phase_compositions;
-    postsolve.held_stage_ii_rejected_candidate_count = discovery.held_stage_ii_rejected_candidate_count;
-    postsolve.held_stage_ii_rejected_candidate_ranks = discovery.held_stage_ii_rejected_candidate_ranks;
-    postsolve.held_stage_ii_rejected_candidate_reasons = discovery.held_stage_ii_rejected_candidate_reasons;
-    postsolve.held_stage_iii_status = discovery.held_stage_iii_status;
-    postsolve.held_stage_iii_refined_phase_count = discovery.held_stage_iii_refined_phase_count;
-    postsolve.min_tpd = discovery.min_tpd;
-    postsolve.candidate_mass_balance_norm = discovery.candidate_mass_balance_norm;
-    postsolve.tpd_candidate_count = discovery.tpd_candidate_count;
-    postsolve.unique_candidate_count = discovery.unique_candidate_count;
-    postsolve.selected_candidate_count = discovery.selected_candidate_count;
-    postsolve.selected_phase_fractions = discovery.selected_phase_fractions;
-    postsolve.selected_phase_kinds = discovery.selected_phase_kinds;
-    postsolve.selected_phase_compositions = discovery.selected_phase_compositions;
-    postsolve.tpd_candidate_values.clear();
-    postsolve.tpd_candidate_sources.clear();
-    postsolve.tpd_candidate_phase_kinds.clear();
-    postsolve.tpd_candidate_compositions.clear();
-    postsolve.tpd_candidate_pressure_residuals.clear();
-    postsolve.tpd_candidate_iteration_counts.clear();
-    postsolve.tpd_candidate_step_finals.clear();
-    postsolve.tpd_candidate_ranks.clear();
-    postsolve.tpd_candidate_feasibility_statuses.clear();
-    postsolve.tpd_candidate_selected.clear();
-    for (const NeutralTpdCandidate& candidate : discovery.candidates) {
-        postsolve.tpd_candidate_values.push_back(candidate.tpd);
-        postsolve.tpd_candidate_sources.push_back(candidate.source);
-        postsolve.tpd_candidate_phase_kinds.push_back(candidate.phase_kind);
-        postsolve.tpd_candidate_compositions.push_back(candidate.composition);
-        postsolve.tpd_candidate_pressure_residuals.push_back(candidate.pressure_residual_estimate);
-        postsolve.tpd_candidate_iteration_counts.push_back(candidate.tpd_iteration_count);
-        postsolve.tpd_candidate_step_finals.push_back(candidate.tpd_step_final);
-        postsolve.tpd_candidate_ranks.push_back(candidate.candidate_rank);
-        postsolve.tpd_candidate_feasibility_statuses.push_back(candidate.feasibility_status);
-        postsolve.tpd_candidate_selected.push_back(candidate.selected);
-    }
-}
-
-void apply_stage_ii_discovery_certificate_to_refined_postsolve(
-    NeutralTwoPhaseEosPostsolve& postsolve,
-    const NeutralPhaseDiscoveryResult& discovery,
-    int refined_phase_count,
-    const std::string& replay_source,
-    const std::string& replay_seed_name
-) {
-    const bool residual_metrics_accepted = postsolve.accepted;
-    const std::string residual_rejection_reason = postsolve.rejection_reason;
-
-    copy_discovery_to_postsolve(postsolve, discovery);
-    postsolve.held_stage_iii_status = "ipopt_refinement_completed_current_route";
-    postsolve.held_stage_iii_refined_phase_count = refined_phase_count;
-    postsolve.held_stage_iii_consumed_stage_ii_replay_metadata = discovery.held_stage_ii_replay_ready;
-    postsolve.held_stage_iii_replay_source = replay_source;
-    postsolve.held_stage_iii_replay_seed_name = replay_seed_name;
-    postsolve.held_stage_iii_replay_candidate_count = discovery.held_stage_ii_replay_candidate_count;
-
-    if (!residual_metrics_accepted) {
-        postsolve.accepted = false;
-        postsolve.rejection_reason = residual_rejection_reason;
-        return;
-    }
-    if (!discovery.stability_checked) {
-        postsolve.accepted = false;
-        postsolve.rejection_reason = "candidate_completeness";
-        return;
-    }
-    if (!discovery.stability_accepted) {
-        postsolve.accepted = false;
-        postsolve.rejection_reason = "stability_tpd";
-        return;
-    }
-    if (!discovery.candidate_completeness_accepted || !discovery.phase_set_mass_balance_feasible) {
-        postsolve.accepted = false;
-        postsolve.rejection_reason = "candidate_completeness";
-        return;
-    }
-    postsolve.accepted = true;
-    postsolve.rejection_reason = "accepted";
-}
 
 bool candidate_duplicates_accepted_phase(
     const NeutralTpdCandidate& candidate,
@@ -2603,8 +2433,6 @@ NeutralPhaseDiscoveryResult certify_neutral_phase_set(
             negative_novel_candidate = true;
         }
     }
-    out.stability_accepted = out.stability_checked && !negative_novel_candidate;
-
     const double total_feed = positive_sum(feed_amounts, "Neutral TPD postsolve feed amount");
     std::vector<double> feed_composition;
     feed_composition.reserve(feed_amounts.size());
@@ -2634,24 +2462,20 @@ NeutralPhaseDiscoveryResult certify_neutral_phase_set(
         out.candidate_mass_balance_norm =
             std::max(out.candidate_mass_balance_norm, std::abs(reconstructed - feed_composition[species]));
     }
-    out.phase_set_mass_balance_feasible = out.candidate_mass_balance_norm <= candidate_mass_balance_tolerance;
-    out.candidate_completeness_accepted = out.phase_set_mass_balance_feasible && out.stability_accepted;
     out.selected_candidate_count = static_cast<int>(system.phase_blocks.size());
     out.selected_phase_fractions = fractions;
     out.selected_phase_kinds = phase_kinds;
     for (const EosPhaseBlockResult& block : system.phase_blocks) {
         out.selected_phase_compositions.push_back(block.composition);
     }
-    if (!out.stability_checked) {
-        out.phase_set_status = "stability_uncertified";
-    } else if (!out.stability_accepted) {
-        out.phase_set_status = "negative_tpd_candidate";
-    } else if (!out.phase_set_mass_balance_feasible) {
-        out.phase_set_status = "candidate_mass_balance_incomplete";
-    } else {
-        out.phase_set_status = "phase_set_certified";
-    }
-    finalize_stage9_phase_discovery(out, tpd_tolerance, continuous_tpd_required);
+    certify_neutral_phase_discovery(
+        out,
+        NeutralPhaseDiscoveryAcceptancePolicy::AcceptedPhaseSet,
+        tpd_tolerance,
+        candidate_mass_balance_tolerance,
+        negative_novel_candidate
+    );
+    finalize_stage9_phase_discovery(out, tpd_tolerance, continuous_tpd_required, true);
     return out;
 }
 
@@ -2753,35 +2577,6 @@ NeutralTwoPhaseEosInitialPoint build_two_phase_eos_initial_point_from_candidate_
     );
 }
 
-NeutralTwoPhaseEosInitialPoint build_charge_neutral_two_phase_eos_initial_point(
-    const add_args& args,
-    const std::vector<double>& feed_amounts,
-    const std::vector<double>& charges,
-    double temperature,
-    double target_pressure,
-    const std::string& route_label,
-    const std::vector<int>& phase_kinds,
-    double shift_sign = 1.0
-) {
-    const std::vector<double> composition = normalized_positive_values(feed_amounts, route_label + " feed amount");
-    const std::vector<double> first_composition =
-        deterministic_composition_shift(composition, charges, route_label + " composition", shift_sign);
-    return build_two_phase_eos_initial_point(
-        args,
-        feed_amounts,
-        first_composition,
-        temperature,
-        target_pressure,
-        route_label,
-        phase_kinds
-    );
-}
-
-struct NamedInitialVariables {
-    std::string seed_name;
-    std::vector<double> variables;
-};
-
 std::vector<double> neutral_two_phase_variables_from_initial(
     const NeutralTwoPhaseEosInitialPoint& initial
 ) {
@@ -2794,214 +2589,12 @@ std::vector<double> neutral_two_phase_variables_from_initial(
     return out;
 }
 
-void append_phase_discovery_seed_candidates(
-    std::vector<NamedInitialVariables>& out,
-    const add_args& args,
-    const std::vector<double>& feed_amounts,
-    double temperature,
-    double target_pressure,
-    const std::string& route_label,
-    const std::vector<int>& phase_kinds
-) {
-    try {
-        const std::vector<double> feed_composition =
-            normalized_positive_values(feed_amounts, route_label + " feed amount");
-        const NeutralPhaseDiscoveryResult discovery = evaluate_neutral_tpd_phase_discovery(
-            args,
-            temperature,
-            target_pressure,
-            feed_composition,
-            phase_kinds,
-            1.0e-6,
-            1.0e-6,
-            true
-        );
-        if (!discovery.held_stage_ii_replay_ready
-            || !discovery.phase_set_mass_balance_feasible
-            || discovery.selected_candidate_count != 2) {
-            return;
-        }
-        out.push_back({
-            kHeldStageIIDualLoopSeedName,
-            neutral_two_phase_variables_from_initial(
-                build_two_phase_eos_initial_point_from_candidate_set(
-                    args,
-                    feed_amounts,
-                    discovery,
-                    temperature,
-                    target_pressure,
-                    route_label,
-                    phase_kinds
-                )
-            )
-        });
-    } catch (const std::exception&) {
-        return;
-    }
-}
-
-std::vector<NamedInitialVariables> neutral_two_phase_seed_candidates(
-    const add_args& args,
-    const std::vector<double>& feed_amounts,
-    const std::vector<double>& charges,
-    double temperature,
-    double target_pressure,
-    const std::string& route_label,
-    const std::vector<int>& phase_kinds
-) {
-    std::vector<NamedInitialVariables> out;
-    if (charges.empty()) {
-        append_phase_discovery_seed_candidates(
-            out,
-            args,
-            feed_amounts,
-            temperature,
-            target_pressure,
-            route_label,
-            phase_kinds
-        );
-        const std::vector<double> feed_composition =
-            normalized_positive_values(feed_amounts, route_label + " feed amount");
-        if (
-            phase_kinds.size() == 2
-            && phase_kinds[0] == 0
-            && phase_kinds[1] == 0
-            && feed_amounts.size() == 2
-            && is_gross_2002_figure10_water_pentanol_case(args)
-        ) {
-            try {
-                out.push_back({
-                    "gross_2002_figure10_source_pair_water_rich",
-                    neutral_two_phase_variables_from_initial(
-                        build_two_phase_eos_initial_point(
-                            args,
-                            feed_amounts,
-                            {0.995, 0.005},
-                            temperature,
-                            target_pressure,
-                            route_label,
-                            phase_kinds
-                        )
-                    )
-                });
-            } catch (const std::exception&) {
-            }
-        }
-        out.push_back({
-            "canonical_shifted_feed",
-            neutral_two_phase_variables_from_initial(
-                build_neutral_two_phase_eos_initial_point(
-                    args,
-                    feed_amounts,
-                    temperature,
-                    target_pressure,
-                    route_label,
-                    phase_kinds,
-                    1.0
-                )
-            )
-        });
-        out.push_back({
-            "mirrored_shifted_feed",
-            neutral_two_phase_variables_from_initial(
-                build_neutral_two_phase_eos_initial_point(
-                    args,
-                    feed_amounts,
-                    temperature,
-                    target_pressure,
-                    route_label,
-                    phase_kinds,
-                    -1.0
-                )
-            )
-        });
-        if (feed_amounts.size() == 2) {
-            auto append_binary_extreme = [&](int poor_component) {
-                const int rich_component = 1 - poor_component;
-                const double poor_fraction = std::max(
-                    1.0e-6,
-                    std::min(0.05, 0.5 * feed_composition[static_cast<std::size_t>(poor_component)])
-                );
-                std::vector<double> first_composition(2, 0.0);
-                first_composition[static_cast<std::size_t>(poor_component)] = poor_fraction;
-                first_composition[static_cast<std::size_t>(rich_component)] = 1.0 - poor_fraction;
-                for (std::size_t species = 0; species < first_composition.size(); ++species) {
-                    if (0.5 * first_composition[species] >= feed_composition[species]) {
-                        return;
-                    }
-                }
-                try {
-                    out.push_back({
-                        "binary_extreme_component_" + std::to_string(poor_component) + "_poor",
-                        neutral_two_phase_variables_from_initial(
-                            build_two_phase_eos_initial_point(
-                                args,
-                                feed_amounts,
-                                first_composition,
-                                temperature,
-                                target_pressure,
-                                route_label,
-                                phase_kinds
-                            )
-                        )
-                    });
-                } catch (const std::exception&) {
-                    return;
-                }
-            };
-            append_binary_extreme(0);
-            append_binary_extreme(1);
-        }
-        return out;
-    }
-    out.push_back({
-        "canonical_shifted_feed",
-        neutral_two_phase_variables_from_initial(
-            build_charge_neutral_two_phase_eos_initial_point(
-                args,
-                feed_amounts,
-                charges,
-                temperature,
-                target_pressure,
-                route_label,
-                phase_kinds,
-                1.0
-            )
-        )
-    });
-    out.push_back({
-        "mirrored_shifted_feed",
-        neutral_two_phase_variables_from_initial(
-            build_charge_neutral_two_phase_eos_initial_point(
-                args,
-                feed_amounts,
-                charges,
-                temperature,
-                target_pressure,
-                route_label,
-                phase_kinds,
-                -1.0
-            )
-        )
-    });
-    return out;
-}
-
 double vector_infinity_norm(const std::vector<double>& values, std::size_t begin, std::size_t end) {
     double norm = 0.0;
     for (std::size_t index = begin; index < end; ++index) {
         norm = std::max(norm, std::abs(values[index]));
     }
     return norm;
-}
-
-double phase_distance_inf_norm(const std::vector<double>& first, const std::vector<double>& second) {
-    require_size(second, first.size(), "Neutral EOS postsolve phase composition");
-    double distance = 0.0;
-    for (std::size_t index = 0; index < first.size(); ++index) {
-        distance = std::max(distance, std::abs(first[index] - second[index]));
-    }
-    return distance;
 }
 
 double phase_charge_inf_norm(
@@ -5208,27 +4801,6 @@ void require_projected_problem_values_at_variables(
     }
 }
 
-void mark_projected_route_derivative_preflight_failed(
-    NeutralTwoPhaseEosRouteResult& out,
-    const NlpProblem& problem,
-    const std::string& message
-) {
-    out.ran = false;
-    out.solver_accepted = false;
-    out.solver_feasible_point = false;
-    out.postsolve_accepted = false;
-    out.accepted = false;
-    out.status = "solver_rejected";
-    out.rejection_reason = "derivative_preflight_failed";
-    out.solver_status = "preflight_failed";
-    out.application_status = "derivative_contract_failed";
-    out.last_callback_failure = "derivative_preflight_failed";
-    out.last_callback_exception = message;
-    out.hessian_approximation = "exact";
-    out.hessian_backend = problem.hessian_backend();
-    out.exact_hessian_available = false;
-}
-
 NeutralTwoPhaseEosRouteResult solve_electrolyte_two_phase_projected_residual_route(
     const add_args& args,
     double temperature,
@@ -5300,12 +4872,12 @@ NeutralTwoPhaseEosRouteResult solve_electrolyte_two_phase_projected_residual_rou
         validate_nlp_problem_shape(problem);
         require_projected_problem_values_at_variables(problem, route_options.initial_variables);
     } catch (const std::exception& exc) {
-        mark_projected_route_derivative_preflight_failed(out, problem, exc.what());
+        mark_neutral_route_derivative_preflight_failed(out, problem, exc.what());
         out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
         trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
         return out;
     } catch (...) {
-        mark_projected_route_derivative_preflight_failed(out, problem, "unknown preflight exception");
+        mark_neutral_route_derivative_preflight_failed(out, problem, "unknown preflight exception");
         out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
         trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
         return out;
@@ -5314,12 +4886,12 @@ NeutralTwoPhaseEosRouteResult solve_electrolyte_two_phase_projected_residual_rou
     try {
         solve = solve_ipopt_nlp(problem, route_options);
     } catch (const std::exception& exc) {
-        mark_projected_route_derivative_preflight_failed(out, problem, exc.what());
+        mark_neutral_route_derivative_preflight_failed(out, problem, exc.what());
         out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
         trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
         return out;
     } catch (...) {
-        mark_projected_route_derivative_preflight_failed(out, problem, "unknown solve exception");
+        mark_neutral_route_derivative_preflight_failed(out, problem, "unknown solve exception");
         out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
         trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
         return out;
@@ -5352,14 +4924,17 @@ NeutralTwoPhaseEosRouteResult solve_electrolyte_two_phase_projected_residual_rou
         false
     );
     postsolve.charge_balance_norm = phase_charge_inf_norm(out.phase_amounts, charges);
-    postsolve.accepted = postsolve.accepted && postsolve.charge_balance_norm <= charge_tolerance;
-    if (postsolve.charge_balance_norm > charge_tolerance) {
-        postsolve.rejection_reason = "charge_balance";
-    }
-    if (postsolve.phase_distance <= phase_distance_tolerance) {
-        postsolve.accepted = false;
-        postsolve.rejection_reason = "phase_distance";
-    }
+    NeutralPostsolveAcceptanceCriteria criteria;
+    criteria.material_tolerance = material_tolerance;
+    criteria.pressure_tolerance = pressure_tolerance;
+    criteria.chemical_potential_tolerance = transfer_tolerance;
+    criteria.phase_distance_tolerance = phase_distance_tolerance;
+    criteria.charge_tolerance = charge_tolerance;
+    criteria.charged_system = true;
+    criteria.phase_distance_required = true;
+    criteria.phase_distance_strictly_greater = true;
+    criteria.charge_balance_required = true;
+    certify_neutral_postsolve(postsolve, criteria);
     apply_neutral_route_postsolve(out, std::move(postsolve), NeutralRouteCertificationLevel::LocalPostsolve);
     out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
     trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
@@ -5421,27 +4996,14 @@ NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
     for (const NeutralTpdCandidate& candidate : out.candidates) {
         out.min_tpd = std::min(out.min_tpd, candidate.tpd);
     }
-    const bool feed_stable = out.stability_checked && out.min_tpd >= -tpd_tolerance;
-    out.stability_accepted = feed_stable;
     select_generalized_phase_candidate_set(out, feed, phase_kinds, candidate_mass_balance_tolerance);
-    finalize_stage9_phase_discovery(out, tpd_tolerance, continuous_tpd_required);
-    if (!out.stability_checked) {
-        out.phase_set_status = "stability_uncertified";
-    } else if (!out.phase_set_mass_balance_feasible) {
-        out.phase_set_status = "candidate_mass_balance_incomplete";
-    } else if (out.held_stage_ii_replay_ready) {
-        out.stability_accepted = true;
-        out.candidate_completeness_accepted = true;
-        out.phase_set_status = "phase_set_certified";
-    } else if (feed_stable) {
-        out.stability_accepted = true;
-        out.candidate_completeness_accepted = true;
-        out.phase_set_status = "single_phase_stable_candidate_set";
-    } else {
-        out.stability_accepted = false;
-        out.candidate_completeness_accepted = false;
-        out.phase_set_status = "candidate_bound_gap_open";
-    }
+    finalize_stage9_phase_discovery(out, tpd_tolerance, continuous_tpd_required, true);
+    certify_neutral_phase_discovery(
+        out,
+        NeutralPhaseDiscoveryAcceptancePolicy::GeneralizedFeed,
+        tpd_tolerance,
+        candidate_mass_balance_tolerance
+    );
     return out;
 }
 
@@ -5537,29 +5099,18 @@ NeutralPhaseDiscoveryResult evaluate_electrolyte_tpd_phase_discovery(
     for (const NeutralTpdCandidate& candidate : out.candidates) {
         out.min_tpd = std::min(out.min_tpd, candidate.tpd);
     }
-    out.stability_accepted = out.stability_checked && out.min_tpd >= -tpd_tolerance;
     select_generalized_phase_candidate_set(out, feed, requested_phase_kinds, candidate_mass_balance_tolerance);
-    finalize_stage9_phase_discovery(out, tpd_tolerance, false);
+    finalize_stage9_phase_discovery(out, tpd_tolerance, false, false);
     out.phase_discovery_backend = "charge_neutral_deterministic_tpd_candidate_screening";
     out.stability_certificate = "electrolyte_charge_neutral_tpd_screening";
     out.continuous_tpd_status = "pending_held2_dual_phase_discovery";
-    out.held_stage_i_status = "pending_held2_dual_phase_discovery";
-    out.held_stage_ii_status = "pending_held2_dual_phase_discovery";
-    out.held_stage_ii_candidate_bound_audit_status = "pending_held2_dual_phase_discovery";
-    out.held_stage_ii_dual_loop_status = "pending_held2_dual_phase_discovery";
-    out.held_stage_ii_replay_ready = false;
     out.held_stage_iii_status = "pending_electrolyte_stage_iii_refinement";
-    if (!out.stability_checked) {
-        out.phase_set_status = "stability_uncertified";
-    } else if (!out.phase_set_mass_balance_feasible) {
-        out.phase_set_status = "candidate_mass_balance_incomplete";
-    } else if (out.stability_accepted) {
-        out.candidate_completeness_accepted = true;
-        out.phase_set_status = "charge_neutral_tpd_screening_complete";
-    } else {
-        out.candidate_completeness_accepted = false;
-        out.phase_set_status = "charge_neutral_tpd_negative_candidate";
-    }
+    certify_neutral_phase_discovery(
+        out,
+        NeutralPhaseDiscoveryAcceptancePolicy::ElectrolyteDeterministic,
+        tpd_tolerance,
+        candidate_mass_balance_tolerance
+    );
     return out;
 }
 
@@ -5650,13 +5201,12 @@ NeutralPhaseDiscoveryResult evaluate_electrolyte_continuous_tpd_minimizer(
     for (const NeutralTpdCandidate& candidate : out.candidates) {
         out.min_tpd = std::min(out.min_tpd, candidate.tpd);
     }
-    out.stability_accepted = out.stability_checked && out.min_tpd >= -tpd_tolerance;
     select_generalized_phase_candidate_set(out, feed, requested_phase_kinds, candidate_mass_balance_tolerance);
     synchronize_continuous_tpd_start_records(
         out,
         "not_selected_by_reduced_electroneutral_mass_balance_gate"
     );
-    finalize_stage9_phase_discovery(out, tpd_tolerance, true);
+    finalize_stage9_phase_discovery(out, tpd_tolerance, true, false);
     out.phase_discovery_backend = "continuous_reduced_electroneutral_tpd_minimization";
     out.stability_certificate = "electrolyte_continuous_reduced_electroneutral_tpd_minimizer";
     out.continuous_tpd_backend = "continuous_reduced_electroneutral_coordinate_search";
@@ -5666,25 +5216,13 @@ NeutralPhaseDiscoveryResult evaluate_electrolyte_continuous_tpd_minimizer(
     if (has_accepted_continuous_start && has_rejected_continuous_start) {
         out.continuous_tpd_status = "complete_with_rejected_starts";
     }
-    out.held_stage_i_status = "pending_stage_i_stability_certificate";
-    out.held_stage_ii_status = "pending_held2_stage_ii_discovery";
-    out.held_stage_ii_candidate_bound_audit_status = "pending_held2_stage_ii_discovery";
-    out.held_stage_ii_dual_loop_status = "pending_held2_stage_ii_discovery";
-    out.held_stage_ii_replay_ready = false;
     out.held_stage_iii_status = "pending_electrolyte_stage_iii_refinement";
-    if (!out.stability_checked) {
-        out.phase_set_status = "stability_uncertified";
-        out.candidate_completeness_accepted = false;
-    } else if (!has_accepted_continuous_start) {
-        out.phase_set_status = "continuous_reduced_electroneutral_tpd_incomplete";
-        out.candidate_completeness_accepted = false;
-    } else if (has_rejected_continuous_start) {
-        out.phase_set_status = "continuous_reduced_electroneutral_tpd_complete_with_rejected_starts";
-        out.candidate_completeness_accepted = true;
-    } else {
-        out.phase_set_status = "continuous_reduced_electroneutral_tpd_complete";
-        out.candidate_completeness_accepted = true;
-    }
+    certify_neutral_phase_discovery(
+        out,
+        NeutralPhaseDiscoveryAcceptancePolicy::ElectrolyteContinuous,
+        tpd_tolerance,
+        candidate_mass_balance_tolerance
+    );
     return out;
 }
 
@@ -5879,39 +5417,31 @@ ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
         out.tpd_discovery,
         "not_selected_by_held2_stage_ii_dual_loop_mass_balance_gate"
     );
-    out.tpd_discovery.held_stage_i_min_tpd = out.tpd_discovery.continuous_tpd_min;
-    out.tpd_discovery.held_stage_i_negative_tpd_found =
-        out.tpd_discovery.continuous_tpd_solve_count > 0
-        && out.tpd_discovery.continuous_tpd_min < -tpd_tolerance;
-    out.tpd_discovery.held_stage_i_status = out.tpd_discovery.held_stage_i_negative_tpd_found
-        ? "stage_i_negative_tpd_certificate_consumed"
-        : "stage_i_no_negative_tpd_certificate_consumed";
-    evaluate_held_stage_ii_candidate_bounds(out.tpd_discovery, tpd_tolerance, true);
+    certify_held_stage_i_evidence(
+        out.tpd_discovery,
+        tpd_tolerance,
+        true,
+        HeldStageICertificateUse::Held2ConsumedEvidence
+    );
+    evaluate_held_stage_ii_candidate_bounds(out.tpd_discovery, tpd_tolerance, true, false);
     out.tpd_discovery.phase_discovery_backend =
         "continuous_reduced_electroneutral_held2_stage_ii_dual_phase_discovery";
     out.tpd_discovery.stability_certificate = "electrolyte_held2_stage_ii_dual_phase_discovery";
     out.tpd_discovery.held_stage_iii_status = "pending_ipopt_refinement";
-    if (out.tpd_discovery.held_stage_ii_replay_ready) {
-        out.tpd_discovery.stability_accepted = true;
-        out.tpd_discovery.candidate_completeness_accepted = true;
-        out.tpd_discovery.phase_set_status = "held2_stage_ii_candidate_set_verified";
-    } else {
-        out.tpd_discovery.stability_accepted = false;
-        out.tpd_discovery.candidate_completeness_accepted = false;
-        out.tpd_discovery.phase_set_status = "held2_stage_ii_candidate_set_incomplete";
-    }
+    certify_neutral_phase_discovery(
+        out.tpd_discovery,
+        NeutralPhaseDiscoveryAcceptancePolicy::ElectrolyteHeld2,
+        tpd_tolerance,
+        candidate_mass_balance_tolerance
+    );
     out.reduced_start_count = out.tpd_discovery.tpd_candidate_count;
     out.converged_start_count = out.tpd_discovery.unique_candidate_count;
     out.selected_candidate_count = out.tpd_discovery.selected_candidate_count;
     out.min_tpd = out.tpd_discovery.min_tpd;
     out.duplicate_candidate_distance = duplicate_candidate_distance(out.tpd_discovery.candidates);
 
-    std::vector<std::vector<double>> candidate_compositions = out.tpd_discovery.selected_phase_compositions;
-    if (candidate_compositions.empty()) {
-        for (const NeutralTpdCandidate& candidate : out.tpd_discovery.candidates) {
-            candidate_compositions.push_back(candidate.composition);
-        }
-    }
+    const std::vector<std::vector<double>>& candidate_compositions =
+        out.tpd_discovery.selected_phase_compositions;
     out.lifted_candidate_compositions = candidate_compositions;
     out.stage_iii_phase_compositions = out.tpd_discovery.selected_phase_compositions;
     out.stage_iii_phase_fractions = out.tpd_discovery.selected_phase_fractions;
@@ -5979,11 +5509,7 @@ ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
             out.mean_ionic_max_abs_residual = std::max(out.mean_ionic_max_abs_residual, std::abs(value));
         }
     }
-    out.phase_discovery_status = "complete";
-    out.stage_iii_refinement_status = "pending";
-    out.postsolve_certification_status = "pending";
-    out.public_route_admission_status = "separate_public_admission_gate";
-    out.stage_iii_handoff_status = "pending_stage_iii_refinement";
+    certify_electrolyte_held2_phase_discovery(out);
     return out;
 }
 
@@ -6029,15 +5555,24 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
         tpd_tolerance,
         candidate_mass_balance_tolerance
     );
-    out.selected_candidate_count = out.held2_discovery.selected_candidate_count;
-    out.selected_phase_kinds = out.held2_discovery.stage_iii_phase_kinds;
-    out.selected_phase_fractions = out.held2_discovery.stage_iii_phase_fractions;
-    out.selected_phase_compositions = out.held2_discovery.stage_iii_phase_compositions;
-    for (std::size_t phase = 0; phase < phase_kinds.size(); ++phase) {
+    const NeutralPhaseDiscoveryResult& stage_ii = out.held2_discovery.tpd_discovery;
+    out.selected_candidate_count = stage_ii.selected_candidate_count;
+    out.seed_name = stage_ii.held_stage_ii_replay_seed_name;
+    const bool certified_two_phase_replay =
+        out.held2_discovery.stage_iii_handoff_status == "ready_for_stage_iii_refinement"
+        && stage_ii.held_stage_ii_replay_phase_kinds.size() == 2
+        && stage_ii.held_stage_ii_replay_phase_fractions.size() == 2
+        && stage_ii.held_stage_ii_replay_phase_compositions.size() == 2;
+    if (!certified_two_phase_replay) {
+        certify_electrolyte_stage_iii_refinement(out);
+        return out;
+    }
+    out.selected_phase_kinds = stage_ii.held_stage_ii_replay_phase_kinds;
+    for (std::size_t phase = 0; phase < out.selected_phase_kinds.size(); ++phase) {
         out.selected_phase_labels.push_back("phase_" + std::to_string(phase));
     }
 
-    const std::size_t phase_count = phase_kinds.size();
+    const std::size_t phase_count = out.selected_phase_kinds.size();
     const std::size_t pair_count = out.held2_discovery.pair_labels.size();
     for (std::size_t phase = 0; phase < phase_count; ++phase) {
         for (const std::string& pair_label : out.held2_discovery.pair_labels) {
@@ -6070,7 +5605,7 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
         temperature,
         target_pressure,
         "electrolyte_stage_iii_projected_residual_refinement",
-        phase_kinds
+        out.selected_phase_kinds
     );
     IpoptSolveOptions base_options;
     base_options.max_iterations = 260;
@@ -6116,8 +5651,8 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
     out.route_result.initial_point_strategy = "electrolyte_held2_candidate_set_replay";
     out.route_result.seed_name = out.seed_name;
 
-    std::vector<std::vector<double>> diagnostic_phase_amounts = out.route_result.phase_amounts;
-    std::vector<double> diagnostic_phase_volumes = out.route_result.phase_volumes;
+    const std::vector<std::vector<double>>& diagnostic_phase_amounts = out.route_result.phase_amounts;
+    const std::vector<double>& diagnostic_phase_volumes = out.route_result.phase_volumes;
     const auto diagnostic_state_is_valid = [&]() {
         if (diagnostic_phase_amounts.size() != phase_count || diagnostic_phase_volumes.size() != phase_count) {
             return false;
@@ -6137,70 +5672,21 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
         }
         return true;
     };
-    if (!diagnostic_state_is_valid()
-        && out.route_result.variables.size() == phase_count * (feed.size() + 1)) {
-        try {
-            diagnostic_phase_amounts = neutral_phase_amounts_from_route_variables(
-                out.route_result.variables,
-                feed.size()
-            );
-            diagnostic_phase_volumes = neutral_phase_volumes_from_route_variables(
-                out.route_result.variables,
-                feed.size()
-            );
-            if (!diagnostic_state_is_valid()) {
-                diagnostic_phase_amounts.clear();
-                diagnostic_phase_volumes.clear();
-            }
-        } catch (const std::exception&) {
-            diagnostic_phase_amounts.clear();
-            diagnostic_phase_volumes.clear();
-        }
-    }
-
-    const auto composition_from_diagnostic_amounts = [&](const std::vector<double>& amounts) {
-        const double total = std::accumulate(amounts.begin(), amounts.end(), 0.0);
-        require_positive_finite(total, "Electrolyte Stage III diagnostic phase amount total");
-        std::vector<double> composition;
-        composition.reserve(amounts.size());
-        for (double amount : amounts) {
-            composition.push_back(amount / total);
-        }
-        return composition;
-    };
-
-    std::vector<std::vector<double>> phase_compositions = out.route_result.postsolve.phase_compositions;
-    if (phase_compositions.empty() && diagnostic_state_is_valid()) {
-        phase_compositions.reserve(diagnostic_phase_amounts.size());
-        for (const std::vector<double>& amounts : diagnostic_phase_amounts) {
-            phase_compositions.push_back(composition_from_diagnostic_amounts(amounts));
-        }
-    }
-    if (phase_compositions.empty()) {
-        phase_compositions = out.selected_phase_compositions;
-    }
-    if (!phase_compositions.empty()) {
-        out.selected_phase_compositions = phase_compositions;
-    }
+    out.selected_phase_compositions = out.route_result.postsolve.phase_compositions;
+    out.selected_phase_fractions.clear();
     if (!out.route_result.postsolve.phase_amount_totals.empty()) {
         const double total_amount = std::accumulate(
             out.route_result.postsolve.phase_amount_totals.begin(),
             out.route_result.postsolve.phase_amount_totals.end(),
             0.0
         );
-        if (total_amount > 0.0) {
-            out.selected_phase_fractions.clear();
+        if (
+            std::isfinite(total_amount)
+            && total_amount > 0.0
+            && out.route_result.postsolve.phase_amount_totals.size() == phase_count
+        ) {
             for (double amount : out.route_result.postsolve.phase_amount_totals) {
                 out.selected_phase_fractions.push_back(amount / total_amount);
-            }
-        }
-    } else if (diagnostic_state_is_valid()) {
-        const double total_amount = std::accumulate(feed_amounts.begin(), feed_amounts.end(), 0.0);
-        if (total_amount > 0.0) {
-            out.selected_phase_fractions.clear();
-            for (const std::vector<double>& amounts : diagnostic_phase_amounts) {
-                const double phase_total = std::accumulate(amounts.begin(), amounts.end(), 0.0);
-                out.selected_phase_fractions.push_back(phase_total / total_amount);
             }
         }
     }
@@ -6229,59 +5715,50 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
     }
     out.residual_values.push_back(fraction_sum - 1.0);
     for (const std::vector<double>& composition : out.selected_phase_compositions) {
+        require_size(composition, charges.size(), "Electrolyte Stage III refined phase composition");
         double phase_charge = 0.0;
         for (std::size_t species = 0; species < composition.size(); ++species) {
             phase_charge += composition[species] * charges[species];
         }
         out.residual_values.push_back(phase_charge);
     }
-    out.residual_inf_norm = 0.0;
+    out.residual_inf_norm = out.residual_values.empty()
+        ? std::numeric_limits<double>::infinity()
+        : 0.0;
     for (double residual : out.residual_values) {
+        if (!std::isfinite(residual)) {
+            out.residual_inf_norm = std::numeric_limits<double>::infinity();
+            break;
+        }
         out.residual_inf_norm = std::max(out.residual_inf_norm, std::abs(residual));
     }
-    out.active_bound_violation = 0.0;
+    out.active_bound_violation = out.route_result.variables.empty()
+        ? std::numeric_limits<double>::infinity()
+        : 0.0;
     for (double value : out.route_result.variables) {
-        if (std::isfinite(value)) {
-            out.active_bound_violation = std::max(out.active_bound_violation, std::max(0.0, 1.0e-14 - value));
+        if (!std::isfinite(value)) {
+            out.active_bound_violation = std::numeric_limits<double>::infinity();
+            break;
         }
+        out.active_bound_violation = std::max(
+            out.active_bound_violation,
+            std::max(0.0, 1.0e-14 - value)
+        );
     }
     const int variable_count = static_cast<int>(out.variable_labels.size());
     const int residual_count = static_cast<int>(out.equation_labels.size());
     out.jacobian_nonzero_count = variable_count * residual_count;
     out.hessian_nonzero_count = variable_count * (variable_count + 1) / 2;
     out.exact_reduced_jacobian_available =
-        out.route_result.exact_jacobian_required && out.route_result.jacobian_approximation == "exact";
-    out.exact_reduced_hessian_available = !out.held2_discovery.counterion_pair_matrix.empty();
+        out.route_result.exact_jacobian_required
+        && out.route_result.jacobian_approximation == "exact"
+        && !out.held2_discovery.counterion_pair_matrix.empty();
+    out.exact_reduced_hessian_available =
+        out.route_result.exact_hessian_available
+        && out.route_result.hessian_approximation == "exact"
+        && out.route_result.hessian_backend.find("projected_electrolyte") != std::string::npos;
 
-    const bool solver_success =
-        out.route_result.solver_accepted
-        && out.route_result.accepted
-        && out.route_result.solver_status == "success"
-        && out.route_result.application_status == "solve_succeeded";
-    const bool finite_compositions = !out.selected_phase_compositions.empty()
-        && std::all_of(
-            out.selected_phase_compositions.begin(),
-            out.selected_phase_compositions.end(),
-            [](const std::vector<double>& composition) {
-                return std::all_of(composition.begin(), composition.end(), [](double value) {
-                    return std::isfinite(value) && value >= 0.0;
-                });
-            }
-        );
-    const bool residuals_pass =
-        out.residual_inf_norm <= residual_tolerance && out.residual_values.size() == out.equation_labels.size();
-    const bool phase_distance_pass = out.phase_distance > phase_distance_tolerance;
-    const bool bounds_pass = out.active_bound_violation <= active_bound_tolerance;
-    const bool derivative_pass = out.exact_reduced_jacobian_available && out.exact_reduced_hessian_available;
-    out.status = (
-        solver_success
-        && finite_compositions
-        && residuals_pass
-        && phase_distance_pass
-        && bounds_pass
-        && derivative_pass
-    ) ? "complete" : "incomplete";
-    out.stage_iii_refinement_status = out.status == "complete" ? "complete" : "incomplete";
+    certify_electrolyte_stage_iii_refinement(out);
     return out;
 }
 
@@ -6333,9 +5810,6 @@ ElectrolytePostsolveCertificationResult evaluate_electrolyte_postsolve_certifica
         phase_distance_tolerance,
         active_bound_tolerance
     );
-    out.phase_discovery_status = out.stage_iii_refinement.phase_discovery_status;
-    out.stage_iii_refinement_status = out.stage_iii_refinement.stage_iii_refinement_status;
-
     out.component_labels.reserve(feed.size());
     for (std::size_t species = 0; species < feed.size(); ++species) {
         if (species < species_labels.size() && !species_labels[species].empty()) {
@@ -6346,22 +5820,15 @@ ElectrolytePostsolveCertificationResult evaluate_electrolyte_postsolve_certifica
     }
 
     const NeutralTwoPhaseEosPostsolve& postsolve = out.stage_iii_refinement.route_result.postsolve;
-    out.phase_compositions = postsolve.phase_compositions.empty()
-        ? out.stage_iii_refinement.selected_phase_compositions
-        : postsolve.phase_compositions;
+    out.phase_compositions = postsolve.phase_compositions;
     out.phase_amount_totals = postsolve.phase_amount_totals;
-    if (out.phase_amount_totals.empty()) {
-        out.phase_amount_totals = out.stage_iii_refinement.selected_phase_fractions;
-    }
     out.phase_count = static_cast<int>(out.phase_compositions.size());
     const double amount_total = std::accumulate(out.phase_amount_totals.begin(), out.phase_amount_totals.end(), 0.0);
     out.phase_fractions.reserve(out.phase_amount_totals.size());
-    if (amount_total > 0.0) {
+    if (std::isfinite(amount_total) && amount_total > 0.0) {
         for (double amount : out.phase_amount_totals) {
             out.phase_fractions.push_back(amount / amount_total);
         }
-    } else {
-        out.phase_fractions = out.stage_iii_refinement.selected_phase_fractions;
     }
 
     out.reconstructed_feed_composition.assign(feed.size(), 0.0);
@@ -6431,6 +5898,7 @@ ElectrolytePostsolveCertificationResult evaluate_electrolyte_postsolve_certifica
     out.total_charge_residual = std::abs(out.total_charge_residual);
 
     if (out.phase_compositions.size() >= 2 && postsolve.phase_ln_fugacity_coefficients.size() >= 2) {
+        out.neutral_transfer_max_abs_residual = 0.0;
         const std::vector<double>& first_lnphi = postsolve.phase_ln_fugacity_coefficients.front();
         const std::vector<double>& second_lnphi = postsolve.phase_ln_fugacity_coefficients[1];
         require_size(first_lnphi, feed.size(), "Electrolyte postsolve first phase ln fugacity");
@@ -6451,6 +5919,9 @@ ElectrolytePostsolveCertificationResult evaluate_electrolyte_postsolve_certifica
         }
     }
 
+    if (!out.stage_iii_refinement.equation_labels.empty()) {
+        out.mean_ionic_transfer_max_abs_residual = 0.0;
+    }
     for (std::size_t equation = 0; equation < out.stage_iii_refinement.equation_labels.size(); ++equation) {
         const std::string& label = out.stage_iii_refinement.equation_labels[equation];
         const std::string prefix = "pair_mean_ionic_equality:";
@@ -6465,47 +5936,7 @@ ElectrolytePostsolveCertificationResult evaluate_electrolyte_postsolve_certifica
     }
 
     out.pressure_consistency_norm = postsolve.pressure_consistency_norm;
-    out.explicit_ion_reconstruction_accepted =
-        out.feed_reconstruction_inf_norm <= out.feed_reconstruction_tolerance
-        && out.component_nonnegativity_margin >= 0.0;
-    out.charge_balance_accepted =
-        !out.phase_charge_residuals.empty()
-        && out.max_phase_charge_residual <= out.phase_charge_tolerance
-        && out.total_charge_residual <= out.total_charge_tolerance;
-    out.transfer_residuals_accepted =
-        !out.neutral_species_labels.empty()
-        && !out.mean_ionic_pair_labels.empty()
-        && out.neutral_transfer_max_abs_residual <= out.neutral_transfer_tolerance
-        && out.mean_ionic_transfer_max_abs_residual <= out.mean_ionic_transfer_tolerance;
-    out.pressure_consistency_accepted = out.pressure_consistency_norm <= out.pressure_tolerance;
-    const bool composition_sums_accepted = std::all_of(
-        out.composition_sum_residuals.begin(),
-        out.composition_sum_residuals.end(),
-        [&out](double residual) { return residual <= out.composition_sum_tolerance; }
-    );
-    out.phase_set_accepted =
-        out.phase_count >= 2
-        && !out.phase_amount_totals.empty()
-        && out.phase_fraction_sum_residual <= out.phase_fraction_sum_tolerance
-        && composition_sums_accepted;
-    out.domain_margins_accepted =
-        out.minimum_component_mole_fraction >= 0.0
-        && out.minimum_phase_amount > 0.0
-        && out.phase_distance > out.phase_distance_tolerance;
-
-    const bool stage_iii_complete = out.stage_iii_refinement.status == "complete";
-    const bool route_postsolve_accepted = out.stage_iii_refinement.route_result.postsolve.accepted;
-    const bool accepted =
-        stage_iii_complete
-        && route_postsolve_accepted
-        && out.explicit_ion_reconstruction_accepted
-        && out.charge_balance_accepted
-        && out.transfer_residuals_accepted
-        && out.pressure_consistency_accepted
-        && out.phase_set_accepted
-        && out.domain_margins_accepted;
-    out.status = accepted ? "complete" : "incomplete";
-    out.postsolve_certification_status = accepted ? "complete" : "incomplete";
+    certify_electrolyte_postsolve(out);
     return out;
 }
 
@@ -6708,10 +6139,6 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     out.ln_fugacity_consistency_norm =
         pairwise_ln_fugacity_inf_norm(args, system.phase_blocks, species_count, charges);
     out.phase_distance = pairwise_phase_distance_inf_norm(out.phase_compositions);
-    out.stability_checked = false;
-    out.stability_accepted = !stability_certification_required;
-    out.candidate_completeness_accepted = !stability_certification_required;
-    out.phase_set_mass_balance_feasible = !stability_certification_required;
     out.phase_discovery_backend = stability_certification_required
         ? "deterministic_tpd_candidate_screening"
         : "deterministic_seed_sweep";
@@ -6720,74 +6147,54 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
         : "postsolve_local_only";
     out.phase_set_status = stability_certification_required ? "not_checked" : "not_required";
 
-    const double effective_chemical_tolerance = charges.empty()
-        ? chemical_potential_tolerance
-        : std::max(chemical_potential_tolerance, 2.0 * std::sqrt(chemical_potential_tolerance));
-    const bool ln_fugacity_consistency_accepted =
-        !ln_fugacity_consistency_required
-        || out.ln_fugacity_consistency_norm <= effective_chemical_tolerance;
-    out.accepted = out.material_balance_norm <= material_tolerance
-        && out.pressure_consistency_norm <= pressure_tolerance
-        && out.chemical_potential_consistency_norm <= effective_chemical_tolerance
-        && ln_fugacity_consistency_accepted
-        && (!phase_distance_constraint || out.phase_distance >= phase_distance_tolerance);
-    if (out.accepted) {
-        out.rejection_reason = "accepted";
-    } else if (out.material_balance_norm > material_tolerance) {
-        out.rejection_reason = "material_balance";
-    } else if (out.pressure_consistency_norm > pressure_tolerance) {
-        out.rejection_reason = "pressure_consistency";
-    } else if (out.chemical_potential_consistency_norm > effective_chemical_tolerance) {
-        out.rejection_reason = "chemical_potential_consistency";
-    } else if (ln_fugacity_consistency_required && out.ln_fugacity_consistency_norm > effective_chemical_tolerance) {
-        out.rejection_reason = "ln_fugacity_consistency";
-    } else if (phase_distance_constraint) {
-        out.rejection_reason = "phase_distance";
-    } else {
-        out.rejection_reason = "phase_set_not_certified";
+    NeutralPostsolveAcceptanceCriteria criteria;
+    criteria.material_tolerance = material_tolerance;
+    criteria.pressure_tolerance = pressure_tolerance;
+    criteria.chemical_potential_tolerance = chemical_potential_tolerance;
+    criteria.phase_distance_tolerance = phase_distance_tolerance;
+    criteria.charged_system = !charges.empty();
+    criteria.phase_distance_required = phase_distance_constraint;
+    criteria.stability_evidence_pending = stability_certification_required;
+    criteria.ln_fugacity_consistency_required = ln_fugacity_consistency_required;
+    certify_neutral_postsolve(out, criteria);
+    if (!out.accepted || !stability_certification_required) {
+        return out;
     }
-    if (out.accepted && stability_certification_required) {
-        if (!charges.empty()) {
-            out.accepted = false;
-            out.rejection_reason = "stability_tpd";
-            out.phase_set_status = "neutral_tpd_not_valid_for_charged_system";
-            return out;
-        }
-        if (phase_kinds.empty()) {
-            phase_kinds.assign(static_cast<std::size_t>(system.phase_count), 0);
-        }
-        if (phase_kinds.size() != static_cast<std::size_t>(system.phase_count)) {
-            throw ValueError("Neutral EOS postsolve phase kind size does not match the accepted phase set.");
-        }
-        const double tpd_tolerance = std::max(1.0e-6, 100.0 * chemical_potential_tolerance);
-        const double candidate_mass_balance_tolerance = std::max(1.0e-8, 10.0 * material_tolerance);
-        const NeutralPhaseDiscoveryResult discovery = certify_neutral_phase_set(
-            args,
-            temperature,
-            target_pressure,
-            system,
-            feed_amounts,
-            phase_kinds,
-            tpd_tolerance,
-            candidate_mass_balance_tolerance,
-            continuous_tpd_required
-        );
-        copy_discovery_to_postsolve(out, discovery);
-        out.held_stage_iii_status = "ipopt_refinement_completed_current_route";
-        out.held_stage_iii_refined_phase_count = system.phase_count;
-        if (!out.stability_checked) {
-            out.accepted = false;
-            out.rejection_reason = "candidate_completeness";
-        } else if (!out.stability_accepted) {
-            out.accepted = false;
-            out.rejection_reason = "stability_tpd";
-        } else if (!out.candidate_completeness_accepted) {
-            out.accepted = false;
-            out.rejection_reason = "candidate_completeness";
-        } else {
-            out.rejection_reason = "accepted";
-        }
+
+    criteria.stability_evidence_pending = false;
+    criteria.stability_certification_required = true;
+    out.phase_discovery_backend = "deterministic_tpd_candidate_screening";
+    out.stability_certificate = "tpd_postsolve";
+    out.phase_set_status = "not_checked";
+    if (!charges.empty()) {
+        criteria.stability_certification_unsupported = true;
+        certify_neutral_postsolve(out, criteria);
+        return out;
     }
+    if (phase_kinds.empty()) {
+        phase_kinds.assign(static_cast<std::size_t>(system.phase_count), 0);
+    }
+    if (phase_kinds.size() != static_cast<std::size_t>(system.phase_count)) {
+        throw ValueError("Neutral EOS postsolve phase kind size does not match the accepted phase set.");
+    }
+
+    const double tpd_tolerance = std::max(1.0e-6, 100.0 * chemical_potential_tolerance);
+    const double candidate_mass_balance_tolerance = std::max(1.0e-8, 10.0 * material_tolerance);
+    const NeutralPhaseDiscoveryResult discovery = certify_neutral_phase_set(
+        args,
+        temperature,
+        target_pressure,
+        system,
+        feed_amounts,
+        phase_kinds,
+        tpd_tolerance,
+        candidate_mass_balance_tolerance,
+        continuous_tpd_required
+    );
+    copy_neutral_phase_discovery_evidence(out, discovery);
+    out.held_stage_iii_status = "ipopt_refinement_completed_current_route";
+    out.held_stage_iii_refined_phase_count = system.phase_count;
+    certify_neutral_postsolve(out, criteria);
     return out;
 }
 
@@ -6868,25 +6275,14 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
         problem_name,
         minimum_phase_distance
     );
-    const bool strict_solver_acceptance = apply_neutral_route_solve_result(out, solve);
-    const bool certified_stage_iii_acceptable_point =
-        !strict_solver_acceptance
-        && problem_name == "electrolyte_stage_iii_reduced_variable_refinement"
-        && solve.acceptable
-        && solve.application_status == "solved_to_acceptable_level"
-        && !solve.variables.empty()
-        && solve_diagnostic_double(solve, "scaled_constraint_violation_inf_norm", std::numeric_limits<double>::infinity())
-            <= chemical_potential_tolerance
-        && solve_diagnostic_double(solve, "scaled_stationarity_inf_norm", std::numeric_limits<double>::infinity())
-            <= chemical_potential_tolerance
-        && solve_diagnostic_double(solve, "scaled_complementarity_inf_norm", std::numeric_limits<double>::infinity())
-            <= chemical_potential_tolerance;
-    if (!strict_solver_acceptance && !certified_stage_iii_acceptable_point) {
+    const NeutralRouteAcceptablePointCriteria acceptable_point{
+        problem_name == "electrolyte_stage_iii_reduced_variable_refinement",
+        chemical_potential_tolerance,
+        chemical_potential_tolerance,
+        chemical_potential_tolerance,
+    };
+    if (!apply_neutral_route_solve_result(out, solve, acceptable_point)) {
         return out;
-    }
-    if (certified_stage_iii_acceptable_point) {
-        out.solver_accepted = true;
-        out.rejection_reason.clear();
     }
 
     const std::size_t species_count = feed_amounts.size();
@@ -6908,10 +6304,16 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
     );
     if (!charges.empty()) {
         postsolve.charge_balance_norm = phase_charge_inf_norm(out.phase_amounts, charges);
-        postsolve.accepted = postsolve.accepted && postsolve.charge_balance_norm <= charge_tolerance;
-        if (postsolve.charge_balance_norm > charge_tolerance) {
-            postsolve.rejection_reason = "charge_balance";
-        }
+        NeutralPostsolveAcceptanceCriteria criteria;
+        criteria.material_tolerance = material_tolerance;
+        criteria.pressure_tolerance = pressure_tolerance;
+        criteria.chemical_potential_tolerance = chemical_potential_tolerance;
+        criteria.phase_distance_tolerance = phase_distance_tolerance;
+        criteria.charge_tolerance = charge_tolerance;
+        criteria.charged_system = true;
+        criteria.phase_distance_required = minimum_phase_distance > 0.0;
+        criteria.charge_balance_required = true;
+        certify_neutral_postsolve(postsolve, criteria);
     }
     apply_neutral_route_postsolve(out, std::move(postsolve), NeutralRouteCertificationLevel::LocalPostsolve);
     return out;
@@ -6943,7 +6345,7 @@ NeutralTwoPhaseEosRouteResult solve_neutral_multiphase_fugacity_residual_route(
     out.problem_name = problem_name;
     out.activation_compiler = "direct_multiphase_candidate_set";
     out.initial_point_strategy = "stage_ii_candidate_set_replay";
-    out.seed_name = kHeldStageIIDualLoopCandidateSetName;
+    out.seed_name = kSampledCandidateSetReplaySeedName;
     apply_route_metadata(out, phase_amount_volume_route_metadata(false, false, true));
     if (!adapter.compiled) {
         mark_neutral_route_ipopt_dependency_required(out);
@@ -6968,9 +6370,8 @@ NeutralTwoPhaseEosRouteResult solve_neutral_multiphase_fugacity_residual_route(
         || !discovery.phase_set_mass_balance_feasible
         || discovery.selected_candidate_count != static_cast<int>(phase_kinds.size())) {
         NeutralTwoPhaseEosPostsolve postsolve;
-        copy_discovery_to_postsolve(postsolve, discovery);
-        postsolve.accepted = false;
-        postsolve.rejection_reason = "stage_ii_candidate_set_replay";
+        copy_neutral_phase_discovery_evidence(postsolve, discovery);
+        reject_neutral_postsolve(postsolve, "stage_ii_candidate_set_replay");
         apply_neutral_route_postsolve(out, std::move(postsolve), NeutralRouteCertificationLevel::LocalPostsolve);
         return out;
     }
@@ -7028,18 +6429,22 @@ NeutralTwoPhaseEosRouteResult solve_neutral_multiphase_fugacity_residual_route(
         false,
         true
     );
-    if (postsolve.phase_distance <= phase_distance_tolerance) {
-        postsolve.accepted = false;
-        postsolve.rejection_reason = "phase_distance";
-    }
-    apply_stage_ii_discovery_certificate_to_refined_postsolve(
+    NeutralPostsolveAcceptanceCriteria criteria;
+    criteria.material_tolerance = material_tolerance;
+    criteria.pressure_tolerance = pressure_tolerance;
+    criteria.chemical_potential_tolerance = ln_fugacity_tolerance;
+    criteria.phase_distance_tolerance = phase_distance_tolerance;
+    criteria.phase_distance_required = true;
+    criteria.phase_distance_strictly_greater = true;
+    certify_neutral_postsolve(postsolve, criteria);
+    certify_refined_neutral_postsolve(
         postsolve,
         discovery,
         postsolve.phase_count,
-        "stage_ii_dual_loop_candidate_set_seed",
-        kHeldStageIIDualLoopCandidateSetName
+        "sampled_candidate_set_seed",
+        kSampledCandidateSetReplaySeedName
     );
-    apply_neutral_route_postsolve(out, std::move(postsolve), NeutralRouteCertificationLevel::PhaseSetCertified);
+    apply_neutral_route_postsolve(out, std::move(postsolve), NeutralRouteCertificationLevel::LocalPostsolve);
     out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
     trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
     return out;
@@ -7071,155 +6476,121 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
             static_cast<int>(plan.feed_composition.size())
         );
     const IpoptAdapterInfo adapter = native_ipopt_adapter_info();
-    NeutralTwoPhaseEosRouteResult best;
-    best.compiled = adapter.compiled;
-    best.adapter_available = adapter.adapter_available;
-    best.adapter_kind = adapter.adapter_kind;
-    best.exact_gradient_required = adapter.exact_gradient_required;
-    best.exact_jacobian_required = adapter.exact_jacobian_required;
-    best.problem_name = problem_name;
-    best.activation_compiler = "activation_plan";
-    apply_route_metadata(best, phase_amount_volume_route_metadata(false, true));
+    NeutralTwoPhaseEosRouteResult out;
+    out.compiled = adapter.compiled;
+    out.adapter_available = adapter.adapter_available;
+    out.adapter_kind = adapter.adapter_kind;
+    out.exact_gradient_required = adapter.exact_gradient_required;
+    out.exact_jacobian_required = adapter.exact_jacobian_required;
+    out.problem_name = problem_name;
+    out.activation_compiler = "activation_plan";
+    out.initial_point_strategy = "sampled_candidate_pair_replay";
+    out.seed_name = kSampledCandidatePairReplaySeedName;
+    apply_route_metadata(out, phase_amount_volume_route_metadata(false, true));
     if (!adapter.compiled) {
-        mark_neutral_route_ipopt_dependency_required(best);
-        return best;
+        mark_neutral_route_ipopt_dependency_required(out);
+        return out;
     }
 
     const std::vector<double>& normalized_feed = plan.feed_composition;
     const std::vector<double> feed_amounts = normalized_feed;
-    const IpoptSolveOptions route_options = ipopt_solve_options_for_profile(options, "held_refinement");
-    const std::vector<NamedInitialVariables> seeds = neutral_two_phase_seed_candidates(
+    const std::vector<int> phase_kinds = {0, 0};
+    const double tpd_tolerance = std::max(1.0e-6, 100.0 * chemical_potential_tolerance);
+    const double candidate_mass_balance_tolerance = std::max(1.0e-8, 10.0 * material_tolerance);
+    const NeutralPhaseDiscoveryResult discovery = evaluate_neutral_tpd_phase_discovery(
+        args,
+        temperature,
+        target_pressure,
+        normalized_feed,
+        phase_kinds,
+        tpd_tolerance,
+        candidate_mass_balance_tolerance,
+        true
+    );
+    const bool valid_sampled_candidate_pair =
+        sampled_candidate_replay_is_valid(discovery)
+        && discovery.selected_candidate_count == 2
+        && kSampledCandidatePairReplaySeedName == discovery.held_stage_ii_replay_seed_name
+        && discovery.held_stage_ii_replay_phase_fractions.size() == 2
+        && discovery.held_stage_ii_replay_phase_kinds == phase_kinds
+        && discovery.held_stage_ii_replay_phase_compositions.size() == 2;
+    if (!valid_sampled_candidate_pair) {
+        NeutralTwoPhaseEosPostsolve postsolve;
+        copy_neutral_phase_discovery_evidence(postsolve, discovery);
+        reject_neutral_postsolve(postsolve, "sampled_candidate_pair_replay_unavailable");
+        apply_neutral_route_postsolve(
+            out,
+            std::move(postsolve),
+            NeutralRouteCertificationLevel::LocalPostsolve
+        );
+        return out;
+    }
+
+    const NeutralTwoPhaseEosInitialPoint initial = build_two_phase_eos_initial_point_from_candidate_set(
         args,
         feed_amounts,
-        {},
+        discovery,
         temperature,
         target_pressure,
         problem_name,
-        {0, 0}
+        phase_kinds
     );
-    bool have_best = false;
-    std::vector<RouteSeedAttempt> attempts;
-    attempts.reserve(seeds.size() + (route_options.initial_variables.empty() ? 0 : 1));
-    const int seed_attempt_count =
-        static_cast<int>(seeds.size() + (route_options.initial_variables.empty() ? 0 : 1));
+    IpoptSolveOptions route_options = ipopt_solve_options_for_profile(options, "held_refinement");
+    route_options.initial_variables = neutral_two_phase_variables_from_initial(initial);
+    route_options.initial_bound_lower_multipliers.clear();
+    route_options.initial_bound_upper_multipliers.clear();
+    route_options.initial_constraint_multipliers.clear();
 
-    auto run_attempt = [&](const std::string& seed_name, const IpoptSolveOptions& attempt_options) {
-        const int seed_attempt_index = static_cast<int>(attempts.size()) + 1;
-        trace_route_seed_attempt_start(
-            problem_name,
-            seed_name,
-            seed_attempt_index,
-            seed_attempt_count,
-            attempt_options
-        );
-        ActivatedEquilibriumNlp problem(args, plan, layout);
-        const IpoptSolveResult solve = solve_ipopt_nlp(problem, attempt_options);
-        NeutralTwoPhaseEosRouteResult result;
-        result.compiled = adapter.compiled;
-        result.adapter_available = adapter.adapter_available;
-        result.adapter_kind = adapter.adapter_kind;
-        result.exact_gradient_required = adapter.exact_gradient_required;
-        result.exact_jacobian_required = adapter.exact_jacobian_required;
-        result.problem_name = problem_name;
-        result.activation_compiler = "activation_plan";
-        result.initial_point_strategy = "deterministic_seed_sweep";
-        result.seed_name = seed_name;
-        const bool can_postsolve = apply_neutral_route_solve_result(result, solve);
-        apply_route_metadata(result, phase_amount_volume_route_metadata(false, true));
-        if (!can_postsolve) {
-            attempts.push_back(neutral_seed_attempt_from_result(result));
-            trace_route_seed_attempt_finish(
-                problem_name,
-                seed_name,
-                seed_attempt_index,
-                seed_attempt_count,
-                result
-            );
-            if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
-                best = result;
-                have_best = true;
-            }
-            return result;
-        }
-
-        result.phase_amounts = neutral_phase_amounts_from_route_variables(
-            solve.variables,
-            static_cast<std::size_t>(layout.species_count)
-        );
-        result.phase_volumes = neutral_phase_volumes_from_route_variables(
-            solve.variables,
-            static_cast<std::size_t>(layout.species_count)
-        );
-        NeutralTwoPhaseEosPostsolve postsolve = evaluate_neutral_two_phase_eos_postsolve(
-            args,
-            temperature,
-            target_pressure,
-            result.phase_amounts,
-            result.phase_volumes,
-            feed_amounts,
-            material_tolerance,
-            pressure_tolerance,
-            chemical_potential_tolerance,
-            phase_distance_tolerance,
-            {},
-            true,
-            true,
-            {0, 0},
-            true
-        );
-        apply_neutral_route_postsolve(
-            result,
-            std::move(postsolve),
-            NeutralRouteCertificationLevel::PhaseSetCertified
-        );
-        if (seed_name == kHeldStageIIDualLoopSeedName && result.postsolve.held_stage_ii_replay_ready) {
-            result.postsolve.held_stage_iii_consumed_stage_ii_replay_metadata = true;
-            result.postsolve.held_stage_iii_replay_source = "stage_ii_dual_loop_candidate_seed";
-            result.postsolve.held_stage_iii_replay_seed_name = kHeldStageIIDualLoopSeedName;
-            result.postsolve.held_stage_iii_replay_candidate_count =
-                result.postsolve.held_stage_ii_replay_candidate_count;
-        }
-        attempts.push_back(neutral_seed_attempt_from_result(result));
-        trace_route_seed_attempt_finish(
-            problem_name,
-            seed_name,
-            seed_attempt_index,
-            seed_attempt_count,
-            result
-        );
-        if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
-            best = result;
-            have_best = true;
-        }
-        return result;
-    };
-
-    if (!route_options.initial_variables.empty()) {
-        const NeutralTwoPhaseEosRouteResult continuation = run_attempt("continuation_state", route_options);
-        if (continuation.accepted) {
-            best.seed_attempts = attempts;
-            return best;
-        }
+    trace_route_seed_attempt_start(problem_name, out.seed_name, 1, 1, route_options);
+    ActivatedEquilibriumNlp problem(args, plan, layout);
+    const IpoptSolveResult solve = solve_ipopt_nlp(problem, route_options);
+    if (!apply_neutral_route_solve_result(out, solve)) {
+        out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
+        trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
+        return out;
     }
 
-    if (seeds.empty()) {
-        throw ValueError(problem_name + " could not construct a deterministic LLE seed.");
-    }
-    for (const auto& seed : seeds) {
-        IpoptSolveOptions attempt_options = route_options;
-        attempt_options.initial_variables = seed.variables;
-        attempt_options.initial_bound_lower_multipliers.clear();
-        attempt_options.initial_bound_upper_multipliers.clear();
-        attempt_options.initial_constraint_multipliers.clear();
-        const NeutralTwoPhaseEosRouteResult attempt = run_attempt(seed.seed_name, attempt_options);
-        if (attempt.accepted) {
-            break;
-        }
-    }
-
-    best.initial_point_strategy = "deterministic_seed_sweep";
-    best.seed_attempts = attempts;
-    return best;
+    out.phase_amounts = neutral_phase_amounts_from_route_variables(
+        solve.variables,
+        static_cast<std::size_t>(layout.species_count)
+    );
+    out.phase_volumes = neutral_phase_volumes_from_route_variables(
+        solve.variables,
+        static_cast<std::size_t>(layout.species_count)
+    );
+    NeutralTwoPhaseEosPostsolve postsolve = evaluate_neutral_two_phase_eos_postsolve(
+        args,
+        temperature,
+        target_pressure,
+        out.phase_amounts,
+        out.phase_volumes,
+        feed_amounts,
+        material_tolerance,
+        pressure_tolerance,
+        chemical_potential_tolerance,
+        phase_distance_tolerance,
+        {},
+        true,
+        false,
+        phase_kinds,
+        false,
+        true
+    );
+    certify_refined_neutral_postsolve(
+        postsolve,
+        discovery,
+        postsolve.phase_count,
+        "sampled_candidate_pair_seed",
+        kSampledCandidatePairReplaySeedName
+    );
+    apply_neutral_route_postsolve(
+        out,
+        std::move(postsolve),
+        NeutralRouteCertificationLevel::LocalPostsolve
+    );
+    out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
+    trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
+    return out;
 }
 
 }  // namespace epcsaft::native::equilibrium_nlp

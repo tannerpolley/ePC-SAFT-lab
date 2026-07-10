@@ -1,0 +1,100 @@
+{
+  "artifacts": {
+    "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/fit_statistics.csv",
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/model_curve.csv",
+    "pdf": "analyses/paper_validation/2002_gross/figures/figure_04/results/figure_04.pdf",
+    "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/plotted_data.csv",
+    "png": "analyses/paper_validation/2002_gross/figures/figure_04/results/figure_04.png",
+    "source_csv": "analyses/paper_validation/2002_gross/figures/figure_04/source/source_points.csv",
+    "source_notes_csv": "analyses/paper_validation/2002_gross/figures/figure_04/source/source_notes.csv",
+    "svg": "analyses/paper_validation/2002_gross/figures/figure_04/results/figure_04.svg"
+  },
+  "figure_id": "figure_04",
+  "model_point_count": 11,
+  "native_route": {
+    "derivative_status": "verified_exact",
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/model_curve.csv",
+    "native_freshness_receipt": {
+      "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+      "checker_command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/validation/check_gross_2002_full_replication.py",
+        "--json",
+        "--require-exact-association-hessian",
+        "--require-fresh-native"
+      ],
+      "current_source_identity": "2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94",
+      "embedded_source_identity": "2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94",
+      "embedded_source_identity_algorithm": "sha256-relative-path-content-v1",
+      "embedded_source_identity_file_count": 110,
+      "embedded_source_identity_limit": "Covers the canonical equilibrium object/module/header manifest, every listed equilibrium file, this shared CMake loader/identity helper, the provider source manifest contract, the exact manifest-listed provider target .cpp files, and the .h/.hpp header contracts reachable from manifest include roots. Root/standalone target compile definitions, include/link flags, compiler identity, generated dependency sources, and dependency binaries are outside this source receipt.",
+      "embedded_source_identity_scope": "equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph",
+      "freshness_mode": "embedded_source_identity",
+      "git_commit": "162d32ba225a9fbe0f711b5c28985238589f2d10",
+      "native_module_name": "epcsaft_equilibrium._native_core",
+      "native_module_path": "/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/packages/epcsaft-equilibrium/src/epcsaft_equilibrium/_native_core.cpython-313-x86_64-linux-gnu.so",
+      "source_identity_algorithm": "sha256-relative-path-content-v1",
+      "source_identity_file_count": 110,
+      "source_identity_limit": "Covers the canonical equilibrium object/module/header manifest, every listed equilibrium file, this shared CMake loader/identity helper, the provider source manifest contract, the exact manifest-listed provider target .cpp files, and the .h/.hpp header contracts reachable from manifest include roots. Root/standalone target compile definitions, include/link flags, compiler identity, generated dependency sources, and dependency binaries are outside this source receipt.",
+      "source_identity_matches": true,
+      "source_identity_scope": "equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph"
+    },
+    "public_entrypoint": "epcsaft_equilibrium.Equilibrium(mixture, route='bubble_pressure'/'dew_pressure', T=..., x=.../y=...).solve()"
+  },
+  "score": {
+    "branch_coverage_score": 1.0,
+    "derivative_status": "verified_exact",
+    "max_axis_error": {
+      "P_bar": 0.04120717555099637,
+      "composition_component_1": 0.0
+    },
+    "model_point_count": 11,
+    "normalized_plot_score": 8.022280518543198,
+    "pass": true,
+    "rmse_axis": {
+      "P_bar": 0.01584864610118039,
+      "composition_component_1": 0.0
+    },
+    "score_basis": "pressure-coordinate RMSE against calibrated Gross 2002 Figure 4 retained P-x/y source points",
+    "series_scores": {
+      "bubble_line": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "P_bar": 0.021092435561207545,
+          "x_1_pentanol": 0.0
+        },
+        "model_point_count": 6,
+        "normalized_plot_score": 8.840051551448525,
+        "pass": true,
+        "rmse_axis": {
+          "P_bar": 0.011599484485514747,
+          "x_1_pentanol": 0.0
+        },
+        "source_point_count": 6
+      },
+      "dew_line": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "P_bar": 0.04120717555099637,
+          "y_1_pentanol": 0.0
+        },
+        "model_point_count": 5,
+        "normalized_plot_score": 8.022280518543198,
+        "pass": true,
+        "rmse_axis": {
+          "P_bar": 0.019777194814568022,
+          "y_1_pentanol": 0.0
+        },
+        "source_point_count": 5
+      }
+    },
+    "source_point_count": 11
+  },
+  "source_point_count": 33,
+  "status": "accepted"
+}

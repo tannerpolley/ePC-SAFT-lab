@@ -3,19 +3,19 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from analyses.package_validation.explicit_association_toybox.scripts.pcsaft_inputs import (
-    ToyPCSAFTState,
-    state_from_config,
+from analyses.package_validation.explicit_association_toybox.scripts.dispersion import (
+    ares_disp,
+    dispersion_polynomials,
+    mixed_dispersion_moments,
 )
 from analyses.package_validation.explicit_association_toybox.scripts.hard_chain import (
     ares_hc,
     ares_hs,
     hard_chain_state,
 )
-from analyses.package_validation.explicit_association_toybox.scripts.dispersion import (
-    ares_disp,
-    dispersion_polynomials,
-    mixed_dispersion_moments,
+from analyses.package_validation.explicit_association_toybox.scripts.pcsaft_inputs import (
+    ToyPCSAFTState,
+    state_from_config,
 )
 
 

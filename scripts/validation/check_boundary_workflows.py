@@ -25,6 +25,7 @@ apply_native_runtime_env(os.environ)
 
 from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.core.native_results import native_route_solved_pressure, native_route_solved_temperature
+
 from scripts.validation import equilibrium_validation_runtime as runtime
 
 _core = extension_native_core()
@@ -71,17 +72,6 @@ BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
         "fixed_variables": ("T", "x"),
         "free_variables": ("P", "y", "phase_volumes"),
     },
-    "bubble_temperature": {
-        "workflow_label": "Bubble point",
-        "selector_family": "bubble_dew_derived_routes",
-        "problem_name": "neutral_bubble_t_eos",
-        "diagram_target": "T-x",
-        "source_phase": "liquid",
-        "composition_role": "liquid",
-        "boundary_variable": "T",
-        "fixed_variables": ("P", "x"),
-        "free_variables": ("T", "y", "phase_volumes"),
-    },
     "dew_pressure": {
         "workflow_label": "Dew point",
         "selector_family": "bubble_dew_derived_routes",
@@ -92,17 +82,6 @@ BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
         "boundary_variable": "P",
         "fixed_variables": ("T", "y"),
         "free_variables": ("P", "x", "phase_volumes"),
-    },
-    "dew_temperature": {
-        "workflow_label": "Dew point",
-        "selector_family": "bubble_dew_derived_routes",
-        "problem_name": "neutral_dew_t_eos",
-        "diagram_target": "T-x",
-        "source_phase": "vapor",
-        "composition_role": "vapor",
-        "boundary_variable": "T",
-        "fixed_variables": ("P", "y"),
-        "free_variables": ("T", "x", "phase_volumes"),
     },
 }
 
@@ -200,12 +179,16 @@ def _cloud_shadow_metadata_blockers(metadata: dict[str, Any]) -> list[str]:
         blockers.append("cloud_shadow_source_status_not_source_backed")
     if metadata.get("species") != EXPECTED_CLOUD_SHADOW_SPECIES:
         blockers.append("cloud_shadow_metadata_species_order_mismatch")
-    if metadata.get("route") != "lle":
+    if metadata.get("route") != "internal_neutral_lle_tpd_diagnostic":
         blockers.append("cloud_shadow_metadata_route_mismatch")
     if metadata.get("selector_route") != "neutral_lle":
         blockers.append("cloud_shadow_metadata_selector_route_mismatch")
     if metadata.get("expected_phase_count") != 2:
         blockers.append("cloud_shadow_expected_phase_count_mismatch")
+    if metadata.get("public_admission_state") != "closed":
+        blockers.append("cloud_shadow_metadata_public_admission_not_closed")
+    if metadata.get("global_held_proof") is not False:
+        blockers.append("cloud_shadow_metadata_global_held_claim_present")
     for field in ("association_active", "electrolyte_active", "reaction_active"):
         if metadata.get(field) is not False:
             blockers.append(f"cloud_shadow_forbidden_physics_active:{field}")
@@ -461,175 +444,6 @@ def _cloud_shadow_pair_source(case_dir: Path) -> dict[str, Any]:
     }
 
 
-def _cloud_shadow_feed_source(case_dir: Path, species_count: int) -> dict[str, Any]:
-    rows = _read_csv(case_dir / "feed_compositions.csv")
-    if len(rows) != 1:
-        raise ValueError("cloud_shadow_expected_one_feed_row")
-    row = rows[0]
-    return {
-        "temperature_K": float(row["temperature_K"]),
-        "pressure_Pa": float(row["pressure_Pa"]),
-        "feed_composition": _cloud_shadow_composition_from_prefix(row, "z", species_count),
-    }
-
-
-def _cloud_shadow_composition_error(left: list[float], right: list[float]) -> list[float]:
-    if len(left) != len(right):
-        return []
-    return [abs(a - b) for a, b in zip(left, right, strict=True)]
-
-
-def _cloud_shadow_max_composition_error(left: list[float], right: list[float]) -> float | None:
-    errors = _cloud_shadow_composition_error(left, right)
-    return max(errors) if errors else None
-
-
-def _cloud_shadow_phase_match(
-    phase_compositions: list[list[float]],
-    source_parent: list[float],
-    source_shadow: list[float],
-) -> dict[str, Any]:
-    if len(phase_compositions) < 2:
-        return {
-            "complete": False,
-            "blockers": ["cloud_shadow_model_reference_phase_compositions_missing"],
-        }
-    best: dict[str, Any] | None = None
-    for parent_index, shadow_index in ((0, 1), (1, 0)):
-        parent = phase_compositions[parent_index]
-        shadow = phase_compositions[shadow_index]
-        parent_error = _cloud_shadow_max_composition_error(parent, source_parent)
-        shadow_error = _cloud_shadow_max_composition_error(shadow, source_shadow)
-        if parent_error is None or shadow_error is None:
-            continue
-        candidate = {
-            "complete": True,
-            "parent_index": parent_index,
-            "shadow_index": shadow_index,
-            "parent_liquid_composition": parent,
-            "shadow_liquid_composition": shadow,
-            "source_parent_composition_abs_error": _cloud_shadow_composition_error(parent, source_parent),
-            "source_shadow_composition_abs_error": _cloud_shadow_composition_error(shadow, source_shadow),
-            "max_source_parent_composition_abs_error": parent_error,
-            "max_source_shadow_composition_abs_error": shadow_error,
-            "blockers": [],
-        }
-        score = parent_error + shadow_error
-        if best is None or score < float(best["score"]):
-            candidate["score"] = score
-            best = candidate
-    if best is None:
-        return {
-            "complete": False,
-            "blockers": ["cloud_shadow_model_reference_phase_match_missing"],
-        }
-    best.pop("score")
-    return best
-
-
-def _run_cloud_shadow_model_reference_route(
-    mix: Any,
-    request: dict[str, Any],
-    thresholds: dict[str, Any],
-    *,
-    debug: bool,
-) -> dict[str, Any]:
-    def run() -> dict[str, Any]:
-        return dict(
-            _core._native_equilibrium_selector_route_result(
-                mix._native,
-                request,
-                int(thresholds["solver_max_iterations"]),
-                float(thresholds["solver_tolerance"]),
-                0.0,
-                "auto",
-                50 if debug else 8,
-                float(thresholds["material_balance_abs"]),
-                float(thresholds["pressure_abs_Pa"]),
-                float(thresholds["solver_tolerance"]),
-                float(thresholds["solver_tolerance"]),
-                {},
-                linear_solver="auto",
-                print_level=5 if debug else 0,
-                acceptable_tolerance=float(thresholds["acceptable_tolerance"]),
-                constraint_violation_tolerance=float(thresholds["constraint_violation_tolerance"]),
-                dual_infeasibility_tolerance=float(thresholds["dual_infeasibility_tolerance"]),
-                complementarity_tolerance=float(thresholds["complementarity_tolerance"]),
-            )
-        )
-
-    if debug:
-        with runtime.redirect_native_stdout_to_stderr():
-            return run()
-    with runtime.suppress_native_stdout():
-        return run()
-
-
-def _cloud_shadow_model_reference(
-    mix: Any,
-    case_dir: Path,
-    species_count: int,
-    source: dict[str, Any],
-    thresholds: dict[str, Any],
-    *,
-    debug: bool,
-) -> dict[str, Any]:
-    feed = _cloud_shadow_feed_source(case_dir, species_count)
-    request = {
-        "route": "neutral_lle",
-        "temperature": float(feed["temperature_K"]),
-        "pressure": float(feed["pressure_Pa"]),
-        "composition": list(feed["feed_composition"]),
-        "composition_role": "feed",
-    }
-    route_payload = _run_cloud_shadow_model_reference_route(mix, request, thresholds, debug=debug)
-    postsolve = route_payload.get("postsolve")
-    postsolve = postsolve if isinstance(postsolve, dict) else {}
-    phase_compositions = [
-        [float(value) for value in composition]
-        for composition in postsolve.get("phase_compositions", [])
-        if isinstance(composition, list)
-    ]
-    match = _cloud_shadow_phase_match(
-        phase_compositions,
-        list(source.get("parent_liquid_composition", [])),
-        list(source.get("source_shadow_composition", [])),
-    )
-    blockers = list(match.get("blockers", []))
-    if not math.isclose(feed["temperature_K"], float(source["source_temperature_K"]), rel_tol=0.0, abs_tol=1.0e-9):
-        blockers.append("cloud_shadow_model_reference_temperature_source_mismatch")
-    if not math.isclose(feed["pressure_Pa"], float(source["pressure_Pa"]), rel_tol=0.0, abs_tol=1.0e-6):
-        blockers.append("cloud_shadow_model_reference_pressure_source_mismatch")
-    if route_payload.get("status") != "production_accepted":
-        blockers.append("cloud_shadow_model_reference_route_not_production_accepted")
-    if route_payload.get("solver_status") != "success":
-        blockers.append("cloud_shadow_model_reference_solver_not_success")
-    if route_payload.get("application_status") != "solve_succeeded":
-        blockers.append("cloud_shadow_model_reference_application_not_solved")
-    if route_payload.get("accepted") is not True:
-        blockers.append("cloud_shadow_model_reference_not_accepted")
-    parent_error = match.get("max_source_parent_composition_abs_error")
-    shadow_error = match.get("max_source_shadow_composition_abs_error")
-    composition_threshold = _threshold_value(thresholds, "composition_abs")
-    if parent_error is None or float(parent_error) > composition_threshold:
-        blockers.append("cloud_shadow_model_parent_source_error_exceeds_threshold")
-    if shadow_error is None or float(shadow_error) > composition_threshold:
-        blockers.append("cloud_shadow_model_shadow_source_error_exceeds_threshold")
-    return {
-        "complete": not blockers,
-        "status": "model_reference_complete" if not blockers else "model_reference_blocked",
-        "blockers": sorted(set(blockers)),
-        "route": "neutral_lle",
-        "route_status": route_payload.get("status"),
-        "solver_status": route_payload.get("solver_status"),
-        "application_status": route_payload.get("application_status"),
-        "source_temperature_K": feed["temperature_K"],
-        "pressure_Pa": feed["pressure_Pa"],
-        "feed_composition": feed["feed_composition"],
-        **{key: value for key, value in match.items() if key not in {"blockers", "complete"}},
-    }
-
-
 def _cloud_shadow_route_request(source: dict[str, Any], parent_liquid_composition: list[float]) -> dict[str, Any]:
     return {
         "route": EXPECTED_CLOUD_SHADOW_ROUTE,
@@ -822,63 +636,53 @@ def evaluate_cloud_shadow_route_evidence(
         blockers.append("native_cloud_temperature_route_unrequested")
     elif not hasattr(_core, "_native_equilibrium_cloud_shadow_route_result"):
         blockers.append("native_cloud_temperature_route_missing")
-    elif not hasattr(_core, "_native_equilibrium_selector_route_result"):
-        blockers.append("native_neutral_lle_model_reference_route_missing")
     else:
         metadata = _read_json(case_dir / "metadata.json")
         species = [str(item) for item in metadata["species"]]
         mix = _cloud_shadow_case_mixture(case_dir, species)
-        model_reference = _cloud_shadow_model_reference(
-            mix,
-            case_dir,
-            len(species),
-            source,
-            thresholds,
-            debug=debug,
+        parent = [float(value) for value in source["parent_liquid_composition"]]
+        source_parent_error = [0.0 for _ in parent]
+        model_reference = {
+            "status": "retired_public_lle_model_reference",
+            "claim_scope": "source parent-liquid composition used directly",
+            "production_route_admitted": False,
+            "global_phase_set_certified": False,
+        }
+        request = _cloud_shadow_route_request(source, parent)
+        route_payload = _run_cloud_shadow_native_route(mix, request, thresholds, debug=debug)
+        public_route_admission = str(route_payload.get("public_route_admission", "unknown"))
+        seed_attempts = _seed_attempt_summary(route_payload)
+        iteration_limit_attempts = _iteration_limit_seed_attempts(route_payload)
+        strict = _strict_convergence(route_payload, iteration_limit_attempts)
+        residuals = _residuals(route_payload)
+        solved_temperature = native_route_solved_temperature(route_payload, EXPECTED_CLOUD_SHADOW_ROUTE)
+        solved_shadow = _cloud_shadow_phase_composition(route_payload, "shadow_liquid", 1)
+        phase_distance = _cloud_shadow_phase_distance(route_payload, parent, solved_shadow)
+        temperature_error = abs(solved_temperature - float(source["source_temperature_K"]))
+        shadow_error = [abs(left - right) for left, right in zip(solved_shadow, source_shadow, strict=True)]
+        max_shadow_error = max(shadow_error) if shadow_error else None
+        route_trace = _cloud_shadow_route_trace(
+            route_payload,
+            source_fixture,
+            parent,
+            residuals,
+            seed_attempts,
+            iteration_limit_attempts,
+            strict,
         )
-        blockers.extend(model_reference.get("blockers", []))
-        if not model_reference.get("complete"):
-            parent = []
-        else:
-            parent = [float(value) for value in model_reference["parent_liquid_composition"]]
-            source_parent_error = [
-                float(value) for value in model_reference.get("source_parent_composition_abs_error", [])
-            ]
-            request = _cloud_shadow_route_request(source, parent)
-            route_payload = _run_cloud_shadow_native_route(mix, request, thresholds, debug=debug)
-            public_route_admission = str(route_payload.get("public_route_admission", "unknown"))
-            seed_attempts = _seed_attempt_summary(route_payload)
-            iteration_limit_attempts = _iteration_limit_seed_attempts(route_payload)
-            strict = _strict_convergence(route_payload, iteration_limit_attempts)
-            residuals = _residuals(route_payload)
-            solved_temperature = native_route_solved_temperature(route_payload, EXPECTED_CLOUD_SHADOW_ROUTE)
-            solved_shadow = _cloud_shadow_phase_composition(route_payload, "shadow_liquid", 1)
-            phase_distance = _cloud_shadow_phase_distance(route_payload, parent, solved_shadow)
-            temperature_error = abs(solved_temperature - float(source["source_temperature_K"]))
-            shadow_error = [abs(left - right) for left, right in zip(solved_shadow, source_shadow, strict=True)]
-            max_shadow_error = max(shadow_error) if shadow_error else None
-            route_trace = _cloud_shadow_route_trace(
-                route_payload,
-                source_fixture,
-                parent,
-                residuals,
-                seed_attempts,
-                iteration_limit_attempts,
-                strict,
-            )
-            if not strict:
-                blockers.append("native_cloud_temperature_strict_convergence_missing")
-            if temperature_error > _threshold_value(thresholds, "source_temperature_pair_abs_K"):
-                blockers.append("cloud_shadow_temperature_error_exceeds_threshold")
-            if max_shadow_error is None or max_shadow_error > _threshold_value(thresholds, "composition_abs"):
-                blockers.append("cloud_shadow_shadow_composition_error_exceeds_threshold")
-            blockers.extend(_cloud_shadow_residual_blockers(residuals, phase_distance, thresholds))
-            if route_payload.get("selector_family") != EXPECTED_CLOUD_SHADOW_SELECTOR_FAMILY:
-                blockers.append("cloud_shadow_selector_family_mismatch")
-            if route_payload.get("problem_name") != EXPECTED_CLOUD_SHADOW_PROBLEM_NAME:
-                blockers.append("cloud_shadow_problem_name_mismatch")
-            if public_route_admission != "closed":
-                blockers.append("cloud_shadow_public_route_admission_open")
+        if not strict:
+            blockers.append("native_cloud_temperature_strict_convergence_missing")
+        if temperature_error > _threshold_value(thresholds, "source_temperature_pair_abs_K"):
+            blockers.append("cloud_shadow_temperature_error_exceeds_threshold")
+        if max_shadow_error is None or max_shadow_error > _threshold_value(thresholds, "composition_abs"):
+            blockers.append("cloud_shadow_shadow_composition_error_exceeds_threshold")
+        blockers.extend(_cloud_shadow_residual_blockers(residuals, phase_distance, thresholds))
+        if route_payload.get("selector_family") != EXPECTED_CLOUD_SHADOW_SELECTOR_FAMILY:
+            blockers.append("cloud_shadow_selector_family_mismatch")
+        if route_payload.get("problem_name") != EXPECTED_CLOUD_SHADOW_PROBLEM_NAME:
+            blockers.append("cloud_shadow_problem_name_mismatch")
+        if public_route_admission != "closed":
+            blockers.append("cloud_shadow_public_route_admission_open")
 
     blockers = sorted(set(blockers))
     complete = gate["complete"] and run_native and not blockers
@@ -929,54 +733,28 @@ def _workflow_contracts(route_points_by_label: dict[str, list[dict[str, Any]]] |
             "label": "Bubble point",
             "workflow_kind": "derived_boundary",
             "activation_family_row": False,
-            "runtime_status": "executable_current_routes",
-            "routes": ["bubble_pressure", "bubble_temperature"],
-            "fixed_variables": ["temperature_or_pressure", "liquid_or_feed_composition"],
-            "free_variables": ["incipient_vapor_composition", "phase_volumes", "boundary_pressure_or_temperature"],
-            "diagram_targets": ["P-x", "T-x"],
+            "runtime_status": "public_route_open",
+            "routes": ["bubble_pressure"],
+            "fixed_variables": ["temperature", "liquid_composition"],
+            "free_variables": ["incipient_vapor_composition", "phase_volumes", "boundary_pressure"],
+            "diagram_targets": ["P-x"],
         },
         {
             "label": "Dew point",
             "workflow_kind": "derived_boundary",
             "activation_family_row": False,
-            "runtime_status": "executable_current_routes",
-            "routes": ["dew_pressure", "dew_temperature"],
-            "fixed_variables": ["temperature_or_pressure", "vapor_composition"],
-            "free_variables": ["incipient_liquid_composition", "phase_volumes", "boundary_pressure_or_temperature"],
-            "diagram_targets": ["P-x", "T-x"],
-        },
-        {
-            "label": "Cloud point",
-            "workflow_kind": "derived_boundary",
-            "activation_family_row": False,
-            "runtime_status": "planned_not_executable",
-            "routes": [],
-            "fixed_variables": ["temperature_or_pressure", "parent_liquid_composition"],
-            "free_variables": [
-                "incipient_second_liquid_composition",
-                "phase_volumes",
-                "boundary_pressure_or_temperature",
-            ],
-            "diagram_targets": ["P-x", "T-x"],
-        },
-        {
-            "label": "Shadow point",
-            "workflow_kind": "derived_boundary",
-            "activation_family_row": False,
-            "runtime_status": "planned_not_executable",
-            "routes": [],
-            "fixed_variables": ["cloud_state"],
-            "free_variables": ["incipient_phase_composition", "incipient_phase_volume"],
-            "diagram_targets": ["P-x", "T-x"],
+            "runtime_status": "public_route_open",
+            "routes": ["dew_pressure"],
+            "fixed_variables": ["temperature", "vapor_composition"],
+            "free_variables": ["incipient_liquid_composition", "phase_volumes", "boundary_pressure"],
+            "diagram_targets": ["P-x"],
         },
     ]
     for workflow in workflows:
         route_points = list(route_points_by_label.get(workflow["label"], []))
         workflow["route_points"] = route_points
-        if workflow["runtime_status"] == "planned_not_executable":
-            workflow["route_point_status"] = "planned_not_executable"
-        elif not route_points:
-            workflow["route_point_status"] = "not_requested"
+        if not route_points:
+            workflow["route_point_status"] = "contracts_only"
         elif all(point["status"] == "accepted" for point in route_points):
             workflow["route_point_status"] = "complete"
         else:
@@ -1427,6 +1205,8 @@ def _base_payload(args: argparse.Namespace, workflows: list[dict[str, Any]], blo
         complete = bool(cloud_shadow_route_evidence["complete"])
     elif cloud_shadow_gate and not args.run_current_boundary_route:
         complete = bool(cloud_shadow_gate["complete"])
+    elif not args.run_current_boundary_route:
+        complete = not all_blockers
     else:
         complete = route_complete and not all_blockers
     if cloud_shadow_route_evidence and not args.run_current_boundary_route:
@@ -1434,7 +1214,7 @@ def _base_payload(args: argparse.Namespace, workflows: list[dict[str, Any]], blo
     elif cloud_shadow_gate and not args.run_current_boundary_route:
         status = "cloud_shadow_gate_complete" if complete else "cloud_shadow_gate_blocked"
     elif not args.run_current_boundary_route:
-        status = "contracts_available"
+        status = "contracts_verified" if complete else "contracts_blocked"
     elif complete:
         status = "complete_route_convergence"
     else:
@@ -1446,7 +1226,7 @@ def _base_payload(args: argparse.Namespace, workflows: list[dict[str, Any]], blo
         "requested_route_point_count": summary["requested_route_point_count"],
         "route_point_summary": summary,
         "boundary_trace_status": (
-            "not_requested"
+            "contracts_only"
             if summary["requested_route_point_count"] == 0
             else ("complete" if trace_result["complete"] else "blocked")
         ),
@@ -1486,6 +1266,8 @@ def evaluate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         if args.require_cloud_shadow_gate and not payload.get("cloud_shadow_gate", {}).get("complete", False):
             return payload, 2
         if args.require_cloud_shadow_route and not payload.get("cloud_shadow_route_evidence", {}).get("complete", False):
+            return payload, 2
+        if args.require_complete and not payload["complete"]:
             return payload, 2
         return payload, 0
 

@@ -7,7 +7,6 @@ import epcsaft_regression
 import epcsaft_regression.core as regression_core
 from epcsaft_regression.native_adapter import native_ceres_backend_info
 
-
 REGRESSION_CAPABILITY_DIMENSIONS = (
     "registry_known_target_kind",
     "derivative_supported_target_kind",
@@ -36,12 +35,11 @@ def test_runtime_reports_ceres_build_contract() -> None:
 
 
 def test_ceres_cppad_capability_claims_require_enabled_native_dependencies() -> None:
-    provider_capabilities = epcsaft.capabilities()
     capabilities = epcsaft_regression.capabilities()
     ceres = capabilities["optimizers"]["ceres"]
     cppad = capabilities["derivatives"]["cppad"]
-    coverage = provider_capabilities["derivatives"]["coverage_matrix"]
     jacobians = capabilities["derivatives"]["regression_ceres_jacobians"]
+    target_rows = capabilities["regression"]["target_kind_evidence"]["rows"]
 
     assert ceres["compiled"] is True
     assert ceres["available"] is True
@@ -55,8 +53,15 @@ def test_ceres_cppad_capability_claims_require_enabled_native_dependencies() -> 
         "binary_pair_constant_kij",
         "liquid_electrolyte_born",
     ]
-    assert {row["quantity"] for row in coverage["rows"]}.issuperset({"pure_neutral_parameters"})
-    assert "numerical" + "_derivative" not in json.dumps({"ceres": ceres, "cppad": cppad, "coverage": coverage}).lower()
+    pure_neutral_targets = {
+        row["target_kind"]
+        for row in target_rows
+        if row["public_production_supported_target_kind"] and "pure_neutral" in row["route_key"]
+    }
+    assert pure_neutral_targets.issuperset({"m", "s", "e"})
+    assert "numerical" + "_derivative" not in json.dumps(
+        {"ceres": ceres, "cppad": cppad, "target_rows": target_rows}
+    ).lower()
 
 
 def test_regression_capability_evidence_separates_registry_derivative_optimizer_and_public_claims() -> None:
@@ -98,9 +103,7 @@ def test_association_affecting_regression_targets_remain_nonproduction_until_evi
 
 
 def test_property_derivative_parameter_families_scope_active_association_lij_out_of_production() -> None:
-    parameter_families = epcsaft.capabilities()["derivatives"]["property_derivative_result_apis"][
-        "parameter_families"
-    ]
+    parameter_families = epcsaft.capabilities()["derivatives"]["property_derivative_result_apis"]["parameter_families"]
     production_supported = set(epcsaft_regression.capabilities()["regression"]["production_supported_target_kinds"])
 
     assert "production_supported" not in parameter_families

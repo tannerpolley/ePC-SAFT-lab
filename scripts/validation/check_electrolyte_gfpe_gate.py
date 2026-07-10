@@ -277,6 +277,7 @@ def _native_diagnostics_payload(
     apply_native_runtime_env(os.environ)
 
     from epcsaft_equilibrium._native import extension_native_core
+
     from scripts.validation import native_freshness
 
     if mixture is None:
@@ -309,7 +310,7 @@ def _native_diagnostics_payload(
         CHARGES.tolist(),
     )
     phase_charge_residuals = [abs(float(value)) for value in phase_system.get("phase_charge_residuals", [])]
-    receipt = native_freshness.build_receipt(
+    receipt = native_freshness.build_equilibrium_native_receipt(
         native_module=core,
         checker_command=checker_command or ["python", "scripts/validation/check_electrolyte_gfpe_gate.py"],
     )
@@ -548,7 +549,7 @@ def main(argv: list[str] | None = None) -> int:
             from scripts.validation import native_freshness
 
             try:
-                native_freshness.require_receipt(dict(receipt))
+                native_freshness.require_equilibrium_native_fresh(dict(receipt))
             except ValueError as exc:
                 print(str(exc), file=sys.stderr)
                 return 2

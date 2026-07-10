@@ -4,11 +4,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-import epcsaft.runtime.capability_evidence as capability_evidence
 import pytest
 
 import run_pytest
-from scripts.dev import doctor, validate_project
+from scripts.dev import doctor, validate_project, validation_registry
 
 EQUILIBRIUM_API_TEST_FILE = "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py"
 EQUILIBRIUM_BUBBLE_DERIVATIVE_TEST_FILE = "packages/epcsaft-equilibrium/tests/api/test_bubble_derivatives.py"
@@ -33,6 +32,47 @@ PROVIDER_NATIVE_CONTRIBUTIONS_TEST = (
 REGRESSION_API_TEST_FILE = "packages/epcsaft-regression/tests/api/test_regression.py"
 REGRESSION_NATIVE_PURE_TEST = "packages/epcsaft-regression/tests/native/test_pure.py"
 REGRESSION_NATIVE_BINARY_TEST = "packages/epcsaft-regression/tests/native/test_binary.py"
+
+
+def test_repository_validation_registry_defines_cross_package_orchestration() -> None:
+    registry = validation_registry
+
+    assert set(registry.TEST_SLICES) == {
+        "generic",
+        "all",
+        "confidence",
+        "provider-api",
+        "equilibrium-confidence",
+        "equilibrium-api",
+        "regression",
+        "integration",
+        "runtime",
+        "native",
+        "native-contracts",
+    }
+    assert set(registry.VALIDATION_LANES) == {
+        "quick",
+        "provider",
+        "equilibrium",
+        "regression",
+        "integration",
+        "confidence",
+        "docs",
+        "full",
+        "ceres-cppad",
+        "equilibrium-confidence",
+        "equilibrium-debug",
+    }
+    assert registry.registry_targets("all") == (
+        "tests",
+        "packages/epcsaft/tests",
+        "packages/epcsaft-equilibrium/tests",
+        "packages/epcsaft-regression/tests",
+    )
+    assert registry.validation_lane_commands("equilibrium") == (
+        ("scripts/dev/doctor.py",),
+        ("run_pytest.py", "--equilibrium-api", "-q"),
+    )
 
 
 def test_confidence_slice_extends_generic_targets_without_changing_generic():
@@ -135,7 +175,7 @@ def test_bare_pytest_collection_matches_all_wrapper_ordered_node_ids():
 
 def test_validate_project_modes_route_to_standard_validation_bundles():
     assert validate_project.CHECK_COMMANDS == {
-        name: capability_evidence.validation_lane_commands(name) for name in capability_evidence.VALIDATION_LANES
+        name: validation_registry.validation_lane_commands(name) for name in validation_registry.VALIDATION_LANES
     }
     assert validate_project.CHECK_COMMANDS["quick"] == (
         ("scripts/dev/doctor.py",),
@@ -256,16 +296,73 @@ def test_bootstrap_setup_does_not_repeat_environment_sync():
     assert "scripts/dev/build_epcsaft.py" in result.stdout
 
 
-def test_pytest_slices_are_adapted_from_capability_evidence_registry():
+def test_pytest_slices_are_adapted_from_repository_validation_registry():
     assert run_pytest.SLICE_TARGETS == {
-        name: capability_evidence.registry_targets(name) for name in capability_evidence.TEST_SLICES
+        name: validation_registry.registry_targets(name) for name in validation_registry.TEST_SLICES
     }
-    assert run_pytest.GENERIC_TEST_TARGETS == capability_evidence.registry_targets("generic")
-    assert run_pytest.CONFIDENCE_TEST_TARGETS == capability_evidence.registry_targets("confidence")
-    assert run_pytest.PROVIDER_API_TEST_TARGETS == capability_evidence.registry_targets("provider-api")
-    assert run_pytest.REGRESSION_TEST_TARGETS == capability_evidence.registry_targets("regression")
-    assert run_pytest.INTEGRATION_TEST_TARGETS == capability_evidence.registry_targets("integration")
-    assert run_pytest.NATIVE_CONTRACT_TEST_TARGETS == capability_evidence.registry_targets("native-contracts")
+    assert run_pytest.GENERIC_TEST_TARGETS == validation_registry.registry_targets("generic")
+    assert run_pytest.CONFIDENCE_TEST_TARGETS == validation_registry.registry_targets("confidence")
+    assert run_pytest.PROVIDER_API_TEST_TARGETS == validation_registry.registry_targets("provider-api")
+    assert run_pytest.REGRESSION_TEST_TARGETS == validation_registry.registry_targets("regression")
+    assert run_pytest.INTEGRATION_TEST_TARGETS == validation_registry.registry_targets("integration")
+    assert run_pytest.NATIVE_CONTRACT_TEST_TARGETS == validation_registry.registry_targets("native-contracts")
+
+
+def test_repository_entrypoints_do_not_import_provider_capability_metadata() -> None:
+    for path in (Path("run_pytest.py"), Path("scripts/dev/validate_project.py")):
+        source = path.read_text(encoding="utf-8")
+        assert "scripts.dev.validation_registry" in source
+        assert "capability_evidence" not in source
+
+
+def test_provider_runtime_does_not_publish_repository_validation_orchestration() -> None:
+    from epcsaft.runtime import capability_evidence as provider_capability_evidence
+
+    evidence_source = Path("packages/epcsaft/src/epcsaft/runtime/capability_evidence.py").read_text(encoding="utf-8")
+    runtime_source = Path("packages/epcsaft/src/epcsaft/runtime/core.py").read_text(encoding="utf-8")
+
+    for removed_name in (
+        "TEST_SLICES",
+        "VALIDATION_LANES",
+        "registry_targets",
+        "validation_lane_commands",
+        "EQUILIBRIUM_CONFIDENCE_TEST_TARGETS",
+        "EQUILIBRIUM_API_TEST_TARGETS",
+        "REGRESSION_TEST_TARGETS",
+        "_EQUILIBRIUM_PRODUCTION_ROUTES_BY_FAMILY",
+        "production_equilibrium_activation_rows",
+        "public_ipopt_routes_by_family",
+        "public_ipopt_route_family_map",
+        "registered_ipopt_public_routes",
+        "REGRESSION_CAPABILITY_KEYS",
+        "REGRESSION_CAPABILITY_DIMENSIONS",
+        "REGRESSION_CAPABILITY_REVISIT_AFTER",
+        "REGRESSION_TARGET_KIND_EVIDENCE",
+    ):
+        assert removed_name not in evidence_source
+    assert all(row["row_family"] != "regression" for row in provider_capability_evidence.DERIVATIVE_COVERAGE_ROWS)
+    for removed_field in (
+        "pytest_slices",
+        "validation_lanes",
+        "cheap_validation_lanes",
+        "speciation_implicit_sensitivities",
+    ):
+        assert removed_field not in runtime_source
+
+
+def test_registered_exact_test_nodes_collect() -> None:
+    exact_nodes = validation_registry.registered_exact_test_nodes()
+
+    assert exact_nodes
+    collection = subprocess.run(
+        [sys.executable, "-m", "pytest", "--collect-only", "-q", *exact_nodes],
+        cwd=Path(__file__).resolve().parents[3],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert collection.returncode == 0, collection.stdout + collection.stderr
 
 
 def test_equilibrium_debug_flag_sets_opt_in_test_environment():
@@ -377,7 +474,6 @@ def test_named_shortcuts_expand_to_expected_targets_and_keep_pytest_arg_ordering
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
 
     runtime_args = run_pytest._pytest_args(["-q"], pytest_temp, runtime=True)
-    api_args = run_pytest._pytest_args(["-q"], pytest_temp, api=True)
     native_args = run_pytest._pytest_args(["-q"], pytest_temp, native=True)
     native_contract_args = run_pytest._pytest_args(["-q"], pytest_temp, native_contracts=True)
     provider_api_args = run_pytest._pytest_args(["-q"], pytest_temp, provider_api=True)
@@ -387,7 +483,6 @@ def test_named_shortcuts_expand_to_expected_targets_and_keep_pytest_arg_ordering
     equilibrium_api_args = run_pytest._pytest_args(["-q"], pytest_temp, equilibrium_api=True)
 
     assert runtime_args[: len(run_pytest.RUNTIME_TEST_TARGETS)] == list(run_pytest.RUNTIME_TEST_TARGETS)
-    assert api_args[: len(run_pytest.API_TEST_TARGETS)] == list(run_pytest.API_TEST_TARGETS)
     assert native_args[: len(run_pytest.NATIVE_TEST_TARGETS)] == list(run_pytest.NATIVE_TEST_TARGETS)
     assert native_contract_args[: len(run_pytest.NATIVE_CONTRACT_TEST_TARGETS)] == list(
         run_pytest.NATIVE_CONTRACT_TEST_TARGETS
@@ -402,7 +497,6 @@ def test_named_shortcuts_expand_to_expected_targets_and_keep_pytest_arg_ordering
         run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     )
     assert runtime_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
-    assert api_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
     assert native_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
     assert native_contract_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
     assert provider_api_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
@@ -414,7 +508,12 @@ def test_named_shortcuts_expand_to_expected_targets_and_keep_pytest_arg_ordering
 
 def test_pytest_slice_dispatch_rejects_multiple_programmatic_flags():
     with pytest.raises(ValueError, match="mutually exclusive"):
-        run_pytest._pytest_args(["-q"], Path("build") / "pytest-temp" / "run-test", generic=True, api=True)
+        run_pytest._pytest_args(
+            ["-q"],
+            Path("build") / "pytest-temp" / "run-test",
+            generic=True,
+            provider_api=True,
+        )
 
 
 def test_plot_output_tests_have_no_named_slice():
@@ -429,7 +528,6 @@ def test_slice_targets_use_grouped_test_subpackages():
         *run_pytest.GENERIC_TEST_TARGETS,
         *run_pytest.CONFIDENCE_TEST_TARGETS,
         *run_pytest.RUNTIME_TEST_TARGETS,
-        *run_pytest.API_TEST_TARGETS,
         *run_pytest.NATIVE_TEST_TARGETS,
         *run_pytest.NATIVE_CONTRACT_TEST_TARGETS,
         *run_pytest.PROVIDER_API_TEST_TARGETS,
@@ -451,12 +549,15 @@ def test_slice_targets_use_grouped_test_subpackages():
         for target in all_targets
     )
     assert all(target.count("/") >= 2 for target in all_targets)
-    assert "tests/api/frontend" not in run_pytest.API_TEST_TARGETS
+    assert "tests/api/frontend" not in run_pytest.PROVIDER_API_TEST_TARGETS
     assert "tests/api/frontend" not in run_pytest.GENERIC_TEST_TARGETS
-    assert "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py" not in run_pytest.API_TEST_TARGETS
+    assert (
+        "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py"
+        not in run_pytest.PROVIDER_API_TEST_TARGETS
+    )
     assert "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py" not in run_pytest.GENERIC_TEST_TARGETS
-    assert PROVIDER_API_IMPORTS_TEST in run_pytest.API_TEST_TARGETS
-    assert "tests/api/frontend/test_regression.py" not in run_pytest.API_TEST_TARGETS
+    assert PROVIDER_API_IMPORTS_TEST in run_pytest.PROVIDER_API_TEST_TARGETS
+    assert "tests/api/frontend/test_regression.py" not in run_pytest.PROVIDER_API_TEST_TARGETS
     assert "tests/api/frontend/test_regression.py" not in run_pytest.REGRESSION_TEST_TARGETS
     assert REGRESSION_API_TEST_FILE in run_pytest.REGRESSION_TEST_TARGETS
     assert "packages/epcsaft-equilibrium/tests/api/test_imports.py" in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
@@ -480,12 +581,18 @@ def test_slice_targets_use_grouped_test_subpackages():
     assert (
         "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route"
     ) in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
-    assert (
-        "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::"
-        "test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point"
-    ) in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
+    assert all("flash" not in target for target in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS)
     assert (
         "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_lle_route_returns_named_liquid_phase_helpers"
+        not in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
+    )
+    assert (
+        "packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py::"
+        "test_single_component_vle_route_returns_saturation_payload"
+    ) in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
+    assert (
+        "packages/epcsaft-equilibrium/tests/api/test_associating_lle_gross_2002_certification.py::"
+        "test_associating_lle_gross_2002_certification_payload_reports_shared_contract"
     ) in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
     assert all(
         "packages/epcsaft-equilibrium/tests/native/results" not in target
@@ -530,7 +637,6 @@ def test_package_local_equilibrium_native_tests_are_labeled() -> None:
 
 
 def test_provider_slice_does_not_import_equilibrium_extension() -> None:
-    assert set(run_pytest.API_TEST_TARGETS) == set(run_pytest.PROVIDER_API_TEST_TARGETS)
     assert all("epcsaft-equilibrium" not in target for target in run_pytest.PROVIDER_API_TEST_TARGETS)
     assert all("test_equilibrium" not in target for target in run_pytest.PROVIDER_API_TEST_TARGETS)
 
@@ -668,7 +774,7 @@ def test_equilibrium_confidence_shortcut_keeps_full_report_env_opt_in():
     assert 'env["EPCSAFT_EQUILIBRIUM_CONFIDENCE"] = "1"' not in source
 
 
-def test_equilibrium_confidence_slice_uses_one_target_per_public_route_family():
+def test_equilibrium_confidence_slice_keeps_public_routes_and_internal_gross_scope_explicit():
     targets = run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
 
     assert len(targets) == 3
@@ -677,10 +783,7 @@ def test_equilibrium_confidence_slice_uses_one_target_per_public_route_family():
         "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::"
         "test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route"
     ) in targets
-    assert (
-        "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::"
-        "test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point"
-    ) in targets
+    assert all("flash" not in target for target in targets)
     assert (
         "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::"
         "test_equilibrium_flash_rejects_ipopt_iteration_limit_before_postsolve"
@@ -688,6 +791,14 @@ def test_equilibrium_confidence_slice_uses_one_target_per_public_route_family():
     assert (
         "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::"
         "test_equilibrium_lle_route_returns_named_liquid_phase_helpers"
+    ) not in targets
+    assert (
+        "packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py::"
+        "test_single_component_vle_route_returns_saturation_payload"
+    ) in targets
+    assert (
+        "packages/epcsaft-equilibrium/tests/api/test_associating_lle_gross_2002_certification.py::"
+        "test_associating_lle_gross_2002_certification_payload_reports_shared_contract"
     ) in targets
     assert all("iteration_limit" not in target for target in targets)
     assert all("packages/epcsaft-equilibrium/tests/native/diagnostics" not in target for target in targets)
@@ -785,7 +896,7 @@ def test_equilibrium_debug_rejects_non_equilibrium_slices():
         run_pytest._pytest_args(["-q"], pytest_temp, equilibrium_confidence=True, equilibrium_debug=True)
 
 
-def test_generic_and_api_slices_do_not_run_equilibrium_route_sweeps():
+def test_generic_and_provider_api_slices_do_not_run_equilibrium_route_sweeps():
     blocked = {
         "tests/api/frontend",
         "packages/epcsaft/tests/api/frontend",
@@ -793,7 +904,7 @@ def test_generic_and_api_slices_do_not_run_equilibrium_route_sweeps():
     }
 
     assert blocked.isdisjoint(run_pytest.GENERIC_TEST_TARGETS)
-    assert blocked.isdisjoint(run_pytest.API_TEST_TARGETS)
+    assert blocked.isdisjoint(run_pytest.PROVIDER_API_TEST_TARGETS)
     assert blocked.isdisjoint(run_pytest.EQUILIBRIUM_API_TEST_TARGETS)
 
 

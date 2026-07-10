@@ -7,10 +7,13 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <numeric>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "eos/contributions/contribution_internal.h"
+#include "eos/residual/implicit_association/sensitivities.h"
 #include "equilibrium/blocks/association_block.h"
 #include "equilibrium/blocks/chemical_equilibrium_block.h"
 #include "equilibrium/blocks/electrolyte_block.h"
@@ -20,6 +23,7 @@
 #include "equilibrium/blocks/reaction_block.h"
 #include "equilibrium/blocks/saturation_block.h"
 #include "equilibrium/core/activation_matrix.h"
+#include "equilibrium/core/activated_equilibrium_nlp.h"
 #include "equilibrium/core/chemical_equilibrium_nlp.h"
 #include "equilibrium/core/continuation_driver.h"
 #include "equilibrium/core/feasible_initialization.h"
@@ -27,11 +31,10 @@
 #include "equilibrium/core/second_order.h"
 #include "equilibrium/core/selector_core.h"
 #include "equilibrium/core/variable_transform.h"
+#include "equilibrium/results/held_certification.h"
 #include "equilibrium/results/result_builder.h"
 #include "equilibrium/results/route_result_bridge.h"
 #include "equilibrium/solvers/ipopt_adapter.h"
-#include "model/native_types.h"
-
 namespace py = pybind11;
 
 namespace {
@@ -2347,6 +2350,75 @@ py::dict electrolyte_postsolve_certification_to_dict(
     return out;
 }
 
+py::dict complete_sampled_candidate_bound_audit_from_dict(const py::dict& evidence) {
+    nlp::NeutralPhaseDiscoveryResult discovery;
+    const bool continuous_tpd_required =
+        required_native_arg_field<bool>(evidence, "continuous_tpd_required");
+    discovery.continuous_tpd_status =
+        required_native_arg_field<std::string>(evidence, "continuous_tpd_status");
+    const int candidate_count = required_native_arg_field<int>(evidence, "candidate_count");
+    if (candidate_count < 0) {
+        throw ValueError("Sampled-candidate audit raw candidate count must be nonnegative.");
+    }
+    discovery.candidates.resize(static_cast<std::size_t>(candidate_count));
+    discovery.unique_candidate_count = candidate_count;
+    discovery.held_stage_ii_major_iterations =
+        required_native_arg_field<int>(evidence, "major_iterations");
+    discovery.held_stage_ii_lower_bound = required_native_arg_field<double>(evidence, "lower_bound");
+    discovery.phase_set_mass_balance_feasible =
+        required_native_arg_field<bool>(evidence, "phase_set_mass_balance_feasible");
+    discovery.selected_candidate_count =
+        required_native_arg_field<int>(evidence, "selected_candidate_count");
+    discovery.held_stage_ii_bound_gap = required_native_arg_field<double>(evidence, "bound_gap");
+    discovery.held_stage_ii_bound_tolerance =
+        required_native_arg_field<double>(evidence, "bound_tolerance");
+
+    nlp::complete_sampled_candidate_bound_audit(discovery, continuous_tpd_required);
+
+    py::dict out;
+    out["status"] = discovery.held_stage_ii_status;
+    out["candidate_bound_audit_status"] = discovery.held_stage_ii_candidate_bound_audit_status;
+    out["dual_loop_status"] = discovery.held_stage_ii_dual_loop_status;
+    out["stopping_reason"] = discovery.held_stage_ii_stopping_reason;
+    out["replay_ready"] = discovery.held_stage_ii_replay_ready;
+    out["replay_source"] = discovery.held_stage_ii_replay_source;
+    out["replay_seed_name"] = discovery.held_stage_ii_replay_seed_name;
+    return out;
+}
+
+py::dict certify_electrolyte_stage_iii_refinement_from_dict(const py::dict& evidence) {
+    nlp::ElectrolyteStageIIIRefinementResult result;
+    result.route_result.solver_accepted = required_native_arg_field<bool>(evidence, "solver_accepted");
+    result.route_result.accepted = required_native_arg_field<bool>(evidence, "route_accepted");
+    result.route_result.solver_status = required_native_arg_field<std::string>(evidence, "solver_status");
+    result.route_result.application_status =
+        required_native_arg_field<std::string>(evidence, "application_status");
+    result.selected_phase_compositions =
+        required_native_arg_field<std::vector<std::vector<double>>>(evidence, "phase_compositions");
+    result.residual_values = required_native_arg_field<std::vector<double>>(evidence, "residual_values");
+    result.equation_labels = required_native_arg_field<std::vector<std::string>>(evidence, "equation_labels");
+    result.residual_inf_norm = required_native_arg_field<double>(evidence, "residual_inf_norm");
+    result.residual_tolerance = required_native_arg_field<double>(evidence, "residual_tolerance");
+    result.phase_distance = required_native_arg_field<double>(evidence, "phase_distance");
+    result.phase_distance_tolerance =
+        required_native_arg_field<double>(evidence, "phase_distance_tolerance");
+    result.active_bound_violation =
+        required_native_arg_field<double>(evidence, "active_bound_violation");
+    result.active_bound_tolerance =
+        required_native_arg_field<double>(evidence, "active_bound_tolerance");
+    result.exact_reduced_jacobian_available =
+        required_native_arg_field<bool>(evidence, "exact_reduced_jacobian_available");
+    result.exact_reduced_hessian_available =
+        required_native_arg_field<bool>(evidence, "exact_reduced_hessian_available");
+
+    nlp::certify_electrolyte_stage_iii_refinement(result);
+
+    py::dict out;
+    out["status"] = result.status;
+    out["stage_iii_refinement_status"] = result.stage_iii_refinement_status;
+    return out;
+}
+
 py::dict activation_to_dict(const epcsaft::native::equilibrium::ProblemFamilyActivation& activation) {
     py::dict out;
     out["key"] = activation.key;
@@ -2371,6 +2443,18 @@ py::dict activation_to_dict(const epcsaft::native::equilibrium::ProblemFamilyAct
     out["initialization_strategy"] = activation.initialization_strategy;
     out["continuation_strategy"] = activation.continuation_strategy;
     out["final_proof_policy"] = activation.final_proof_policy;
+    return out;
+}
+
+py::dict selector_route_activation_to_dict(
+    const epcsaft::native::equilibrium::SelectorRouteActivation& activation
+) {
+    py::dict out;
+    out["selector_route"] = activation.selector_route;
+    out["public_route"] = activation.public_route;
+    out["selector_family"] = activation.selector_family;
+    out["production_exposed"] = activation.production_exposed;
+    out["proof_routes"] = activation.proof_routes;
     return out;
 }
 
@@ -2610,75 +2694,6 @@ epcsaft::native::equilibrium::SelectorRouteRequest selector_request_from_dict(co
     return out;
 }
 
-py::dict neutral_two_phase_eos_phase_payload_to_dict(
-    const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosPhasePayload& phase
-) {
-    py::dict diagnostics;
-    diagnostics["amount_total"] = phase.amount_total;
-    diagnostics["volume"] = phase.volume;
-    diagnostics["eos_pressure"] = phase.eos_pressure;
-    diagnostics["pressure_consistency_residual"] = phase.pressure_consistency_residual;
-    diagnostics["compressibility_factor"] = phase.compressibility_factor;
-
-    py::dict out;
-    out["label"] = phase.label;
-    out["composition"] = phase.composition;
-    out["density"] = phase.density;
-    out["temperature"] = phase.temperature;
-    out["pressure"] = phase.pressure;
-    out["phase_fraction"] = phase.phase_fraction;
-    out["ln_fugacity_coefficient"] = phase.ln_fugacity_coefficient;
-    out["fugacity_coefficient"] = phase.fugacity_coefficient;
-    out["amount_total"] = phase.amount_total;
-    out["volume"] = phase.volume;
-    out["eos_pressure"] = phase.eos_pressure;
-    out["diagnostics"] = diagnostics;
-    return out;
-}
-
-py::dict neutral_two_phase_eos_result_payload_to_dict(
-    const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosResultPayload& result
-) {
-    py::list phases;
-    py::list labels;
-    for (const auto& phase : result.phases) {
-        phases.append(neutral_two_phase_eos_phase_payload_to_dict(phase));
-        labels.append(phase.label);
-    }
-
-    py::dict diagnostics;
-    diagnostics["derivative_backend"] = result.derivative_backend;
-    diagnostics["rejection_reason"] = result.rejection_reason;
-    diagnostics["objective"] = result.objective;
-    diagnostics["material_balance_norm"] = result.material_balance_norm;
-    diagnostics["pressure_consistency_norm"] = result.pressure_consistency_norm;
-    diagnostics["chemical_potential_consistency_norm"] = result.chemical_potential_consistency_norm;
-    diagnostics["ln_fugacity_consistency_norm"] = result.ln_fugacity_consistency_norm;
-    diagnostics["phase_distance"] = result.phase_distance;
-    diagnostics["constraints"] = result.constraints;
-    diagnostics["feed_amounts"] = result.feed_amounts;
-
-    py::dict out;
-    out["accepted"] = result.accepted;
-    out["backend"] = result.backend;
-    out["problem_kind"] = result.problem_kind;
-    out["phase_labels"] = labels;
-    out["phases"] = phases;
-    out["stable"] = result.stable;
-    out["split_detected"] = result.split_detected;
-    out["derivative_backend"] = result.derivative_backend;
-    out["rejection_reason"] = result.rejection_reason;
-    out["objective"] = result.objective;
-    out["material_balance_norm"] = result.material_balance_norm;
-    out["pressure_consistency_norm"] = result.pressure_consistency_norm;
-    out["chemical_potential_consistency_norm"] = result.chemical_potential_consistency_norm;
-    out["ln_fugacity_consistency_norm"] = result.ln_fugacity_consistency_norm;
-    out["phase_distance"] = result.phase_distance;
-    out["constraints"] = result.constraints;
-    out["diagnostics"] = diagnostics;
-    return out;
-}
-
 epcsaft::native::equilibrium_nlp::IpoptSolveOptions ipopt_solve_options_from_scalars(
     int max_iterations,
     double tolerance,
@@ -2753,6 +2768,221 @@ void apply_ipopt_control_kwargs(
     }
 }
 
+struct Gross2002Figure01PureComponent {
+    const char* component;
+    double m;
+    double sigma;
+    double epsilon_k;
+    double epsilon_k_ab;
+    double kappa_ab;
+    double molar_mass;
+    double minimum_temperature;
+    double maximum_temperature;
+};
+
+const Gross2002Figure01PureComponent& require_gross_2002_figure01_component(
+    const add_args& args,
+    double temperature
+) {
+    static const std::vector<Gross2002Figure01PureComponent> components = {
+        {"methanol", 1.5255, 3.2300, 188.90, 2899.5, 0.035176, 0.032042, 260.0, 475.0},
+        {"1-pentanol", 3.6260, 3.4508, 247.28, 2252.1, 0.010319, 0.08815, 280.0, 560.0},
+        {"1-nonanol", 4.6839, 3.7292, 263.64, 2941.9, 0.001427, 0.144257, 300.0, 640.0},
+    };
+    const auto close = [](double actual, double expected) {
+        return std::isfinite(actual)
+            && std::abs(actual - expected) <= 1.0e-12 * std::max(1.0, std::abs(expected));
+    };
+    if (args.m.size() != 1 || args.s.size() != 1 || args.e.size() != 1
+        || args.e_assoc.size() != 1 || args.vol_a.size() != 1 || args.mw.size() != 1) {
+        throw ValueError(
+            "Gross 2002 Figure 1 validation requires one explicit m, sigma, epsilon/k, "
+            "association energy, association volume, and molar-mass value."
+        );
+    }
+    const auto match = std::find_if(components.begin(), components.end(), [&](const auto& component) {
+        return close(args.m[0], component.m)
+            && close(args.s[0], component.sigma)
+            && close(args.e[0], component.epsilon_k)
+            && close(args.e_assoc[0], component.epsilon_k_ab)
+            && close(args.vol_a[0], component.kappa_ab)
+            && close(args.mw[0], component.molar_mass);
+    });
+    if (match == components.end()) {
+        throw ValueError(
+            "Gross 2002 Figure 1 validation requires the exact retained Table 1 fingerprint "
+            "for methanol, 1-pentanol, or 1-nonanol."
+        );
+    }
+    if (temperature < match->minimum_temperature || temperature > match->maximum_temperature) {
+        throw ValueError(
+            std::string("Gross 2002 Figure 1 validation temperature is outside the retained model range for ")
+            + match->component + "."
+        );
+    }
+    return *match;
+}
+
+bool finite_zero_vector(const std::vector<double>& values) {
+    return std::all_of(values.begin(), values.end(), [](double value) {
+        return std::isfinite(value) && std::abs(value) <= 1.0e-14;
+    });
+}
+
+bool finite_vector(const std::vector<double>& values) {
+    return std::all_of(values.begin(), values.end(), [](double value) {
+        return std::isfinite(value);
+    });
+}
+
+double square_matrix_symmetry_error(const std::vector<double>& values, int dimension) {
+    if (dimension <= 0 || values.size() != static_cast<std::size_t>(dimension * dimension)
+        || !finite_vector(values)) {
+        return std::numeric_limits<double>::infinity();
+    }
+    double error = 0.0;
+    for (int row = 0; row < dimension; ++row) {
+        for (int column = 0; column < row; ++column) {
+            error = std::max(
+                error,
+                std::abs(
+                    values[static_cast<std::size_t>(row * dimension + column)]
+                    - values[static_cast<std::size_t>(column * dimension + row)]
+                )
+            );
+        }
+    }
+    return error;
+}
+
+py::dict gross_2002_figure01_association_phase_receipt(
+    const add_args& args,
+    double temperature,
+    double pressure,
+    const std::vector<double>& amounts,
+    double volume,
+    const std::string& phase_label
+) {
+    const double total_amount = std::accumulate(amounts.begin(), amounts.end(), 0.0);
+    if (amounts.size() != 1 || !std::isfinite(total_amount) || total_amount <= 0.0
+        || !std::isfinite(volume) || volume <= 0.0) {
+        throw ValueError("Gross 2002 Figure 1 association receipt requires one positive phase amount and volume.");
+    }
+    const double density = total_amount / volume;
+    const std::vector<double> composition = {1.0};
+    const MixtureState mixture_state = mixture_state_cpp(temperature, density, composition, args, false);
+    const HardChainState hard_chain = hard_chain_state_cpp(mixture_state, composition, args);
+    const AssociationIntermediateState association_state = association_intermediate_state_cpp(
+        mixture_state,
+        hard_chain,
+        temperature,
+        composition,
+        args,
+        false,
+        false
+    );
+    const nlp::AssociationMassActionBlockResult mass_action =
+        nlp::evaluate_association_mass_action_block(
+            mixture_state.den,
+            association_state.XA,
+            association_state.setup.x_assoc,
+            association_state.setup.delta_ij
+        );
+    const auto response =
+        residual_association_detail::association_phase_state_response_cppad_cpp(
+            temperature,
+            density,
+            composition,
+            args
+        );
+    const EosPhaseAssociationDerivativeCorrectionResult corrections =
+        eos_phase_association_derivative_corrections_cpp(temperature, amounts, volume, args);
+    const nlp::EosPhaseBlockResult phase_block =
+        nlp::evaluate_eos_phase_block(args, temperature, pressure, amounts, volume);
+
+    const int site_count = response.site_count;
+    const int base_variable_count = response.base_var_count;
+    const bool exact_site_jacobian = response.active
+        && site_count == 2
+        && base_variable_count == 2
+        && response.site_sensitivity_row_major.size()
+            == static_cast<std::size_t>(site_count * base_variable_count)
+        && finite_vector(response.site_sensitivity_row_major);
+    const bool exact_site_hessian = exact_site_jacobian
+        && response.site_second_sensitivity_tensor_row_major.size()
+            == static_cast<std::size_t>(site_count * base_variable_count * base_variable_count)
+        && finite_vector(response.site_second_sensitivity_tensor_row_major);
+    const bool site_bounds_accepted = association_state.XA.size() == 2
+        && finite_vector(association_state.XA)
+        && association_state.solve_diagnostics.min_XA > 0.0
+        && association_state.solve_diagnostics.max_XA <= 1.0 + 1.0e-12;
+    double recomputed_mass_action_norm = 0.0;
+    for (double residual : mass_action.residuals) {
+        recomputed_mass_action_norm = std::max(recomputed_mass_action_norm, std::abs(residual));
+    }
+    const double objective_symmetry_error = square_matrix_symmetry_error(
+        phase_block.objective_curvature_row_major,
+        phase_block.objective_curvature_rows
+    );
+    const double pressure_symmetry_error = square_matrix_symmetry_error(
+        phase_block.pressure_hessian_row_major,
+        phase_block.pressure_hessian_rows
+    );
+    const bool exact_phase_hessians = corrections.active
+        && corrections.backend == "cppad_implicit_association"
+        && phase_block.objective_curvature_backend == corrections.backend
+        && phase_block.pressure_hessian_backend == corrections.backend
+        && finite_vector(phase_block.objective_curvature_row_major)
+        && finite_vector(phase_block.pressure_hessian_row_major);
+    if (!association_state.active || !association_state.solve_diagnostics.converged
+        || association_state.solve_diagnostics.residual_norm
+            > association_state.solve_diagnostics.residual_tolerance
+        || recomputed_mass_action_norm > association_state.solve_diagnostics.residual_tolerance
+        || !site_bounds_accepted || !exact_site_jacobian || !exact_site_hessian
+        || !exact_phase_hessians) {
+        throw ValueError(
+            "Gross 2002 Figure 1 accepted phase did not produce a complete exact implicit-association receipt."
+        );
+    }
+
+    py::dict receipt;
+    receipt["phase_label"] = phase_label;
+    receipt["density_mol_m3"] = density;
+    receipt["association_active"] = true;
+    receipt["association_scheme"] = "2B";
+    receipt["site_count"] = site_count;
+    receipt["assoc_num"] = args.assoc_num;
+    receipt["assoc_matrix"] = args.assoc_matrix;
+    receipt["site_component_index"] = association_state.setup.site_component_index;
+    receipt["site_composition"] = association_state.setup.x_assoc;
+    receipt["delta_row_major"] = association_state.setup.delta_ij;
+    receipt["site_fractions"] = association_state.XA;
+    receipt["site_fraction_minimum"] = association_state.solve_diagnostics.min_XA;
+    receipt["site_fraction_maximum"] = association_state.solve_diagnostics.max_XA;
+    receipt["site_fraction_bounds_accepted"] = site_bounds_accepted;
+    receipt["mass_action_converged"] = association_state.solve_diagnostics.converged;
+    receipt["mass_action_residuals"] = mass_action.residuals;
+    receipt["mass_action_residual_norm"] = association_state.solve_diagnostics.residual_norm;
+    receipt["recomputed_mass_action_residual_norm"] = recomputed_mass_action_norm;
+    receipt["mass_action_residual_tolerance"] = association_state.solve_diagnostics.residual_tolerance;
+    receipt["derivative_backend"] = response.backend;
+    receipt["implicit_sensitivity_helper"] = response.helper;
+    receipt["exact_site_fraction_jacobian_available"] = exact_site_jacobian;
+    receipt["exact_site_fraction_hessian_available"] = exact_site_hessian;
+    receipt["site_fraction_sensitivity_finite"] = true;
+    receipt["association_correction_backend"] = corrections.backend;
+    receipt["objective_hessian_backend"] = phase_block.objective_curvature_backend;
+    receipt["pressure_hessian_backend"] = phase_block.pressure_hessian_backend;
+    receipt["objective_hessian_finite"] = finite_vector(phase_block.objective_curvature_row_major);
+    receipt["pressure_hessian_finite"] = finite_vector(phase_block.pressure_hessian_row_major);
+    receipt["returned_objective_hessian_symmetry_error"] = objective_symmetry_error;
+    receipt["returned_pressure_hessian_symmetry_error"] = pressure_symmetry_error;
+    receipt["returned_hessian_symmetry_enforced_by_backend"] = true;
+    receipt["hessian_symmetry_evidence_scope"] = "returned_post_symmetrization_matrices";
+    receipt["exact_phase_hessians_available"] = exact_phase_hessians;
+    return receipt;
+}
+
 }  // namespace
 
 void register_equilibrium_bindings(pybind11::module_& m) {
@@ -2760,6 +2990,14 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::list rows;
         for (const auto& activation : epcsaft::native::equilibrium::problem_family_activation_matrix()) {
             rows.append(activation_to_dict(activation));
+        }
+        return rows;
+    });
+    m.def("_native_equilibrium_selector_route_contracts", []() {
+        py::list rows;
+        for (const auto& activation :
+             epcsaft::native::equilibrium::selector_route_activation_matrix()) {
+            rows.append(selector_route_activation_to_dict(activation));
         }
         return rows;
     });
@@ -2873,6 +3111,188 @@ void register_equilibrium_bindings(pybind11::module_& m) {
             )
         );
         apply_selector_metadata(out, contract);
+        return out;
+    });
+
+    m.def("_native_associating_single_component_vle_validation_result", [](
+        const py::object& mixture,
+        double temperature,
+        int max_iterations,
+        double tolerance,
+        double timeout_seconds,
+        int iteration_history_limit,
+        double phase_total_tolerance,
+        double pressure_tolerance,
+        double chemical_potential_tolerance,
+        double phase_distance_tolerance,
+        const py::object& continuation_state,
+        const py::kwargs& kwargs
+    ) {
+        const add_args args = native_args_from_mixture_object(
+            mixture,
+            "Associating single-component VLE validation"
+        );
+        if (args.m.size() != 1) {
+            throw ValueError("Associating single-component VLE validation requires exactly one component.");
+        }
+        if (!std::isfinite(temperature) || temperature <= 0.0) {
+            throw ValueError("Associating single-component VLE validation temperature must be positive and finite.");
+        }
+        const auto& source_component = require_gross_2002_figure01_component(args, temperature);
+        if (args.z.size() != 1 || !finite_zero_vector(args.z)
+            || args.dielc.size() != 1 || std::abs(args.dielc[0] - 1.0) > 1.0e-14
+            || args.d_born.size() != 1 || !finite_zero_vector(args.d_born)
+            || args.f_solv.size() != 1 || std::abs(args.f_solv[0] - 1.0) > 1.0e-14) {
+            throw ValueError(
+                "Gross 2002 Figure 1 validation requires the exact retained neutral auxiliary record."
+            );
+        }
+        if (args.assoc_num != std::vector<int>{2}
+            || args.assoc_matrix != std::vector<int>{0, 1, 1, 0}) {
+            throw ValueError("Gross 2002 Figure 1 validation requires the exact pure-component 2B site topology.");
+        }
+        if ((!args.k_ij.empty() && (args.k_ij.size() != 1 || !finite_zero_vector(args.k_ij)))
+            || (!args.k_hb.empty() && (args.k_hb.size() != 1 || !finite_zero_vector(args.k_hb)))
+            || (!args.l_ij.empty() && (args.l_ij.size() != 1 || !finite_zero_vector(args.l_ij)))) {
+            throw ValueError("Gross 2002 Figure 1 validation rejects binary interaction terms.");
+        }
+        if (args.include_born_model != 0) {
+            throw ValueError("Gross 2002 Figure 1 validation requires inactive Born terms.");
+        }
+        const std::vector<std::string> required_provenance_fields = {
+            "source", "paper", "table", "figure", "source_path"
+        };
+        if (args.parameter_source_label != "Gross2002 Table1"
+            || args.parameter_provenance_status != "source_backed_parameter_metadata"
+            || args.parameter_provenance_fields != required_provenance_fields) {
+            throw ValueError(
+                "Gross 2002 Figure 1 validation requires the complete retained Table 1 source receipt."
+            );
+        }
+
+        epcsaft::native::equilibrium_nlp::IpoptSolveOptions options =
+            ipopt_solve_options_from_scalars(
+                max_iterations,
+                tolerance,
+                timeout_seconds,
+                "exact",
+                "proof",
+                iteration_history_limit
+            );
+        apply_ipopt_control_kwargs(options, kwargs);
+        apply_ipopt_continuation_state(options, continuation_state);
+        const auto result = epcsaft::native::equilibrium_nlp::solve_neutral_single_component_vle_route(
+            args,
+            temperature,
+            options,
+            phase_total_tolerance,
+            pressure_tolerance,
+            chemical_potential_tolerance,
+            phase_distance_tolerance
+        );
+        py::dict out = neutral_two_phase_eos_route_result_to_dict(result);
+        if (result.accepted) {
+            if (!result.exact_hessian_available || result.hessian_approximation != "exact"
+                || result.eval_h_calls <= 0) {
+                throw ValueError(
+                    "Associating saturation validation requires an exercised exact route Hessian."
+                );
+            }
+            if (result.phase_amounts.size() != 2 || result.phase_volumes.size() != 2) {
+                throw ValueError("Associating saturation validation requires exactly two accepted phase records.");
+            }
+            if (!std::isfinite(result.phase_volumes[0]) || !std::isfinite(result.phase_volumes[1])
+                || result.phase_volumes[0] <= 0.0 || result.phase_volumes[1] <= 0.0) {
+                throw ValueError("Associating saturation validation requires two positive finite phase volumes.");
+            }
+            const double amount_0 = std::accumulate(
+                result.phase_amounts[0].begin(), result.phase_amounts[0].end(), 0.0
+            );
+            const double amount_1 = std::accumulate(
+                result.phase_amounts[1].begin(), result.phase_amounts[1].end(), 0.0
+            );
+            const double density_0 = amount_0 / result.phase_volumes[0];
+            const double density_1 = amount_1 / result.phase_volumes[1];
+            if (!std::isfinite(density_0) || !std::isfinite(density_1) || density_0 <= 0.0 || density_1 <= 0.0
+                || density_0 == density_1) {
+                throw ValueError("Associating saturation validation requires two distinct positive phase densities.");
+            }
+            const std::vector<std::string> phase_labels = density_0 > density_1
+                ? std::vector<std::string>{"liquid", "vapor"}
+                : std::vector<std::string>{"vapor", "liquid"};
+            if (result.variables.empty() || !std::isfinite(result.variables.back())
+                || result.variables.back() <= 0.0) {
+                throw ValueError("Associating saturation validation requires a positive finite solved pressure.");
+            }
+            const double solved_pressure = result.variables.back();
+            out["phase_labels"] = phase_labels;
+            out["phase_roles"] = phase_labels;
+            py::dict physical_evidence = py::cast<py::dict>(out["physical_evidence"]);
+            physical_evidence["phase_labels"] = phase_labels;
+            physical_evidence["phase_roles"] = phase_labels;
+            py::list physical_phases = py::cast<py::list>(physical_evidence["phases"]);
+            if (physical_phases.size() != 2) {
+                throw ValueError("Associating saturation validation requires two physical phase records.");
+            }
+            for (std::size_t phase = 0; phase < 2; ++phase) {
+                py::dict phase_record = py::cast<py::dict>(physical_phases[phase]);
+                phase_record["label"] = phase_labels[phase];
+                phase_record["role"] = phase_labels[phase];
+                physical_phases[phase] = phase_record;
+            }
+            physical_evidence["phases"] = physical_phases;
+            out["physical_evidence"] = physical_evidence;
+            out["solved_pressure_Pa"] = solved_pressure;
+
+            py::list phase_receipts;
+            for (std::size_t phase = 0; phase < 2; ++phase) {
+                phase_receipts.append(gross_2002_figure01_association_phase_receipt(
+                    args,
+                    temperature,
+                    solved_pressure,
+                    result.phase_amounts[phase],
+                    result.phase_volumes[phase],
+                    phase_labels[phase]
+                ));
+            }
+            py::dict association_receipt;
+            association_receipt["association_active"] = true;
+            association_receipt["association_scheme"] = "2B";
+            association_receipt["site_count_per_component"] = std::vector<int>{2};
+            association_receipt["derivative_mode"] = "cppad_implicit_association";
+            association_receipt["exact_site_fraction_jacobian_available"] = true;
+            association_receipt["exact_site_fraction_hessian_available"] = true;
+            association_receipt["route_exact_hessian_available"] = result.exact_hessian_available;
+            association_receipt["route_eval_h_calls"] = result.eval_h_calls;
+            association_receipt["phases"] = phase_receipts;
+            out["association_derivative_receipt"] = association_receipt;
+        }
+        out["route"] = "internal_associating_single_component_vle_validation";
+        out["validation_route"] = "internal_associating_single_component_vle_validation";
+        out["solver_route"] = "single_component_vle_eos";
+        out["validation_case"] = "gross_sadowski_2002_figure_1";
+        out["route_status"] = result.accepted ? "internal_validation_accepted" : "internal_validation_rejected";
+        out["native_binding"] = "_native_associating_single_component_vle_validation_result";
+        out["validation_scope"] = "internal_associating_single_component_vle_validation";
+        out["source_component"] = source_component.component;
+        out["temperature_K"] = temperature;
+        py::dict source_receipt;
+        source_receipt["source"] = "Gross2002 Table1";
+        source_receipt["paper"] = "Gross and Sadowski 2002";
+        source_receipt["table"] = "Table 1";
+        source_receipt["figure"] = "Figure 1";
+        source_receipt["source_path"] =
+            "analyses/paper_validation/2002_gross/parameters/pure/any_solvent.csv";
+        source_receipt["parameter_provenance_status"] = args.parameter_provenance_status;
+        source_receipt["parameter_provenance_fields"] = args.parameter_provenance_fields;
+        out["source_receipt"] = source_receipt;
+        out["public_route_admission"] = "closed";
+        out["production_exposed"] = false;
+        out["public_routes"] = std::vector<std::string>{};
+        out["proof_routes"] = std::vector<std::string>{};
+        out["selector_dispatch_used"] = false;
+        out["global_phase_set_certified"] = false;
+        out["stability_scope"] = "postsolve_local_two_phase_consistency";
         return out;
     });
 
@@ -3710,8 +4130,8 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         out["residual_derivative_backend"] = "cppad_explicit_density";
         out["residual_exact_jacobian_available"] = true;
         out["residual_exact_hessian_available"] = true;
-        out["production_exposed"] = true;
-        out["public_route_admission"] = "open";
+        out["production_exposed"] = false;
+        out["validation_scope"] = "internal_component_diagnostic";
         return out;
     },
         py::arg("mixture"),
@@ -4073,46 +4493,14 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::arg("phase_distance_tolerance"),
         py::arg("active_bound_tolerance")
     );
-    m.def("_native_neutral_two_phase_eos_result", [](
-        const py::object& mixture,
-        double temperature,
-        double target_pressure,
-        const std::vector<std::vector<double>>& phase_amounts,
-        const std::vector<double>& volumes,
-        const std::vector<double>& feed_amounts,
-        double material_tolerance,
-        double pressure_tolerance,
-        double chemical_potential_tolerance,
-        double phase_distance_tolerance,
-        bool phase_distance_constraint
-    ) {
-        const add_args args = native_args_from_mixture_object(mixture, "Neutral two-phase EOS result builder");
-        return neutral_two_phase_eos_result_payload_to_dict(
-            epcsaft::native::equilibrium_nlp::build_neutral_two_phase_eos_result(
-                args,
-                temperature,
-                target_pressure,
-                phase_amounts,
-                volumes,
-                feed_amounts,
-                material_tolerance,
-                pressure_tolerance,
-                chemical_potential_tolerance,
-                phase_distance_tolerance,
-                phase_distance_constraint
-            )
-        );
-    },
-        py::arg("mixture"),
-        py::arg("temperature"),
-        py::arg("target_pressure"),
-        py::arg("phase_amounts"),
-        py::arg("volumes"),
-        py::arg("feed_amounts"),
-        py::arg("material_tolerance"),
-        py::arg("pressure_tolerance"),
-        py::arg("chemical_potential_tolerance"),
-        py::arg("phase_distance_tolerance"),
-        py::arg("phase_distance_constraint") = true
+    m.def(
+        "_native_result_builder_complete_sampled_candidate_bound_audit",
+        &complete_sampled_candidate_bound_audit_from_dict,
+        py::arg("raw_evidence")
+    );
+    m.def(
+        "_native_result_builder_certify_electrolyte_stage_iii_refinement",
+        &certify_electrolyte_stage_iii_refinement_from_dict,
+        py::arg("raw_evidence")
     );
 }

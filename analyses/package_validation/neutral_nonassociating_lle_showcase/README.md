@@ -12,12 +12,15 @@ data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/
 Scope:
 
 - neutral, nonelectrolyte, nonreactive, nonassociating binary LLE only;
-- current public `Equilibrium(..., route="lle", ...)` utility route;
-- HELD Stage II replay and Stage III replay-consumption evidence from the
-  current native route.
+- internal native TPD candidate generation and a one-pass sampled-candidate
+  bound audit;
+- comparison of the sampled candidates with the retained Matsuda/NIST source
+  pair as diagnostic findings.
 
-This analysis does not promote generalized phase-set admission and does not
-cover associating, electrolyte, reactive, CE, or CPE behavior.
+The public `lle` route is closed. This analysis does not provide a global HELD
+dual-loop proof, certify phase-set completeness, or support public route
+admission. It also does not cover associating, electrolyte, reactive, CE, or
+CPE behavior.
 
 Regenerate retained data:
 

@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -14,10 +12,10 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -36,8 +34,9 @@ require_epcsaft_install()
 
 import _plot_common as common
 from epcsaft.parameters import get_prop_dict
-from scripts.data.paper_validation_parameters import paper_validation_parameter_path
+
 from scripts._epcsaft_oop import epcsaft_density, epcsaft_solvation_free_energy
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 DATASETS = [
     ("a", "Water to methanol", "methanol", common.analysis_data_path(__file__, "water-methanol-comparison.csv", kind="source")),

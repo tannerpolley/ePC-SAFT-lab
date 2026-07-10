@@ -94,10 +94,9 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
     ]
     assert benchmarks["Khudaida 2026 electrolyte LLE"]["priority_rank"] == 1
     assert benchmarks["Khudaida 2026 electrolyte LLE"]["status"] == (
-        "held2_public_route_phase_discovery_admitted"
+        "internal_diagnostic_selector_integration_required"
     )
-    assert "Perdomo/Figiel validation" in benchmarks["Khudaida 2026 electrolyte LLE"]["todo"]
-    assert "CE/CPE" in benchmarks["Khudaida 2026 electrolyte LLE"]["todo"]
+    assert "authorizes no public electrolyte route" in benchmarks["Khudaida 2026 electrolyte LLE"]["todo"]
     assert benchmarks["Held 2014 Figure 6"]["priority_rank"] == 2
     assert benchmarks["Ascani/Sadowski/Held 2022 mixed-solvent LLE"]["priority_rank"] == 3
 
@@ -115,8 +114,9 @@ def test_neutral_lle_showcase_declares_shared_certification_and_tolerance_margin
     assert {
         "source_backed_binodal_branch_rows",
         "source_fitted_binary_interaction",
-        "current_lle_route_acceptance",
-        "shared_phase_equilibrium_certification",
+        "internal_sampled_candidate_diagnostic",
+        "sampled_candidate_stage_ii_not_global_held",
+        "public_route_admission_closed",
         "source_tolerance_margins",
     } <= set(matsuda["acceptance_checks"])
 
@@ -135,13 +135,50 @@ def test_associating_lle_gross_2002_declares_shared_certification_and_tolerance_
         "source_digitized_figure_8_lle_rows",
         "source_backed_parameters",
         "source_backed_binary_interaction",
-        "public_associating_route_admitted",
+        "public_route_admission_closed",
+        "sampled_candidate_stage_ii_not_global_held",
         "association_mass_action",
         "exact_hessian",
-        "phase_equilibrium_certification",
-        "shared_phase_equilibrium_certification",
+        "internal_phase_equilibrium_evidence",
         "source_tolerance_margins",
     } <= set(gross["acceptance_checks"])
+
+
+def test_current_public_route_policy_excludes_neutral_lle_and_tp_flash() -> None:
+    policy = _registry()["policy"]["current_public_route_policy"]
+
+    assert "bubble/dew pressure" in policy
+    assert "single-component VLE" in policy
+    assert "neutral TP flash and neutral LLE are internal" in policy
+
+
+def test_neutral_lle_fixture_metadata_declares_internal_closed_scope() -> None:
+    metadata = json.loads(
+        (
+            REPO_ROOT
+            / "data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/metadata.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert metadata["route"] == "internal_neutral_lle_tpd_diagnostic"
+    assert metadata["selector_route"] == "neutral_lle"
+    assert metadata["evidence_scope"] == "internal_sampled_candidate_diagnostic"
+    assert metadata["public_admission_state"] == "closed"
+    assert metadata["global_held_proof"] is False
+
+
+def test_associating_lle_fixture_metadata_declares_internal_closed_scope() -> None:
+    metadata = json.loads(
+        (
+            REPO_ROOT
+            / "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane/metadata.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert metadata["route"] == "internal_associating_lle_source_pair"
+    assert metadata["evidence_scope"] == "internal_exact_hessian_source_pair"
+    assert metadata["public_admission_state"] == "closed"
+    assert metadata["global_held_proof"] is False
 
 
 def test_neutral_tp_flash_gate_defines_executable_fixture_contract() -> None:
@@ -361,9 +398,9 @@ def test_ce_and_cpe_registry_rows_have_explicit_gates() -> None:
     ce = rows["CE Standalone Reactive Speciation"]
     cpe = rows["CPE Simultaneous Phase-Chemistry Contract"]
 
-    assert ce["activation_status"] == "standalone_ce_public_admitted"
-    assert ce["production_exposed"] is True
-    assert ce["existing_public_utility_routes"] == ["reactive_speciation"]
+    assert ce["activation_status"] == "active_validation_not_public"
+    assert ce["production_exposed"] is False
+    assert ce["existing_public_utility_routes"] == []
     assert ce["phase_discovery_status"] == "not_applicable_homogeneous_single_phase"
     assert {
         "homogeneous_single_phase_only",

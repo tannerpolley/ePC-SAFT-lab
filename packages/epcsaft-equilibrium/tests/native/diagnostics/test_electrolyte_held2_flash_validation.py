@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
+import epcsaft
 import numpy as np
 import pytest
-
-import epcsaft
 from epcsaft_equilibrium import _native_core as core
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
@@ -77,43 +77,31 @@ def test_electrolyte_held2_flash_uses_figiel_parameters_and_records_single_phase
     ]
 
     assert result["status"] == "incomplete"
-    assert route["status"] == "postsolve_rejected"
-    assert route["rejection_reason"] == "phase_distance"
-    assert solver["solver_status"] == "success"
-    assert solver["application_status"] == "solve_succeeded"
-    assert solver["solver_accepted"] is True
+    assert route["ran"] is False
+    assert route["solver_accepted"] is False
+    assert route["postsolve_accepted"] is False
+    assert route["accepted"] is False
+    assert solver["solver_accepted"] is False
     assert solver["route_accepted"] is False
+    assert solver["iteration_count"] == 0
     assert discovery["tpd_candidate_count"] >= 30
     assert any(candidate["phase_kind"] == 1 for candidate in trace_ion_candidates)
     trace_ion_tpd_values = [candidate["tpd"] for candidate in trace_ion_candidates]
     assert any(value < 0.0 for value in trace_ion_tpd_values)
     assert any(value > 0.0 for value in trace_ion_tpd_values)
 
-    assert route["initial_point_strategy"] == "electrolyte_held2_candidate_set_replay"
-    assert route["problem_name"] == "electrolyte_stage_iii_projected_residual_refinement"
-    assert route["hessian_approximation"] == "exact"
-    assert str(route["hessian_backend"]).startswith("cppad_phase_system_projected_electrolyte")
-    assert derivatives["route_hessian_approximation"] == "exact"
-    assert derivatives["exact_reduced_hessian_available"] is True
-    assert derivatives["born_ssm_ds_active_block_exact_hessian"] is True
+    assert derivatives["exact_reduced_jacobian_available"] is False
+    assert derivatives["exact_reduced_hessian_available"] is False
+    assert derivatives["born_ssm_ds_active_block_exact_hessian"] is False
 
-    assert residual_system["equation_labels"] == [
-        "pair_mean_ionic_equality:Li+/Cl-",
-        "phase_fraction_closure",
-        "phase_charge_balance:phase_0",
-        "phase_charge_balance:phase_1",
-    ]
-    assert max(abs(value) for value in residual_system["residual_values"]) <= 1.0e-4
+    assert residual_system["equation_labels"] == []
+    assert residual_system["residual_values"] == []
+    assert math.isinf(residual_system["residual_inf_norm"])
+    assert residual_system["residual_tolerance"] == 1.0e-4
     assert solver["charge_balance_norm"] <= 1.0e-10
     assert solver["pressure_consistency_norm"] <= 1.0e-2
     assert solver["phase_distance"] < solver["phase_distance_tolerance"]
-
-    first, second = solver["phase_compositions"]
-    assert np.max(np.abs(np.array(first) - np.array(second))) == pytest.approx(
-        solver["phase_distance"],
-        rel=0.0,
-        abs=1.0e-12,
-    )
+    assert solver["phase_compositions"] == []
 
 
 def test_electrolyte_held2_flash_bubble_temperature_route_accepts_figiel_boundary() -> None:

@@ -84,16 +84,16 @@ def render_binodal_showcase() -> None:
     )
 
     source_roles = ["source_liquid1", "source_liquid2"]
-    solved_roles = ["solved_liquid1", "solved_liquid2"]
+    sampled_roles = ["sampled_liquid1", "sampled_liquid2"]
     source_x = [_as_float(by_role[role], "x_perfluorohexane") for role in source_roles]
     source_t = [_as_float(by_role[role], "temperature_K") for role in source_roles]
-    solved_x = [_as_float(by_role[role], "x_perfluorohexane") for role in solved_roles]
-    solved_t = [_as_float(by_role[role], "temperature_K") for role in solved_roles]
+    sampled_x = [_as_float(by_role[role], "x_perfluorohexane") for role in sampled_roles]
+    sampled_t = [_as_float(by_role[role], "temperature_K") for role in sampled_roles]
     feed = by_role["feed"]
     ax.plot(source_x, source_t, color="#2563eb", linestyle="--", linewidth=2.0)
-    ax.plot(solved_x, solved_t, color="#0f766e", linewidth=2.2)
+    ax.plot(sampled_x, sampled_t, color="#0f766e", linewidth=2.2)
     ax.scatter(source_x, source_t, s=88, marker="s", facecolor="white", edgecolor="#2563eb", linewidth=1.8)
-    ax.scatter(solved_x, solved_t, s=62, marker="o", color="#0f766e")
+    ax.scatter(sampled_x, sampled_t, s=62, marker="o", color="#0f766e")
     ax.scatter(
         [_as_float(feed, "x_perfluorohexane")],
         [_as_float(feed, "temperature_K")],
@@ -102,7 +102,7 @@ def render_binodal_showcase() -> None:
         color="#b45309",
     )
 
-    ax.set_title("Neutral nonassociating LLE source showcase")
+    ax.set_title("Neutral LLE sampled-candidate comparison")
     ax.set_xlabel(r"$x_{\mathrm{perfluorohexane}}$ in liquid phase")
     ax.set_ylabel("Temperature / K")
     ax.grid(True, which="major", alpha=0.25)
@@ -112,7 +112,7 @@ def render_binodal_showcase() -> None:
         handles=[
             Line2D([0], [0], marker="o", color="#525252", markerfacecolor="white", linestyle="-", label="NIST cloud-point rows"),
             Line2D([0], [0], marker="s", color="#2563eb", markerfacecolor="white", linestyle="--", label="paired source branches"),
-            Line2D([0], [0], marker="o", color="#0f766e", linestyle="-", label="current route liquids"),
+            Line2D([0], [0], marker="o", color="#0f766e", linestyle="-", label="sampled TPD candidates"),
             Line2D([0], [0], marker="D", color="#b45309", linestyle="None", label="constructed feed"),
         ],
         frameon=False,
@@ -137,10 +137,10 @@ def render_tolerance_margins() -> None:
 
     fig, ax = plt.subplots(figsize=(8.0, 4.8))
     ax.bar(range(len(metrics)), ratios, color=colors, width=0.64)
-    ax.axhline(1.0, color="black", linewidth=1.1, linestyle="--", label="acceptance limit")
+    ax.axhline(1.0, color="black", linewidth=1.1, linestyle="--", label="reference threshold")
     ax.set_yscale("log")
     ax.set_ylabel("margin ratio")
-    ax.set_title("Neutral LLE route diagnostics vs fixture limits")
+    ax.set_title("Internal sampled-candidate diagnostics vs reference thresholds")
     ax.set_xticks(range(len(metrics)))
     ax.set_xticklabels(metrics, rotation=24, ha="right")
     ax.grid(axis="y", which="major", alpha=0.25)
@@ -176,7 +176,7 @@ def render_held_stage_status() -> None:
     ax.invert_yaxis()
     ax.set_xlim(0.0, 1.0)
     ax.set_xticks([])
-    ax.set_title("Neutral LLE HELD-stage admission evidence")
+    ax.set_title("Internal neutral LLE sampled-candidate diagnostics")
     for y, row in zip(y_positions, rows, strict=True):
         ax.text(0.02, y, row["status"], va="center", ha="left", color="white", fontsize=9)
     for spine in ax.spines.values():
@@ -191,8 +191,13 @@ def render_held_stage_status() -> None:
 
 def main() -> int:
     summary = json.loads((SHARED_RESULTS / "run_summary.json").read_text(encoding="utf-8"))
-    if summary["route_status"] != "production_accepted" or not summary["complete"]:
-        raise RuntimeError("neutral LLE showcase retained data are not complete")
+    if (
+        summary["diagnostic_status"] != "internal_diagnostic_complete"
+        or summary["production_route_admitted"] is not False
+        or summary["global_phase_set_certified"] is not False
+        or not summary["complete"]
+    ):
+        raise RuntimeError("neutral LLE internal diagnostic retained data are not complete")
     render_binodal_showcase()
     render_tolerance_margins()
     render_held_stage_status()

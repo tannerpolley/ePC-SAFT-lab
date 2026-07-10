@@ -1,4 +1,4 @@
-figure_id,series,system,pressure_bar,T_C,T_K,x_water,x_1_pentanol,source_x_px,source_y_px,source_kind,source_reference,uncertainty_x,uncertainty_T_C,point_index
+figure_id,series,system,pressure_bar,T_C,T_K,x_water,x_1_pentanol,retained_x_px,retained_y_px,source_kind,source_reference,uncertainty_x,uncertainty_T_C,point_index
 figure_10,upper_vle_curve,water/1-pentanol,1.013,138.0,411.15,0.0,1.0,130.0,71.43200000000002,calibrated_pc_saft_curve_trace,Gross 2002 Figure 10 visible PC-SAFT solid curve,0.025,2.0,1
 figure_10,upper_vle_curve,water/1-pentanol,1.013,136.0,409.15,0.055,0.945,167.675,80.50400000000002,calibrated_pc_saft_curve_trace,Gross 2002 Figure 10 visible PC-SAFT solid curve,0.025,2.0,2
 figure_10,upper_vle_curve,water/1-pentanol,1.013,132.0,405.15,0.18,0.8200000000000001,253.3,98.64800000000002,calibrated_pc_saft_curve_trace,Gross 2002 Figure 10 visible PC-SAFT solid curve,0.025,2.0,3

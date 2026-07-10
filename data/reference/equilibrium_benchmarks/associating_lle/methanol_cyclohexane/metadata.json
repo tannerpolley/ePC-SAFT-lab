@@ -1,8 +1,9 @@
 {
   "case_label": "Gross/Sadowski 2002 methanol/cyclohexane associating LLE",
   "family_label": "PE-Associating TP Flash",
-  "route": "lle",
+  "route": "internal_associating_lle_source_pair",
   "selector_route": "associating_lle_internal_proof",
+  "evidence_scope": "internal_exact_hessian_source_pair",
   "species": [
     "methanol",
     "cyclohexane"
@@ -28,7 +29,8 @@
   ],
   "electrolyte_active": false,
   "reaction_active": false,
-  "public_admission_state": "closed_until_issue_190",
+  "public_admission_state": "closed",
+  "global_held_proof": false,
   "follow_on_stress_target": "water/1-pentanol from Gross and Sadowski 2002 Figure 10, after the one-associating-component proof is green.",
-  "scope_statement": "This fixture supports issue #145 internal proof for one neutral associating binary LLE with one associating component. It does not admit public associating GFPE, electrolyte, reactive, CE, CPE, LLLE, or generalized associating phase-set behavior."
+  "scope_statement": "This fixture retains internal exact-Hessian source-pair evidence for one neutral associating binary LLE with one associating component. It does not establish global HELD phase-set completeness or admit public associating GFPE, electrolyte, reactive, CE, CPE, LLLE, or generalized associating phase-set behavior."
 }

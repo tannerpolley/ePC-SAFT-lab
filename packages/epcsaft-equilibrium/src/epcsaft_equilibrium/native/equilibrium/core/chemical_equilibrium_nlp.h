@@ -2,12 +2,9 @@
 
 #include "equilibrium/blocks/chemical_equilibrium_block.h"
 #include "equilibrium/core/activation_plan.h"
-#include "equilibrium/core/continuation_driver.h"
 #include "equilibrium/core/feasible_initialization.h"
 #include "equilibrium/core/nlp_problem.h"
-#include "equilibrium/core/two_phase_eos_route.h"
 #include "equilibrium/core/variable_layout.h"
-#include "equilibrium/solvers/ipopt_adapter.h"
 
 #include <memory>
 #include <string>
@@ -47,6 +44,14 @@ struct ReactionProofScalingMetrics {
     double unscaled_reaction_stationarity_inf_norm = 0.0;
 };
 
+struct ChemicalEquilibriumProofEvaluation {
+    HomogeneousChemicalEquilibriumBlockResult block;
+    double balance_inf_norm = 0.0;
+    double reaction_stationarity_inf_norm = 0.0;
+    ReactionProofScalingMetrics proof_metrics;
+    bool thermodynamically_accepted = false;
+};
+
 struct PhysicalProofCorrectorResult {
     bool attempted = false;
     bool accepted = false;
@@ -62,41 +67,6 @@ struct PhysicalProofCorrectorResult {
     ReactionProofScalingMetrics proof_metrics;
     std::vector<double> variables;
     HomogeneousChemicalEquilibriumBlockResult postsolve;
-};
-
-struct ChemicalEquilibriumNlpResult {
-    NeutralTwoPhaseEosNlpContract contract;
-    IpoptSolveResult solve;
-    HomogeneousChemicalEquilibriumBlockResult postsolve;
-    bool accepted = false;
-    double balance_inf_norm = 0.0;
-    double reaction_stationarity_inf_norm = 0.0;
-    ReactionProofScalingMetrics proof_metrics;
-    bool source_oracle_initial_amounts = true;
-    std::string seed_source = "caller_initial_amounts";
-    std::string accepted_seed_source;
-    std::vector<std::string> seed_attempt_order;
-    bool caller_seed_attempted = false;
-    bool caller_seed_final_proof_attempted = false;
-    bool caller_seed_final_proof_accepted = false;
-    bool caller_seed_escalated = false;
-    std::string caller_seed_rejection_source;
-    std::string caller_seed_rejection_reason;
-    bool caller_seed_exception_observed = false;
-    std::string caller_seed_exception_message;
-    FeasibleInitializationResult feasible_initialization;
-    bool direct_final_proof_attempted = false;
-    bool direct_final_proof_accepted = false;
-    PhysicalProofCorrectorResult proof_corrector;
-    ContinuationTraceResult continuation;
-    std::string continuation_parameter_name = "log_equilibrium_constants_lambda";
-    std::vector<double> continuation_lambdas;
-    std::vector<double> activity_continuation_lambdas;
-    std::string activity_continuation_mode;
-    double activity_continuation_minimum_step = 0.0;
-    int activity_continuation_maximum_stage_count = 0;
-    std::vector<double> accepted_activity_steps;
-    std::vector<double> rejected_activity_steps;
 };
 
 class HomogeneousChemicalEquilibriumNlp final : public NlpProblem {
@@ -136,6 +106,21 @@ public:
     HomogeneousChemicalEquilibriumBlockResult evaluate_physical_block(
         const std::vector<double>& amounts
     ) const;
+    ReactionProofScalingMetrics reaction_proof_scaling_metrics(
+        const HomogeneousChemicalEquilibriumBlockResult& block,
+        double reaction_stationarity_tolerance
+    ) const;
+    ChemicalEquilibriumProofEvaluation evaluate_physical_proof(
+        const std::vector<double>& solver_variables,
+        double balance_tolerance,
+        double reaction_stationarity_tolerance
+    ) const;
+    std::vector<double> initial_constraint_multipliers() const;
+    PhysicalProofCorrectorResult correct_physical_proof(
+        const std::vector<double>& initial_variables,
+        double balance_tolerance,
+        double reaction_stationarity_tolerance
+    ) const;
     std::vector<double> physical_amounts_from_solver_variables(
         const std::vector<double>& solver_variables
     ) const;
@@ -153,19 +138,8 @@ private:
     NlpBounds bounds_;
 };
 
-NeutralTwoPhaseEosNlpContract evaluate_activated_chemical_equilibrium_nlp_contract(
-    const ChemicalEquilibriumNlpInput& input,
-    const epcsaft::native::equilibrium::ActivationPlan& plan,
-    const epcsaft::native::equilibrium::VariableLayout& layout
-);
-
-ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
-    const ChemicalEquilibriumNlpInput& input,
-    const epcsaft::native::equilibrium::ActivationPlan& plan,
-    const epcsaft::native::equilibrium::VariableLayout& layout,
-    const IpoptSolveOptions& options,
-    double balance_tolerance,
-    double reaction_stationarity_tolerance
+FeasibleInitializationInput chemical_equilibrium_feasible_initialization_input(
+    const ChemicalEquilibriumNlpInput& input
 );
 
 }  // namespace epcsaft::native::equilibrium_nlp

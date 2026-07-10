@@ -13,7 +13,7 @@ from ._native import provider_contract
 class Equilibrium:
     """A constructor-configured equilibrium workflow for a mixture."""
 
-    __slots__ = ("mixture", "_problem")
+    __slots__ = ("_problem", "mixture")
 
     def __init__(
         self,
@@ -25,7 +25,6 @@ class Equilibrium:
         x: Sequence[float] | None = None,
         y: Sequence[float] | None = None,
         z: Sequence[float] | None = None,
-        phase_kinds: Sequence[str] | None = None,
     ) -> None:
         if not isinstance(mixture, Mixture):
             raise InputError("Equilibrium requires a Mixture.")
@@ -42,7 +41,6 @@ class Equilibrium:
             x=x,
             y=y,
             z=z,
-            phase_kinds=phase_kinds,
         )
 
     @property

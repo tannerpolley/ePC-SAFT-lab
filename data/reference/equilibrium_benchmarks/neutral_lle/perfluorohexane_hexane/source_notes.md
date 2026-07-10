@@ -29,7 +29,7 @@ The pure-component rows use Tihic thesis PC-SAFT-compatible sPC-SAFT parameters:
   and `epsilon/k = 233.90 K`.
 
 Tihic reports `kij = 0.073` for the sPC-SAFT perfluorohexane + n-alkane LLE
-context. With the current ePC-SAFT neutral PC-SAFT route, that value
+context. With the internal ePC-SAFT neutral PC-SAFT diagnostic, that value
 over-splits the retained source pair by about 0.13 mole fraction. This fixture
 therefore stores `kij = 0.0662`, fitted against the retained source pair using
 the current route. The binary interaction is source-fitted, not imported as a
@@ -38,6 +38,6 @@ literature value.
 ## Scope
 
 This fixture is neutral, nonelectrolyte, nonreactive, and nonassociating. It is
-one public source-backed LLE showcase for the current `route="lle"` utility. It
-does not promote generalized phase-set admission and does not cover
+one source-backed internal sampled-candidate LLE diagnostic. It does not prove
+global HELD phase-set completeness, admit a public `lle` route, or cover
 associating, electrolyte, reactive, CE, or CPE behavior.

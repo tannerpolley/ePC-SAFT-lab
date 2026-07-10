@@ -29,18 +29,21 @@ def test_associating_lle_gross_2002_certification_payload_reports_shared_contrac
     assert shared["status"] == "accepted"
     assert shared["selector_family"] == "neutral_lle"
     assert shared["family_residual_block"] == "lle"
-    assert shared["public_routes"] == ["lle"]
+    assert shared["production_exposed"] is False
+    assert shared["public_routes"] == []
+    assert shared["public_route_admission"] == "closed"
+    assert shared["global_held_proof"] is False
     assert set(shared["required_associating_evidence_quantities"]) == {
-        "associating_neutral_lle_gross_2002_public_exact_hessian",
-        "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian",
+        "associating_neutral_lle_gross_2002_internal_exact_hessian",
+        "associating_neutral_lle_gross_2002_figure_10_internal_exact_hessian",
     }
     evidence_by_quantity = {row["quantity"]: row for row in shared["associating_evidence_rows"]}
     assert set(evidence_by_quantity) == set(shared["required_associating_evidence_quantities"])
     for row in evidence_by_quantity.values():
         assert row["backend"] == "cppad_implicit_association"
-        assert row["classification"] == "production_supported"
-        assert row["public_admission_state"] == "public_route_open"
-        assert row["public_route"] == "lle"
+        assert row["classification"] == "internal_validation_evidence"
+        assert row["public_route_admission"] == "closed"
+        assert row["global_held_proof"] is False
 
 
 def test_associating_lle_gross_2002_certification_retains_source_margins_and_overlay_gaps(
@@ -57,4 +60,4 @@ def test_associating_lle_gross_2002_certification_retains_source_margins_and_ove
         assert figure_margins["fit_pass"]["status"] == "accepted"
         assert figure_margins["derivative_status"]["status"] == "accepted"
         assert figure_margins["literature_overlay"]["counts_toward_completion"] is False
-        assert figure_margins["literature_overlay"]["status"] == "regression_followup_not_m4_acceptance"
+        assert figure_margins["literature_overlay"]["status"] == "absent"

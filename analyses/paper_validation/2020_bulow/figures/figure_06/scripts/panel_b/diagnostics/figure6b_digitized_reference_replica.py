@@ -5,10 +5,8 @@ from __future__ import annotations
 import argparse
 import csv
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -18,11 +16,11 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-from typing import Dict, List, Tuple
 
 import matplotlib
 import numpy as np
+
+from scripts.plot_outputs import REPO_ROOT
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -69,7 +67,7 @@ def _normalize_series_name(name: str) -> str:
     return aliases[s]
 
 
-def _load_digitized_curves(path: Path) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
+def _load_digitized_curves(path: Path) -> dict[str, tuple[np.ndarray, np.ndarray]]:
     with path.open("r", newline="", encoding="utf-8-sig") as handle:
         reader = csv.reader(handle)
         rows = list(reader)
@@ -81,10 +79,10 @@ def _load_digitized_curves(path: Path) -> Dict[str, Tuple[np.ndarray, np.ndarray
     if len(header) % 2 != 0:
         raise ValueError("Expected x/y column pairs in the digitized Figure 6b CSV.")
 
-    series: Dict[str, List[Tuple[float, float]]] = {}
+    series: dict[str, list[tuple[float, float]]] = {}
     for col in range(0, len(header), 2):
         y_name = _normalize_series_name(header[col + 1])
-        pairs: List[Tuple[float, float]] = []
+        pairs: list[tuple[float, float]] = []
         for row in rows[1:]:
             x_raw = row[col].strip() if col < len(row) and row[col] is not None else ""
             y_raw = row[col + 1].strip() if col + 1 < len(row) and row[col + 1] is not None else ""
@@ -107,7 +105,7 @@ def _load_digitized_curves(path: Path) -> Dict[str, Tuple[np.ndarray, np.ndarray
     return series
 
 
-def _interp_dense_curve(x: np.ndarray, y: np.ndarray, points: int) -> Tuple[np.ndarray, np.ndarray]:
+def _interp_dense_curve(x: np.ndarray, y: np.ndarray, points: int) -> tuple[np.ndarray, np.ndarray]:
     x_dense = np.linspace(float(np.min(x)), float(np.max(x)), int(points))
     y_dense = np.interp(x_dense, x, y)
     return x_dense, y_dense

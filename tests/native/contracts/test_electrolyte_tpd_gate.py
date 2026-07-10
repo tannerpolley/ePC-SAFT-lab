@@ -52,7 +52,8 @@ def test_electrolyte_tpd_gate_uses_source_readiness_and_native_candidates() -> N
     assert payload["held2_status"]["readiness_only"] is True
     assert payload["held2_status"]["full_held2_claimed"] is False
     assert "held2_dual_phase_discovery" in payload["held2_status"]["pending_gates"]
-    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is True
+    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is False
+    assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == []
 
 
 def test_cli_requires_complete_electrolyte_tpd_gate() -> None:

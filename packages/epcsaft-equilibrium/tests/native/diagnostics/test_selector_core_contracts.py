@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import epcsaft._core as _provider_core
 import numpy as np
 import pytest
-import epcsaft._core as _provider_core
-
 from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
@@ -11,17 +10,14 @@ from epcsaft.frontend import Mixture
 from epcsaft.model.parameters import BinaryRecord, ParameterSet, PureRecord
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from equilibrium_support.equilibrium_cases import (
-    GROSS_2002_LLE_FEED,
     GROSS_2002_PRESSURE_PA,
-    GROSS_2002_TEMPERATURE_K,
-    gross_2002_associating_public_mixture,
-    gross_2002_figure10_public_mixture,
     _ionic_mixture,
     _methanol_cyclohexane_mixture,
     _neutral_binary_mixture,
     _nonideal_lle_binary_mixture,
+    gross_2002_figure10_public_mixture,
 )
-from equilibrium_support.route_assertions import assert_neutral_lle_stage_iii_replay_receipt
+
 
 def _skip_without_ipopt() -> None:
     if not _core._native_ipopt_smoke()["compiled"]:
@@ -36,6 +32,16 @@ def _pure_ethane_mixture() -> ePCSAFTMixture:
         "e": np.asarray([191.42]),
     }
     return ePCSAFTMixture.from_params(params, species=["Ethane"])
+
+
+def _unproven_pure_mixture() -> ePCSAFTMixture:
+    params = {
+        "MW": np.asarray([20.180e-3]),
+        "m": np.asarray([1.2]),
+        "s": np.asarray([3.1]),
+        "e": np.asarray([120.0]),
+    }
+    return ePCSAFTMixture.from_params(params, species=["UnprovenPureComponent"])
 
 
 @pytest.mark.parametrize(
@@ -67,21 +73,6 @@ def _pure_ethane_mixture() -> ePCSAFTMixture:
         ),
         (
             {
-                "route": "bubble_temperature",
-                "pressure": 1.0e6,
-                "composition": [0.35, 0.65],
-                "composition_role": "liquid",
-            },
-            "bubble_dew_derived_routes",
-            "neutral_bubble_t_eos",
-            "liquid",
-            ["liquid", "vapor"],
-            ["liquid", "vapor"],
-            False,
-            True,
-        ),
-        (
-            {
                 "route": "dew_pressure",
                 "temperature": 300.0,
                 "composition": [0.35, 0.65],
@@ -94,53 +85,6 @@ def _pure_ethane_mixture() -> ePCSAFTMixture:
             ["liquid", "vapor"],
             True,
             False,
-        ),
-        (
-            {
-                "route": "dew_temperature",
-                "pressure": 1.0e6,
-                "composition": [0.35, 0.65],
-                "composition_role": "vapor",
-            },
-            "bubble_dew_derived_routes",
-            "neutral_dew_t_eos",
-            "vapor",
-            ["liquid", "vapor"],
-            ["liquid", "vapor"],
-            False,
-            True,
-        ),
-        (
-            {
-                "route": "neutral_tp_flash",
-                "temperature": 300.0,
-                "pressure": 1.0e6,
-                "composition": [0.35, 0.65],
-                "composition_role": "feed",
-            },
-            "neutral_tp_flash",
-            "neutral_tp_flash_eos",
-            "feed",
-            ["liquid", "vapor"],
-            ["liquid", "vapor"],
-            True,
-            True,
-        ),
-        (
-            {
-                "route": "neutral_lle",
-                "temperature": 300.0,
-                "pressure": 1.0e6,
-                "composition": [0.5, 0.5],
-                "composition_role": "feed",
-            },
-            "neutral_lle",
-            "neutral_lle_eos",
-            "feed",
-            ["liquid1", "liquid2"],
-            ["liquid", "liquid"],
-            True,
-            True,
         ),
         (
             {
@@ -169,9 +113,7 @@ def test_selector_core_contract_owns_production_vle_metadata(
     specified_temperature: bool,
     specified_pressure: bool,
 ) -> None:
-    if selector_request["route"] == "neutral_lle":
-        mix = _nonideal_lle_binary_mixture()
-    elif selector_request["route"] == "single_component_vle":
+    if selector_request["route"] == "single_component_vle":
         mix = _pure_ethane_mixture()
     else:
         mix = _neutral_binary_mixture()
@@ -234,9 +176,6 @@ def test_selector_core_contract_owns_production_vle_metadata(
     assert payload["constraint_families"] == activation["constraint_families"]
     assert payload["variable_model"] == activation["variable_model"]
     assert payload["density_backend"] == activation["density_backend"]
-    if family in {"neutral_tp_flash", "neutral_lle"}:
-        assert activation["stability_prelayer"] == "deterministic_tpd_candidate_screening"
-        assert activation["postsolve_certification"] == "tpd_postsolve"
 
 
 def test_selector_core_rejects_single_component_vle_for_binary_payload() -> None:
@@ -281,6 +220,49 @@ def test_selector_core_rejects_invalid_route_family_before_solver_dispatch() -> 
         )
 
 
+def test_selector_core_rejects_single_component_vle_outside_nist_hydrocarbon_scope() -> None:
+    mix = _unproven_pure_mixture()
+
+    with pytest.raises(_provider_core.NativeValueError, match="NIST-backed methane, ethane, or propane"):
+        _core._native_equilibrium_selector_contract(
+            mix._native,
+            {
+                "route": "single_component_vle",
+                "temperature": 233.15,
+                "composition": [1.0],
+                "composition_role": "pure",
+            },
+        )
+
+
+@pytest.mark.parametrize(
+    ("route", "composition_role"),
+    (
+        ("bubble_temperature", "liquid"),
+        ("dew_temperature", "vapor"),
+        ("neutral_tp_flash", "feed"),
+        ("neutral_lle", "feed"),
+    ),
+)
+def test_selector_core_rejects_unproven_declared_routes_before_dispatch(
+    route: str,
+    composition_role: str,
+) -> None:
+    mix = _neutral_binary_mixture()
+
+    with pytest.raises(_provider_core.NativeValueError, match="not production exposed"):
+        _core._native_equilibrium_selector_contract(
+            mix._native,
+            {
+                "route": route,
+                "temperature": 300.0,
+                "pressure": 1.0e6,
+                "composition": [0.35, 0.65],
+                "composition_role": composition_role,
+            },
+        )
+
+
 def test_selector_core_rejects_active_association_before_solver_dispatch() -> None:
     mix = _methanol_cyclohexane_mixture()
 
@@ -296,116 +278,25 @@ def test_selector_core_rejects_active_association_before_solver_dispatch() -> No
         )
 
 
-def test_selector_core_admits_source_backed_gross_2002_associating_lle_contract() -> None:
-    mix = gross_2002_associating_public_mixture()
+def test_selector_core_rejects_gross_2002_figure10_vle_without_route_proof() -> None:
+    mix = gross_2002_figure10_public_mixture()
 
-    payload = _core._native_equilibrium_selector_contract(
-        mix._native,
-        {
-            "route": "neutral_lle",
-            "temperature": GROSS_2002_TEMPERATURE_K,
-            "pressure": GROSS_2002_PRESSURE_PA,
-            "composition": GROSS_2002_LLE_FEED,
-            "composition_role": "feed",
-        },
-    )
-
-    assert payload["selector_family"] == "neutral_lle"
-    assert payload["route"] == "neutral_lle"
-    assert payload["phase_labels"] == ["liquid1", "liquid2"]
-    assert payload["phase_roles"] == ["liquid", "liquid"]
-    assert (
-        "associating_neutral_lle_gross_2002_public_exact_hessian"
-        in payload["activation"]["proof_routes"]
-    )
-    classification = payload["input_classification"]
-    assert classification["neutral"] is True
-    assert classification["nonelectrolyte"] is True
-    assert classification["nonreactive"] is True
-    assert classification["nonassociating"] is False
-    assert classification["associating_species_indices"] == [0]
-    assert classification["active_family_markers"] == [
-        "associating_neutral_lle_proven",
-        "neutral",
-        "associating",
-        "nonreactive",
-    ]
-    readiness = payload["parameter_readiness"]
-    assert readiness["association_parameters_active"] is True
-    assert readiness["source_backed_parameter_provenance_present"] is True
-    assert readiness["binary_interaction_provenance_status"] == "explicit_binary_records"
-    assert readiness["associating_admission_proof_route"] == (
-        "associating_neutral_lle_gross_2002_public_exact_hessian"
-    )
-    assert readiness["associating_admission_fixture"] == "Gross/Sadowski 2002 Figure 8 methanol-cyclohexane"
-    assert readiness["associating_admission_backend"] == "cppad_implicit_association"
-
-
-def test_selector_core_rejects_gross_2002_associating_lle_without_source_proof() -> None:
-    mix = gross_2002_associating_public_mixture(source_backed=False)
-
-    with pytest.raises(_provider_core.NativeValueError, match="source-backed Gross/Sadowski 2002"):
+    with pytest.raises(_provider_core.NativeValueError, match="Figures 2-9"):
         _core._native_equilibrium_selector_contract(
             mix._native,
             {
-                "route": "neutral_lle",
-                "temperature": GROSS_2002_TEMPERATURE_K,
-                "pressure": GROSS_2002_PRESSURE_PA,
-                "composition": GROSS_2002_LLE_FEED,
-                "composition_role": "feed",
+                "route": "dew_pressure",
+                "temperature": 381.15,
+                "composition": [0.73, 0.27],
+                "composition_role": "vapor",
             },
         )
 
 
-def test_selector_core_admits_source_backed_gross_2002_figure10_associating_lle_contract() -> None:
-    mix = gross_2002_figure10_public_mixture()
-
-    payload = _core._native_equilibrium_selector_contract(
-        mix._native,
-        {
-            "route": "neutral_lle",
-            "temperature": 337.15,
-            "pressure": GROSS_2002_PRESSURE_PA,
-            "composition": [0.70, 0.30],
-            "composition_role": "feed",
-        },
-    )
-
-    readiness = payload["parameter_readiness"]
-    assert readiness["associating_admission_proof_route"] == (
-        "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian"
-    )
-    assert readiness["associating_admission_fixture"] == "Gross/Sadowski 2002 Figure 10 water-1-pentanol"
-    assert readiness["associating_admission_backend"] == "cppad_implicit_association"
-
-
-def test_selector_core_admits_source_backed_gross_2002_figure10_associating_vle_contract() -> None:
-    mix = gross_2002_figure10_public_mixture()
-
-    payload = _core._native_equilibrium_selector_contract(
-        mix._native,
-        {
-            "route": "dew_pressure",
-            "temperature": 381.15,
-            "composition": [0.73, 0.27],
-            "composition_role": "vapor",
-        },
-    )
-
-    readiness = payload["parameter_readiness"]
-    assert readiness["associating_admission_proof_route"] == (
-        "associating_neutral_vle_gross_2002_figure_10_public_exact_hessian"
-    )
-    assert readiness["associating_admission_fixture"] == (
-        "Gross/Sadowski 2002 Figure 10 water-1-pentanol upper VLLE/VLE boundary"
-    )
-    assert readiness["associating_admission_backend"] == "cppad_implicit_association"
-
-
-def test_selector_core_rejects_ionic_lle_before_solver_dispatch() -> None:
+def test_selector_core_rejects_closed_ionic_lle_before_solver_dispatch() -> None:
     mix = _ionic_mixture()
 
-    with pytest.raises(_provider_core.NativeValueError, match="selector-ineligible"):
+    with pytest.raises(_provider_core.NativeValueError, match="not production exposed"):
         _core._native_equilibrium_selector_contract(
             mix._native,
             {
@@ -432,11 +323,10 @@ def test_selector_core_rejects_missing_binary_interactions_before_solver_dispatc
         _core._native_equilibrium_selector_contract(
             mix._native,
             {
-                "route": "neutral_tp_flash",
+                "route": "bubble_pressure",
                 "temperature": 300.0,
-                "pressure": 1.0e6,
                 "composition": [0.35, 0.65],
-                "composition_role": "feed",
+                "composition_role": "liquid",
             },
         )
 
@@ -459,11 +349,10 @@ def test_selector_core_accepts_source_backed_explicit_zero_binary_convention() -
     payload = _core._native_equilibrium_selector_contract(
         mix._native,
         {
-            "route": "neutral_tp_flash",
+            "route": "bubble_pressure",
             "temperature": 300.0,
-            "pressure": 1.0e6,
             "composition": [0.35, 0.65],
-            "composition_role": "feed",
+            "composition_role": "liquid",
         },
     )
 
@@ -477,7 +366,7 @@ def test_selector_core_accepts_source_backed_explicit_zero_binary_convention() -
     assert readiness["required_parameter_families_present"] is True
 
 
-def test_neutral_lle_stage_ii_dual_loop_reports_replayable_candidate_gate() -> None:
+def test_neutral_lle_sampled_candidate_audit_reports_replayable_candidate_set() -> None:
     mix = _nonideal_lle_binary_mixture()
 
     discovery = _core._native_neutral_tpd_phase_discovery(
@@ -490,19 +379,19 @@ def test_neutral_lle_stage_ii_dual_loop_reports_replayable_candidate_gate() -> N
         1.0e-6,
     )
 
-    assert discovery["phase_discovery_backend"] == "continuous_tpd_held_dual_phase_discovery"
+    assert discovery["phase_discovery_backend"] == "continuous_tpd_sampled_candidate_audit"
     assert discovery["stage9_phase_discovery_steps"] == [
         "deterministic_screening",
         "continuous_tpd_minimization",
         "held_stage_i_stability",
         "held_stage_ii_candidate_bound_audit",
-        "held_stage_ii_dual_loop_verification",
+        "sampled_candidate_bound_audit",
         "held_stage_iii_ipopt_refinement",
     ]
     assert discovery["held_stage_ii_candidate_bound_audit_status"] == "candidate_bound_gap_closed"
-    assert discovery["held_stage_ii_status"] == "dual_loop_verified"
-    assert discovery["held_stage_ii_dual_loop_status"] == "verified"
-    assert discovery["held_stage_ii_stopping_reason"] == "bound_gap_closed"
+    assert discovery["held_stage_ii_status"] == "sampled_candidate_audit_complete"
+    assert discovery["held_stage_ii_dual_loop_status"] == "not_performed"
+    assert discovery["held_stage_ii_stopping_reason"] == "sampled_candidate_bound_gap_closed"
     assert discovery["held_stage_ii_bound_tolerance"] == pytest.approx(1.0e-6)
     assert discovery["held_stage_ii_lower_bound_history"]
     assert discovery["held_stage_ii_upper_bound_history"]
@@ -520,8 +409,8 @@ def test_neutral_lle_stage_ii_dual_loop_reports_replayable_candidate_gate() -> N
         discovery["held_stage_ii_bound_gap"]
     )
     assert discovery["held_stage_ii_replay_ready"] is True
-    assert discovery["held_stage_ii_replay_source"] == "stage_ii_dual_loop_selected_candidates"
-    assert discovery["held_stage_ii_replay_seed_name"] == "held_stage_ii_dual_loop_candidate_pair"
+    assert discovery["held_stage_ii_replay_source"] == "sampled_candidate_audit_selected_candidates"
+    assert discovery["held_stage_ii_replay_seed_name"] == "sampled_candidate_pair_replay"
     assert discovery["held_stage_ii_replay_phase_kinds"] == discovery["selected_phase_kinds"]
     assert discovery["held_stage_ii_replay_phase_fractions"] == pytest.approx(
         discovery["selected_phase_fractions"]
@@ -540,49 +429,11 @@ def test_neutral_lle_stage_ii_dual_loop_reports_replayable_candidate_gate() -> N
     assert len(discovery["held_stage_ii_rejected_candidate_ranks"]) == len(rejected)
     assert len(discovery["held_stage_ii_rejected_candidate_reasons"]) == len(rejected)
     assert set(discovery["held_stage_ii_rejected_candidate_reasons"]) == {
-        "not_selected_by_dual_loop_mass_balance_gate"
+        "not_selected_by_sampled_candidate_mass_balance_gate"
     }
 
 
-def test_neutral_lle_stage_iii_route_refinement_records_stage_ii_replay_seed() -> None:
-    _skip_without_ipopt()
-    mix = _nonideal_lle_binary_mixture()
-
-    route = _core._native_equilibrium_selector_route_result(
-        mix._native,
-        {
-            "route": "neutral_lle",
-            "temperature": 225.0,
-            "pressure": 1.0e6,
-            "composition": [0.5, 0.5],
-            "composition_role": "feed",
-        },
-        260,
-        1.0e-6,
-        0.0,
-        "auto",
-        50,
-        1.0e-8,
-        1.0e-3,
-        1.0e-6,
-        1.0e-6,
-        {},
-        linear_solver="auto",
-        option_profile="held_refinement",
-        print_level=0,
-        acceptable_tolerance=1.0e-7,
-        constraint_violation_tolerance=1.0e-7,
-        dual_infeasibility_tolerance=1.0e-8,
-        complementarity_tolerance=1.0e-8,
-    )
-
-    postsolve = route["postsolve"]
-    assert postsolve["held_stage_ii_status"] == "dual_loop_verified"
-    assert postsolve["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
-    assert_neutral_lle_stage_iii_replay_receipt(route)
-
-
-def test_neutral_tp_flash_activation_plan_contract_matches_matrix() -> None:
+def test_closed_neutral_tp_flash_cannot_bypass_selector_with_activation_plan() -> None:
     mix = _neutral_binary_mixture()
     request = {
         "route": "neutral_tp_flash",
@@ -592,72 +443,13 @@ def test_neutral_tp_flash_activation_plan_contract_matches_matrix() -> None:
         "composition_role": "feed",
     }
 
-    payload = _core._native_equilibrium_selector_contract(mix._native, request)
-    activation = {row["key"]: row for row in _core._native_equilibrium_activation_matrix()}["neutral_tp_flash"]
-    plan = payload["activation_plan"]
-    layout = payload["variable_layout"]
-
-    assert payload["activation_compiler"] == "activation_plan"
-    assert plan["family_key"] == "neutral_tp_flash"
-    assert plan["route"] == "neutral_tp_flash"
-    assert plan["phase_keys"] == ["liquid", "vapor"]
-    assert plan["phase_kinds"] == ["liquid", "vapor"]
-    assert plan["variable_blocks"] == ["phase_species_amounts", "phase_volumes"]
-    assert plan["constraint_blocks"] == activation["constraint_families"]
-    assert plan["residual_blocks"] == activation["residual_families"]
-    assert plan["postsolve_blocks"] == [
-        "material_balance",
-        "phase_pressure_consistency",
-        "phase_equilibrium",
-        "phase_distance",
-        "phase_volume_gap",
-    ]
-    assert activation["stability_prelayer"] == "deterministic_tpd_candidate_screening"
-    assert activation["postsolve_certification"] == "tpd_postsolve"
-    assert plan["variable_model"] == activation["variable_model"]
-    assert plan["density_backend"] == activation["density_backend"]
-    assert plan["feed_composition"] == pytest.approx([0.35, 0.65])
-    assert plan["temperature"] == pytest.approx(300.0)
-    assert plan["pressure"] == pytest.approx(1.0e6)
-
-    assert layout["family_key"] == "neutral_tp_flash"
-    assert layout["route"] == "neutral_tp_flash"
-    assert layout["physical_basis"] == "true_species_phase_amounts_and_phase_volumes"
-    assert layout["solver_coordinate_basis"] == "physical_variables"
-    assert layout["lift_policy"] == "identity_true_species_lift"
-    assert layout["back_lift_policy"] == "phase_amount_volume_back_lift"
-    assert layout["phase_keys"] == ["liquid", "vapor"]
-    assert layout["phase_kinds"] == ["liquid", "vapor"]
-    assert layout["phase_count"] == 2
-    assert layout["species_count"] == 2
-    assert layout["variable_count"] == payload["variable_count"]
-    assert layout["phase_amount_indices"] == [[0, 1], [3, 4]]
-    assert layout["phase_volume_indices"] == [2, 5]
-    assert layout["physical_variable_order"] == [
-        "n_phase_0_species_0",
-        "n_phase_0_species_1",
-        "V_phase_0",
-        "n_phase_1_species_0",
-        "n_phase_1_species_1",
-        "V_phase_1",
-    ]
-    assert layout["variable_blocks"] == [
-        {
-            "name": "phase_species_amounts",
-            "offset": 0,
-            "size": 4,
-            "stride": 3,
-        },
-        {
-            "name": "phase_volumes",
-            "offset": 2,
-            "size": 2,
-            "stride": 3,
-        },
-    ]
+    with pytest.raises(_provider_core.NativeValueError, match="not production exposed"):
+        _core._native_equilibrium_selector_contract(mix._native, request)
+    with pytest.raises(_provider_core.NativeValueError, match="not production exposed"):
+        _core._native_equilibrium_activation_plan_contract(mix._native, request)
 
 
-def test_neutral_lle_activation_plan_contract_matches_matrix() -> None:
+def test_closed_neutral_lle_cannot_bypass_selector_with_activation_plan() -> None:
     mix = _nonideal_lle_binary_mixture()
     request = {
         "route": "neutral_lle",
@@ -667,50 +459,10 @@ def test_neutral_lle_activation_plan_contract_matches_matrix() -> None:
         "composition_role": "feed",
     }
 
-    payload = _core._native_equilibrium_selector_contract(mix._native, request)
-    activation = {row["key"]: row for row in _core._native_equilibrium_activation_matrix()}["neutral_lle"]
-    plan = payload["activation_plan"]
-    layout = payload["variable_layout"]
-
-    assert payload["activation_compiler"] == "activation_plan"
-    assert payload["problem_name"] == "neutral_lle_eos"
-    assert plan["family_key"] == "neutral_lle"
-    assert plan["route"] == "neutral_lle"
-    assert plan["phase_keys"] == ["liquid1", "liquid2"]
-    assert plan["phase_kinds"] == ["liquid", "liquid"]
-    assert plan["variable_blocks"] == ["phase_species_amounts", "phase_volumes"]
-    assert plan["constraint_blocks"] == [
-        "material_balance",
-        "phase_pressure_consistency",
-        "phase_distance",
-    ]
-    assert "phase_volume_gap" not in plan["constraint_blocks"]
-    assert plan["residual_blocks"] == activation["residual_families"]
-    assert plan["postsolve_blocks"] == [
-        "material_balance",
-        "phase_pressure_consistency",
-        "phase_equilibrium",
-        "phase_distance",
-    ]
-    assert activation["stability_prelayer"] == "deterministic_tpd_candidate_screening"
-    assert activation["postsolve_certification"] == "tpd_postsolve"
-    assert plan["variable_model"] == activation["variable_model"]
-    assert plan["density_backend"] == activation["density_backend"]
-    assert plan["feed_composition"] == pytest.approx([0.5, 0.5])
-    assert plan["temperature"] == pytest.approx(300.0)
-    assert plan["pressure"] == pytest.approx(1.0e6)
-
-    assert layout["family_key"] == "neutral_lle"
-    assert layout["route"] == "neutral_lle"
-    assert layout["physical_basis"] == "true_species_phase_amounts_and_phase_volumes"
-    assert layout["lift_policy"] == "identity_true_species_lift"
-    assert layout["phase_keys"] == ["liquid1", "liquid2"]
-    assert layout["phase_kinds"] == ["liquid", "liquid"]
-    assert layout["phase_count"] == 2
-    assert layout["species_count"] == 2
-    assert layout["variable_count"] == payload["variable_count"]
-    assert layout["phase_amount_indices"] == [[0, 1], [3, 4]]
-    assert layout["phase_volume_indices"] == [2, 5]
+    with pytest.raises(_provider_core.NativeValueError, match="not production exposed"):
+        _core._native_equilibrium_selector_contract(mix._native, request)
+    with pytest.raises(_provider_core.NativeValueError, match="not production exposed"):
+        _core._native_equilibrium_activation_plan_contract(mix._native, request)
 
 
 @pytest.mark.parametrize(
@@ -742,7 +494,7 @@ def test_activation_plan_builder_rejects_non_activation_routes(route: str, compo
         )
 
 
-def test_activated_neutral_tp_flash_nlp_matches_trusted_contract_shape() -> None:
+def test_closed_neutral_tp_flash_cannot_reach_activated_nlp_contract() -> None:
     mix = _neutral_binary_mixture()
     request = {
         "route": "neutral_tp_flash",
@@ -752,64 +504,8 @@ def test_activated_neutral_tp_flash_nlp_matches_trusted_contract_shape() -> None
         "composition_role": "feed",
     }
 
-    payload = _core._native_activated_neutral_tp_flash_nlp_contract(mix._native, request)
-    activated = payload["activated"]
-    trusted = payload["trusted_reference"]
-
-    assert payload["activation_plan"]["family_key"] == "neutral_tp_flash"
-    assert payload["variable_layout"]["variable_count"] == activated["variable_count"]
-    assert activated["activation_compiler"] == "activation_plan"
-    assert activated["variable_count"] == trusted["variable_count"]
-    assert activated["constraint_count"] == trusted["constraint_count"]
-    assert activated["jacobian_nonzero_count"] == trusted["jacobian_nonzero_count"]
-    assert len(activated["variable_lower_bounds"]) == len(trusted["variable_lower_bounds"])
-    assert len(activated["variable_upper_bounds"]) == len(trusted["variable_upper_bounds"])
-    assert len(activated["constraint_lower_bounds"]) == len(trusted["constraint_lower_bounds"])
-    assert len(activated["constraint_upper_bounds"]) == len(trusted["constraint_upper_bounds"])
-    assert len(activated["initial_point"]) == len(trusted["initial_point"])
-    assert activated["residual_families"] == trusted["residual_families"]
-    assert activated["constraint_families"] == trusted["constraint_families"]
-    assert activated["exact_hessian_available"] is True
-    assert activated["hessian_nonzero_count"] == trusted["hessian_nonzero_count"]
-    assert len(activated["hessian_rows"]) == activated["hessian_nonzero_count"]
-    assert len(activated["hessian_cols"]) == activated["hessian_nonzero_count"]
-    assert len(activated["hessian_values_at_initial"]) == activated["hessian_nonzero_count"]
-    assert activated["hessian_backend"] == trusted["hessian_backend"]
-    assert activated["sparse_contract"]["jacobian_structure_matches_values"] is True
-    assert activated["sparse_contract"]["hessian_structure_matches_values"] is True
-    assert activated["derivative_contract"]["objective_gradient_exact"] is True
-    assert activated["derivative_contract"]["constraint_jacobian_exact"] is True
-    assert activated["derivative_contract"]["lagrangian_hessian_exact"] is True
-    assert activated["derivative_contract"]["missing_exact_derivative_blocks"] == []
-    assert activated["objective_scaling"] > 0.0
-    assert len(activated["variable_scaling"]) == activated["variable_count"]
-    assert len(activated["constraint_scaling"]) == activated["constraint_count"]
-    assert activated["initial_variable_bound_margin"] > 0.0
-    assert activated["initial_amount_lower_margin"] > 0.0
-    assert activated["initial_volume_lower_margin"] > 0.0
-    assert activated["initial_constraint_bound_violation"] >= 0.0
-    assert activated["domain_safety_policy"] == "explicit_bounds_variable_transform_ipopt_barrier"
-    assert activated["transform_policy"] == "identity_physical_coordinates"
-    assert activated["transform_backend"] == "analytic_identity"
-    assert activated["transform_input_variable_count"] == activated["variable_count"]
-    assert activated["transform_output_variable_count"] == activated["variable_count"]
-    assert activated["transform_jacobian_value_count"] == activated["variable_count"] ** 2
-    assert activated["transform_hessian_value_count"] == activated["variable_count"] ** 3
-    assert activated["barrier_policy"] == "ipopt_internal_barrier_for_declared_bounds"
-    domain = activated["domain_contract"]
-    assert domain["variable_bounds_declared"] is True
-    assert domain["constraint_bounds_declared"] is True
-    assert domain["solver_to_physical_declared"] is True
-    assert domain["transform_jacobian_declared"] is True
-    assert domain["transform_hessian_declared"] is True
-    assert domain["transform_chain_rule_derivatives_declared"] is True
-    assert domain["variable_scaling_declared"] is True
-    assert domain["constraint_scaling_declared"] is True
-    assert domain["ipopt_barrier_owns_declared_bounds"] is True
-    assert domain["thermodynamic_objective_custom_barrier"] is False
-    assert domain["margins"]["initial_variable_bound_margin"] == pytest.approx(
-        activated["initial_variable_bound_margin"]
-    )
+    with pytest.raises(_provider_core.NativeValueError, match="not production exposed"):
+        _core._native_activated_neutral_tp_flash_nlp_contract(mix._native, request)
 
 
 def test_selector_core_rejects_incompatible_composition_role_before_solver_dispatch() -> None:

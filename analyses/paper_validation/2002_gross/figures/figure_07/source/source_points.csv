@@ -1,4 +1,4 @@
-figure_id,series,system,T_C,T_K,P_bar,x_butane,source_kind,source_reference,source_x_px,source_y_px,uncertainty_P_bar,uncertainty_composition,point_index
+figure_id,series,system,T_C,T_K,P_bar,x_butane,source_kind,source_reference,retained_x_px,retained_y_px,uncertainty_P_bar,uncertainty_composition,point_index
 figure_07,T_100C,ethanol/n-butane,100.0,373.15,5.0578512396694215,0.048104956268221574,calibrated_pc_saft_curve_trace,Gross 2002 Figure 7 visible PC-SAFT solid curve,151.0,572.0,1.0,0.015,1
 figure_07,T_100C,ethanol/n-butane,100.0,373.15,7.041322314049586,0.09183673469387756,calibrated_pc_saft_curve_trace,Gross 2002 Figure 7 visible PC-SAFT solid curve,181.0,552.0,1.0,0.015,2
 figure_07,T_100C,ethanol/n-butane,100.0,373.15,9.12396694214876,0.15014577259475217,calibrated_pc_saft_curve_trace,Gross 2002 Figure 7 visible PC-SAFT solid curve,221.0,531.0,1.0,0.015,3

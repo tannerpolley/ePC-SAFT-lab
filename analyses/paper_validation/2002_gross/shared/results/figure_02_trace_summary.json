@@ -10,12 +10,17 @@
   },
   "trace_source_policy": {
     "binary_branch_min_composition": 0.02,
-    "pure_endpoints_route": "single_component_vle",
-    "reason": "pure-limit source points are represented by the single-component saturation route; finite binary branch anchors use bubble/dew pressure routes"
+    "boundary_limit_coordinate_role": "y_component_1",
+    "boundary_limit_coordinates": [
+      1e-06,
+      0.999999
+    ],
+    "boundary_limit_route": "dew_pressure",
+    "reason": "finite binary dew-pressure limits provide both liquid and vapor compositions on the shared boundary without claiming unsupported public pure-component scope"
   },
   "traces": [
     {
-      "accepted_point_count": 26,
+      "accepted_point_count": 23,
       "blockers": [],
       "complete": true,
       "exact_hessian_verified": true,
@@ -28,7 +33,7 @@
       "solved_required_anchor_count": 16
     },
     {
-      "accepted_point_count": 21,
+      "accepted_point_count": 19,
       "blockers": [],
       "complete": true,
       "exact_hessian_verified": true,

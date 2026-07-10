@@ -9,9 +9,10 @@ from epcsaft_equilibrium.chemical_equilibrium import (
     ChemicalSpecies,
     EquilibriumConstantRecord,
     StandardStateRecord,
+    _require_closed_chemical_equilibrium_activation,
+    _solve_closed_chemical_equilibrium_nlp_activation,
     build_standard_state_registry,
     compile_reaction_set,
-    solve_chemical_equilibrium_nlp_activation,
 )
 
 _core = extension_native_core()
@@ -50,14 +51,14 @@ def _ideal_ab_problem():
     return compiled, registry
 
 
-def test_reactive_speciation_activation_matrix_declares_single_nlp_proof_only() -> None:
+def test_reactive_speciation_activation_matrix_is_internal_validation_only() -> None:
     rows = {row["key"]: row for row in _core._native_equilibrium_activation_matrix()}
     reactive = rows["reactive_speciation"]
 
-    assert reactive["production_exposed"] is True
-    assert reactive["exposure_status"] == "production_exposed"
-    assert reactive["proof_routes"] == ["reactive_speciation_single_nlp_ipopt_exact_hessian"]
-    assert reactive["public_routes"] == ["reactive_speciation"]
+    assert reactive["production_exposed"] is False
+    assert reactive["exposure_status"] == "declared_not_exposed"
+    assert reactive["proof_routes"] == []
+    assert reactive["public_routes"] == []
     assert reactive["solver_strategy"] == "ipopt_nlp_with_internal_continuation"
     assert reactive["initialization_strategy"] == "max_min_feasible_interior"
     assert reactive["continuation_strategy"] == "adaptive_k_scaling_homotopy"
@@ -68,12 +69,50 @@ def test_reactive_speciation_activation_matrix_declares_single_nlp_proof_only() 
     assert reactive["residual_families"] == ["conserved_balance", "reaction_stationarity"]
 
 
-def test_frontend_standalone_ce_uses_single_activation_nlp_path() -> None:
+@pytest.mark.parametrize(
+    ("activation_update", "replacement"),
+    [
+        ({"production_exposed": True}, None),
+        ({"public_routes": ["reactive_speciation"]}, None),
+        ({"proof_routes": ["stale_reactive_speciation_proof"]}, None),
+        ({"key": "reactive_lle"}, None),
+        ({}, "invalid"),
+    ],
+)
+def test_internal_ce_adapter_rejects_stale_production_activation(
+    activation_update: dict[str, object], replacement: object | None
+) -> None:
+    activation: object = {
+        "key": "reactive_speciation",
+        "production_exposed": False,
+        "public_routes": [],
+        "proof_routes": [],
+    }
+    if replacement is None:
+        assert isinstance(activation, dict)
+        activation.update(activation_update)
+    else:
+        activation = replacement
+    payload = {
+        "native_binding": "_native_chemical_equilibrium_nlp_activation",
+        "route": "reactive_speciation",
+        "activation_compiler": "activation_plan",
+        "thermodynamic_block": "homogeneous_chemical_equilibrium",
+        "accepted": True,
+        "selector_contract": {"selector_family": "reactive_speciation"},
+        "activation": activation,
+    }
+
+    with pytest.raises(RuntimeError, match=r"activation|production surface"):
+        _require_closed_chemical_equilibrium_activation(payload)
+
+
+def test_internal_standalone_ce_validation_uses_single_activation_nlp_path() -> None:
     if not _core._native_ipopt_smoke()["compiled"]:
         pytest.skip("native Ipopt is not compiled")
 
     compiled, registry = _ideal_ab_problem()
-    result = solve_chemical_equilibrium_nlp_activation(
+    result = _solve_closed_chemical_equilibrium_nlp_activation(
         compiled,
         registry,
         initial_amounts=[0.5, 0.5],
@@ -93,8 +132,8 @@ def test_frontend_standalone_ce_uses_single_activation_nlp_path() -> None:
 
     activation = result["activation"]
     assert activation["key"] == "reactive_speciation"
-    assert activation["public_routes"] == ["reactive_speciation"]
-    assert activation["proof_routes"] == ["reactive_speciation_single_nlp_ipopt_exact_hessian"]
+    assert activation["public_routes"] == []
+    assert activation["proof_routes"] == []
     assert activation["solver_strategy"] == "ipopt_nlp_with_internal_continuation"
     assert activation["initialization_strategy"] == "max_min_feasible_interior"
     assert activation["continuation_strategy"] == "adaptive_k_scaling_homotopy"
@@ -147,6 +186,11 @@ def test_frontend_standalone_ce_uses_single_activation_nlp_path() -> None:
     assert result["mole_fractions"] == pytest.approx([0.25, 0.75], abs=1.0e-7)
     assert result["balance_inf_norm"] < 1.0e-9
     assert result["reaction_stationarity_inf_norm"] < 1.0e-8
+    assert result["accepted"] is (
+        solver["solver_accepted"]
+        and result["balance_inf_norm"] <= 1.0e-9
+        and result["reaction_stationarity_inf_norm"] <= 1.0e-8
+    )
 
 
 def test_no_side_channel_ce_solver_bindings_exist() -> None:
@@ -154,8 +198,6 @@ def test_no_side_channel_ce_solver_bindings_exist() -> None:
         "_native_chemical_equilibrium_block",
         "_native_chemical_equilibrium_nlp_activation",
     }
-    chemical_equilibrium_bindings = {
-        name for name in dir(_core) if name.startswith("_native_chemical_equilibrium")
-    }
+    chemical_equilibrium_bindings = {name for name in dir(_core) if name.startswith("_native_chemical_equilibrium")}
 
     assert chemical_equilibrium_bindings == expected

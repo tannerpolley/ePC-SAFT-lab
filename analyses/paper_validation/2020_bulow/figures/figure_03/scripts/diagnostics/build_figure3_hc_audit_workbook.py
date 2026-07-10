@@ -3,10 +3,8 @@ from __future__ import annotations
 import math
 import shutil
 import sys
-
-
-from pathlib import Path
 import sys as _bootstrap_sys
+from pathlib import Path
 from pathlib import Path as _BootstrapPath
 
 for _candidate in _BootstrapPath(__file__).resolve().parents:
@@ -16,11 +14,11 @@ for _candidate in _BootstrapPath(__file__).resolve().parents:
         break
 else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
-from scripts.plot_outputs import REPO_ROOT
-
 import numpy as np
 from openpyxl import load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
+
+from scripts.plot_outputs import REPO_ROOT
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 FIGURE_DIR = SCRIPT_DIR.parent
@@ -35,10 +33,11 @@ from scripts._env import require_epcsaft_install
 
 require_epcsaft_install()
 
-from epcsaft.parameters import get_prop_dict
-from scripts.data.paper_validation_parameters import paper_validation_parameter_path
-from scripts._epcsaft_oop import epcsaft_density, epcsaft_fugacity_coefficient_terms, epcsaft_pressure
 import _plot_common as common
+from epcsaft.parameters import get_prop_dict
+
+from scripts._epcsaft_oop import epcsaft_density, epcsaft_fugacity_coefficient_terms, epcsaft_pressure
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 R_GAS = 8.31446261815324
 N_AV = 6.022140857e23
