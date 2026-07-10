@@ -83,13 +83,13 @@ def test_source_dataset_loader_preserves_source_metadata_column(tmp_path) -> Non
             "component,H2O,Na+\nH2O,0,0\nNa+,0,0\n",
             encoding="utf-8",
         )
-    (root / "mixed" / "binary_interaction" / "source_manifest.csv").write_text(
-        "parameter,component_i,component_j,value,source\n"
-        "k_ij,H2O,Na+,0,Test interaction table\n"
-        "l_ij,H2O,Na+,0,Test interaction table\n"
-        "k_hb_ij,H2O,Na+,0,Test interaction table\n",
-        encoding="utf-8",
-    )
+        (root / "mixed" / "binary_interaction" / "source_manifest.csv").write_text(
+            "parameter,component_i,component_j,value,source,provenance_status\n"
+            "k_ij,H2O,Na+,0,Test interaction table,source_backed\n"
+            "l_ij,H2O,Na+,0,Test interaction table,source_backed\n"
+            "k_hb_ij,H2O,Na+,0,Test interaction table,source_backed\n",
+            encoding="utf-8",
+        )
     (root / "mixed" / "rel_perm" / "parameters.csv").write_text("organic,a,b,c\n", encoding="utf-8")
     (root / "user_options.json").write_text("{}", encoding="utf-8")
 
