@@ -64,7 +64,8 @@ _STRUCTURAL_KEYS = {
     "schema_version",
     "components",
     "pure_records",
-    "binary_records",
+    "interactions",
+    "interaction_policies",
     "metadata",
     "runtime_options",
 }
@@ -84,16 +85,32 @@ _NATIVE_RUNTIME_PASSTHROUGH_KEYS = {
 }
 
 PARAMETER_SET_SCHEMA = "epcsaft.parameter-set"
-PARAMETER_SET_SCHEMA_VERSION = 1
+PARAMETER_SET_SCHEMA_VERSION = 2
 _CANONICAL_TOP_LEVEL_KEYS = {
     "schema",
     "schema_version",
     "components",
     "pure_records",
-    "binary_records",
+    "interactions",
+    "interaction_policies",
     "metadata",
     "runtime_options",
 }
+_INTERACTION_FAMILIES = ("k_ij", "l_ij", "k_hb_ij")
+_INTERACTION_RUNTIME_KEYS = {"k_ij": "k_ij", "l_ij": "l_ij", "k_hb_ij": "k_hb"}
+_INTERACTION_PROVENANCE_KINDS = {"literature", "fitted", "model_structural_zero"}
+_CONSTANT_INTERACTION_KEYS = {"kind", "family", "components", "value", "provenance"}
+_LINEAR_TEMPERATURE_INTERACTION_KEYS = {
+    "kind",
+    "family",
+    "components",
+    "slope",
+    "intercept",
+    "temperature_units",
+    "provenance",
+}
+_STRUCTURAL_ZERO_POLICY_KEYS = {"kind", "family", "components", "reason", "provenance"}
+_INTERACTION_PROVENANCE_KEYS = {"kind", "source"}
 _CANONICAL_PURE_RECORD_KEYS = {
     "component",
     "molar_mass",
@@ -271,21 +288,86 @@ class PureRecord:
 
 
 @dataclass(frozen=True, slots=True)
-class BinaryRecord:
-    """Canonical binary interaction record."""
+class InteractionProvenance:
+    """Traceable origin for one interaction value or structural-zero policy."""
 
-    components: tuple[str, str]
-    k_ij: float = 0.0
-    l_ij: float = 0.0
-    k_hb_ij: float = 0.0
+    kind: str
+    source: str
 
     def __post_init__(self) -> None:
-        if len(self.components) != 2:
-            raise InputError("BinaryRecord.components must contain exactly two component labels.")
-        object.__setattr__(self, "components", (str(self.components[0]), str(self.components[1])))
-        object.__setattr__(self, "k_ij", float(self.k_ij))
-        object.__setattr__(self, "l_ij", float(self.l_ij))
-        object.__setattr__(self, "k_hb_ij", float(self.k_hb_ij))
+        kind = _nonblank_identity(self.kind, "interaction provenance kind")
+        if kind not in _INTERACTION_PROVENANCE_KINDS:
+            supported = ", ".join(sorted(_INTERACTION_PROVENANCE_KINDS))
+            raise InputError(f"interaction provenance kind must be one of: {supported}.")
+        object.__setattr__(self, "kind", kind)
+        object.__setattr__(self, "source", _nonblank_identity(self.source, "interaction provenance source"))
+
+
+@dataclass(frozen=True, slots=True)
+class ConstantInteractionRecord:
+    """One finite constant interaction with explicit scientific provenance."""
+
+    family: str
+    components: tuple[str, str]
+    value: float
+    provenance: InteractionProvenance
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "family", _interaction_family(self.family))
+        object.__setattr__(self, "components", _interaction_pair(self.components, "constant interaction"))
+        object.__setattr__(self, "value", _finite_interaction_value(self.value))
+        if not isinstance(self.provenance, InteractionProvenance):
+            raise InputError("constant interaction requires explicit provenance.")
+        if self.provenance.kind == "model_structural_zero":
+            raise InputError("model structural zeros must use a named StructuralZeroPolicy.")
+
+
+@dataclass(frozen=True, slots=True)
+class LinearTemperatureInteractionRecord:
+    """One interaction correlation of the form ``slope*T + intercept`` in kelvin."""
+
+    family: str
+    components: tuple[str, str]
+    slope: float
+    intercept: float
+    temperature_units: str
+    provenance: InteractionProvenance
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "family", _interaction_family(self.family))
+        object.__setattr__(self, "components", _interaction_pair(self.components, "linear-temperature interaction"))
+        object.__setattr__(self, "slope", _finite_correlation_coefficient(self.slope, "slope"))
+        object.__setattr__(self, "intercept", _finite_correlation_coefficient(self.intercept, "intercept"))
+        units = _nonblank_identity(self.temperature_units, "temperature_units")
+        if units != "K":
+            raise InputError("linear-temperature interaction temperature_units must be 'K'.")
+        object.__setattr__(self, "temperature_units", units)
+        if not isinstance(self.provenance, InteractionProvenance):
+            raise InputError("linear-temperature interaction requires explicit provenance.")
+        if self.provenance.kind == "model_structural_zero":
+            raise InputError("model structural zeros must use a named StructuralZeroPolicy.")
+
+
+InteractionRecord = ConstantInteractionRecord | LinearTemperatureInteractionRecord
+
+
+@dataclass(frozen=True, slots=True)
+class StructuralZeroPolicy:
+    """A named equation/model policy that sets one pair-family value to zero."""
+
+    family: str
+    components: tuple[str, str]
+    reason: str
+    provenance: InteractionProvenance
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "family", _interaction_family(self.family))
+        object.__setattr__(self, "components", _interaction_pair(self.components, "structural-zero policy"))
+        object.__setattr__(self, "reason", _nonblank_identity(self.reason, "structural-zero policy reason"))
+        if not isinstance(self.provenance, InteractionProvenance):
+            raise InputError("structural-zero policy requires explicit provenance.")
+        if self.provenance.kind != "model_structural_zero":
+            raise InputError("structural-zero policy provenance kind must be model_structural_zero.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -306,7 +388,8 @@ class ParameterSet:
 
     components: tuple[str, ...]
     pure_records: tuple[PureRecord, ...]
-    binary_records: tuple[BinaryRecord, ...] = ()
+    interactions: tuple[InteractionRecord, ...] = ()
+    interaction_policies: tuple[StructuralZeroPolicy, ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
     runtime_options: Mapping[str, Any] = field(default_factory=dict)
 
@@ -314,7 +397,8 @@ class ParameterSet:
         components = tuple(str(component) for component in self.components)
         object.__setattr__(self, "components", components)
         object.__setattr__(self, "pure_records", tuple(self.pure_records))
-        object.__setattr__(self, "binary_records", tuple(self.binary_records))
+        object.__setattr__(self, "interactions", tuple(self.interactions))
+        object.__setattr__(self, "interaction_policies", tuple(self.interaction_policies))
         object.__setattr__(self, "metadata", dict(self.metadata))
         object.__setattr__(self, "runtime_options", _copy_payload_mapping(self.runtime_options))
         self.validate()
@@ -323,8 +407,9 @@ class ParameterSet:
     def from_records(
         cls,
         pure_records: Sequence[PureRecord],
-        binary_records: Sequence[BinaryRecord] | None = None,
+        interactions: Sequence[InteractionRecord] | None = None,
         *,
+        interaction_policies: Sequence[StructuralZeroPolicy] | None = None,
         metadata: Mapping[str, Any] | None = None,
         runtime_options: Mapping[str, Any] | None = None,
     ) -> ParameterSet:
@@ -332,7 +417,8 @@ class ParameterSet:
         return cls(
             components=tuple(str(record.component) for record in pure),
             pure_records=pure,
-            binary_records=tuple(binary_records or ()),
+            interactions=tuple(interactions or ()),
+            interaction_policies=tuple(interaction_policies or ()),
             metadata=dict(metadata or {}),
             runtime_options=_copy_payload_mapping(runtime_options),
         )
@@ -356,7 +442,7 @@ class ParameterSet:
         ):
             raise InputError(
                 "ParameterSet.from_dict accepts only the versioned canonical schema "
-                "'epcsaft.parameter-set' with schema_version 1; "
+                "'epcsaft.parameter-set' with schema_version 2; "
                 "parallel-array and unversioned payloads are rejected."
             )
         return cls._from_canonical_payload(canonical, species=species, metadata=metadata)
@@ -374,7 +460,8 @@ class ParameterSet:
             raise InputError(f"canonical parameter payload contains unsupported key(s): {', '.join(unknown)}.")
         payload_components_raw = _canonical_array(payload, "components")
         pure_payloads = _canonical_array(payload, "pure_records")
-        binary_payloads = _canonical_array(payload, "binary_records")
+        interaction_payloads = _canonical_array(payload, "interactions")
+        policy_payloads = _canonical_array(payload, "interaction_policies")
         if not pure_payloads:
             raise InputError("canonical parameter payload must include pure_records.")
         if not payload_components_raw:
@@ -398,7 +485,8 @@ class ParameterSet:
         return cls(
             components=payload_components,
             pure_records=tuple(_pure_record_from_canonical(item) for item in pure_payloads),
-            binary_records=tuple(_binary_record_from_canonical(item) for item in binary_payloads),
+            interactions=tuple(_interaction_record_from_canonical(item) for item in interaction_payloads),
+            interaction_policies=tuple(_structural_zero_policy_from_canonical(item) for item in policy_payloads),
             metadata=payload_metadata,
             runtime_options=_copy_payload_mapping(runtime_options_raw),
         )
@@ -447,7 +535,8 @@ class ParameterSet:
             return cls(
                 components=params.components,
                 pure_records=params.pure_records,
-                binary_records=params.binary_records,
+                interactions=params.interactions,
+                interaction_policies=params.interaction_policies,
                 metadata=params.metadata,
                 runtime_options=runtime_options,
             )
@@ -495,10 +584,43 @@ class ParameterSet:
         undeclared = sorted(seen - known)
         if undeclared:
             errors.append(f"ParameterSet contains pure records for undeclared components: {', '.join(undeclared)}.")
-        for record in self.binary_records:
-            for label in record.components:
-                if label not in known:
-                    errors.append(f"BinaryRecord references unknown component {label}.")
+        covered_interactions: dict[tuple[str, frozenset[str]], str] = {}
+        for field_name, owner, records, record_types in (
+            (
+                "interactions",
+                "interaction record",
+                self.interactions,
+                (ConstantInteractionRecord, LinearTemperatureInteractionRecord),
+            ),
+            (
+                "interaction_policies",
+                "structural-zero policy",
+                self.interaction_policies,
+                (StructuralZeroPolicy,),
+            ),
+        ):
+            for record in records:
+                if not isinstance(record, record_types):
+                    errors.append(f"ParameterSet {field_name} must contain only its typed record class.")
+                    continue
+                for label in record.components:
+                    if label not in known:
+                        errors.append(f"{owner} references unknown component {label}.")
+                key = _interaction_key(record.family, record.components)
+                previous = covered_interactions.get(key)
+                if previous is not None:
+                    left, right = sorted(record.components)
+                    errors.append(
+                        f"Duplicate interaction coverage for {record.family} pair {left}|{right}: "
+                        f"{previous} and {owner}."
+                    )
+                else:
+                    covered_interactions[key] = owner
+        for left_index, left in enumerate(self.components):
+            for right in self.components[left_index + 1 :]:
+                for family in _INTERACTION_FAMILIES:
+                    if _interaction_key(family, (left, right)) not in covered_interactions:
+                        errors.append(f"Missing interaction data for {family} pair {left}|{right}.")
         reserved = sorted(set(self.runtime_options) & _PARAMETER_PAYLOAD_KEYS)
         if reserved:
             errors.append(f"runtime_options cannot override parameter payload keys: {', '.join(reserved)}.")
@@ -512,7 +634,8 @@ class ParameterSet:
         return {
             "valid": True,
             "component_count": len(self.components),
-            "binary_count": len(self.binary_records),
+            "interaction_count": len(self.interactions),
+            "structural_zero_policy_count": len(self.interaction_policies),
             "runtime_option_count": len(self.runtime_options),
         }
 
@@ -536,25 +659,14 @@ class ParameterSet:
             "d_born": np.asarray([record.born_diameter for record in ordered], dtype=float),
             "f_solv": np.asarray([record.solvation_factor for record in ordered], dtype=float),
         }
-        ncomp = len(self.components)
-        matrices = {
-            "k_ij": np.zeros((ncomp, ncomp), dtype=float),
-            "l_ij": np.zeros((ncomp, ncomp), dtype=float),
-            "k_hb": np.zeros((ncomp, ncomp), dtype=float),
-        }
-        index = {label: idx for idx, label in enumerate(self.components)}
-        for record in self.binary_records:
-            i, j = index[record.components[0]], index[record.components[1]]
-            matrices["k_ij"][i, j] = matrices["k_ij"][j, i] = record.k_ij
-            matrices["l_ij"][i, j] = matrices["l_ij"][j, i] = record.l_ij
-            matrices["k_hb"][i, j] = matrices["k_hb"][j, i] = record.k_hb_ij
+        matrices, interaction_receipt = _interaction_matrices(self, self.components)
         payload.update(matrices)
         runtime_options = _normalize_runtime_user_options(_deep_update_mapping(self.runtime_options, user_options or {}))
         reserved = sorted(set(runtime_options) & _PARAMETER_PAYLOAD_KEYS)
         if reserved:
             raise InputError(f"runtime_options cannot override parameter payload keys: {', '.join(reserved)}.")
         payload.update(runtime_options)
-        payload.update(_runtime_parameter_provenance_payload(self.metadata, bool(self.binary_records)))
+        payload.update(_runtime_parameter_provenance_payload(self.metadata, interaction_receipt))
         return payload
 
     def to_json(self, path: str | Path | None = None) -> str:
@@ -563,7 +675,10 @@ class ParameterSet:
             "schema_version": PARAMETER_SET_SCHEMA_VERSION,
             "components": list(self.components),
             "pure_records": [_pure_record_json(record) for record in self.pure_records],
-            "binary_records": [asdict(record) for record in self.binary_records],
+            "interactions": [_interaction_record_json(record) for record in self.interactions],
+            "interaction_policies": [
+                _structural_zero_policy_json(policy) for policy in self.interaction_policies
+            ],
             "metadata": _json_ready(self.metadata),
             "runtime_options": _json_ready(self.runtime_options),
         }
@@ -682,13 +797,129 @@ def _association_site_from_canonical(payload: Any) -> AssociationSite:
     return AssociationSite(label=payload["label"], kind=payload["kind"])
 
 
-def _binary_record_from_canonical(payload: Mapping[str, Any]) -> BinaryRecord:
-    return BinaryRecord(
-        components=tuple(str(item) for item in payload.get("components", ())),
-        k_ij=_optional_float(payload, "k_ij", 0.0),
-        l_ij=_optional_float(payload, "l_ij", 0.0),
-        k_hb_ij=_optional_float(payload, "k_hb_ij", 0.0),
+def _interaction_record_from_canonical(payload: Any) -> InteractionRecord:
+    if not isinstance(payload, Mapping):
+        raise InputError("canonical interactions entries must be mappings.")
+    kind = payload.get("kind")
+    if kind == "linear_temperature":
+        return _linear_temperature_interaction_from_canonical(payload)
+    if kind != "constant":
+        raise InputError("canonical interaction kind must be 'constant' or 'linear_temperature'.")
+    unknown = sorted(set(payload) - _CONSTANT_INTERACTION_KEYS)
+    if unknown:
+        raise InputError(f"constant interaction contains unsupported key(s): {', '.join(unknown)}.")
+    missing = sorted(_CONSTANT_INTERACTION_KEYS - set(payload))
+    if missing:
+        raise InputError(f"constant interaction requires explicit field(s): {', '.join(missing)}.")
+    return ConstantInteractionRecord(
+        family=payload["family"],
+        components=_canonical_interaction_pair(payload["components"], "constant interaction"),
+        value=_finite_interaction_value(payload["value"]),
+        provenance=_interaction_provenance_from_canonical(payload["provenance"]),
     )
+
+
+def _linear_temperature_interaction_from_canonical(payload: Mapping[str, Any]) -> LinearTemperatureInteractionRecord:
+    unknown = sorted(set(payload) - _LINEAR_TEMPERATURE_INTERACTION_KEYS)
+    if unknown:
+        raise InputError(f"linear-temperature interaction contains unsupported key(s): {', '.join(unknown)}.")
+    missing = sorted(_LINEAR_TEMPERATURE_INTERACTION_KEYS - set(payload))
+    if missing:
+        raise InputError(f"linear-temperature interaction requires explicit field(s): {', '.join(missing)}.")
+    return LinearTemperatureInteractionRecord(
+        family=payload["family"],
+        components=_canonical_interaction_pair(payload["components"], "linear-temperature interaction"),
+        slope=payload["slope"],
+        intercept=payload["intercept"],
+        temperature_units=payload["temperature_units"],
+        provenance=_interaction_provenance_from_canonical(payload["provenance"]),
+    )
+
+
+def _structural_zero_policy_from_canonical(payload: Any) -> StructuralZeroPolicy:
+    if not isinstance(payload, Mapping):
+        raise InputError("canonical interaction_policies entries must be mappings.")
+    kind = payload.get("kind")
+    if kind != "structural_zero":
+        raise InputError("canonical interaction policy kind must be 'structural_zero'.")
+    unknown = sorted(set(payload) - _STRUCTURAL_ZERO_POLICY_KEYS)
+    if unknown:
+        raise InputError(f"structural-zero policy contains unsupported key(s): {', '.join(unknown)}.")
+    missing = sorted(_STRUCTURAL_ZERO_POLICY_KEYS - set(payload))
+    if missing:
+        raise InputError(f"structural-zero policy requires explicit field(s): {', '.join(missing)}.")
+    return StructuralZeroPolicy(
+        family=payload["family"],
+        components=_canonical_interaction_pair(payload["components"], "structural-zero policy"),
+        reason=payload["reason"],
+        provenance=_interaction_provenance_from_canonical(payload["provenance"]),
+    )
+
+
+def _interaction_provenance_from_canonical(payload: Any) -> InteractionProvenance:
+    if not isinstance(payload, Mapping):
+        raise InputError("interaction provenance must be a mapping with kind and source fields.")
+    unknown = sorted(set(payload) - _INTERACTION_PROVENANCE_KEYS)
+    if unknown:
+        raise InputError(f"interaction provenance contains unsupported key(s): {', '.join(unknown)}.")
+    missing = sorted(_INTERACTION_PROVENANCE_KEYS - set(payload))
+    if missing:
+        raise InputError(f"interaction provenance requires explicit field(s): {', '.join(missing)}.")
+    return InteractionProvenance(kind=payload["kind"], source=payload["source"])
+
+
+def _canonical_interaction_pair(value: Any, owner: str) -> tuple[str, str]:
+    if not isinstance(value, list):
+        raise InputError(f"{owner} components must be a JSON array containing exactly two component labels.")
+    return _interaction_pair(tuple(value), owner)
+
+
+def _interaction_family(value: Any) -> str:
+    family = _nonblank_identity(value, "interaction family")
+    if family not in _INTERACTION_FAMILIES:
+        supported = ", ".join(_INTERACTION_FAMILIES)
+        raise InputError(f"interaction family must be one of: {supported}.")
+    return family
+
+
+def _interaction_pair(value: Sequence[Any], owner: str) -> tuple[str, str]:
+    if isinstance(value, (str, bytes)) or len(value) != 2:
+        raise InputError(f"{owner} components must contain exactly two component labels.")
+    pair = (
+        _nonblank_identity(value[0], f"{owner} components[0]"),
+        _nonblank_identity(value[1], f"{owner} components[1]"),
+    )
+    if pair[0] == pair[1]:
+        raise InputError(f"{owner} must not encode a diagonal interaction pair.")
+    return pair
+
+
+def _finite_interaction_value(value: Any) -> float:
+    if value is None or value == "" or isinstance(value, (bool, np.bool_)):
+        raise InputError("constant interaction value must be a finite number.")
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError) as exc:
+        raise InputError("constant interaction value must be a finite number.") from exc
+    if not np.isfinite(parsed):
+        raise InputError("constant interaction value must be finite.")
+    return parsed
+
+
+def _finite_correlation_coefficient(value: Any, field_name: str) -> float:
+    if value is None or value == "" or isinstance(value, (bool, np.bool_)):
+        raise InputError(f"linear-temperature interaction {field_name} must be a finite number.")
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError) as exc:
+        raise InputError(f"linear-temperature interaction {field_name} must be a finite number.") from exc
+    if not np.isfinite(parsed):
+        raise InputError(f"linear-temperature interaction {field_name} must be finite.")
+    return parsed
+
+
+def _interaction_key(family: str, components: Sequence[str]) -> tuple[str, frozenset[str]]:
+    return family, frozenset(components)
 
 
 def _required_float(payload: Mapping[str, Any], key: str, component: str) -> float:
@@ -716,13 +947,6 @@ def _required_nullable_text(payload: Mapping[str, Any], key: str, component: str
     if not text:
         raise InputError(f"{component}.{key} must use null for a nonassociating component, not blank text.")
     return text
-
-
-def _optional_float(payload: Mapping[str, Any], key: str, default: float) -> float:
-    value = payload.get(key, default)
-    if value in (None, ""):
-        return float(default)
-    return float(value)
 
 
 def _resolve_parameter_source_species(
@@ -759,7 +983,8 @@ def _parameter_set_with_runtime_options(
     return ParameterSet(
         components=params.components,
         pure_records=params.pure_records,
-        binary_records=params.binary_records,
+        interactions=params.interactions,
+        interaction_policies=params.interaction_policies,
         metadata=params.metadata,
         runtime_options=_deep_update_mapping(params.runtime_options, user_options),
     )
@@ -802,7 +1027,65 @@ def _normalize_runtime_user_options(runtime_options: Mapping[str, Any]) -> dict[
     return normalized
 
 
-def _runtime_parameter_provenance_payload(metadata: Mapping[str, Any], has_binary_records: bool) -> dict[str, Any]:
+def _interaction_matrices(
+    parameters: ParameterSet,
+    components: Sequence[str],
+) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
+    labels = tuple(str(component) for component in components)
+    if len(labels) != len(parameters.components) or set(labels) != set(parameters.components):
+        raise InputError("Interaction matrix components must exactly match the ParameterSet components.")
+    index = {component: position for position, component in enumerate(labels)}
+    matrices = {
+        runtime_key: np.full((len(labels), len(labels)), np.nan, dtype=float)
+        for runtime_key in _INTERACTION_RUNTIME_KEYS.values()
+    }
+    for matrix in matrices.values():
+        np.fill_diagonal(matrix, 0.0)
+    for record in parameters.interactions:
+        if isinstance(record, LinearTemperatureInteractionRecord):
+            raise InputError(
+                f"A state temperature is required to resolve linear_temperature {record.family} interaction "
+                f"for pair {record.components[0]}|{record.components[1]}."
+            )
+        left, right = record.components
+        i, j = index[left], index[right]
+        runtime_key = _INTERACTION_RUNTIME_KEYS[record.family]
+        matrices[runtime_key][i, j] = matrices[runtime_key][j, i] = record.value
+    for policy in parameters.interaction_policies:
+        left, right = policy.components
+        i, j = index[left], index[right]
+        runtime_key = _INTERACTION_RUNTIME_KEYS[policy.family]
+        matrices[runtime_key][i, j] = matrices[runtime_key][j, i] = 0.0
+    missing: list[str] = []
+    for family, runtime_key in _INTERACTION_RUNTIME_KEYS.items():
+        matrix = matrices[runtime_key]
+        for left_index, left in enumerate(labels):
+            for right_index in range(left_index + 1, len(labels)):
+                if not np.isfinite(matrix[left_index, right_index]):
+                    missing.append(f"{family} pair {left}|{labels[right_index]}")
+    if missing:
+        raise InputError(f"Missing interaction data: {'; '.join(missing)}.")
+    receipt = {
+        "diagonal_policy": "equation_defined_identity_zero",
+        "constant_record_count": sum(
+            isinstance(record, ConstantInteractionRecord) for record in parameters.interactions
+        ),
+        "correlation_record_count": sum(
+            isinstance(record, LinearTemperatureInteractionRecord) for record in parameters.interactions
+        ),
+        "structural_zero_policy_count": len(parameters.interaction_policies),
+        "records": [_interaction_record_json(record) for record in parameters.interactions],
+        "structural_zero_policies": [
+            _structural_zero_policy_json(policy) for policy in parameters.interaction_policies
+        ],
+    }
+    return matrices, receipt
+
+
+def _runtime_parameter_provenance_payload(
+    metadata: Mapping[str, Any],
+    interaction_receipt: Mapping[str, Any],
+) -> dict[str, Any]:
     fields = _provenance_metadata_fields(metadata)
     source_label = next((str(metadata[key]) for key in fields if key in {"source", "dataset", "paper"}), "ParameterSet")
     source_backed = bool(metadata.get("source_backed", False))
@@ -816,9 +1099,8 @@ def _runtime_parameter_provenance_payload(metadata: Mapping[str, Any], has_binar
         "_parameter_source_label": source_label,
         "_parameter_provenance_status": status,
         "_parameter_provenance_fields": fields,
-        "_binary_interaction_provenance_status": (
-            "explicit_binary_records" if has_binary_records else "missing_binary_records"
-        ),
+        "_binary_interaction_provenance_status": "complete_interaction_graph",
+        "_interaction_provenance_receipt": _json_ready(interaction_receipt),
     }
 
 
@@ -846,6 +1128,36 @@ def _pure_record_json(record: PureRecord) -> dict[str, Any]:
     payload = asdict(record)
     payload["molar_mass_units"] = "kg/mol"
     return payload
+
+
+def _interaction_record_json(record: InteractionRecord) -> dict[str, Any]:
+    if isinstance(record, LinearTemperatureInteractionRecord):
+        return {
+            "kind": "linear_temperature",
+            "family": record.family,
+            "components": list(record.components),
+            "slope": record.slope,
+            "intercept": record.intercept,
+            "temperature_units": record.temperature_units,
+            "provenance": asdict(record.provenance),
+        }
+    return {
+        "kind": "constant",
+        "family": record.family,
+        "components": list(record.components),
+        "value": record.value,
+        "provenance": asdict(record.provenance),
+    }
+
+
+def _structural_zero_policy_json(policy: StructuralZeroPolicy) -> dict[str, Any]:
+    return {
+        "kind": "structural_zero",
+        "family": policy.family,
+        "components": list(policy.components),
+        "reason": policy.reason,
+        "provenance": asdict(policy.provenance),
+    }
 
 
 def _canonical_array(payload: Mapping[str, Any], key: str) -> list[Any]:

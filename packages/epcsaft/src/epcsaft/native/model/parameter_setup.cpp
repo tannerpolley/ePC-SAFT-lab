@@ -415,7 +415,6 @@ double pair_diameter_cpp(double d_i, double d_j) {
     return d_i * d_j / (d_i + d_j);
 }
 
-// EqID: epsilon_assoc_mixing
 // EqID: kappa_assoc_mixing
 double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const add_args &cppargs) {
     int idxi = comp_i * ncomp + comp_i;

@@ -28,7 +28,12 @@ import epcsaft
 import epcsaft_equilibrium
 import matplotlib.pyplot as plt
 import numpy as np
-from epcsaft.model.parameters import BinaryRecord, PureRecord
+from epcsaft.model.parameters import (
+    ConstantInteractionRecord,
+    InteractionProvenance,
+    PureRecord,
+    StructuralZeroPolicy,
+)
 from epcsaft_equilibrium._native import extension_native_core
 from PIL import Image, ImageDraw
 
@@ -335,6 +340,7 @@ def _write_source_artifacts() -> list[dict[str, Any]]:
 
 
 def _mixture() -> epcsaft.Mixture:
+    pair = ("Methanol", "1-Octanol")
     return epcsaft.Mixture(
         epcsaft.ParameterSet.from_records(
             (
@@ -367,7 +373,28 @@ def _mixture() -> epcsaft.Mixture:
                     solvation_factor=1.0,
                 ),
             ),
-            (BinaryRecord(("Methanol", "1-Octanol"), k_ij=0.020),),
+            (
+                ConstantInteractionRecord(
+                    "k_ij",
+                    pair,
+                    0.020,
+                    InteractionProvenance("literature", "Gross 2002 Table 2: methanol-1-octanol PC-SAFT row (k_ij=0.020)"),
+                ),
+            ),
+            interaction_policies=(
+                StructuralZeroPolicy(
+                    family="l_ij",
+                    components=pair,
+                    reason="Lorentz segment-diameter mixing rule; no l_ij correction in this source-scoped reproduction.",
+                    provenance=InteractionProvenance("model_structural_zero", "Lorentz diameter rule / EqID sigma_mixing"),
+                ),
+                StructuralZeroPolicy(
+                    family="k_hb_ij",
+                    components=pair,
+                    reason="Gross 2002 Eq. 3 association combining rule; no association binary correction in this source-scoped reproduction.",
+                    provenance=InteractionProvenance("model_structural_zero", "Gross 2002 Eq. 3; no association binary correction"),
+                ),
+            ),
             metadata={
                 "source": "Gross/Sadowski 2002 Figure 9",
                 "paper": "Gross and Sadowski 2002",

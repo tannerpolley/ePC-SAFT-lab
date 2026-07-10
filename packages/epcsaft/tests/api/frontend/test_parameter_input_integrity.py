@@ -21,7 +21,7 @@ REPO_ROOT = Path(__file__).resolve().parents[5]
 def _canonical_payload(*, component: str = "Test neutral") -> dict[str, object]:
     return {
         "schema": "epcsaft.parameter-set",
-        "schema_version": 1,
+        "schema_version": 2,
         "components": [component],
         "pure_records": [
             {
@@ -41,7 +41,8 @@ def _canonical_payload(*, component: str = "Test neutral") -> dict[str, object]:
                 "solvation_factor": 1.0,
             }
         ],
-        "binary_records": [],
+        "interactions": [],
+        "interaction_policies": [],
         "metadata": {
             "source": "Test literature table",
             "source_backed": True,
@@ -125,12 +126,13 @@ def test_from_dict_accepts_only_the_versioned_canonical_schema() -> None:
 @pytest.mark.parametrize(
     "schema,schema_version",
     [
-        (None, 1),
-        ("canonical", 1),
+        (None, 2),
+        ("canonical", 2),
         ("epcsaft.parameter-set", None),
-        ("epcsaft.parameter-set", 2),
+        ("epcsaft.parameter-set", 1),
+        ("epcsaft.parameter-set", 3),
         ("epcsaft.parameter-set", True),
-        ("epcsaft.parameter-set", 1.0),
+        ("epcsaft.parameter-set", 2.0),
     ],
 )
 def test_from_dict_rejects_missing_or_unknown_schema_identity(
@@ -147,7 +149,7 @@ def test_from_dict_rejects_missing_or_unknown_schema_identity(
     else:
         payload["schema_version"] = schema_version
 
-    with pytest.raises(InputError, match=r"epcsaft.parameter-set.*schema_version 1"):
+    with pytest.raises(InputError, match=r"epcsaft.parameter-set.*schema_version 2"):
         ParameterSet.from_dict(payload)
 
 
@@ -216,7 +218,8 @@ def test_unknown_canonical_keys_are_rejected_at_their_owner() -> None:
     [
         ("components", "Component X"),
         ("pure_records", {"component": "Component X"}),
-        ("binary_records", {}),
+        ("interactions", {}),
+        ("interaction_policies", {}),
         ("metadata", []),
         ("runtime_options", []),
     ],
@@ -480,12 +483,14 @@ def test_parameter_folder_api_has_no_unused_reference_state_arguments() -> None:
     assert not hasattr(ParameterSet, "to_legacy_dict")
 
 
-def _nonzero_undirected_pairs(path: Path) -> set[tuple[str, str]]:
-    matrix = datasets._load_matrix(path)
+def _nonzero_manifest_pairs(parameter_root: Path) -> set[frozenset[str]]:
+    manifest, _wildcards = datasets._load_interaction_source_manifest(
+        parameter_root / "mixed" / "binary_interaction" / "source_manifest.csv"
+    )
     return {
-        tuple(sorted((left, right)))
-        for (left, right), raw in matrix.items()
-        if left != right and float(raw) != 0.0
+        pair
+        for (family, pair), (signature, _source, _status) in manifest.items()
+        if family == "k_ij" and signature[0] == "constant" and signature[1] != 0.0
     }
 
 
@@ -495,8 +500,8 @@ def test_source_backed_gross_parameter_counts_are_characterized() -> None:
 
     assert len(datasets._load_component_rows(gross_2001 / "pure" / "any_solvent.csv")) == 78
     assert len(datasets._load_component_rows(gross_2002 / "pure" / "any_solvent.csv")) == 22
-    assert len(_nonzero_undirected_pairs(gross_2001 / "mixed" / "binary_interaction" / "k_ij.csv")) == 24
-    assert len(_nonzero_undirected_pairs(gross_2002 / "mixed" / "binary_interaction" / "k_ij.csv")) == 10
+    assert len(_nonzero_manifest_pairs(gross_2001)) == 24
+    assert len(_nonzero_manifest_pairs(gross_2002)) == 10
 
 
 def test_held_2008_catalog_contains_only_the_source_backed_aqueous_subset() -> None:
@@ -548,7 +553,10 @@ def test_figiel_any_solvent_ion_records_are_used_without_inventing_solvent_speci
     composition = np.asarray([0.29880, 0.61277, 0.044213, 0.044213], dtype=float)
     composition /= composition.sum()
 
-    payload = datasets.get_prop_dict(parameter_root, species, composition, 351.25)
+    with pytest.raises(InputError, match=r"(?i)wildcard interaction"):
+        datasets.get_prop_dict(parameter_root, species, composition, 351.25)
+
+    payload = datasets._resolve_dataset_runtime_payload(parameter_root, species, composition, 351.25)
 
     assert payload["e"].tolist() == pytest.approx([188.90, 353.95, 360.0, 170.0])
     assert payload["mixed_ion_dispersion_sources"] == pytest.approx({"pure/any_solvent.csv": 2.0})

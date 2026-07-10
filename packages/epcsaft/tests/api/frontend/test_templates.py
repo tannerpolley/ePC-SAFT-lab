@@ -26,9 +26,10 @@ def test_create_input_template_writes_versioned_parameter_set_and_workflow_optio
     assert {path.name for path in root.iterdir()} == expected_files
     parameter_set = json.loads((root / "parameter_set.json").read_text(encoding="utf-8"))
     assert parameter_set["schema"] == "epcsaft.parameter-set"
-    assert parameter_set["schema_version"] == 1
+    assert parameter_set["schema_version"] == 2
     assert parameter_set["components"] == ["Methane", "Ethane"]
-    assert parameter_set["binary_records"] == []
+    assert parameter_set["interactions"] == []
+    assert parameter_set["interaction_policies"] == []
     assert parameter_set["metadata"] == {"source": None, "source_backed": False}
     unresolved_fields = {
         "molar_mass",
@@ -82,6 +83,13 @@ def test_source_dataset_loader_preserves_source_metadata_column(tmp_path) -> Non
             "component,H2O,Na+\nH2O,0,0\nNa+,0,0\n",
             encoding="utf-8",
         )
+    (root / "mixed" / "binary_interaction" / "source_manifest.csv").write_text(
+        "parameter,component_i,component_j,value,source\n"
+        "k_ij,H2O,Na+,0,Test interaction table\n"
+        "l_ij,H2O,Na+,0,Test interaction table\n"
+        "k_hb_ij,H2O,Na+,0,Test interaction table\n",
+        encoding="utf-8",
+    )
     (root / "mixed" / "rel_perm" / "parameters.csv").write_text("organic,a,b,c\n", encoding="utf-8")
     (root / "user_options.json").write_text("{}", encoding="utf-8")
 

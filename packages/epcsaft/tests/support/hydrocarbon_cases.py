@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import numpy as np
 from epcsaft import ParameterSet
-from epcsaft.model.parameters import BinaryRecord, PureRecord
+from epcsaft.model.parameters import (
+    ConstantInteractionRecord,
+    InteractionProvenance,
+    PureRecord,
+    StructuralZeroPolicy,
+)
 
 HYDROCARBON_COMPONENTS = ("Methane", "Ethane", "Propane")
 HYDROCARBON_LIQUID_X = (0.1, 0.3, 0.6)
@@ -42,12 +47,48 @@ def hydrocarbon_parameter_set() -> ParameterSet:
     return ParameterSet.from_records(
         pure_records,
         (
-            BinaryRecord(("Methane", "Ethane"), k_ij=3.0e-4),
-            BinaryRecord(("Methane", "Propane"), k_ij=1.15e-2),
-            BinaryRecord(("Ethane", "Propane"), k_ij=5.10e-3),
+            ConstantInteractionRecord(
+                "k_ij",
+                ("Methane", "Ethane"),
+                3.0e-4,
+                InteractionProvenance("literature", "Gross and Sadowski 2001 Table 4"),
+            ),
+            ConstantInteractionRecord(
+                "k_ij",
+                ("Methane", "Propane"),
+                1.15e-2,
+                InteractionProvenance("literature", "Gross and Sadowski 2001 Table 4"),
+            ),
+            ConstantInteractionRecord(
+                "k_ij",
+                ("Ethane", "Propane"),
+                5.10e-3,
+                InteractionProvenance("literature", "Gross and Sadowski 2001 Table 4"),
+            ),
+        ),
+        interaction_policies=tuple(
+            StructuralZeroPolicy(
+                family,
+                pair,
+                reason,
+                InteractionProvenance("model_structural_zero", source),
+            )
+            for pair in (("Methane", "Ethane"), ("Methane", "Propane"), ("Ethane", "Propane"))
+            for family, reason, source in (
+                (
+                    "l_ij",
+                    "Lorentz diameter rule for the pair.",
+                    "Lorentz diameter rule / EqID sigma_mixing",
+                ),
+                (
+                    "k_hb_ij",
+                    "The hydrocarbon pair has inactive association topology.",
+                    "inactive association topology / EqID kappa_assoc_mixing",
+                ),
+            )
         ),
         metadata={
-            "source": "Gross and Sadowski 2001 hydrocarbon parameters",
+            "source": "Gross and Sadowski 2001 Tables 2 and 4",
             "source_backed": True,
         },
     )

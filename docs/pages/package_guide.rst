@@ -22,7 +22,7 @@ Build a ``ParameterSet`` from ePC-SAFT parameter data, then attach
    parameters = ParameterSet.from_dict(
        {
            "schema": "epcsaft.parameter-set",
-           "schema_version": 1,
+           "schema_version": 2,
            "components": ["Methane"],
            "pure_records": [{
                "component": "Methane",
@@ -40,7 +40,8 @@ Build a ``ParameterSet`` from ePC-SAFT parameter data, then attach
                "born_diameter": 0.0,
                "solvation_factor": 1.0,
            }],
-           "binary_records": [],
+           "interactions": [],
+           "interaction_policies": [],
            "metadata": {
                "source": "Gross and Sadowski (2001), Table 2",
                "source_backed": True,

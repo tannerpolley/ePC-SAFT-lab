@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import csv
 import math
+import os
+import tempfile
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -12,14 +14,23 @@ from typing import Any
 import numpy as np
 from epcsaft._types import InputError, phase_to_int, vector_to_array
 from epcsaft.model.datasets import (
+    _interaction_source_path,
+    _interaction_value_signature,
     _invalidate_dataset_cache,
     _load_dataset,
-    _matrix_value,
+    _load_interaction_source_manifest,
+    _load_source_interactions,
+    _load_strict_interaction_matrix,
     _normalize_component,
     _resolve_component_field_with_source,
     molality_to_molefraction,
 )
-from epcsaft.model.parameters import ParameterSet, ParameterSource
+from epcsaft.model.parameters import (
+    ConstantInteractionRecord,
+    LinearTemperatureInteractionRecord,
+    ParameterSet,
+    ParameterSource,
+)
 from epcsaft.state.native_adapter import check_association, create_struct
 
 from .native_adapter import (
@@ -2085,13 +2096,18 @@ def _fit_binary_pair_internal(
         species=normalized_species,
         charges=charges,
     )
-    dataset_obj = _load_dataset(dataset)
-    current = {
-        target: _matrix_value(
-            dataset_obj, "k_hb" if target == "k_hb_ij" else target, normalized_pair[0], normalized_pair[1], T_ref
-        )
-        for target in normalized_fit_targets
+    source_interactions = {
+        record.family: record for record in _load_source_interactions(dataset, normalized_pair)
     }
+    current: dict[str, float] = {}
+    for target in normalized_fit_targets:
+        record = source_interactions[target]
+        if isinstance(record, ConstantInteractionRecord):
+            current[target] = record.value
+        elif isinstance(record, LinearTemperatureInteractionRecord):
+            current[target] = record.slope * T_ref + record.intercept
+        else:
+            raise InputError(f"Unsupported typed interaction record for regression target {target}.")
     initial_map = {}
     for target in normalized_fit_targets:
         initial_map.update(
@@ -3247,12 +3263,16 @@ def _update_csv_row(path: Path, component: str, updates: Mapping[str, str | floa
         writer.writerows(rows)
 
 
-def _update_matrix_file(
+def _matrix_rows_with_update(
     path: Path,
     pair: tuple[str, str],
     value: str | float,
     overwrite: bool,
-) -> None:
+) -> tuple[list[str], list[list[str]]]:
+    family = path.stem
+    if family == "khb_ij":
+        family = "k_hb_ij"
+    _load_strict_interaction_matrix(path, family)
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.reader(handle)
         rows = [row for row in reader]
@@ -3264,7 +3284,12 @@ def _update_matrix_file(
         raise InputError(f"Matrix file '{path}' must start with a 'component' header column.")
     columns = header[1:]
     normalized_columns = [_normalize_component(name) for name in columns]
-    row_lookup = {_normalize_component(row[0]): index for index, row in enumerate(rows[1:], start=1) if row}
+    row_lookup: dict[str, int] = {}
+    for index, row in enumerate(rows[1:], start=1):
+        normalized = _normalize_component(row[0])
+        if normalized in row_lookup:
+            raise InputError(f"Matrix file '{path}' contains duplicate component rows.")
+        row_lookup[normalized] = index
     if pair[0] not in row_lookup or pair[1] not in row_lookup:
         raise InputError(f"Matrix file '{path}' does not contain both fitted components.")
     try:
@@ -3283,9 +3308,153 @@ def _update_matrix_file(
             raise InputError(f"Refusing to overwrite existing matrix value in '{path}' without overwrite=True.")
         rows[row_index][col_index] = string_value
 
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.writer(handle)
-        writer.writerows(rows)
+    return header, rows[1:]
+
+
+def _stage_csv(path: Path, fieldnames: Sequence[str], rows: Sequence[Sequence[str]]) -> Path:
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            newline="",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            temporary_path = Path(handle.name)
+            writer = csv.writer(handle)
+            writer.writerow(fieldnames)
+            writer.writerows(rows)
+            handle.flush()
+            os.fsync(handle.fileno())
+        assert temporary_path is not None
+        staged_path = temporary_path
+        temporary_path = None
+        return staged_path
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+
+
+def _commit_staged_csvs(staged: Sequence[tuple[Path, Path]]) -> None:
+    """Replace staged CSVs individually; no filesystem-wide transaction is claimed."""
+
+    try:
+        for temporary_path, destination in staged:
+            os.replace(temporary_path, destination)
+    finally:
+        for temporary_path, _destination in staged:
+            temporary_path.unlink(missing_ok=True)
+
+
+def _manifest_rows_with_fit_updates(
+    path: Path,
+    pair: tuple[str, str],
+    updates: Mapping[str, str | float],
+) -> tuple[list[str], list[dict[str, str]]]:
+    manifest, _wildcard_families = _load_interaction_source_manifest(path)
+    normalized_pair = tuple(_normalize_component(component) for component in pair)
+    if len(set(normalized_pair)) != 2:
+        raise InputError("Binary fit persistence requires two distinct manifest component identities.")
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fieldnames = list(reader.fieldnames or ())
+        rows = list(reader)
+    if "provenance_status" not in fieldnames:
+        fieldnames.append("provenance_status")
+    for target, value in updates.items():
+        if target not in MATRIX_FILE_NAMES:
+            raise InputError(f"Binary fit persistence does not support interaction family '{target}'.")
+        signature = _interaction_value_signature(value, family=target, pair=pair)
+        key = (target, frozenset(normalized_pair))
+        if key not in manifest:
+            raise InputError(f"Missing source-manifest interaction record for {target} pair {pair[0]}|{pair[1]}.")
+        matches = []
+        for row in rows:
+            family = str(row.get("parameter", "")).strip()
+            if family == "k_hb":
+                family = "k_hb_ij"
+            row_pair = frozenset(
+                (
+                    _normalize_component(str(row.get("component_i", "")).strip()),
+                    _normalize_component(str(row.get("component_j", "")).strip()),
+                )
+            )
+            if family == target and row_pair == frozenset(normalized_pair):
+                matches.append(row)
+        if len(matches) != 1:
+            raise InputError(
+                f"Expected exactly one source-manifest record for {target} pair {pair[0]}|{pair[1]}, "
+                f"found {len(matches)}."
+            )
+        row = matches[0]
+        row["parameter"] = target
+        row["component_i"] = pair[0]
+        row["component_j"] = pair[1]
+        row["value"] = _render_interaction_value(signature, value)
+        row["provenance_status"] = "fitted"
+    return fieldnames, [{field: str(row.get(field, "") or "") for field in fieldnames} for row in rows]
+
+
+def _render_interaction_value(signature: tuple, value: str | float) -> str:
+    if signature[0] == "constant":
+        return f"{float(signature[1]):.12g}"
+    return str(value).strip()
+
+
+def _persist_binary_fit_result(
+    result: FitResult,
+    root: Path,
+    binary_dir: Path,
+    *,
+    overwrite: bool,
+) -> list[Path]:
+    problem = result.problem
+    if not problem.fit_targets:
+        raise InputError("binary_pair fit results require at least one interaction target before writing.")
+    assert problem.pair is not None
+    pair = tuple(problem.pair)
+    source_manifest_path = binary_dir / "source_manifest.csv"
+    _load_source_interactions(root, pair)
+    matrix_updates: dict[Path, tuple[list[str], list[list[str]]]] = {}
+    rendered_updates: dict[str, str | float] = {}
+    for target in problem.fit_targets:
+        if target not in MATRIX_FILE_NAMES:
+            raise InputError(f"Binary fit persistence does not support interaction family '{target}'.")
+        if target not in result.rendered_values:
+            raise InputError(f"Binary fit result is missing rendered value for '{target}'.")
+        value = result.rendered_values[target]
+        _interaction_value_signature(value, family=target, pair=pair)
+        matrix_path = _interaction_source_path(binary_dir, target)
+        matrix_updates[matrix_path] = _matrix_rows_with_update(matrix_path, pair, value, overwrite)
+        rendered_updates[target] = value
+    manifest_fieldnames, manifest_rows = _manifest_rows_with_fit_updates(
+        source_manifest_path,
+        pair,
+        rendered_updates,
+    )
+    staged: list[tuple[Path, Path]] = []
+    try:
+        for path, (fieldnames, rows) in matrix_updates.items():
+            staged.append((_stage_csv(path, fieldnames, rows), path))
+        staged.append(
+            (
+                _stage_csv(
+                    source_manifest_path,
+                    manifest_fieldnames,
+                    [[row[field] for field in manifest_fieldnames] for row in manifest_rows],
+                ),
+                source_manifest_path,
+            )
+        )
+    except Exception:
+        for temporary_path, _destination in staged:
+            temporary_path.unlink(missing_ok=True)
+        raise
+    _commit_staged_csvs(staged)
+    return [*matrix_updates, source_manifest_path]
 
 
 def _target_bounds(
@@ -3323,12 +3492,7 @@ def write_fit_result(
             raise FileNotFoundError(f"Dataset folder '{root}' does not contain mixed/binary_interaction/.")
         if problem.pair is None:
             raise InputError("binary_pair fit results require problem.pair before writing.")
-        for target in problem.fit_targets:
-            path = bi_dir / MATRIX_FILE_NAMES[target]
-            if not path.exists():
-                raise FileNotFoundError(f"Expected matrix file '{path}' to exist.")
-            _update_matrix_file(path, problem.pair, result.rendered_values[target], overwrite=overwrite)
-            written.append(path)
+        written.extend(_persist_binary_fit_result(result, root, bi_dir, overwrite=overwrite))
         _invalidate_dataset_cache(root)
         return written
 

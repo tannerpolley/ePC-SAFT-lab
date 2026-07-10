@@ -47,6 +47,18 @@ def test_figure02_methanol_endpoint_uses_public_finite_binary_dew_limit() -> Non
     assert RETAINED_PLOT.is_file()
 
 
+def test_figure02_kij_provenance_uses_the_caption_pair_not_the_conflicting_table_row() -> None:
+    interaction = next(
+        record for record in figure02._mixture().parameters.interactions if record.family == "k_ij"
+    )
+
+    assert interaction.components == ("Methanol", "Isobutane")
+    assert interaction.value == pytest.approx(0.05)
+    assert interaction.provenance.source == (
+        "Gross and Sadowski 2002 Figure 2 caption: methanol-isobutane PC-SAFT k_ij=0.05"
+    )
+
+
 def test_figure02_public_pressure_continuation_retargets_changed_composition() -> None:
     source_row = next(
         row

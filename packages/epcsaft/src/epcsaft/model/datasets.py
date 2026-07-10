@@ -25,6 +25,7 @@ from pathlib import Path
 
 import numpy as np
 
+from .._types import InputError
 from .sources import (
     deep_update_parameter_mapping as _deep_update,
 )
@@ -297,7 +298,13 @@ def _solvent_fraction_aliases(token: str, basis: str) -> tuple[str, ...]:
 
 def _read_csv(path: Path) -> list[dict]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        return list(csv.DictReader(handle))
+        reader = csv.DictReader(handle)
+        rows = []
+        for row_number, row in enumerate(reader, start=2):
+            if row.get(None):
+                raise ValueError(f"CSV file '{path}' row {row_number} contains surplus cells.")
+            rows.append(row)
+        return rows
 
 
 def _load_component_rows(path: Path) -> dict[str, dict[str, str]]:
@@ -356,22 +363,302 @@ def _ion_pure_set_key(dataset: dict, solvent: str) -> str:
     )
 
 
-def _load_matrix(path: Path) -> dict[tuple[str, str], str]:
-    if not path.exists():
-        return {}
-    rows = _read_csv(path)
-    if not rows:
-        return {}
-    columns = [c for c in rows[0].keys() if c and c != "component"]
-    matrix = {}
-    for row in rows:
-        row_comp = _normalize_component(str(row.get("component", "")).strip())
-        if not row_comp:
-            continue
-        for col in columns:
-            col_comp = _normalize_component(col.strip())
-            matrix[(row_comp, col_comp)] = str(row.get(col, "") or "").strip()
+_INTERACTION_SOURCE_FILES = {
+    "k_ij": ("k_ij.csv",),
+    "l_ij": ("l_ij.csv",),
+    "k_hb_ij": ("k_hb_ij.csv", "khb_ij.csv"),
+}
+_INTERACTION_PROVENANCE_STATUS_KIND = {
+    "": "literature",
+    "source_backed": "literature",
+    "fitted": "fitted",
+}
+
+
+def _load_source_interactions(
+    dataset_root: str | Path,
+    components: Iterable[str],
+):
+    """Load a complete typed interaction graph from matrices and their source manifest."""
+
+    from .parameters import (
+        ConstantInteractionRecord,
+        InteractionProvenance,
+        LinearTemperatureInteractionRecord,
+    )
+
+    root = Path(dataset_root).expanduser()
+    binary_root = root / "mixed" / "binary_interaction"
+    requested = tuple(str(component) for component in components)
+    normalized = tuple(_normalize_component(component) for component in requested)
+    if len(set(requested)) != len(requested):
+        raise InputError("Interaction components must be unique.")
+    if len(set(normalized)) != len(normalized):
+        raise InputError("Interaction component aliases must resolve to unique dataset identities.")
+    if len(requested) < 2:
+        return ()
+    requested_by_normalized = dict(zip(normalized, requested, strict=True))
+
+    matrices = {
+        family: _load_strict_interaction_matrix(
+            _interaction_source_path(binary_root, family),
+            family,
+        )
+        for family in _INTERACTION_SOURCE_FILES
+    }
+    manifest, wildcard_families = _load_interaction_source_manifest(binary_root / "source_manifest.csv")
+    _validate_interaction_manifest_matrix_identity(manifest, matrices)
+    records = []
+    wildcard_gaps: list[str] = []
+    missing_gaps: list[str] = []
+    for left_index, left in enumerate(normalized):
+        for right in normalized[left_index + 1 :]:
+            requested_pair = (requested_by_normalized[left], requested_by_normalized[right])
+            for family in _INTERACTION_SOURCE_FILES:
+                matrix_signature = _matrix_pair_signature(
+                    matrices[family],
+                    family=family,
+                    left=left,
+                    right=right,
+                    display_pair=requested_pair,
+                )
+                manifest_entry = manifest.get((family, frozenset((left, right))))
+                if manifest_entry is None:
+                    gap = f"{family} pair {requested_pair[0]}|{requested_pair[1]}"
+                    if family in wildcard_families:
+                        wildcard_gaps.append(gap)
+                    else:
+                        missing_gaps.append(gap)
+                    continue
+                manifest_signature, source, provenance_status = manifest_entry
+                provenance_kind = _INTERACTION_PROVENANCE_STATUS_KIND.get(provenance_status)
+                if provenance_kind is None:
+                    raise InputError(
+                        f"Interaction {family} pair {requested_pair[0]}|{requested_pair[1]} has unresolved "
+                        f"provenance status '{provenance_status}'."
+                    )
+                if manifest_signature != matrix_signature:
+                    raise InputError(
+                        f"Interaction source manifest value does not match matrix {family} pair "
+                        f"{requested_pair[0]}|{requested_pair[1]}."
+                    )
+                provenance = InteractionProvenance(kind=provenance_kind, source=source)
+                if manifest_signature[0] == "constant":
+                    records.append(
+                        ConstantInteractionRecord(
+                            family=family,
+                            components=requested_pair,
+                            value=manifest_signature[1],
+                            provenance=provenance,
+                        )
+                    )
+                else:
+                    records.append(
+                        LinearTemperatureInteractionRecord(
+                            family=family,
+                            components=requested_pair,
+                            slope=manifest_signature[1],
+                            intercept=manifest_signature[2],
+                            temperature_units="K",
+                            provenance=provenance,
+                        )
+                    )
+    if wildcard_gaps:
+        raise InputError(
+            "Wildcard interaction rows cannot supply explicit evidence for "
+            + "; ".join(wildcard_gaps)
+            + "."
+        )
+    if missing_gaps:
+        raise InputError("Missing source-manifest interaction records for " + "; ".join(missing_gaps) + ".")
+    return tuple(records)
+
+
+def _interaction_source_path(binary_root: Path, family: str) -> Path:
+    candidates = [binary_root / name for name in _INTERACTION_SOURCE_FILES[family] if (binary_root / name).is_file()]
+    if len(candidates) != 1:
+        expected = ", ".join(_INTERACTION_SOURCE_FILES[family])
+        raise InputError(
+            f"Interaction family {family} requires exactly one source matrix ({expected}) in '{binary_root}'."
+        )
+    return candidates[0]
+
+
+def _load_strict_interaction_matrix(path: Path, family: str) -> dict[tuple[str, str], tuple]:
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fieldnames = list(reader.fieldnames or ())
+        rows = list(reader)
+    for row_number, row in enumerate(rows, start=2):
+        if row.get(None):
+            raise InputError(f"Interaction matrix '{path}' row {row_number} contains surplus cells.")
+    if len(fieldnames) < 2 or fieldnames[0] != "component":
+        raise InputError(f"Interaction matrix '{path}' must begin with a component column.")
+    columns = tuple(_normalize_component(str(value).strip()) for value in fieldnames[1:])
+    if any(not component for component in columns) or len(set(columns)) != len(columns):
+        raise InputError(f"Interaction matrix '{path}' has blank or duplicate component columns.")
+    if len(rows) != len(columns):
+        raise InputError(
+            f"Interaction matrix '{path}' has invalid dimensions: {len(rows)} rows for {len(columns)} components."
+        )
+    row_labels = tuple(_normalize_component(str(row.get("component", "")).strip()) for row in rows)
+    if any(not component for component in row_labels) or len(set(row_labels)) != len(row_labels):
+        raise InputError(f"Interaction matrix '{path}' has blank or duplicate component rows.")
+    if set(row_labels) != set(columns):
+        raise InputError(f"Interaction matrix '{path}' row and column component identities differ.")
+    matrix: dict[tuple[str, str], tuple] = {}
+    original_columns = fieldnames[1:]
+    for row, row_component in zip(rows, row_labels, strict=True):
+        for original_column, column_component in zip(original_columns, columns, strict=True):
+            matrix[(row_component, column_component)] = _interaction_value_signature(
+                row.get(original_column),
+                family=family,
+                pair=(row_component, column_component),
+            )
+    for component in columns:
+        diagonal = matrix[(component, component)]
+        if diagonal != ("constant", 0.0):
+            raise InputError(f"Interaction matrix {family} diagonal for {component} must be explicit zero.")
+    for left_index, left in enumerate(columns):
+        for right in columns[left_index + 1 :]:
+            if matrix[(left, right)] != matrix[(right, left)]:
+                raise InputError(f"Interaction matrix has asymmetric {family} values for pair {left}|{right}.")
     return matrix
+
+
+def _interaction_value_signature(raw, *, family: str, pair: tuple[str, str]) -> tuple:
+    text = "" if raw is None else str(raw).strip()
+    if not text:
+        raise InputError(f"Blank interaction cell for {family} pair {pair[0]}|{pair[1]}.")
+    try:
+        value = float(text)
+    except ValueError:
+        linear = _parse_linear_t_correlation(text)
+        if linear is None:
+            raise InputError(
+                f"Unsupported interaction value '{text}' for {family} pair {pair[0]}|{pair[1]}."
+            ) from None
+        return ("linear_temperature", linear[0], linear[1])
+    if not math.isfinite(value):
+        raise InputError(f"Non-finite interaction cell for {family} pair {pair[0]}|{pair[1]}.")
+    return ("constant", value)
+
+
+def _parse_linear_t_correlation(raw: str) -> tuple[float, float] | None:
+    text = str(raw).replace(" ", "").replace("/K", "").replace("/k", "")
+    match = _LINEAR_T_RE.match(text)
+    if not match:
+        return None
+    slope = _parse_t_coefficient(match.group(1))
+    intercept = float(match.group(2).replace(" ", ""))
+    if not math.isfinite(slope) or not math.isfinite(intercept):
+        return None
+    return slope, intercept
+
+
+def _matrix_pair_signature(
+    matrix: Mapping[tuple[str, str], tuple],
+    *,
+    family: str,
+    left: str,
+    right: str,
+    display_pair: tuple[str, str],
+) -> tuple:
+    try:
+        return matrix[(left, right)]
+    except KeyError as exc:
+        raise InputError(
+            f"Interaction matrix {family} does not contain pair {display_pair[0]}|{display_pair[1]}."
+        ) from exc
+
+
+def _validate_interaction_manifest_matrix_identity(
+    manifest: Mapping[tuple[str, frozenset[str]], tuple[tuple, str, str]],
+    matrices: Mapping[str, Mapping[tuple[str, str], tuple]],
+) -> None:
+    for (family, component_set), (manifest_signature, _source, _status) in manifest.items():
+        components = sorted(component_set)
+        if len(components) != 2:
+            raise InputError(f"Interaction source manifest has an invalid {family} component identity.")
+        left, right = components
+        matrix = matrices[family]
+        if (left, right) not in matrix:
+            raise InputError(
+                f"Interaction source manifest pair {left}|{right} does not exist in the {family} matrix."
+            )
+        if matrix[(left, right)] != manifest_signature:
+            raise InputError(
+                f"Interaction source manifest value does not match matrix {family} pair {left}|{right}."
+            )
+
+
+def _load_interaction_source_manifest(
+    path: Path,
+) -> tuple[dict[tuple[str, frozenset[str]], tuple[tuple, str, str]], set[str]]:
+    if not path.is_file():
+        raise InputError(f"Interaction source manifest '{path}' does not exist.")
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fieldnames = set(reader.fieldnames or ())
+        rows = list(reader)
+    for row_number, row in enumerate(rows, start=2):
+        if row.get(None):
+            raise InputError(f"Interaction source manifest '{path}' row {row_number} contains surplus cells.")
+    required_columns = {"parameter", "component_i", "component_j", "value", "source"}
+    allowed_columns = required_columns | {"provenance_status"}
+    missing_columns = sorted(required_columns - fieldnames)
+    if missing_columns:
+        raise InputError(
+            f"Interaction source manifest '{path}' is missing required column(s): {', '.join(missing_columns)}."
+        )
+    unknown_columns = sorted(fieldnames - allowed_columns)
+    if unknown_columns:
+        raise InputError(
+            f"Interaction source manifest '{path}' contains unsupported column(s): {', '.join(unknown_columns)}."
+        )
+    manifest: dict[tuple[str, frozenset[str]], tuple[tuple, str, str]] = {}
+    wildcard_families: set[str] = set()
+    for row_number, row in enumerate(rows, start=2):
+        family = str(row.get("parameter", "")).strip()
+        if family == "k_hb":
+            family = "k_hb_ij"
+        if family not in _INTERACTION_SOURCE_FILES:
+            raise InputError(f"Interaction source manifest row {row_number} has unknown family '{family}'.")
+        left_raw = str(row.get("component_i", "")).strip()
+        right_raw = str(row.get("component_j", "")).strip()
+        if (left_raw == "*") != (right_raw == "*"):
+            raise InputError(f"Interaction source manifest row {row_number} has a partial wildcard pair.")
+        if left_raw == "*":
+            if family in wildcard_families:
+                raise InputError(f"Interaction source manifest has duplicate wildcard rows for {family}.")
+            wildcard_signature = _interaction_value_signature(
+                row.get("value"),
+                family=family,
+                pair=(left_raw, right_raw),
+            )
+            if wildcard_signature != ("constant", 0.0):
+                raise InputError(f"Interaction source manifest wildcard for {family} must be explicit zero.")
+            wildcard_families.add(family)
+            continue
+        left = _normalize_component(left_raw)
+        right = _normalize_component(right_raw)
+        if not left or not right or left == right:
+            raise InputError(f"Interaction source manifest row {row_number} has an invalid component pair.")
+        key = (family, frozenset((left, right)))
+        if key in manifest:
+            ordered = sorted((left_raw, right_raw))
+            raise InputError(
+                f"Duplicate interaction source record for {family} pair {ordered[0]}|{ordered[1]}."
+            )
+        signature = _interaction_value_signature(
+            row.get("value"),
+            family=family,
+            pair=(left_raw, right_raw),
+        )
+        source = str(row.get("source", "")).strip()
+        status = str(row.get("provenance_status", "")).strip()
+        manifest[key] = (signature, source, status)
+    return manifest, wildcard_families
 
 
 def _load_mixed_rel_perm(path: Path) -> dict[str, dict[str, float]]:
@@ -490,7 +777,6 @@ def _load_dataset(dataset_name_or_path) -> dict:
         raise FileNotFoundError(f"Dataset '{dataset_name}' must include pure/*.csv component-parameter files.")
 
     mixed_dir = dataset_dir / "mixed"
-    bi_dir = mixed_dir / "binary_interaction"
     rel_perm_dir = mixed_dir / "rel_perm"
     rel_perm_coeff_path = rel_perm_dir / "parameters.csv"
     data = {
@@ -499,9 +785,6 @@ def _load_dataset(dataset_name_or_path) -> dict:
         "pure": pure_map,
         "pure_sets": pure_sets,
         "sole_pure_set_key": sole_pure_set_key,
-        "k_ij": _load_matrix(bi_dir / "k_ij.csv"),
-        "l_ij": _load_matrix(bi_dir / "l_ij.csv"),
-        "k_hb": _load_matrix(bi_dir / "k_hb_ij.csv") or _load_matrix(bi_dir / "khb_ij.csv"),
         "mixed_rel_perm": _load_mixed_rel_perm(rel_perm_coeff_path),
         "mixed_rel_perm_tables": _load_mixed_rel_perm_tables(rel_perm_dir),
         "canonical_user_options": _load_canonical_user_options(dataset_dir),
@@ -641,29 +924,6 @@ def _resolve_component_field_with_source(
     source_key = _normalize_pure_set_key(pure_set_key) if pure_set_key else dataset.get("sole_pure_set_key")
     value = _resolve_component_field(dataset, component, field, T, pure_set_key=source_key)
     return value, source_key
-
-
-def _matrix_value(dataset: dict, matrix_name: str, c1: str, c2: str, T: float) -> float:
-    matrix = dataset[matrix_name]
-    raw = matrix.get((c1, c2))
-    if raw is None:
-        raw = matrix.get((c2, c1))
-    if raw is None or not str(raw).strip():
-        return 0.0
-    value = _parse_cell_value(
-        raw,
-        dataset=dataset["dataset_name"],
-        component=f"{c1}|{c2}",
-        field=matrix_name,
-        T=T,
-    )
-    if value is None:
-        return 0.0
-    if isinstance(value, str):
-        raise ValueError(
-            f"Non-numeric matrix value in dataset '{dataset['dataset_name']}' for pair '{c1}|{c2}' in {matrix_name}."
-        )
-    return float(value)
 
 
 def _as_rule_number(value, aliases: dict[str, int]) -> int:
@@ -1362,10 +1622,10 @@ def molefraction_to_molality(
     return cation_fraction / (cation_count * solvent_fraction * mass_values[solvent])
 
 
-def get_prop_dict(
+def _resolve_dataset_runtime_payload(
     dataset_name: str | Path, species: Iterable[str], x, T: float, user_options: dict | None = None
 ) -> dict:
-    """Build a runtime parameter dictionary from a repository dataset or path."""
+    """Resolve source-backed pure data and runtime options without interaction serialization."""
     dataset = _load_dataset(dataset_name)
     species = list(species)
     components = [_normalize_component(s) for s in species]
@@ -1389,19 +1649,6 @@ def get_prop_dict(
         prop_dic[field] = np.asarray(values, dtype=float)
 
     n = len(species)
-    k_ij = np.zeros((n, n), dtype=float)
-    l_ij = np.zeros((n, n), dtype=float)
-    k_hb = np.zeros((n, n), dtype=float)
-    for i, c1 in enumerate(components):
-        for j, c2 in enumerate(components):
-            k_ij[i, j] = _matrix_value(dataset, "k_ij", c1, c2, T)
-            l_ij[i, j] = _matrix_value(dataset, "l_ij", c1, c2, T)
-            k_hb[i, j] = _matrix_value(dataset, "k_hb", c1, c2, T)
-
-    prop_dic["k_ij"] = k_ij
-    prop_dic["l_ij"] = l_ij
-    prop_dic["k_hb"] = k_hb
-
     mixed_rel_perm = dataset.get("mixed_rel_perm", {})
     if mixed_rel_perm:
         prop_dic["mixed_rel_perm_a"] = np.zeros(n, dtype=float)
@@ -1464,10 +1711,10 @@ def load_parameter_set(
 ):
     """Resolve an explicit dataset path into canonical parameter records."""
 
-    from .parameters import BinaryRecord, ParameterSet, PureRecord
+    from .parameters import ParameterSet, PureRecord
 
     labels = tuple(str(label) for label in species)
-    payload = get_prop_dict(dataset_name, labels, x, T, user_options=user_options)
+    payload = _resolve_dataset_runtime_payload(dataset_name, labels, x, T, user_options=user_options)
     schemes = list(payload["assoc_scheme"])
     pure_records = tuple(
         PureRecord(
@@ -1486,17 +1733,7 @@ def load_parameter_set(
         )
         for index, label in enumerate(labels)
     )
-    binary_records = []
-    for left_index, left in enumerate(labels):
-        for right_index in range(left_index + 1, len(labels)):
-            right = labels[right_index]
-            values = {
-                "k_ij": float(payload["k_ij"][left_index, right_index]),
-                "l_ij": float(payload["l_ij"][left_index, right_index]),
-                "k_hb_ij": float(payload["k_hb"][left_index, right_index]),
-            }
-            if any(value != 0.0 for value in values.values()):
-                binary_records.append(BinaryRecord((left, right), **values))
+    interactions = _load_source_interactions(dataset_name, labels)
 
     parameter_keys = {
         "MW",
@@ -1510,15 +1747,13 @@ def load_parameter_set(
         "dielc",
         "d_born",
         "f_solv",
-        "k_ij",
-        "l_ij",
-        "k_hb",
     }
     runtime_options = {key: value for key, value in payload.items() if key not in parameter_keys}
     dataset = _load_dataset(dataset_name)
     source_key = dataset.get("sole_pure_set_key")
     rows = dataset.get("pure_sets", {}).get(source_key, {}) if source_key else {}
-    sources = [str(rows[label].get("source", "")).strip() for label in labels if label in rows]
+    normalized_labels = tuple(_normalize_component(label) for label in labels)
+    sources = [str(rows[label].get("source", "")).strip() for label in normalized_labels if label in rows]
     metadata = {
         "dataset": str(dataset_name),
         "source": "; ".join(dict.fromkeys(source for source in sources if source)),
@@ -1527,7 +1762,19 @@ def load_parameter_set(
     }
     return ParameterSet.from_records(
         pure_records,
-        binary_records,
+        interactions,
         metadata=metadata,
         runtime_options=runtime_options,
     )
+
+
+def get_prop_dict(
+    dataset_name: str | Path,
+    species: Iterable[str],
+    x,
+    T: float,
+    user_options: dict | None = None,
+) -> dict:
+    """Build a runtime payload through the canonical typed ParameterSet owner."""
+
+    return load_parameter_set(dataset_name, species, x, T, user_options=user_options).to_runtime_dict()

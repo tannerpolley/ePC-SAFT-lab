@@ -69,10 +69,11 @@ def create_input_template(
         root / "parameter_set.json",
         {
             "schema": "epcsaft.parameter-set",
-            "schema_version": 1,
+            "schema_version": 2,
             "components": component_list,
             "pure_records": [_canonical_pure_record(component) for component in component_list],
-            "binary_records": [],
+            "interactions": [],
+            "interaction_policies": [],
             "metadata": {"source": None, "source_backed": False},
         },
     )

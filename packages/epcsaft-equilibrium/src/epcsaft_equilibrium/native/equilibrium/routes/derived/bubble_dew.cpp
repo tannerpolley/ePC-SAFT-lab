@@ -1356,7 +1356,7 @@ bool route_has_gross_2002_associating_vle_case(
         return false;
     }
     if (args.parameter_provenance_status != "source_backed_parameter_metadata"
-        || args.binary_interaction_provenance_status != "explicit_binary_records") {
+        || args.binary_interaction_provenance_status != "complete_interaction_graph") {
         return false;
     }
     if (

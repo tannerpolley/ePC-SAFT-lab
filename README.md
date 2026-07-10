@@ -121,7 +121,7 @@ from epcsaft import Mixture, ParameterSet, State
 parameters = ParameterSet.from_dict(
     {
         "schema": "epcsaft.parameter-set",
-        "schema_version": 1,
+        "schema_version": 2,
         "components": ["Toluene"],
         "pure_records": [
             {
@@ -141,7 +141,8 @@ parameters = ParameterSet.from_dict(
                 "solvation_factor": 1.0,
             }
         ],
-        "binary_records": [],
+        "interactions": [],
+        "interaction_policies": [],
         "metadata": {
             "source": "Gross and Sadowski (2001), Table 2",
             "source_backed": True,
@@ -212,7 +213,8 @@ from epcsaft import Mixture, ParameterSet, State
 species = ["H2O", "Na+", "Cl-"]
 parameters = ParameterSet.from_records(
     pure_records=loaded_pure_records,
-    binary_records=loaded_binary_records,
+    interactions=loaded_interactions,
+    interaction_policies=loaded_interaction_policies,
 )
 mixture = Mixture(parameters, components=species)
 state = State(mixture, T=298.15, P=101325.0, x=np.asarray([0.9998, 1e-4, 1e-4]))

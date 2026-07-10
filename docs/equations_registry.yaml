@@ -15,8 +15,8 @@
     \bar{m}=\sum_{i} x_{i} m_{i}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 562
-      comment_line: 553
+      line: 561
+      comment_line: 552
       context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "mw_bar"
   section: "Parameter Setup"
@@ -105,8 +105,8 @@
     d_{i}=\sigma_{i}\left[1-0.12 \exp \left(-3 \frac{\epsilon_{i}}{k T}\right)\right]
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 562
-      comment_line: 554
+      line: 561
+      comment_line: 553
       context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "d_segment_dT"
   section: "Parameter Setup"
@@ -125,8 +125,8 @@
         =\sigma_{i}\left(3\frac{\epsilon_{i}}{kT^2}\right)\left[-0.12\exp\left(-3\frac{\epsilon_{i}}{kT}\right)\right]
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 562
-      comment_line: 555
+      line: 561
+      comment_line: 554
       context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "half_d_identity"
   section: "Parameter Setup"
@@ -163,8 +163,8 @@
         \qquad i\in\mathcal{I}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 562
-      comment_line: 556
+      line: 561
+      comment_line: 555
       context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "d_ij"
   section: "Parameter Setup"
@@ -195,8 +195,8 @@
     \sigma_{i j}=\frac{1}{2}\left(\sigma_{i}+\sigma_{j}\right) \cdot \left(1- l_{ij} \right)
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 562
-      comment_line: 557
+      line: 561
+      comment_line: 556
       context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "epsilon_ij_mixing"
   section: "Parameter Setup"
@@ -215,8 +215,8 @@
         \sqrt{\epsilon_{i}\,\epsilon_{j}}\left(1-k_{ij}\right)
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 562
-      comment_line: 558
+      line: 561
+      comment_line: 557
       context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "epsilon_ij_ionic_zero"
   section: "Parameter Setup"
@@ -234,8 +234,8 @@
         \qquad \text{for } z_{i}z_{j}>0,
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 562
-      comment_line: 559
+      line: 561
+      comment_line: 558
       context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "epsilon_assoc_mixing"
   section: "Parameter Setup"
@@ -245,33 +245,33 @@
   source: "\\cite{Gross2002}, Eq.~(2)"
   status: "Manual literature match"
   description: "Provides a supporting relation used in association contribution."
-  change_note: "Mapped manually to the Gross 2002 cross-association energy combining rule."
+  change_note: "Corrected to the source-consistent cross-association energy rule; the hydrogen-bond correction does not multiply the energy."
   tex_file: "docs/latex/equations.tex"
   tex_line: 196
   latex: |
-    \varepsilon^{A_{i}B_{j}}=\frac{1}{2}(\varepsilon^{A_{i}B_{i}}+\varepsilon^{A_{j}B_{j}})(1-k_{ij}^{\mathrm{hb}})
+    \varepsilon^{A_{i}B_{j}}=\frac{1}{2}(\varepsilon^{A_{i}B_{i}}+\varepsilon^{A_{j}B_{j}})
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 420
-      comment_line: 418
-      context: "double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const add_args &cppargs) {"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
+      line: 319
+      comment_line: 318
+      context: "double eABij = 0.5 * (cppargs.e_assoc[comp_i] + cppargs.e_assoc[comp_j]);"
 - eqid: "kappa_assoc_mixing"
   section: "Parameter Setup"
   subsection: "Pair Mixing Rules"
   subsubsection: ""
   label: "eq:kappa_assoc_mixing"
-  source: "\\cite{Gross2002}, Eq.~(3)"
+  source: "\\cite{Gross2002}, Eq.~(3) for the geometric base rule; \\cite{Held2012}, Eq.~(14) for the (1-k_{ij}^{\\mathrm{hb}}) correction"
   status: "Manual literature match"
   description: "Provides a supporting relation used in association contribution."
-  change_note: "Mapped manually to the Gross 2002 cross-association volume combining rule."
+  change_note: "Gross 2002 Eq.~(3) supplies the geometric association-volume base; Held 2012 Eq.~(14) supplies the hydrogen-bond correction applied to that base."
   tex_file: "docs/latex/equations.tex"
   tex_line: 207
   latex: |
-    k^{A_{i}B_{j}}=\sqrt{k^{A_{i}B_{i}}k^{A_{j}B_{j}}}\quad\left(\frac{\sqrt{\sigma_{i}\sigma_{j}}}{1/2(\sigma_{i}+\sigma_{j})}\right)^3
+    \kappa^{A_{i}B_{j}}=\sqrt{\kappa^{A_{i}B_{i}}\kappa^{A_{j}B_{j}}}\quad\left(\frac{\sqrt{\sigma_{ii}\sigma_{jj}}}{1/2(\sigma_{ii}+\sigma_{jj})}\right)^3(1-k_{ij}^{\mathrm{hb}})
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 420
-      comment_line: 419
+      line: 419
+      comment_line: 418
       context: "double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const add_args &cppargs) {"
 - eqid: "epsr_mix_rule"
   section: "Parameter Setup"
@@ -313,8 +313,8 @@
         = \varepsilon_{r, i}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 620
-      comment_line: 614
+      line: 619
+      comment_line: 613
       context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "depsr_dxi_mass"
   section: "Parameter Setup"
@@ -333,8 +333,8 @@
         \frac{MW_{i}}{\overline{MW}}\left(\varepsilon_{r,i}-\varepsilon_{r}\right)
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 620
-      comment_line: 615
+      line: 619
+      comment_line: 614
       context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "depsr_dxi_combo"
   section: "Parameter Setup"
@@ -357,8 +357,8 @@
         \qquad i\in\mathcal S
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 620
-      comment_line: 616
+      line: 619
+      comment_line: 615
       context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "epsr_solvent_mass"
   section: "Parameter Setup"
@@ -492,8 +492,8 @@
         \end{cases}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 620
-      comment_line: 617
+      line: 619
+      comment_line: 616
       context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "depsr_mix_dxi"
   section: "Parameter Setup"
@@ -515,8 +515,8 @@
         \left(\frac{\partial x_{\mathrm{ion}}}{\partial x_{i}}\right)_{T,v,x_{j\neq i}} .
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 620
-      comment_line: 618
+      line: 619
+      comment_line: 617
       context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "depsr_mix_dxi_piecewise"
   section: "Parameter Setup"
@@ -542,8 +542,8 @@
         \end{cases}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 620
-      comment_line: 619
+      line: 619
+      comment_line: 618
       context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "zeta_n"
   section: "Density"
@@ -1020,8 +1020,8 @@
     \overline{m^2 \epsilon \sigma^3}=\sum_{i} \sum_{j} x_{i} x_{j} m_{i} m_{j}\left(\frac{\epsilon_{i j}}{k T}\right) \sigma_{i j}^3
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 562
-      comment_line: 560
+      line: 561
+      comment_line: 559
       context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "m2epssigma3_xk"
   section: "Contribution Intermediates"
@@ -1058,8 +1058,8 @@
     \overline{m^2 \epsilon^2 \sigma^3}=\sum_{i} \sum_{j} x_{i} x_{j} m_{i} m_{j}\left(\frac{\epsilon_{i j}}{k T}\right)^2 \sigma_{i j}{ }^3
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 562
-      comment_line: 561
+      line: 561
+      comment_line: 560
       context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "m2eps2sigma3_xk"
   section: "Contribution Intermediates"
@@ -1407,8 +1407,8 @@
     \left(\frac{\partial\Delta^{A_{i}B_{j}}}{\partial\rho}\right)_{T,x}=d_{ij}^3\kappa^{A_{i}B_{j}}\left[\exp(\epsilon^{A_{i}B_{j}}/kT)-1\right]\left(\frac{\partial g_{ij}^{hs}}{\partial\rho}\right)_{T,x}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 333
-      comment_line: 332
+      line: 334
+      comment_line: 333
       context: "static vector<double> association_site_fraction_density_terms_cpp("
 - eqid: "ddelta_assoc_dxk"
   section: "Contribution Intermediates"
@@ -1429,8 +1429,8 @@
         \left(\frac{\partial g_{ij}^{hs}}{\partial x_{k}}\right)_{T,\rho,x_{j\neq k}}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 366
-      comment_line: 365
+      line: 367
+      comment_line: 366
       context: "static vector<double> association_site_fraction_composition_terms_cpp("
 - eqid: "kappa_dh"
   section: "Contribution Intermediates"
@@ -1664,8 +1664,8 @@
         \qquad i\in\mathcal{I}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
-      line: 467
-      comment_line: 466
+      line: 466
+      comment_line: 465
       context: "double ion_born_radius_cpp(int i, double t, const add_args &cppargs) {"
 - eqid: "f_mix"
   section: "Contribution Intermediates"
@@ -2040,8 +2040,8 @@
         =\rho\sum_{i}x_{i}\sum_{A_{i}}\left(\frac{1}{X^{A_{i}}}-\frac{1}{2}\right)\left(\frac{\partial X^{A_{i}}}{\partial\rho}\right)_{T,x}.
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 502
-      comment_line: 501
+      line: 503
+      comment_line: 502
       context: "double dadrho_assoc_cpp("
 - eqid: "assoc_ares_dxk"
   section: "Residual Helmholtz Energy"
@@ -2064,8 +2064,8 @@
         \left(\frac{\partial X^{A_{i}}}{\partial x_{k}}\right)_{T,v,x_{i\neq k}}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 564
-      comment_line: 563
+      line: 565
+      comment_line: 564
       context: "ContributionDadxResult dadx_assoc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const AssociationIntermediateState &assoc_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "assoc_ares_dT"
   section: "Residual Helmholtz Energy"
@@ -2086,8 +2086,8 @@
         \left(\frac{\partial X^{A_i}}{\partial T}\right)_{\rho,x_i}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 552
-      comment_line: 551
+      line: 553
+      comment_line: 552
       context: "double dadt_assoc_cpp(const AssociationIntermediateState &assoc_state, const vector<double> &x) {"
 - eqid: "ares_dh"
   section: "Residual Helmholtz Energy"

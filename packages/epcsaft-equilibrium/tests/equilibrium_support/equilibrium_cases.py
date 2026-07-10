@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 from epcsaft import Mixture
-from epcsaft.model.parameters import BinaryRecord, ParameterSet, PureRecord
+from epcsaft.model.parameters import (
+    ConstantInteractionRecord,
+    InteractionProvenance,
+    ParameterSet,
+    PureRecord,
+    StructuralZeroPolicy,
+)
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from equilibrium_support.runtime_cases import _ionic_params
 
@@ -13,6 +19,35 @@ GROSS_2002_METHANOL_RICH_LIQUID = [0.856, 0.144]
 GROSS_2002_LLE_FEED = (
     0.5 * (np.asarray(GROSS_2002_METHANOL_LEAN_LIQUID) + np.asarray(GROSS_2002_METHANOL_RICH_LIQUID))
 ).tolist()
+
+
+def _gross_binary_interactions(
+    pair: tuple[str, str],
+    k_ij: float,
+) -> tuple[tuple[ConstantInteractionRecord, ...], tuple[StructuralZeroPolicy, ...]]:
+    provenance = InteractionProvenance(
+        "model_structural_zero",
+        "Gross and Sadowski 2002 simple mixing and combining rules",
+    )
+    return (
+        (
+            ConstantInteractionRecord(
+                "k_ij",
+                pair,
+                k_ij,
+                InteractionProvenance("literature", "Gross and Sadowski 2002 Table 2"),
+            ),
+        ),
+        tuple(
+            StructuralZeroPolicy(
+                family,
+                pair,
+                "Gross/Sadowski 2002 uses the base mixing/combining rule without an additional binary correction.",
+                provenance,
+            )
+            for family in ("l_ij", "k_hb_ij")
+        ),
+    )
 
 
 def _neutral_binary_mixture() -> ePCSAFTMixture:
@@ -67,6 +102,7 @@ def gross_2002_associating_parameter_set(
         ),
         "source_backed": source_backed,
     }
+    interactions, policies = _gross_binary_interactions(("Methanol", "Cyclohexane"), k_ij)
     return ParameterSet.from_records(
         (
             PureRecord(
@@ -98,7 +134,8 @@ def gross_2002_associating_parameter_set(
                 solvation_factor=1.0,
             ),
         ),
-        (BinaryRecord(("Methanol", "Cyclohexane"), k_ij=k_ij),),
+        interactions,
+        interaction_policies=policies,
         metadata=metadata,
     )
 
@@ -116,6 +153,7 @@ def gross_2002_figure10_parameter_set(*, source_backed: bool = True) -> Paramete
         "source_path": "analyses/paper_validation/2002_gross/figures/figure_10",
         "source_backed": source_backed,
     }
+    interactions, policies = _gross_binary_interactions(("Water", "1-Pentanol"), 0.016)
     return ParameterSet.from_records(
         (
             PureRecord(
@@ -147,7 +185,8 @@ def gross_2002_figure10_parameter_set(*, source_backed: bool = True) -> Paramete
                 solvation_factor=1.0,
             ),
         ),
-        (BinaryRecord(("Water", "1-Pentanol"), k_ij=0.016),),
+        interactions,
+        interaction_policies=policies,
         metadata=metadata,
     )
 

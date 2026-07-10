@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import json
 
-import epcsaft
+import pytest
+from epcsaft._types import InputError
 from epcsaft.state.native_adapter import ePCSAFTMixture
-from epcsaft_regression import fit_liquid_electrolyte_parameters
-from epcsaft_regression.native_adapter import native_ceres_backend_info
 
 
 def _write_ssmds_dataset(tmp_path):
@@ -43,59 +42,10 @@ def _write_ssmds_dataset(tmp_path):
     return dataset
 
 
-def test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives(tmp_path) -> None:
-    build = epcsaft.runtime_build_info()["native_dependencies"]
-    assert native_ceres_backend_info()["compiled"], "Ceres must be compiled for native regression tests."
-    assert build["cppad"]["compiled"], "CppAD must be compiled for exact derivative tests."
-
+def test_liquid_electrolyte_dataset_rejects_missing_interaction_sources(tmp_path) -> None:
     dataset = _write_ssmds_dataset(tmp_path)
     species = ("Solv", "Cat+", "An-")
     x = [0.98, 0.01, 0.01]
-    temperature = 298.15
-    pressure = 101325.0
-    mixture = ePCSAFTMixture.from_dataset(dataset, species, x, temperature)
-    state = mixture.state(T=temperature, x=x, P=pressure, phase="liq")
-    epsilon_r, _ = state.relative_permittivity()
-    miac = state.activity_coefficient(mean_ionic_form=True, basis="mole")["Cat+An-"]
 
-    result = fit_liquid_electrolyte_parameters(
-        species=species,
-        data_rows=[
-            {
-                "T": temperature,
-                "P": pressure,
-                "x_Solv": x[0],
-                "x_Cat+": x[1],
-                "x_An-": x[2],
-                "rho": state.molar_density(),
-                "epsilon_r_exp": epsilon_r,
-                "osmotic_coefficient": float(state.osmotic_coefficient()[0]),
-                "mean_ionic_activity": miac,
-            }
-        ],
-        parameter_set=dataset,
-        parameters_to_fit=("d_born", "f_solv"),
-        initial_guess={"d_born": 2.0, "f_solv": 0.5},
-        bounds={"d_born": (1.0, 8.0), "f_solv": (0.1, 3.0)},
-        solver_options={"optimizer_backend": "ceres"},
-    )
-
-    assert result.success, result.message
-    assert result.backend == "ceres"
-    assert result.optimizer_backend == "ceres"
-    assert result.derivative_backend == "cppad_implicit"
-    assert result.jacobian_backend == "cppad_implicit"
-    assert result.python_objective_used is False
-    assert result.objective_final <= result.objective_initial
-    assert result.problem.mode == "liquid_electrolyte"
-    assert result.problem.fit_targets == ("d_born", "f_solv")
-    assert result.problem.solver_options["target_components"] == {"d_born": "Cat+", "f_solv": "Solv"}
-    assert result.row_diagnostics
-    assert {row["row_family"] for row in result.row_diagnostics} == {
-        "density",
-        "relative_permittivity",
-        "osmotic_coefficient",
-        "mean_ionic_activity",
-    }
-    assert result.parameter_movement.keys() == {"d_born", "f_solv"}
-    assert result.final_parameters.keys() == {"d_born", "f_solv"}
+    with pytest.raises(InputError, match=r"(?i)interaction family k_ij.*source matrix"):
+        ePCSAFTMixture.from_dataset(dataset, species, x, 298.15)

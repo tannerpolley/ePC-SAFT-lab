@@ -4,7 +4,12 @@ import epcsaft
 import epcsaft_equilibrium
 import numpy as np
 import pytest
-from epcsaft.model.parameters import BinaryRecord, PureRecord
+from epcsaft.model.parameters import (
+    ConstantInteractionRecord,
+    InteractionProvenance,
+    PureRecord,
+    StructuralZeroPolicy,
+)
 
 
 def _parameter_set(
@@ -49,10 +54,39 @@ def _parameter_set(
             strict=True,
         )
     )
-    binary = () if k_ij is None else (BinaryRecord((components[0], components[1]), k_ij=k_ij),)
+    pair = (components[0], components[1]) if len(components) == 2 else None
+    binary = () if k_ij is None else (
+        ConstantInteractionRecord(
+            "k_ij",
+            pair,
+            k_ij,
+            InteractionProvenance("literature", "Gross and Sadowski 2001 Table 4"),
+        ),
+    )
+    policies = () if k_ij is None else tuple(
+        StructuralZeroPolicy(
+            family,
+            pair,
+            reason,
+            InteractionProvenance("model_structural_zero", source),
+        )
+        for family, reason, source in (
+            (
+                "l_ij",
+                "The binary pair uses the uncorrected Lorentz diameter rule.",
+                "Lorentz diameter rule / EqID sigma_mixing",
+            ),
+            (
+                "k_hb_ij",
+                "The nonassociating hydrocarbon pair has no active association topology.",
+                "inactive association topology / EqID kappa_assoc_mixing",
+            ),
+        )
+    )
     return epcsaft.ParameterSet.from_records(
         pure,
         binary,
+        interaction_policies=policies,
         metadata={"source": "Gross and Sadowski reference parameters", "source_backed": True},
     )
 

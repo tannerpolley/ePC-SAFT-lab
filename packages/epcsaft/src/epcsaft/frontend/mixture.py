@@ -10,7 +10,7 @@ import numpy as np
 
 from .._types import InputError
 from ..model.options import ModelOptions, coerce_model_options
-from ..model.parameters import ParameterSet, _runtime_parameter_provenance_payload
+from ..model.parameters import ParameterSet, _interaction_matrices, _runtime_parameter_provenance_payload
 
 
 class Mixture:
@@ -98,26 +98,7 @@ def _runtime_payload(parameters: ParameterSet, components: Sequence[str], model_
     schemes = [record.association_scheme for record in ordered]
     if any(scheme not in (None, "") for scheme in schemes):
         payload["assoc_scheme"] = schemes
-    payload.update(_binary_matrices(parameters, components))
-    payload.update(_runtime_parameter_provenance_payload(parameters.metadata, bool(parameters.binary_records)))
+    matrices, interaction_receipt = _interaction_matrices(parameters, components)
+    payload.update(matrices)
+    payload.update(_runtime_parameter_provenance_payload(parameters.metadata, interaction_receipt))
     return payload
-
-
-def _binary_matrices(parameters: ParameterSet, components: Sequence[str]) -> dict[str, np.ndarray]:
-    labels = tuple(str(component) for component in components)
-    index = {component: i for i, component in enumerate(labels)}
-    matrices = {
-        "k_ij": np.zeros((len(labels), len(labels)), dtype=float),
-        "l_ij": np.zeros((len(labels), len(labels)), dtype=float),
-        "k_hb": np.zeros((len(labels), len(labels)), dtype=float),
-    }
-    for record in parameters.binary_records:
-        left, right = record.components
-        i = index[left]
-        j = index[right]
-        matrices["k_ij"][i, j] = matrices["k_ij"][j, i] = float(record.k_ij)
-        matrices["l_ij"][i, j] = matrices["l_ij"][j, i] = float(record.l_ij)
-        matrices["k_hb"][i, j] = matrices["k_hb"][j, i] = float(record.k_hb_ij)
-    if parameters.binary_records:
-        return matrices
-    return {key: value for key, value in matrices.items() if np.any(np.abs(value) > 0.0)}

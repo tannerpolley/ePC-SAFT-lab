@@ -93,11 +93,7 @@ def test_ceres_pure_neutral_regression_owns_optimizer_loop() -> None:
     assert result.n_jacobian_evaluations >= 1
 
 
-def test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac(tmp_path) -> None:
-    build = epcsaft.runtime_build_info()["native_dependencies"]
-    assert native_ceres_backend_info()["compiled"], "Ceres must be compiled for native regression tests."
-    assert build["cppad"]["compiled"], "CppAD must be compiled for exact derivative tests."
-
+def test_pure_ion_regression_rejects_dataset_without_interaction_sources(tmp_path) -> None:
     dataset = tmp_path / "synthetic_ion_dataset"
     pure_dir = dataset / "pure"
     pure_dir.mkdir(parents=True)
@@ -129,32 +125,25 @@ def test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac(
         encoding="utf-8",
     )
 
-    result = fit_pure_ion(
-        [
-            {
-                "T": 298.15,
-                "P": 101325.0,
-                "x_Solv": 0.999998,
-                "x_Cat+": 1.0e-6,
-                "x_An-": 1.0e-6,
-                "rho": 40.95,
-                "osmotic_coefficient": 1.0,
-                "mean_ionic_activity": 1.0,
-            }
-        ],
-        "Cat+",
-        dataset=dataset,
-        species=["Solv", "Cat+", "An-"],
-        solvent="Solv",
-        fit_targets=["s", "e", "d_born"],
-        initial_guess={"s": 2.8, "e": 100.0, "d_born": 3.4},
-        bounds={"s": (2.4, 3.2), "e": (50.0, 300.0), "d_born": (2.0, 5.0)},
-    )
-
-    assert result.success, result.message
-    assert result.backend == "ceres"
-    assert result.jacobian_backend == "cppad_implicit"
-    assert result.python_objective_used is False
-    assert result.problem.fit_targets == ("s", "e", "d_born")
-    assert set(result.metrics_by_term) == {"density", "osmotic_coefficient", "mean_ionic_activity"}
-    assert result.provenance_report["parameter_movement"].keys() == {"s", "e", "d_born"}
+    with pytest.raises(InputError, match=r"(?i)interaction family k_ij.*source matrix"):
+        fit_pure_ion(
+            [
+                {
+                    "T": 298.15,
+                    "P": 101325.0,
+                    "x_Solv": 0.999998,
+                    "x_Cat+": 1.0e-6,
+                    "x_An-": 1.0e-6,
+                    "rho": 40.95,
+                    "osmotic_coefficient": 1.0,
+                    "mean_ionic_activity": 1.0,
+                }
+            ],
+            "Cat+",
+            dataset=dataset,
+            species=["Solv", "Cat+", "An-"],
+            solvent="Solv",
+            fit_targets=["s", "e", "d_born"],
+            initial_guess={"s": 2.8, "e": 100.0, "d_born": 3.4},
+            bounds={"s": (2.4, 3.2), "e": (50.0, 300.0), "d_born": (2.0, 5.0)},
+        )

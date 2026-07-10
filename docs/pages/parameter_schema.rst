@@ -15,7 +15,7 @@ Constructing A ParameterSet
    parameters = ParameterSet.from_dict(
        {
            "schema": "epcsaft.parameter-set",
-           "schema_version": 1,
+           "schema_version": 2,
            "components": ["Methane"],
            "pure_records": [{
                "component": "Methane",
@@ -33,7 +33,8 @@ Constructing A ParameterSet
                "born_diameter": 0.0,
                "solvation_factor": 1.0,
            }],
-           "binary_records": [],
+           "interactions": [],
+           "interaction_policies": [],
            "metadata": {
                "source": "Gross and Sadowski (2001), Table 2",
                "source_backed": True,
@@ -43,8 +44,39 @@ Constructing A ParameterSet
    )
 
 The schema, schema version, every scientific pure-component field, and source
-metadata are explicit. Unversioned arrays, missing fields, non-finite values,
-unknown keys, and inferred component properties are rejected.
+metadata are explicit. Every off-diagonal pair must also name one value or
+correlation for each of ``k_ij``, ``l_ij``, and ``k_hb_ij``. A zero is either a
+source-backed constant interaction or a named ``structural_zero`` policy with
+``model_structural_zero`` provenance. Blank cells, wildcard defaults, missing
+pair families, reversed duplicates, asymmetric matrices, unversioned arrays,
+non-finite values, unknown keys, and inferred component properties are rejected.
+
+Interaction records use one family per entry. For example, a source-backed
+constant ``k_ij`` and an equation-defined zero ``l_ij`` have different owners:
+
+.. code-block:: json
+
+   {
+     "interactions": [{
+       "kind": "constant",
+       "family": "k_ij",
+       "components": ["A", "B"],
+       "value": 0.012,
+       "provenance": {"kind": "literature", "source": "Paper Table 4"}
+     }],
+     "interaction_policies": [{
+       "kind": "structural_zero",
+       "family": "l_ij",
+       "components": ["A", "B"],
+       "reason": "The cited model uses the uncorrected Lorentz diameter rule for this pair.",
+       "provenance": {"kind": "model_structural_zero", "source": "EqID sigma_mixing"}
+     }]
+   }
+
+Temperature-dependent interactions use ``kind: linear_temperature`` with
+finite ``slope`` and ``intercept`` fields and ``temperature_units: K``. They
+remain typed correlations; construction does not freeze them at one
+temperature.
 
 Using ModelOptions
 ------------------

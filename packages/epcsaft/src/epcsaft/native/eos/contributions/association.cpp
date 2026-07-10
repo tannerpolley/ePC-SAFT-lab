@@ -315,6 +315,7 @@ AssociationSetup association_setup_cpp(const vector<double> &x, const add_args &
         for (int j = 0; j < num_sites; ++j) {
             int comp_j = setup.site_component_index[j];
             if (cppargs.assoc_matrix[idxa] != 0) {
+                // EqID: epsilon_assoc_mixing
                 double eABij = 0.5 * (cppargs.e_assoc[comp_i] + cppargs.e_assoc[comp_j]);
                 double volABij = association_volume_cpp(comp_i, comp_j, ncomp, s_ij, cppargs);
                 setup.delta_ij[idxa] = ghs[comp_i * ncomp + comp_j] * (std::exp(eABij / t) - 1.0)

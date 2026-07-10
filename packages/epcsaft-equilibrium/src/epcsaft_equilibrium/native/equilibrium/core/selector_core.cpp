@@ -154,7 +154,7 @@ bool int_vector_equals(const std::vector<int>& values, const std::vector<int>& e
 bool gross_2002_source_backed_metadata_present(const add_args& args, const std::string& source_label) {
     return args.parameter_source_label == source_label
         && args.parameter_provenance_status == "source_backed_parameter_metadata"
-        && args.binary_interaction_provenance_status == "explicit_binary_records"
+        && args.binary_interaction_provenance_status == "complete_interaction_graph"
         && contains_text(args.parameter_provenance_fields, "source")
         && contains_text(args.parameter_provenance_fields, "paper")
         && contains_text(args.parameter_provenance_fields, "table")
@@ -571,7 +571,7 @@ SelectorParameterReadiness evaluate_parameter_readiness(
         out.binary_interaction_matrix_present
         && species_count > 1
         && all_zero_or_empty(args.k_ij)
-        && args.binary_interaction_provenance_status == "explicit_binary_records"
+        && args.binary_interaction_provenance_status == "complete_interaction_graph"
         && out.source_backed_parameter_provenance_present;
     out.association_parameters_active = !no_association_sites(args);
     out.electrolyte_parameters_active = !all_zero_or_empty(args.z);

@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import numpy as np
 from epcsaft import ParameterSet
-from epcsaft.model.parameters import BinaryRecord, PureRecord
+from epcsaft.model.parameters import (
+    ConstantInteractionRecord,
+    InteractionProvenance,
+    PureRecord,
+    StructuralZeroPolicy,
+)
 from epcsaft.state.native_adapter import ePCSAFTMixture
 
 
@@ -75,11 +80,58 @@ def ionic_parameter_set(*, association: bool = True) -> ParameterSet:
     return ParameterSet.from_records(
         pure_records,
         (
-            BinaryRecord(("water", "Na+"), k_ij=0.0045),
-            BinaryRecord(("water", "Cl-"), k_ij=-0.25),
-            BinaryRecord(("Na+", "Cl-"), k_ij=0.317),
+            ConstantInteractionRecord(
+                "k_ij",
+                ("water", "Na+"),
+                0.0045,
+                InteractionProvenance("literature", "Bülow, Ascani, and Held 2020 Table 2"),
+            ),
+            ConstantInteractionRecord(
+                "k_ij",
+                ("water", "Cl-"),
+                -0.25,
+                InteractionProvenance("literature", "Bülow, Ascani, and Held 2020 Table 2"),
+            ),
+            ConstantInteractionRecord(
+                "k_ij",
+                ("Na+", "Cl-"),
+                0.317,
+                InteractionProvenance("literature", "Bülow, Ascani, and Held 2020 Table 3"),
+            ),
         ),
-        metadata={"source": "provider ionic contract fixture"},
+        interaction_policies=tuple(
+            StructuralZeroPolicy(
+                family,
+                pair,
+                reason,
+                InteractionProvenance("model_structural_zero", source),
+            )
+            for pair in (("water", "Na+"), ("water", "Cl-"), ("Na+", "Cl-"))
+            for family, reason, source in (
+                (
+                    "l_ij",
+                    "The pair uses the uncorrected Lorentz diameter rule.",
+                    "Lorentz diameter rule / EqID sigma_mixing",
+                ),
+                (
+                    "k_hb_ij",
+                    "Each pair contains an ion with no active association sites.",
+                    "inactive association topology / EqID kappa_assoc_mixing",
+                ),
+            )
+        ),
+        metadata={
+            "source": (
+                "Bülow, Ascani, and Held 2020 Tables 1-3; "
+                "Khudaida et al. 2026 Table 5 Born diameters"
+            ),
+            "source_backed": association,
+            "model_variant": (
+                "source_association_topology"
+                if association
+                else "test_nonassociating_topology"
+            ),
+        },
     )
 
 

@@ -28,7 +28,12 @@ matplotlib.use("Agg")
 import epcsaft
 import matplotlib.pyplot as plt
 import numpy as np
-from epcsaft.model.parameters import BinaryRecord, PureRecord
+from epcsaft.model.parameters import (
+    ConstantInteractionRecord,
+    InteractionProvenance,
+    PureRecord,
+    StructuralZeroPolicy,
+)
 from epcsaft_equilibrium import Equilibrium
 from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.branch_tracing import (
@@ -290,6 +295,7 @@ def _write_overlay(source_rows: list[dict[str, Any]]) -> None:
 
 
 def _mixture() -> epcsaft.Mixture:
+    pair = tuple(MIXTURE_SPECIES)
     parameter_set = epcsaft.ParameterSet.from_records(
         (
             PureRecord(
@@ -321,7 +327,31 @@ def _mixture() -> epcsaft.Mixture:
                 solvation_factor=1.0,
             ),
         ),
-        (BinaryRecord(tuple(MIXTURE_SPECIES), k_ij=0.05),),
+        (
+            ConstantInteractionRecord(
+                "k_ij",
+                pair,
+                0.05,
+                InteractionProvenance(
+                    "literature",
+                    "Gross and Sadowski 2002 Figure 2 caption: methanol-isobutane PC-SAFT k_ij=0.05",
+                ),
+            ),
+        ),
+        interaction_policies=(
+            StructuralZeroPolicy(
+                family="l_ij",
+                components=pair,
+                reason="Lorentz segment-diameter mixing rule; no l_ij correction in this source-scoped reproduction.",
+                provenance=InteractionProvenance("model_structural_zero", "Lorentz diameter rule / EqID sigma_mixing"),
+            ),
+            StructuralZeroPolicy(
+                family="k_hb_ij",
+                components=pair,
+                reason="Gross 2002 Eq. 3 association combining rule; no association binary correction in this source-scoped reproduction.",
+                provenance=InteractionProvenance("model_structural_zero", "Gross 2002 Eq. 3; no association binary correction"),
+            ),
+        ),
         metadata=MIXTURE_METADATA,
     )
     return epcsaft.Mixture(parameter_set)

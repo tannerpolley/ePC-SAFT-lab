@@ -197,21 +197,21 @@ The active ePC-SAFT implementation then applies a same-sign ionic override to th
 % Source: \cite{Gross2002}, Eq.~(2)
 % Status: Manual literature match
 % Description: Provides a supporting relation used in association contribution.
-% Change note: Mapped manually to the Gross 2002 cross-association energy combining rule.
+% Change note: Corrected to the source-consistent cross-association energy rule; the hydrogen-bond correction does not multiply the energy.
 
 \begin{equation}
-    \varepsilon^{A_{i}B_{j}}=\frac{1}{2}(\varepsilon^{A_{i}B_{i}}+\varepsilon^{A_{j}B_{j}})(1-k_{ij}^{\mathrm{hb}})
+    \varepsilon^{A_{i}B_{j}}=\frac{1}{2}(\varepsilon^{A_{i}B_{i}}+\varepsilon^{A_{j}B_{j}})
     \label{eq:epsilon_assoc_mixing}
 \end{equation}
 
 % EqID: kappa_assoc_mixing
-% Source: \cite{Gross2002}, Eq.~(3)
+% Source: \cite{Gross2002}, Eq.~(3) for the geometric base rule; \cite{Held2012}, Eq.~(14) for the (1-k_{ij}^{\mathrm{hb}}) correction
 % Status: Manual literature match
 % Description: Provides a supporting relation used in association contribution.
-% Change note: Mapped manually to the Gross 2002 cross-association volume combining rule.
+% Change note: Gross 2002 Eq.~(3) supplies the geometric association-volume base; Held 2012 Eq.~(14) supplies the hydrogen-bond correction applied to that base.
 
 \begin{equation}
-    k^{A_{i}B_{j}}=\sqrt{k^{A_{i}B_{i}}k^{A_{j}B_{j}}}\quad\left(\frac{\sqrt{\sigma_{i}\sigma_{j}}}{1/2(\sigma_{i}+\sigma_{j})}\right)^3
+    \kappa^{A_{i}B_{j}}=\sqrt{\kappa^{A_{i}B_{i}}\kappa^{A_{j}B_{j}}}\quad\left(\frac{\sqrt{\sigma_{ii}\sigma_{jj}}}{1/2(\sigma_{ii}+\sigma_{jj})}\right)^3(1-k_{ij}^{\mathrm{hb}})
     \label{eq:kappa_assoc_mixing}
 \end{equation}
 

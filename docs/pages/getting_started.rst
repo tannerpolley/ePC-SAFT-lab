@@ -62,7 +62,7 @@ For a one-component example, create a ``ParameterSet`` and pass it to
    parameters = ParameterSet.from_dict(
        {
            "schema": "epcsaft.parameter-set",
-           "schema_version": 1,
+           "schema_version": 2,
            "components": ["Toluene"],
            "pure_records": [{
                "component": "Toluene",
@@ -80,7 +80,8 @@ For a one-component example, create a ``ParameterSet`` and pass it to
                "born_diameter": 0.0,
                "solvation_factor": 1.0,
            }],
-           "binary_records": [],
+           "interactions": [],
+           "interaction_policies": [],
            "metadata": {
                "source": "Gross and Sadowski (2001), Table 2",
                "source_backed": True,

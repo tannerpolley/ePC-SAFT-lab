@@ -5,7 +5,7 @@ import math
 import epcsaft
 import numpy as np
 import pytest
-from epcsaft.model.parameters import BinaryRecord, PureRecord
+from epcsaft.model.parameters import ConstantInteractionRecord, InteractionProvenance, PureRecord, StructuralZeroPolicy
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.chemical_equilibrium import (
@@ -60,9 +60,36 @@ def _mixture() -> epcsaft.Mixture:
                     solvation_factor=1.0,
                 ),
             ],
-            [BinaryRecord(("A", "B"), k_ij=3.0e-4)],
+            [
+                ConstantInteractionRecord(
+                    "k_ij",
+                    ("A", "B"),
+                    3.0e-4,
+                    InteractionProvenance("literature", "Gross and Sadowski 2001 Table 4"),
+                )
+            ],
+            interaction_policies=[
+                StructuralZeroPolicy(
+                    family,
+                    ("A", "B"),
+                    reason,
+                    InteractionProvenance("model_structural_zero", source),
+                )
+                for family, reason, source in (
+                    (
+                        "l_ij",
+                        "The hydrocarbon pair uses the uncorrected Lorentz diameter rule.",
+                        "Lorentz diameter rule / EqID sigma_mixing",
+                    ),
+                    (
+                        "k_hb_ij",
+                        "The nonassociating hydrocarbon pair has no active association topology.",
+                        "inactive association topology / EqID kappa_assoc_mixing",
+                    ),
+                )
+            ],
             metadata={
-                "source": "Gross and Sadowski 2001 hydrocarbon parameters",
+                "source": "Gross and Sadowski 2001 Tables 2 and 4",
                 "source_backed": True,
             },
         )

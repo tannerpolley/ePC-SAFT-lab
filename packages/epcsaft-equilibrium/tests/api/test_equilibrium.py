@@ -7,7 +7,12 @@ from types import MappingProxyType
 import epcsaft
 import numpy as np
 import pytest
-from epcsaft.model.parameters import BinaryRecord, PureRecord
+from epcsaft.model.parameters import (
+    ConstantInteractionRecord,
+    InteractionProvenance,
+    PureRecord,
+    StructuralZeroPolicy,
+)
 from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
@@ -642,7 +647,7 @@ def _parameter_set_from_records(
     relative_permittivity: list[float],
     born_diameter: list[float],
     solvation_factor: list[float],
-    k_ij: float | None = None,
+    k_ij: float,
     metadata: dict[str, object] | None = None,
 ) -> epcsaft.ParameterSet:
     pure_records = tuple(
@@ -689,10 +694,41 @@ def _parameter_set_from_records(
             strict=True,
         )
     )
-    binary_records = () if k_ij is None else (BinaryRecord((species[0], species[1]), k_ij=k_ij),)
+    interactions = (
+        ConstantInteractionRecord(
+            "k_ij",
+            (species[0], species[1]),
+            k_ij,
+            InteractionProvenance(
+                "literature",
+                str((metadata or {}).get("source", "Gross and Sadowski 2002")),
+            ),
+        ),
+    )
+    policies = tuple(
+        StructuralZeroPolicy(
+            family,
+            (species[0], species[1]),
+            reason,
+            InteractionProvenance("model_structural_zero", source),
+        )
+        for family, reason, source in (
+            (
+                "l_ij",
+                "The pair uses the uncorrected Lorentz diameter rule.",
+                "Lorentz diameter rule / EqID sigma_mixing",
+            ),
+            (
+                "k_hb_ij",
+                "The Gross 2002 base association-volume combining rule has no binary correction.",
+                "Gross and Sadowski 2002 Eq. 3 / EqID kappa_assoc_mixing",
+            ),
+        )
+    )
     return epcsaft.ParameterSet.from_records(
         pure_records,
-        binary_records,
+        interactions,
+        interaction_policies=policies,
         metadata=metadata,
     )
 
@@ -713,42 +749,6 @@ def _associating_parameter_set() -> epcsaft.ParameterSet:
         solvation_factor=[1.0, 1.0],
         k_ij=0.051,
         metadata={"source": "Gross and Sadowski 2002 Figure 8", "source_backed": True},
-    )
-
-
-def _ionic_parameter_set() -> epcsaft.ParameterSet:
-    return _parameter_set_from_records(
-        species=["H2O", "Na+", "Cl-"],
-        mw=[18.01528e-3, 22.98e-3, 35.45e-3],
-        m=[1.2047, 1.0, 1.0],
-        sigma=[2.7927, 2.8232, 2.7560],
-        epsilon_k=[353.95, 230.0, 170.0],
-        charge=[0.0, 1.0, -1.0],
-        epsilon_k_ab=[0.0, 0.0, 0.0],
-        kappa_ab=[0.0, 0.0, 0.0],
-        association_scheme=[None, None, None],
-        relative_permittivity=[78.09, 8.0, 8.0],
-        born_diameter=[0.0, 3.445, 4.1],
-        solvation_factor=[1.5, 1.0, 1.0],
-        metadata={"source": "ionic route component fixture"},
-    )
-
-
-def _ionic_associating_parameter_set() -> epcsaft.ParameterSet:
-    return _parameter_set_from_records(
-        species=["H2O", "Na+", "Cl-"],
-        mw=[18.01528e-3, 22.98e-3, 35.45e-3],
-        m=[1.2047, 1.0, 1.0],
-        sigma=[2.7927, 2.8232, 2.7560],
-        epsilon_k=[353.95, 230.0, 170.0],
-        charge=[0.0, 1.0, -1.0],
-        epsilon_k_ab=[2425.7, 0.0, 0.0],
-        kappa_ab=[0.04509, 0.0, 0.0],
-        association_scheme=["2B", None, None],
-        relative_permittivity=[78.09, 8.0, 8.0],
-        born_diameter=[0.0, 3.445, 4.1],
-        solvation_factor=[1.5, 1.0, 1.0],
-        metadata={"source": "ionic association route component fixture"},
     )
 
 

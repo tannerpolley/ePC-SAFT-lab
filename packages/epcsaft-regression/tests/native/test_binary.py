@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import csv
+
 import numpy as np
 import pytest
 from epcsaft._types import InputError
+from epcsaft.model.datasets import _load_source_interactions
+from epcsaft_regression.core import BINARY_PAIR_MODE, FitProblem, FitResult, write_fit_result
 from epcsaft_regression.native_adapter import _fit_generic_native_ceres
 
 
@@ -128,3 +132,47 @@ def test_ceres_binary_kij_regression_rejects_nonpositive_iteration_limit() -> No
             [0.1],
             0,
         )
+
+
+def test_binary_fit_persistence_updates_manifest_and_strict_reload(tmp_path) -> None:
+    binary_dir = tmp_path / "mixed" / "binary_interaction"
+    binary_dir.mkdir(parents=True)
+    matrix = "component,Component A,Component B\nComponent A,0,0.125\nComponent B,0.125,0\n"
+    for name in ("k_ij.csv", "l_ij.csv", "k_hb_ij.csv"):
+        (binary_dir / name).write_text(matrix if name == "k_ij.csv" else matrix.replace("0.125", "0"), encoding="utf-8")
+    manifest = (
+        "parameter,component_i,component_j,value,source,provenance_status\n"
+        "k_ij,Component A,Component B,0.125,Source Table 4,source_backed\n"
+        "l_ij,Component A,Component B,0,Source Eq. 5,source_backed\n"
+        "k_hb_ij,Component A,Component B,0,Source Eq. 6,source_backed\n"
+    )
+    manifest_path = binary_dir / "source_manifest.csv"
+    manifest_path.write_text(manifest, encoding="utf-8")
+
+    problem = FitProblem(
+        mode=BINARY_PAIR_MODE,
+        pair=("Component A", "Component B"),
+        fit_targets=("k_ij",),
+    )
+    result = FitResult(
+        problem=problem,
+        fitted_values={"k_ij": 0.25},
+        rendered_values={"k_ij": 0.25},
+    )
+
+    written = write_fit_result(result, tmp_path, overwrite=True)
+
+    assert binary_dir / "k_ij.csv" in written
+    assert manifest_path in written
+    with manifest_path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    fitted_row = next(row for row in rows if row["parameter"] == "k_ij")
+    assert fitted_row["component_i"] == "Component A"
+    assert fitted_row["component_j"] == "Component B"
+    assert fitted_row["value"] == "0.25"
+    assert fitted_row["provenance_status"] == "fitted"
+
+    records = _load_source_interactions(tmp_path, ("Component A", "Component B"))
+    fitted = next(record for record in records if record.family == "k_ij")
+    assert fitted.value == pytest.approx(0.25)
+    assert fitted.provenance.kind == "fitted"

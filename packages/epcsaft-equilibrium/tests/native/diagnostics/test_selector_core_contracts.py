@@ -7,7 +7,12 @@ from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
 from epcsaft.frontend import Mixture
-from epcsaft.model.parameters import BinaryRecord, ParameterSet, PureRecord
+from epcsaft.model.parameters import (
+    InteractionProvenance,
+    ParameterSet,
+    PureRecord,
+    StructuralZeroPolicy,
+)
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from equilibrium_support.equilibrium_cases import (
     GROSS_2002_PRESSURE_PA,
@@ -363,7 +368,32 @@ def test_selector_core_accepts_source_backed_explicit_zero_binary_convention() -
                 solvation_factor=1.0,
             ),
         ],
-        [BinaryRecord(("Methane", "Ethane"), k_ij=0.0)],
+        [],
+        interaction_policies=[
+            StructuralZeroPolicy(
+                family,
+                ("Methane", "Ethane"),
+                reason,
+                InteractionProvenance("model_structural_zero", source),
+            )
+            for family, reason, source in (
+                (
+                    "k_ij",
+                    "The test selects the uncorrected Berthelot pair-dispersion rule.",
+                    "Berthelot dispersion rule / EqID epsilon_mixing",
+                ),
+                (
+                    "l_ij",
+                    "The test selects the uncorrected Lorentz pair-diameter rule.",
+                    "Lorentz diameter rule / EqID sigma_mixing",
+                ),
+                (
+                    "k_hb_ij",
+                    "The nonassociating pair has no active association topology.",
+                    "inactive association topology / EqID kappa_assoc_mixing",
+                ),
+            )
+        ],
         metadata={
             "source": "Gross and Sadowski (2001), Table 2",
             "table": "pure parameters; binary zero is an explicit selector-contract convention",
@@ -385,7 +415,7 @@ def test_selector_core_accepts_source_backed_explicit_zero_binary_convention() -
 
     readiness = payload["parameter_readiness"]
     assert readiness["binary_interaction_matrix_present"] is True
-    assert readiness["binary_interaction_provenance_status"] == "explicit_binary_records"
+    assert readiness["binary_interaction_provenance_status"] == "complete_interaction_graph"
     assert readiness["parameter_provenance_status"] == "source_backed_parameter_metadata"
     assert readiness["source_backed_parameter_provenance_present"] is True
     assert readiness["explicit_zero_binary_interaction_convention"] is True

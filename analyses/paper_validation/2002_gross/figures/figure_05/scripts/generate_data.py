@@ -29,7 +29,12 @@ import epcsaft
 import epcsaft_equilibrium
 import matplotlib.pyplot as plt
 import numpy as np
-from epcsaft.model.parameters import BinaryRecord, PureRecord
+from epcsaft.model.parameters import (
+    ConstantInteractionRecord,
+    InteractionProvenance,
+    PureRecord,
+    StructuralZeroPolicy,
+)
 from epcsaft_equilibrium._native import extension_native_core
 
 FIGURE_ID = "figure_05"
@@ -211,6 +216,11 @@ def _load_source_rows() -> list[dict[str, Any]]:
 
 def _mixture(series: str) -> epcsaft.Mixture:
     config = SYSTEM_CONFIG[series]
+    pair = tuple(str(component) for component in config["species"])
+    table_2_source = (
+        f"Gross 2002 Table 2: {config['system'].replace('/', '-')} PC-SAFT row "
+        f"(k_ij={float(config['k_ij']):.3f})"
+    )
     return epcsaft.Mixture(
         epcsaft.ParameterSet.from_records(
             tuple(
@@ -241,7 +251,28 @@ def _mixture(series: str) -> epcsaft.Mixture:
                     )
                 )
             ),
-            (BinaryRecord(tuple(config["species"]), k_ij=config["k_ij"]),),
+            (
+                ConstantInteractionRecord(
+                    "k_ij",
+                    pair,
+                    config["k_ij"],
+                    InteractionProvenance("literature", table_2_source),
+                ),
+            ),
+            interaction_policies=(
+                StructuralZeroPolicy(
+                    family="l_ij",
+                    components=pair,
+                    reason="Lorentz segment-diameter mixing rule; no l_ij correction in this source-scoped reproduction.",
+                    provenance=InteractionProvenance("model_structural_zero", "Lorentz diameter rule / EqID sigma_mixing"),
+                ),
+                StructuralZeroPolicy(
+                    family="k_hb_ij",
+                    components=pair,
+                    reason="Gross 2002 Eq. 3 association combining rule; no association binary correction in this source-scoped reproduction.",
+                    provenance=InteractionProvenance("model_structural_zero", "Gross 2002 Eq. 3; no association binary correction"),
+                ),
+            ),
             metadata={
                 "source": "Gross/Sadowski 2002 Figure 5",
                 "paper": "Gross and Sadowski 2002",

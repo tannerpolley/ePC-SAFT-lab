@@ -1,5 +1,4 @@
 parameter,component_i,component_j,value,source
-k_ij,*,*,0,default zero for unpublished values
 k_ij,Br-,Cl-,1.0,2012_Held k_ij.csv
 k_ij,Br-,Ethanol,0.0,2012_Held k_ij.csv
 k_ij,Br-,H2O,0.0,2012_Held k_ij.csv
@@ -45,7 +44,6 @@ k_ij,Li+,Na+,1.0,2012_Held k_ij.csv
 k_ij,Methanol,NH4+,0.0,2012_Held k_ij.csv
 k_ij,Methanol,Na+,0.0,2012_Held k_ij.csv
 k_ij,NH4+,Na+,1.0,2012_Held k_ij.csv
-l_ij,*,*,0,default zero for unpublished values
 l_ij,Br-,Cl-,0.0,2012_Held l_ij.csv
 l_ij,Br-,Ethanol,0.0,2012_Held l_ij.csv
 l_ij,Br-,H2O,0.0,2012_Held l_ij.csv
@@ -91,7 +89,6 @@ l_ij,Li+,Na+,0.0,2012_Held l_ij.csv
 l_ij,Methanol,NH4+,0.0,2012_Held l_ij.csv
 l_ij,Methanol,Na+,0.0,2012_Held l_ij.csv
 l_ij,NH4+,Na+,0.0,2012_Held l_ij.csv
-k_hb_ij,*,*,0,default zero for unpublished values
 k_hb_ij,Br-,Cl-,0.0,2012_Held k_hb_ij.csv
 k_hb_ij,Br-,Ethanol,0.0,2012_Held k_hb_ij.csv
 k_hb_ij,Br-,H2O,0.0,2012_Held k_hb_ij.csv

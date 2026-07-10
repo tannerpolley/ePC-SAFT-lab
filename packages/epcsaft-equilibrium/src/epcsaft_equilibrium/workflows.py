@@ -1546,7 +1546,7 @@ def _require_source_backed_electrolyte_lle_validation_scope(mixture: Any, feed: 
     source_label = str(parameters.get("_parameter_source_label", "")).replace("\\", "/").lower()
     if not source_label.endswith("analyses/paper_validation/2026_khudaida/parameters"):
         raise InputError("electrolyte_lle requires the certified Khudaida 2026 parameter bundle.")
-    if parameters.get("_binary_interaction_provenance_status") != "explicit_binary_records":
+    if parameters.get("_binary_interaction_provenance_status") != "complete_interaction_graph":
         raise InputError("electrolyte_lle requires explicit source-bundle binary interaction records.")
     elec_model = parameters.get("elec_model", {})
     if not isinstance(elec_model, Mapping):
@@ -1616,7 +1616,7 @@ def _has_gross_2002_associating_vle_proof(parameters: Mapping[str, Any]) -> bool
         return False
     if parameters.get("_parameter_provenance_status") != "source_backed_parameter_metadata":
         return False
-    if parameters.get("_binary_interaction_provenance_status") != "explicit_binary_records":
+    if parameters.get("_binary_interaction_provenance_status") != "complete_interaction_graph":
         return False
     fields = {str(field) for field in parameters.get("_parameter_provenance_fields", ())}
     if {"source", "paper", "table", "figure", "source_path"} - fields:
