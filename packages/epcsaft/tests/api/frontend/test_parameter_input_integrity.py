@@ -489,7 +489,7 @@ def _nonzero_manifest_pairs(parameter_root: Path) -> set[frozenset[str]]:
     )
     return {
         pair
-        for (family, pair), (signature, _source, _status) in manifest.items()
+        for (family, pair), (signature, _source, _status, _reason) in manifest.items()
         if family == "k_ij" and signature[0] == "constant" and signature[1] != 0.0
     }
 

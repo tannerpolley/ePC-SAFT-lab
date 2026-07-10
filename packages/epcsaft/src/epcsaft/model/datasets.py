@@ -371,8 +371,13 @@ _INTERACTION_SOURCE_FILES = {
 _INTERACTION_PROVENANCE_STATUS_KIND = {
     "source_backed": "literature",
     "fitted": "fitted",
+    "model_structural_zero": "model_structural_zero",
 }
 _UNRESOLVED_PROVENANCE_STATUS_PREFIX = "unresolved_"
+_NON_EVIDENCE_INTERACTION_SOURCE_RE = re.compile(
+    r"\b(?:default|unpublished|unresolved)\b|\bno\s+source\s+reference\b",
+    flags=re.IGNORECASE,
+)
 
 
 def _load_source_interactions(
@@ -385,6 +390,7 @@ def _load_source_interactions(
         ConstantInteractionRecord,
         InteractionProvenance,
         LinearTemperatureInteractionRecord,
+        StructuralZeroPolicy,
     )
 
     root = Path(dataset_root).expanduser()
@@ -408,7 +414,7 @@ def _load_source_interactions(
     }
     manifest, wildcard_families = _load_interaction_source_manifest(binary_root / "source_manifest.csv")
     _validate_interaction_manifest_matrix_identity(manifest, matrices)
-    records = []
+    loaded = []
     wildcard_gaps: list[str] = []
     missing_gaps: list[str] = []
     for left_index, left in enumerate(normalized):
@@ -430,7 +436,7 @@ def _load_source_interactions(
                     else:
                         missing_gaps.append(gap)
                     continue
-                manifest_signature, source, provenance_status = manifest_entry
+                manifest_signature, source, provenance_status, reason = manifest_entry
                 provenance_kind = _INTERACTION_PROVENANCE_STATUS_KIND.get(provenance_status)
                 if provenance_kind is None:
                     raise InputError(
@@ -443,8 +449,17 @@ def _load_source_interactions(
                         f"{requested_pair[0]}|{requested_pair[1]}."
                     )
                 provenance = InteractionProvenance(kind=provenance_kind, source=source)
-                if manifest_signature[0] == "constant":
-                    records.append(
+                if provenance_kind == "model_structural_zero":
+                    loaded.append(
+                        StructuralZeroPolicy(
+                            family=family,
+                            components=requested_pair,
+                            reason=reason,
+                            provenance=provenance,
+                        )
+                    )
+                elif manifest_signature[0] == "constant":
+                    loaded.append(
                         ConstantInteractionRecord(
                             family=family,
                             components=requested_pair,
@@ -453,7 +468,7 @@ def _load_source_interactions(
                         )
                     )
                 else:
-                    records.append(
+                    loaded.append(
                         LinearTemperatureInteractionRecord(
                             family=family,
                             components=requested_pair,
@@ -471,7 +486,7 @@ def _load_source_interactions(
         )
     if missing_gaps:
         raise InputError("Missing source-manifest interaction records for " + "; ".join(missing_gaps) + ".")
-    return tuple(records)
+    return tuple(loaded)
 
 
 def _interaction_source_path(binary_root: Path, family: str) -> Path:
@@ -573,10 +588,10 @@ def _matrix_pair_signature(
 
 
 def _validate_interaction_manifest_matrix_identity(
-    manifest: Mapping[tuple[str, frozenset[str]], tuple[tuple, str, str]],
+    manifest: Mapping[tuple[str, frozenset[str]], tuple[tuple, str, str, str]],
     matrices: Mapping[str, Mapping[tuple[str, str], tuple]],
 ) -> None:
-    for (family, component_set), (manifest_signature, _source, _status) in manifest.items():
+    for (family, component_set), (manifest_signature, _source, _status, _reason) in manifest.items():
         components = sorted(component_set)
         if len(components) != 2:
             raise InputError(f"Interaction source manifest has an invalid {family} component identity.")
@@ -606,7 +621,7 @@ def _validate_interaction_manifest_matrix_identity(
 
 def _load_interaction_source_manifest(
     path: Path,
-) -> tuple[dict[tuple[str, frozenset[str]], tuple[tuple, str, str]], set[str]]:
+) -> tuple[dict[tuple[str, frozenset[str]], tuple[tuple, str, str, str]], set[str]]:
     if not path.is_file():
         raise InputError(f"Interaction source manifest '{path}' does not exist.")
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
@@ -627,17 +642,18 @@ def _load_interaction_source_manifest(
         if row.get(None):
             raise InputError(f"Interaction source manifest '{path}' row {row_number} contains surplus cells.")
     required_columns = {"parameter", "component_i", "component_j", "value", "source", "provenance_status"}
+    allowed_columns = required_columns | {"reason"}
     missing_columns = sorted(required_columns - set(fieldnames))
     if missing_columns:
         raise InputError(
             f"Interaction source manifest '{path}' is missing required column(s): {', '.join(missing_columns)}."
         )
-    unknown_columns = sorted(set(fieldnames) - required_columns)
+    unknown_columns = sorted(set(fieldnames) - allowed_columns)
     if unknown_columns:
         raise InputError(
             f"Interaction source manifest '{path}' contains unsupported column(s): {', '.join(unknown_columns)}."
         )
-    manifest: dict[tuple[str, frozenset[str]], tuple[tuple, str, str]] = {}
+    manifest: dict[tuple[str, frozenset[str]], tuple[tuple, str, str, str]] = {}
     wildcard_families: set[str] = set()
     for row_number, row in enumerate(rows, start=2):
         family = str(row.get("parameter", "")).strip()
@@ -691,6 +707,7 @@ def _load_interaction_source_manifest(
         )
         source = str(row.get("source", "")).strip()
         status = str(row.get("provenance_status") or "").strip()
+        reason = str(row.get("reason") or "").strip()
         if not status:
             raise InputError(
                 f"Interaction source manifest explicit {family} pair {left_raw}|{right_raw} "
@@ -701,8 +718,49 @@ def _load_interaction_source_manifest(
                 f"Interaction source manifest explicit {family} pair {left_raw}|{right_raw} "
                 f"has unsupported or unresolved provenance status '{status}'."
             )
-        manifest[key] = (signature, source, status)
+        if status == "model_structural_zero":
+            if signature != ("constant", 0.0):
+                raise InputError(
+                    f"Interaction source manifest structural zero for {family} pair {left_raw}|{right_raw} "
+                    "must use numeric zero."
+                )
+            if not source:
+                raise InputError(
+                    f"Interaction source manifest structural zero for {family} pair {left_raw}|{right_raw} "
+                    "source identity must be nonblank."
+                )
+            if not reason:
+                raise InputError(
+                    f"Interaction source manifest structural zero for {family} pair {left_raw}|{right_raw} "
+                    "named reason must be nonblank."
+                )
+        else:
+            _validate_executable_interaction_source(
+                source,
+                provenance_status=status,
+                family=family,
+                pair=(left_raw, right_raw),
+            )
+        manifest[key] = (signature, source, status, reason)
     return manifest, wildcard_families
+
+
+def _validate_executable_interaction_source(
+    source: str,
+    *,
+    provenance_status: str,
+    family: str,
+    pair: tuple[str, str],
+) -> None:
+    if not source:
+        raise InputError(
+            f"Interaction provenance source for explicit {family} pair {pair[0]}|{pair[1]} must be nonblank."
+        )
+    if _NON_EVIDENCE_INTERACTION_SOURCE_RE.search(source):
+        raise InputError(
+            f"Interaction source '{source}' for explicit {family} pair {pair[0]}|{pair[1]} "
+            f"contradicts executable provenance status '{provenance_status}'."
+        )
 
 
 def _load_mixed_rel_perm(path: Path) -> dict[str, dict[str, float]]:
@@ -1755,7 +1813,13 @@ def load_parameter_set(
 ):
     """Resolve an explicit dataset path into canonical parameter records."""
 
-    from .parameters import ParameterSet, PureRecord
+    from .parameters import (
+        ConstantInteractionRecord,
+        LinearTemperatureInteractionRecord,
+        ParameterSet,
+        PureRecord,
+        StructuralZeroPolicy,
+    )
 
     labels = tuple(str(label) for label in species)
     payload = _resolve_dataset_runtime_payload(dataset_name, labels, x, T, user_options=user_options)
@@ -1777,7 +1841,16 @@ def load_parameter_set(
         )
         for index, label in enumerate(labels)
     )
-    interactions = _load_source_interactions(dataset_name, labels)
+    loaded_interactions = _load_source_interactions(dataset_name, labels)
+    interactions = []
+    interaction_policies = []
+    for item in loaded_interactions:
+        if isinstance(item, StructuralZeroPolicy):
+            interaction_policies.append(item)
+        elif isinstance(item, (ConstantInteractionRecord, LinearTemperatureInteractionRecord)):
+            interactions.append(item)
+        else:
+            raise TypeError(f"Unexpected loaded interaction type: {type(item).__name__}.")
 
     parameter_keys = {
         "MW",
@@ -1807,6 +1880,7 @@ def load_parameter_set(
     return ParameterSet.from_records(
         pure_records,
         interactions,
+        interaction_policies=interaction_policies,
         metadata=metadata,
         runtime_options=runtime_options,
     )

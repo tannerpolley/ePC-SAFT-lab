@@ -326,6 +326,23 @@ def _write_pure_source(root: Path, components: tuple[str, ...]) -> Path:
     return root
 
 
+def _write_structural_zero_manifest(
+    root: Path,
+    *,
+    value: str = "0",
+    source: str = "Source Eq. 5",
+    reason: str = "unmodified pair rule",
+) -> None:
+    binary = root / "mixed" / "binary_interaction"
+    (binary / "source_manifest.csv").write_text(
+        "parameter,component_i,component_j,value,source,provenance_status,reason\n"
+        "k_ij,Component A,Component B,0.125,Source Table 4,source_backed,\n"
+        f"l_ij,Component A,Component B,{value},{source},model_structural_zero,{reason}\n"
+        "k_hb_ij,Component A,Component B,0,Source Eq. 6,source_backed,\n",
+        encoding="utf-8",
+    )
+
+
 def test_source_interaction_loader_returns_typed_explicit_values_and_zeros(tmp_path: Path) -> None:
     root = _write_two_component_interaction_source(tmp_path / "parameters")
 
@@ -348,6 +365,71 @@ def test_source_interaction_loader_preserves_fitted_provenance(tmp_path: Path) -
 
     assert by_family["k_ij"].provenance.kind == "fitted"
     assert by_family["l_ij"].provenance.kind == "literature"
+
+
+@pytest.mark.parametrize("provenance_status", ["source_backed", "fitted"])
+@pytest.mark.parametrize(
+    "source",
+    [
+        "default zero for unpublished values",
+        "unpublished interaction value",
+        "unresolved source reference",
+        "no source reference",
+    ],
+)
+def test_source_interaction_manifest_rejects_executable_status_with_non_evidence_source(
+    tmp_path: Path,
+    provenance_status: str,
+    source: str,
+) -> None:
+    root = _write_two_component_interaction_source(
+        tmp_path / "parameters",
+        k_source=source,
+        k_provenance_status=provenance_status,
+    )
+
+    with pytest.raises(InputError, match=r"(?i)source.*contradicts.*provenance status"):
+        datasets._load_source_interactions(root, ("Component A", "Component B"))
+
+
+def test_source_interaction_loader_returns_named_structural_zero_policy(tmp_path: Path) -> None:
+    root = _write_two_component_interaction_source(tmp_path / "parameters")
+    _write_structural_zero_manifest(root)
+
+    loaded = datasets._load_source_interactions(root, ("Component A", "Component B"))
+
+    policies = [item for item in loaded if isinstance(item, parameter_model.StructuralZeroPolicy)]
+    assert len(policies) == 1
+    assert policies[0].family == "l_ij"
+    assert policies[0].reason == "unmodified pair rule"
+    assert policies[0].provenance.kind == "model_structural_zero"
+    assert not any(
+        isinstance(item, parameter_model.ConstantInteractionRecord) and item.family == "l_ij"
+        for item in loaded
+    )
+
+
+@pytest.mark.parametrize(
+    ("value", "source", "reason", "match"),
+    [
+        ("0.1", "Source Eq. 5", "unmodified pair rule", r"(?i)structural zero.*numeric zero"),
+        ("0*T+0", "Source Eq. 5", "unmodified pair rule", r"(?i)structural zero.*numeric zero"),
+        ("0", "", "unmodified pair rule", r"(?i)structural zero.*source.*nonblank"),
+        ("0", "Source Eq. 5", "", r"(?i)structural zero.*reason.*nonblank"),
+    ],
+)
+def test_source_interaction_manifest_rejects_invalid_structural_zero_rows(
+    tmp_path: Path,
+    value: str,
+    source: str,
+    reason: str,
+    match: str,
+) -> None:
+    root = _write_two_component_interaction_source(tmp_path / "parameters")
+    _write_structural_zero_manifest(root, value=value, source=source, reason=reason)
+
+    with pytest.raises(InputError, match=match):
+        datasets._load_source_interactions(root, ("Component A", "Component B"))
 
 
 @pytest.mark.parametrize(
@@ -577,17 +659,36 @@ def test_held_2012_has_complete_explicit_pair_family_records() -> None:
     root = REPO_ROOT / "analyses" / "paper_validation" / "2012_held" / "parameters"
     components = ("Br-", "Cl-", "Ethanol", "H2O", "I-", "K+", "Li+", "Methanol", "NH4+", "Na+")
 
-    records = datasets._load_source_interactions(root, components)
+    loaded = datasets._load_source_interactions(root, components)
     _manifest, wildcard_families = datasets._load_interaction_source_manifest(
         root / "mixed" / "binary_interaction" / "source_manifest.csv"
     )
 
-    assert len(records) == 135
+    records = [item for item in loaded if not isinstance(item, parameter_model.StructuralZeroPolicy)]
+    policies = [item for item in loaded if isinstance(item, parameter_model.StructuralZeroPolicy)]
+    assert len(loaded) == 135
+    assert len(records) == 47
+    assert len(policies) == 88
     assert wildcard_families == set()
     by_key = {(record.family, frozenset(record.components)): record for record in records}
-    assert by_key[("k_ij", frozenset(("H2O", "Ethanol")))].value == pytest.approx(-0.049)
-    assert by_key[("l_ij", frozenset(("H2O", "Ethanol")))].value == pytest.approx(-0.01)
-    assert by_key[("k_hb_ij", frozenset(("H2O", "Ethanol")))].value == pytest.approx(0.2)
+    fitted = {
+        ("k_ij", frozenset(("H2O", "Ethanol"))): -0.049,
+        ("k_ij", frozenset(("H2O", "Methanol"))): -0.085,
+        ("l_ij", frozenset(("H2O", "Ethanol"))): -0.01,
+        ("k_hb_ij", frozenset(("H2O", "Ethanol"))): 0.2,
+    }
+    for key, value in fitted.items():
+        assert by_key[key].value == pytest.approx(value)
+        assert by_key[key].provenance.kind == "fitted"
+        assert by_key[key].provenance.source == "Held 2012 Table 5 footnote c / Hall et al. data"
+    assert by_key[("k_ij", frozenset(("Br-", "Ethanol")))].provenance.kind == "literature"
+    assert by_key[("k_ij", frozenset(("Br-", "Cl-")))].provenance.kind == "literature"
+    assert sum(policy.family == "l_ij" for policy in policies) == 44
+    assert sum(policy.family == "k_hb_ij" for policy in policies) == 44
+    assert {policy.reason for policy in policies if policy.family == "l_ij"} == {"unmodified Lorentz rule"}
+    assert {policy.reason for policy in policies if policy.family == "k_hb_ij"} == {
+        "unmodified association-volume rule"
+    }
 
 
 def test_dataset_loading_and_runtime_serialization_share_the_typed_interaction_owner(tmp_path: Path) -> None:
@@ -608,6 +709,24 @@ def test_dataset_loading_and_runtime_serialization_share_the_typed_interaction_o
     assert direct_runtime["l_ij"].tolist() == typed_runtime["l_ij"].tolist()
     assert direct_runtime["k_hb"].tolist() == typed_runtime["k_hb"].tolist()
     assert not hasattr(datasets, "_matrix_value")
+
+
+def test_dataset_loading_partitions_structural_zero_policies_from_interaction_records(tmp_path: Path) -> None:
+    root = _write_two_component_interaction_source(tmp_path / "parameters")
+    _write_structural_zero_manifest(root)
+    _write_pure_source(root, ("Component A", "Component B"))
+
+    parameters = ParameterSet.from_dataset(
+        root,
+        ("Component A", "Component B"),
+        x=(0.4, 0.6),
+        T=298.15,
+    )
+
+    assert {record.family for record in parameters.interactions} == {"k_ij", "k_hb_ij"}
+    assert len(parameters.interaction_policies) == 1
+    assert parameters.interaction_policies[0].family == "l_ij"
+    assert parameters.interaction_policies[0].provenance.kind == "model_structural_zero"
 
 
 def test_single_component_dataset_needs_no_off_diagonal_interaction_files(tmp_path: Path) -> None:
