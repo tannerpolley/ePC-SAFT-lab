@@ -1,0 +1,114 @@
+{
+  "schema_version": "epcsaft.standalone_ce.nonideal_mea_migration.v1",
+  "lineage": {
+    "source_branch": "codex/m4-ce-nonideal-speciation-plots",
+    "source_tip_commit": "f3057e11",
+    "local_main": "main",
+    "integration_policy": "adapt_only_do_not_merge"
+  },
+  "paths": {
+    "analysis_root": "analyses/package_validation/standalone_ce",
+    "figure_root": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison",
+    "source_root": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/source",
+    "scripts_root": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts",
+    "output_root": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output"
+  },
+  "evidence_roles": [
+    "literature_observation",
+    "imported_downstream_model_snapshot",
+    "current_local_model_prediction",
+    "diagnostic_seed"
+  ],
+  "static_grid": [
+    {
+      "temperature_c": 20.0,
+      "loading_start": 0.02,
+      "loading_end": 0.795,
+      "loading_count": 161
+    },
+    {
+      "temperature_c": 40.0,
+      "loading_start": 0.005,
+      "loading_end": 0.8,
+      "loading_count": 161
+    },
+    {
+      "temperature_c": 60.0,
+      "loading_start": 0.001,
+      "loading_end": 0.8,
+      "loading_count": 161
+    },
+    {
+      "temperature_c": 80.0,
+      "loading_start": 0.001,
+      "loading_end": 0.8,
+      "loading_count": 161
+    }
+  ],
+  "animation_grid": {
+    "temperatures_c": [
+      20.0,
+      40.0,
+      60.0,
+      80.0
+    ],
+    "loadings_mol_co2_per_mol_mea": [
+      0.1,
+      0.3,
+      0.5,
+      0.7
+    ],
+    "state_count": 16,
+    "excluded_temperatures_c": [
+      0.0
+    ],
+    "exclusion_reason": "outside_approved_scope_and_unproven_at_273.15_K"
+  },
+  "capability_boundary": {
+    "public_routes": [],
+    "closed_surfaces": [
+      "reactive_speciation",
+      "reactive_lle",
+      "reactive_electrolyte_lle",
+      "cpe"
+    ],
+    "execution_owner": "epcsaft_equilibrium.workflows._run_standalone_ce_validation"
+  },
+  "globally_closed_relevant_families": {
+    "scope": "migration_global_constraints_not_analysis_capability_surface",
+    "families": [
+      "electrolyte_lle",
+      "tp_flash",
+      "multiphase"
+    ]
+  },
+  "planned_commands": [
+    {
+      "command": "uv run --no-sync python run_pytest.py analyses/package_validation/standalone_ce/tests/test_nonideal_figure_workflow.py tests/native/contracts/test_standalone_ce_gate.py tests/workflows/repo/test_project_structure.py -q",
+      "owner_task": 1,
+      "currently_available": true
+    },
+    {
+      "command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium",
+      "owner_task": 6,
+      "currently_available": true
+    },
+    {
+      "command": "uv run --no-sync python analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_nonideal_data.py",
+      "owner_task": 6,
+      "currently_available": false
+    },
+    {
+      "command": "uv run --no-sync python analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py",
+      "owner_task": 7,
+      "currently_available": true
+    }
+  ],
+  "forbidden_migration_artifacts": [
+    "analyses/paper_validation/standalone_ce",
+    "user_options.json",
+    "results/",
+    "public_reactive_imports",
+    "windows_only_commands"
+  ]
+}

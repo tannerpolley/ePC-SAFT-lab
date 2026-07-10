@@ -69,6 +69,12 @@ ANALYSIS_ROOTS = {
     "package_plot_smokes": REPO_ROOT / "analyses" / "package_validation" / "package_plot_smokes",
     "standalone_ce": REPO_ROOT / "analyses" / "package_validation" / "standalone_ce",
 }
+STANDALONE_CE_NONIDEAL_FIGURE_ROOT = (
+    ANALYSIS_ROOTS["standalone_ce"] / "figures" / "mea_reactive_speciation_oracle_comparison"
+)
+STANDALONE_CE_NONIDEAL_MIGRATION_CONTRACT = (
+    STANDALONE_CE_NONIDEAL_FIGURE_ROOT / "source" / "migration_contract.json"
+)
 MIGRATED_ANALYSIS_IDS = set(ANALYSIS_ROOTS) - {"2025_figiel"}
 CATEGORY_ROOTS = {
     REPO_ROOT / "analyses" / "paper_validation",
@@ -2143,6 +2149,18 @@ def test_migrated_analysis_metadata_uses_figure_owned_outputs() -> None:
         else:
             assert "figures: figures/<figure_id>/" + "output" in text, path
             assert "runs: figures/<figure_id>/" + "output/runs" in text, path
+
+
+def test_nonideal_mea_migration_contract_uses_current_analysis_roots() -> None:
+    contract = json.loads(STANDALONE_CE_NONIDEAL_MIGRATION_CONTRACT.read_text(encoding="utf-8"))
+    declared_paths = contract["paths"]
+
+    assert declared_paths["analysis_root"] == ANALYSIS_ROOTS["standalone_ce"].relative_to(REPO_ROOT).as_posix()
+    assert declared_paths["figure_root"] == STANDALONE_CE_NONIDEAL_FIGURE_ROOT.relative_to(REPO_ROOT).as_posix()
+    for relative_root in declared_paths.values():
+        assert (REPO_ROOT / relative_root).is_dir(), relative_root
+    assert not (STANDALONE_CE_NONIDEAL_FIGURE_ROOT / "results").exists()
+    assert not (REPO_ROOT / "analyses" / "paper_validation" / "standalone_ce").exists()
 
 
 def test_migrated_analyses_use_complete_figure_owned_roots() -> None:

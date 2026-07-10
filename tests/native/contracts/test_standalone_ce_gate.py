@@ -38,6 +38,16 @@ MEA_RETAINED_SUMMARY_PATH = (
     / "mea_ce_oracle_speciation_comparison_summary.json"
 )
 STANDALONE_CE_ANALYSIS_PATH = REPO_ROOT / "analyses" / "package_validation" / "standalone_ce" / "analysis.yaml"
+MEA_MIGRATION_CONTRACT_PATH = (
+    REPO_ROOT
+    / "analyses"
+    / "package_validation"
+    / "standalone_ce"
+    / "figures"
+    / "mea_reactive_speciation_oracle_comparison"
+    / "source"
+    / "migration_contract.json"
+)
 
 pytestmark = pytest.mark.native_contract
 
@@ -117,6 +127,18 @@ def test_standalone_ce_analysis_is_active_validation_not_a_production_claim() ->
     assert mea_retained["validation_entrypoint"] == "epcsaft_equilibrium.workflows._run_standalone_ce_validation"
     assert "public_route" not in mea_retained
     assert "ce_workflow" not in mea_retained
+
+
+def test_nonideal_mea_migration_contract_preserves_analysis_capability_boundary() -> None:
+    metadata = yaml.safe_load(STANDALONE_CE_ANALYSIS_PATH.read_text(encoding="utf-8"))
+    contract = json.loads(MEA_MIGRATION_CONTRACT_PATH.read_text(encoding="utf-8"))
+
+    assert "public_routes" not in contract
+    assert contract["capability_boundary"] == {
+        "public_routes": metadata["scope"]["public_routes"],
+        "closed_surfaces": metadata["scope"]["closed_surfaces"],
+        "execution_owner": "epcsaft_equilibrium.workflows._run_standalone_ce_validation",
+    }
 
 
 def test_standalone_ce_gate_requires_single_nlp_path() -> None:
