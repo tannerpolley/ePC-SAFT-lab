@@ -19,6 +19,9 @@
     "current_local_model_prediction",
     "diagnostic_seed"
   ],
+  "excluded_evidence_roles": [
+    "unresolved_reference_observation"
+  ],
   "static_grid": [
     {
       "temperature_c": 20.0,
