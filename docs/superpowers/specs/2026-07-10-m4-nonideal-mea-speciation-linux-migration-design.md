@@ -1,0 +1,254 @@
+# Nonideal MEA Speciation Linux Migration Design
+
+## Approval And Ownership
+
+- Approved design: live regeneration on the current typed-input contract
+- Approval date: 2026-07-10
+- Owner: `M4 - Equilibrium`
+- Package owner: `packages/epcsaft-equilibrium`
+- Analysis owner: `analyses/package_validation/standalone_ce`
+- Source branch: `codex/m4-ce-nonideal-speciation-plots`
+- Integration target: local `main`
+
+## Purpose
+
+Recover the scientifically useful nonideal MEA speciation data, scripts, and
+plots from the stale source branch without restoring its retired Windows-era
+layout, loose model options, or public reactive-speciation claim. The migrated
+workflow must run on Linux through the current typed provider contract and the
+current internal standalone-chemical-equilibrium validation owner.
+
+The migration is complete only when the retained inputs resolve without
+defaults, current local model rows are regenerated on Linux, plots are rendered
+from retained tables, and the repository still reports reactive speciation and
+reactive phase equilibrium as closed public capabilities.
+
+## Verified Starting State
+
+### Branch value
+
+The source branch retains:
+
+- nonideal MEA speciation plots at 20, 40, 60, and 80 degrees Celsius;
+- concentrated and trace views in SVG, PNG, and PDF;
+- a temperature/loadings animation, preview, and plotted-data snapshots;
+- direct measured/reference rows attributed to Bottinger, Jakobsen, and Matin;
+- Phase-2 reaction-constant and speciation source tables; and
+- scripts for nonideal data generation and rendering.
+
+### Branch incompatibilities
+
+The branch cannot be merged directly because it:
+
+- writes under the retired `analyses/paper_validation/standalone_ce` tree;
+- uses `results/` where the current analysis contract uses `output/`;
+- carries a retired `user_options.json` and a contradictory hard-coded loose
+  options mapping;
+- calls removed `ePCSAFTMixture.from_dataset(..., user_options=...)` behavior;
+- lacks complete pure-row, binary-interaction, dielectric, Born, and solvation
+  provenance under the current strict input contract;
+- records old model outputs as successful even though they were not produced
+  by the current resolved-input/native runtime; and
+- describes `reactive_speciation` as public even though current repository truth
+  keeps that route closed after the retained standalone-CE failure.
+
+### Current main truth
+
+`analyses/package_validation/standalone_ce/analysis.yaml` is authoritative for
+capability status. Its active-validation and closed-route records must survive
+the migration. Source-seeded solves, historical branch outputs, or a finite
+temperature/loading grid cannot substitute for final balance, stationarity,
+native-path, and public-admission proof.
+
+## Chosen Architecture
+
+### Current analysis layout only
+
+All migrated files live beneath:
+
+```text
+analyses/package_validation/standalone_ce/
+  figures/mea_reactive_speciation_oracle_comparison/
+    source/
+    scripts/
+    output/
+```
+
+The migration must not recreate `analyses/paper_validation/standalone_ce`, add
+redirectors, or keep duplicate old/new paths.
+
+### One typed model input
+
+The executable input consists of:
+
+1. a strict versioned `model_configuration.json`;
+2. one typed parameter graph or canonical parameter-set artifact;
+3. exact source identities matching every active record;
+4. typed temperature correlations, including the active water segment-size
+   correlation;
+5. explicit relative-permittivity, Born-diameter, solvation-factor, empirical
+   coefficient/domain, and dielectric-saturation records when selected; and
+6. explicit binary interaction records or scientifically defined structural
+   zeros with row-level provenance.
+
+The migration must distinguish literature values from fitted values. Values
+copied from the retired downstream fit cannot be relabeled as literature. If a
+required record cannot be traced through repository history or retained source
+material, execution stops at that named record. No default, inferred zero,
+fallback formulation, or compatibility wrapper is permitted.
+
+### Internal CE execution only
+
+The generator constructs the current provider `Mixture`/resolved model input
+and calls the existing internal standalone-CE validation path owned by
+`epcsaft_equilibrium.workflows`. It must not restore a public
+`reactive_speciation` import, direct solver bypass, alternate CE algorithm
+selector, or checker-only execution path.
+
+Continuation and source-seeded probes may remain diagnostic. Only the final
+native NLP/Ipopt receipt and independent balance/stationarity checks can support
+future admission, which is outside this migration.
+
+### Source and model data roles
+
+Every retained row has one explicit role:
+
+- `literature_observation`: independently retained measured/reference data;
+- `imported_downstream_model_snapshot`: model output produced outside the
+  current checkout and retained only for comparison;
+- `current_local_model_prediction`: regenerated by this Linux checkout; or
+- `diagnostic_seed`: a source-seeded or continuation aid that is not validation
+  evidence.
+
+Surnames alone are insufficient citation metadata. Literature observations must
+identify the retained bibliography/source table or remain explicitly unresolved.
+
+## Data And Plot Flow
+
+### Generation
+
+The data-generation script:
+
+1. validates the typed parameter/configuration bundle;
+2. records the exact resolved model receipt and Linux runtime identity;
+3. executes the internal CE validation grid;
+4. writes current predictions and failures to durable CSV/JSON tables;
+5. preserves imported and literature rows without overwriting them; and
+6. exits nonzero for missing scientific input, malformed receipts, or an
+   unexpected native-path failure.
+
+A scientifically rejected solve may be retained as a labeled result row. It
+must not be converted into a successful prediction or omitted from the summary.
+
+### Rendering
+
+The rendering script reads retained source/model tables only. It does not call
+the EOS, CE solver, or parameter loader. It writes same-stem SVG, PNG, and PDF
+files for each retained static figure plus the animation preview/GIF when the
+animation input table is complete.
+
+Plots must distinguish literature observations, imported downstream curves,
+and current local predictions by more than color. Titles, axes, units, legends,
+and failure annotations must remain scientifically readable in print.
+
+### MPLGallery
+
+Each discoverable plot uses its Matplotlib SVG as the gallery artifact, keeps
+the exact plotted CSV snapshot beside it, and is registered through the project
+root `.mplgallery/manifest.yaml`. Per-plot `.mpl.yaml` sidecars may remain
+render metadata but are not the discovery contract.
+
+## Linux Contract
+
+- Use `pathlib` paths rooted from the repository or analysis folder.
+- Use `uv run --no-sync python ...` for documented commands.
+- Use the current native build/runtime helper and system Ipopt policy.
+- Do not introduce drive-letter paths, backslash-only paths, PowerShell,
+  executable/DLL assumptions, Conda, or environment-specific absolute paths.
+- Retained receipts must identify Linux runtime/library ownership without
+  claiming release portability beyond the tested checkout.
+
+## Test-Driven Migration
+
+Before production migration code is written, focused tests must fail for:
+
+1. the retired `user_options.json`/loose mapping contract;
+2. unresolved or falsely classified parameter provenance;
+3. failure to resolve the strict model configuration at representative
+   temperature/composition conditions;
+4. use of the retired analysis/results paths;
+5. attempts to call a public or alternate CE route;
+6. renderer dependence on live model execution;
+7. missing plotted-data snapshots or SVG/PNG/PDF siblings; and
+8. Windows-specific path or command text in the migrated workflow.
+
+The minimal implementation then makes those contracts green. Existing
+standalone-CE balance, stationarity, capability, and closed-route tests remain
+authoritative and may not be weakened.
+
+## Validation Gates
+
+The implementation plan must select exact commands, but final integration must
+include at least:
+
+- strict model-configuration parse/resolution and receipt tests;
+- provider and equilibrium focused tests covering the input/native seam;
+- standalone-CE checker and current live-failure/closed-capability contracts;
+- generator and renderer tests;
+- project-structure and Linux-path contracts;
+- MPLGallery manifest and plot-bundle checks;
+- Ruff and strict documentation builds;
+- `git diff --check`;
+- repository-scoped cleanup; and
+- visual inspection of every regenerated plot.
+
+The final handoff renders every new or changed plot inline using absolute paths
+and includes compact real-data tables for the retained observations behind
+those plots.
+
+## Branch Integration And Publication
+
+The seven useful source-branch commits are adapted onto current `main`; the
+stale branch is not merged as history because that would resurrect deleted
+paths and false capability metadata. After the migrated content is committed
+and verified, the local source branch may be removed as superseded.
+
+The already published safe Tasks 1-8 prefix remains on `origin/main`. Local
+Task 9 commits `30bad092`, `bb4d399a`, and `3ab7f93c` stay outside any remote
+push until their 20 deferred paper-specific failures are resolved or the user
+explicitly accepts a separate publication boundary. Because current local
+`main` contains those commits in its ancestry, the nonideal migration remains
+local unless a later explicit Git-history plan separates a clean publication
+line without discarding work. This design does not authorize a force push,
+history rewrite, or divergent remote update.
+
+## Non-Goals
+
+- Opening public reactive speciation, reactive LLE, electrolyte LLE, TP flash,
+  or CPE capability.
+- Claiming that old branch outputs are current local predictions.
+- Refitting missing parameters without an independently approved regression
+  scope and traceable target contract.
+- Repairing the 20 deferred Khudaida/Gross Task 9 paper-specific failures.
+- Broadening release, wheel, or manylinux claims.
+- Treating finite sampled CE states as global phase or reaction certification.
+
+## Acceptance Criteria
+
+The design is implemented when:
+
+1. all useful branch source/data/plot work is present in the current analysis
+   layout with no retired duplicate tree;
+2. one strict typed model input resolves with traceable active records; if any
+   required record remains unverified, the implementation is blocked and is
+   not reported as a completed migration;
+3. current Linux execution produces honest model/failure tables and a resolved
+   configuration receipt;
+4. all static plots and the supported animation are regenerated from retained
+   tables and pass artifact checks;
+5. public reactive/phase capabilities remain closed;
+6. focused validation and independent review pass;
+7. the worktree is clean and superseded local branches are removed only after
+   their useful content is proven present; and
+8. remote publication, if performed, contains neither the paused Task 9 commits
+   nor known failing paper-specific work.
