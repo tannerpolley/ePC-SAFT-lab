@@ -369,10 +369,10 @@ _INTERACTION_SOURCE_FILES = {
     "k_hb_ij": ("k_hb_ij.csv", "khb_ij.csv"),
 }
 _INTERACTION_PROVENANCE_STATUS_KIND = {
-    "": "literature",
     "source_backed": "literature",
     "fitted": "fitted",
 }
+_UNRESOLVED_PROVENANCE_STATUS_PREFIX = "unresolved_"
 
 
 def _load_source_interactions(
@@ -590,6 +590,18 @@ def _validate_interaction_manifest_matrix_identity(
             raise InputError(
                 f"Interaction source manifest value does not match matrix {family} pair {left}|{right}."
             )
+    for family, matrix in matrices.items():
+        components = sorted({component for pair in matrix for component in pair})
+        for left_index, left in enumerate(components):
+            for right in components[left_index + 1 :]:
+                signature = matrix[(left, right)]
+                if signature == ("constant", 0.0):
+                    continue
+                key = (family, frozenset((left, right)))
+                if key not in manifest:
+                    raise InputError(
+                        f"Interaction matrix has unmanifested {family} pair {left}|{right}."
+                    )
 
 
 def _load_interaction_source_manifest(
@@ -599,19 +611,28 @@ def _load_interaction_source_manifest(
         raise InputError(f"Interaction source manifest '{path}' does not exist.")
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
-        fieldnames = set(reader.fieldnames or ())
+        raw_fieldnames = list(reader.fieldnames or ())
+        fieldnames = [str(fieldname).strip() for fieldname in raw_fieldnames]
+        duplicate_columns = sorted(
+            {fieldname for fieldname in fieldnames if fieldnames.count(fieldname) > 1}
+        )
+        if duplicate_columns:
+            raise InputError(
+                f"Interaction source manifest '{path}' has duplicate column(s): "
+                + ", ".join(duplicate_columns)
+                + "."
+            )
         rows = list(reader)
     for row_number, row in enumerate(rows, start=2):
         if row.get(None):
             raise InputError(f"Interaction source manifest '{path}' row {row_number} contains surplus cells.")
-    required_columns = {"parameter", "component_i", "component_j", "value", "source"}
-    allowed_columns = required_columns | {"provenance_status"}
-    missing_columns = sorted(required_columns - fieldnames)
+    required_columns = {"parameter", "component_i", "component_j", "value", "source", "provenance_status"}
+    missing_columns = sorted(required_columns - set(fieldnames))
     if missing_columns:
         raise InputError(
             f"Interaction source manifest '{path}' is missing required column(s): {', '.join(missing_columns)}."
         )
-    unknown_columns = sorted(fieldnames - allowed_columns)
+    unknown_columns = sorted(set(fieldnames) - required_columns)
     if unknown_columns:
         raise InputError(
             f"Interaction source manifest '{path}' contains unsupported column(s): {', '.join(unknown_columns)}."
@@ -631,12 +652,25 @@ def _load_interaction_source_manifest(
         if left_raw == "*":
             if family in wildcard_families:
                 raise InputError(f"Interaction source manifest has duplicate wildcard rows for {family}.")
-            wildcard_signature = _interaction_value_signature(
-                row.get("value"),
-                family=family,
-                pair=(left_raw, right_raw),
-            )
-            if wildcard_signature != ("constant", 0.0):
+            status = str(row.get("provenance_status") or "").strip()
+            if not status:
+                raise InputError(
+                    f"Interaction source manifest wildcard for {family} requires a nonblank provenance status."
+                )
+            if not status.startswith(_UNRESOLVED_PROVENANCE_STATUS_PREFIX):
+                raise InputError(
+                    f"Interaction source manifest wildcard for {family} must use an unresolved provenance status."
+                )
+            value = str(row.get("value") or "").strip()
+            if value:
+                wildcard_signature = _interaction_value_signature(
+                    value,
+                    family=family,
+                    pair=(left_raw, right_raw),
+                )
+                if wildcard_signature != ("constant", 0.0):
+                    raise InputError(f"Interaction source manifest wildcard for {family} must be explicit zero.")
+            elif status != "unresolved_parameter_family":
                 raise InputError(f"Interaction source manifest wildcard for {family} must be explicit zero.")
             wildcard_families.add(family)
             continue
@@ -656,7 +690,17 @@ def _load_interaction_source_manifest(
             pair=(left_raw, right_raw),
         )
         source = str(row.get("source", "")).strip()
-        status = str(row.get("provenance_status", "")).strip()
+        status = str(row.get("provenance_status") or "").strip()
+        if not status:
+            raise InputError(
+                f"Interaction source manifest explicit {family} pair {left_raw}|{right_raw} "
+                "requires a nonblank provenance status."
+            )
+        if status not in _INTERACTION_PROVENANCE_STATUS_KIND:
+            raise InputError(
+                f"Interaction source manifest explicit {family} pair {left_raw}|{right_raw} "
+                f"has unsupported or unresolved provenance status '{status}'."
+            )
         manifest[key] = (signature, source, status)
     return manifest, wildcard_families
 

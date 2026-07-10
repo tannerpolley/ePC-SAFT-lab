@@ -396,6 +396,64 @@ def test_source_interaction_loader_rejects_duplicate_reversed_manifest_pairs(tmp
         datasets._load_source_interactions(root, ("Component A", "Component B"))
 
 
+def test_source_interaction_manifest_requires_provenance_status_column(tmp_path: Path) -> None:
+    root = _write_two_component_interaction_source(tmp_path / "parameters")
+    path = root / "mixed" / "binary_interaction" / "source_manifest.csv"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text(
+        "\n".join(",".join(line.split(",")[:-1]) for line in lines) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(InputError, match=r"missing required column.*provenance_status"):
+        datasets._load_source_interactions(root, ("Component A", "Component B"))
+
+
+def test_source_interaction_manifest_rejects_blank_provenance_status(tmp_path: Path) -> None:
+    root = _write_two_component_interaction_source(tmp_path / "parameters")
+    path = root / "mixed" / "binary_interaction" / "source_manifest.csv"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    lines[1] = lines[1].rsplit(",", 1)[0] + ","
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    with pytest.raises(InputError, match=r"(?i)explicit k_ij pair Component A.*Component B.*nonblank.*provenance status"):
+        datasets._load_source_interactions(root, ("Component A", "Component B"))
+
+
+def test_source_interaction_manifest_rejects_duplicate_headers(tmp_path: Path) -> None:
+    root = _write_two_component_interaction_source(tmp_path / "parameters")
+    path = root / "mixed" / "binary_interaction" / "source_manifest.csv"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    lines[0] += ",provenance_status"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    with pytest.raises(InputError, match=r"duplicate.*provenance_status"):
+        datasets._load_source_interactions(root, ("Component A", "Component B"))
+
+
+def test_source_interaction_loader_rejects_unmanifested_nonzero_matrix_pair(tmp_path: Path) -> None:
+    root = _write_two_component_interaction_source(tmp_path / "parameters")
+    binary = root / "mixed" / "binary_interaction"
+    (binary / "k_ij.csv").write_text(
+        "component,Component A,Component B,Component C\n"
+        "Component A,0,0.125,0.2\n"
+        "Component B,0.125,0,0\n"
+        "Component C,0.2,0,0\n",
+        encoding="utf-8",
+    )
+    for name in ("l_ij.csv", "k_hb_ij.csv"):
+        (binary / name).write_text(
+            "component,Component A,Component B,Component C\n"
+            "Component A,0,0,0\n"
+            "Component B,0,0,0\n"
+            "Component C,0,0,0\n",
+            encoding="utf-8",
+        )
+
+    with pytest.raises(InputError, match=r"(?i)matrix.*unmanifested.*k_ij.*Component A.*Component C"):
+        datasets._load_source_interactions(root, ("Component A", "Component B"))
+
+
 def test_source_interaction_loader_rejects_invalid_matrix_dimensions(tmp_path: Path) -> None:
     root = _write_two_component_interaction_source(tmp_path / "parameters")
     (root / "mixed" / "binary_interaction" / "k_ij.csv").write_text(
