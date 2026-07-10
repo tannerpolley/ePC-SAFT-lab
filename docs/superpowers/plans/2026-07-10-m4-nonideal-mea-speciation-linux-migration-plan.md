@@ -45,8 +45,10 @@ No push, force push, remote branch deletion, or history rewrite is authorized.
 - Branch integration policy: adapt the seven unique commits; do not merge their
   retired `analyses/paper_validation/standalone_ce` paths or false capability
   metadata.
-- Task 9 boundary: local typed-input commits remain in ancestry, but the known
-  paper-specific failures stay deferred and outside this migration.
+- Task 9 boundary: the working line may contain the paused typed-input commits,
+  but the publication-safe line intentionally omits them and their known
+  paper-specific failures. Tasks 4-10 remain conditional on both a closed
+  scientific evidence gate and the typed provider contract being available.
 
 ## Source Evidence
 
@@ -425,13 +427,23 @@ repository cleanup hook passes.
 
 - [ ] **Step 4: Verify the gate**
 
+  Blocked path, including the publication-safe line that omits paused Task 9:
+
+  ```bash
+  uv run --no-sync python run_pytest.py analyses/package_validation/standalone_ce/tests/test_nonideal_figure_workflow.py tests/native/contracts/test_standalone_ce_gate.py tests/workflows/repo/test_project_structure.py -q
+  ```
+
+  Complete path, only after every evidence record closes and the typed provider
+  contract is present:
+
   ```bash
   uv run --no-sync python run_pytest.py analyses/package_validation/standalone_ce/tests/test_nonideal_figure_workflow.py packages/epcsaft/tests/api/frontend/test_model_configuration_receipt.py packages/epcsaft/tests/api/frontend/test_formulation_records.py -q
   ```
 
   Expected result when evidence closes: typed input and all blocker mutations
-  pass. Expected result when evidence remains incomplete: the analysis tests
-  pass by proving the named loud stop and absence of executable inputs.
+  pass. Expected result when evidence remains incomplete: the blocked-path
+  command passes by proving the named loud stop and absence of executable
+  inputs without depending on unpublished Task 9 files.
 
 - [ ] **Step 5: Checkpoint commit**
 

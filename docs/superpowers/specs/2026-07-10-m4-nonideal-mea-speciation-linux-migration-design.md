@@ -215,12 +215,14 @@ and verified, the local source branch may be removed as superseded.
 
 The already published safe Tasks 1-8 prefix remains on `origin/main`. Local
 Task 9 commits `30bad092`, `bb4d399a`, and `3ab7f93c` stay outside any remote
-push until their 20 deferred paper-specific failures are resolved or the user
-explicitly accepts a separate publication boundary. Because current local
-`main` contains those commits in its ancestry, the nonideal migration remains
-local unless a later explicit Git-history plan separates a clean publication
-line without discarding work. This design does not authorize a force push,
-history rewrite, or divergent remote update.
+push until their 20 deferred paper-specific failures are resolved. The user
+subsequently approved a clean publication line: preserve the current working
+tip on `codex/task9-paused`, reconstruct local `main` from `origin/main` with
+only independently verified migration commits, and push that line as a normal
+fast-forward. This preserves all local work and does not authorize a force
+push, object deletion, or divergent remote update. Because Task 3 stopped on
+unresolved evidence, the source branch remains available rather than being
+declared fully displaced.
 
 ## Non-Goals
 
