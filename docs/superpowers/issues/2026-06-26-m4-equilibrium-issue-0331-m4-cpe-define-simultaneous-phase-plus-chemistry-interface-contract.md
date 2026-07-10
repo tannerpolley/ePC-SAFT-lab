@@ -62,12 +62,22 @@ last_synced: "2026-06-26"
 
 Define future simultaneous CPE variables, constraints, blockers, and validation contract.
 
+## One-NLP Invariant
+
+Future CPE must compose phase-equilibrium constraints with the same native CE
+NLP architecture proven by #326 and #325. The contract may define simultaneous
+phase-plus-chemistry variables, constraints, blockers, continuation strategy,
+and validation gates, but it must not add a separate CE route, checker-only
+execution path, alternate solver, or public algorithm selector. No reactive
+phase route opens in this issue.
+
 ## Acceptance Criteria
 
 - [ ] Implement the issue slice described in the source plan.
 - [ ] Add or update focused tests named in the source plan for this slice.
 - [ ] Update docs, registry, capability payloads, and retained validation artifacts when this slice owns them.
 - [ ] Run the slice proof oracle plus the plan validators before handoff.
+- [ ] Prove the CPE contract reuses the #326/#325 native CE NLP block as a composable subproblem and opens no reactive phase route.
 - [ ] Preserve CE, PE, and CPE capability boundaries in user-facing text and capability payloads.
 
 ## Blocked by

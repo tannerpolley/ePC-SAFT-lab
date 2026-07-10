@@ -61,12 +61,22 @@ last_synced: "2026-06-26"
 
 Expose standalone CE/speciation API and result schema without reactive phase claims.
 
+## One-NLP Invariant
+
+The public `reactive_speciation` API and result schema must expose the #326
+standalone CE route only: activation matrix, selector contract, native
+`NlpProblem`, Ipopt adapter, and the #325 homogeneous CE block. Internal
+continuation and diagnostic strategies may support that route, but they must
+not create a second public route, solver bypass, checker-only execution path,
+or alternate algorithm selector.
+
 ## Acceptance Criteria
 
 - [ ] Implement the issue slice described in the source plan.
 - [ ] Add or update focused tests named in the source plan for this slice.
 - [ ] Update docs, registry, capability payloads, and retained validation artifacts when this slice owns them.
 - [ ] Run the slice proof oracle plus the plan validators before handoff.
+- [ ] Prove the public API and result schema report the single native NLP/Ipopt path without exposing a second CE route or solver bypass.
 - [ ] Preserve CE, PE, and CPE capability boundaries in user-facing text and capability payloads.
 
 ## Blocked by

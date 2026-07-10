@@ -65,12 +65,22 @@ The MEA validation-ladder proof is superseded by the no-oracle continuation evid
 
 Build retained analytic, charged, Ascani, MEA, Cantera, and Pope validation ladder.
 
+## One-NLP Invariant
+
+The validation ladder must prove that the #326 standalone CE route remains the
+only executable CE path: activation matrix, selector contract, native
+`NlpProblem`, Ipopt adapter, and the #325 homogeneous CE block. Continuation
+and diagnostic evidence may characterize that path, but complete mode must not
+accept checker-only, oracle-only, direct, or alternate-solver evidence as a
+replacement for final native NLP/Ipopt proof.
+
 ## Acceptance Criteria
 
 - [ ] Implement the issue slice described in the source plan.
 - [ ] Add or update focused tests named in the source plan for this slice.
 - [ ] Update docs, registry, capability payloads, and retained validation artifacts when this slice owns them.
 - [ ] Run the slice proof oracle plus the plan validators before handoff.
+- [ ] Prove complete-mode validation fails when the single native NLP/Ipopt path is missing, bypassed, or replaced by diagnostic-only evidence.
 - [ ] Preserve CE, PE, and CPE capability boundaries in user-facing text and capability payloads.
 
 ## Blocked by

@@ -61,12 +61,22 @@ last_synced: "2026-06-26"
 
 Open only standalone reactive_speciation after all strict CE gates pass.
 
+## One-NLP Invariant
+
+Activation may open only when the #326 standalone CE route remains the sole
+public executable CE path: activation matrix, selector contract, native
+`NlpProblem`, Ipopt adapter, and the #325 homogeneous CE block. Internal
+continuation may support that route, but activation must keep reactive LLE,
+reactive electrolyte LLE, and CPE routes closed and must not expose another CE
+route, algorithm selector, or solver bypass.
+
 ## Acceptance Criteria
 
 - [ ] Implement the issue slice described in the source plan.
 - [ ] Add or update focused tests named in the source plan for this slice.
 - [ ] Update docs, registry, capability payloads, and retained validation artifacts when this slice owns them.
 - [ ] Run the slice proof oracle plus the plan validators before handoff.
+- [ ] Prove activation opens only the single native NLP/Ipopt-backed `reactive_speciation` route after strict checker evidence passes.
 - [ ] Preserve CE, PE, and CPE capability boundaries in user-facing text and capability payloads.
 
 ## Blocked by
