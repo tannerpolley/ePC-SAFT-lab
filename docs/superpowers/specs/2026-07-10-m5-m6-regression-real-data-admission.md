@@ -3,7 +3,7 @@
 Milestones: `M5 - Regression`, `M6 - Validation`
 Packages: `packages/epcsaft-regression`, retained package-validation analyses
 Issues: [#193](https://github.com/ePC-SAFT/ePC-SAFT/issues/193), [#194](https://github.com/ePC-SAFT/ePC-SAFT/issues/194)
-Status: `draft for review`
+Status: `approved for milestone-owned planning`
 Last reviewed: `2026-07-10`
 
 ## Context
@@ -137,13 +137,38 @@ retained saturation pressure and saturated-liquid-density rows for a selected
 hydrocarbon case. It uses deliberately displaced valid starts, declared bounds,
 typed target rows, and one exact neutral model configuration.
 
+At each of the four training temperatures, the exact native objective preserves
+the current pure-neutral Ceres formulation with two rows:
+
+- a dimensionless phase-equilibrium row evaluated at the observed NIST
+  saturation pressure, with model value
+  `g_sat = ln(f_liquid(T, P_obs)) - ln(f_vapor(T, P_obs))`, target `0.0`,
+  residual scale `1.0`, and row weight `1/4`; and
+- a saturated-liquid-density row at the same observed `(T, P_obs)`, with model
+  value `rho_liquid_mass(T, P_obs)`, target `rho_obs` in `kg/m3`, residual
+  scale exactly `rho_obs`, and row weight `1/4`. If the native density root is
+  molar, the compiler multiplies it by the source-qualified methane molar mass
+  before comparison; this is algebraically identical to the existing relative
+  molar-density residual.
+
+Thus the weighted residuals are `0.5 * g_sat` and
+`0.5 * (rho_liquid - rho_obs) / rho_obs`, and the Ceres objective is one half
+the sum of their squares. The `1/4` row weights preserve the existing
+equal-family mean-square normalization for four rows per family; they are not
+accuracy tolerances. The pressure-related training row is not a direct
+predicted-`P_sat` residual.
+
 The retained evidence includes:
 
 - all source rows and their NIST source URLs;
 - the exact training/evaluation row partition, if a partition is used;
 - the native problem/result receipt;
 - before/after predictions for saturation pressure and liquid density at every
-  retained evaluation temperature;
+  retained evaluation temperature, obtained by running the scoped public
+  `single_component_vle` route from temperature and model input rather than by
+  reusing the observed pressure as a prediction;
+- a separate training-objective table retaining raw and weighted fugacity-
+  balance and density residuals at the four observed-pressure states;
 - per-observable residual metrics and parameter movement; and
 - plots of observed and before/after model values versus temperature.
 

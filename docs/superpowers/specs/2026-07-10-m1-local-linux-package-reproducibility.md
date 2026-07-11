@@ -2,7 +2,7 @@
 
 Milestone: `M1 - Packages`
 Issue: planned M1 tracking issue
-Status: `draft for review`
+Status: `approved for planning`
 Last synced: `2026-07-10`
 
 ## Summary

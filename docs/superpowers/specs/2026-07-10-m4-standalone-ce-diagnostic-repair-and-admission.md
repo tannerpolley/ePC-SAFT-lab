@@ -4,15 +4,17 @@ Milestone: `M4 - Equilibrium`
 Tracking issue: `#321`
 Validation issue: `#329`
 Admission issue: `#330`
-Status: `draft for review; implementation remains blocked at the scientific-input gate`
+Status: `approved for planning; #328 typed-request reconciliation precedes #329 component receipt/checker work; source-qualified classification and admission wait on M6 evidence`
 Last synced: `2026-07-10`
 
 ## Summary
 
-Complete the remaining homogeneous chemical-equilibrium work in three ordered
-stages: retain a complete failure receipt, decide and repair the proven
-canonical defect, and consider `reactive_speciation` admission only after typed
-scientific inputs and every numerical gate pass together.
+Complete the remaining homogeneous chemical-equilibrium work in five ordered
+stages: reconcile the typed constructor request in #328, finish the generic
+component receipt/checker contract in #329, build the
+source-qualified M6 evidence bundle, classify or repair the source-qualified
+M4 outcome, and consider `reactive_speciation` admission only after every
+numerical gate passes together.
 
 This merges Tasks 13-14 and only the standalone-speciation slice of Task 15.
 The historical CE foundation remains in
@@ -55,9 +57,13 @@ this spec governs its remaining diagnostic, repair, and admission work.
 2. Retain primitive values needed to reproduce every continuation stage and
    independently recompute physical and KKT acceptance.
 3. Separate generic CE algorithm correctness from nonideal MEA validation.
-4. Select the root-cause owner from evidence before changing code.
-5. Repair only that owner while preserving the one-NLP invariant.
-6. Admit standalone speciation only through the selector and canonical result
+4. Reconcile #328's request schema with constructor-configured
+   `Equilibrium` before closing #329.
+5. Complete #329 from component evidence without waiting on M6.
+6. Select the source-qualified outcome and root-cause owner from evidence
+   before changing code.
+7. Repair only that owner while preserving the one-NLP invariant.
+8. Admit standalone speciation only through the selector and canonical result
    path after typed inputs, source evidence, and numerical gates pass.
 
 ## Non-Goals
@@ -84,35 +90,15 @@ correctness without claiming nonideal MEA validation.
 
 ### Separate Diagnostic Correctness From Scientific Admission
 
-Selected. Generic diagnostics and a proven core repair may proceed on component
-fixtures. Named nonideal MEA validation and public admission remain blocked by
-the complete typed source-input graph.
+Selected. After #328 establishes the typed constructor request, generic
+diagnostics proceed on component fixtures and complete #329.
+Named nonideal MEA validation then runs in an M6 leaf, followed by a separate
+M4 source-classification or defect leaf. Public admission remains blocked by
+that chain.
 
 ## Selected Design
 
-### Gate A: Scientific-Input Readiness
-
-The existing
-`2026-07-10-m4-nonideal-mea-speciation-linux-migration-design.md` is the
-canonical source ledger, typed-input readiness design, Linux execution, and
-source/model artifact contract for the nonideal MEA case. This spec does not
-create a second ledger or plot migration. M6 owns closure of source/artifact
-evidence; M4 consumes the accepted receipt for diagnostics and admission.
-
-A nonideal admission run requires one immutable receipt containing:
-
-- configuration schema/source, parameter-set identity, units, and species order;
-- every active pure parameter, correlation domain, interaction value, and
-  justified structural zero;
-- reaction stoichiometry, independent basis, conservation/charge basis,
-  equilibrium-constant correlation, standard state, and conversion;
-- state conditions, feed basis, evaluated correlations, and exact native map.
-
-Missing, conflicting, out-of-domain, or historical-only values stop before
-native dispatch. Absence of the executable JSON inputs is the correct blocked
-state while the evidence ledger remains open.
-
-### Gate B: Complete Diagnostic Receipt
+### Gate A: Component Receipt And Independent Checker
 
 Compare the required schema with diagnostics already delivered by #382-#402;
 add only proven gaps. The versioned retained receipt records:
@@ -129,23 +115,56 @@ add only proven gaps. The versioned retained receipt records:
   metrics plus exact acceptance/rejection gate.
 
 Norms do not replace primitive arrays. Labeled dimensions and stable hashes
-make the artifact independently checkable and reviewable.
+make the artifact independently checkable and reviewable. An independent
+component checker reconstructs the physical and KKT quantities without calling
+the production solver. After #328 closes, this gate completes #329 and does
+not depend on M6.
 
-### Gate C: Root-Cause Decision
+### Gate B: Scientific-Input And Evidence Readiness
 
-An independent owner recomputes conservation, charge, affinities,
-complementarity, and unscaled KKT stationarity from the receipt. Selected
-analytic/CppAD derivatives are compared with bounded numerical perturbations at
-interior points.
+The existing
+`2026-07-10-m4-nonideal-mea-speciation-linux-migration-design.md` is the
+canonical source ledger, typed-input readiness design, Linux execution, and
+source/model artifact contract for the nonideal MEA case. This spec does not
+create a second ledger or plot migration. M6 owns closure of source/artifact
+evidence and its evidence-completeness checker; M4 consumes the completed
+receipt for later classification. A scientifically rejected solve may complete
+M6 evidence while remaining ineligible for admission.
+
+A nonideal admission run requires one immutable receipt containing:
+
+- configuration schema/source, parameter-set identity, units, and species order;
+- every active pure parameter, correlation domain, interaction value, and
+  justified structural zero;
+- reaction stoichiometry, independent basis, conservation/charge basis,
+  equilibrium-constant correlation, standard state, and conversion;
+- state conditions, feed basis, evaluated correlations, and exact native map.
+
+Missing, conflicting, out-of-domain, or historical-only values stop before
+native dispatch. Absence of the executable JSON inputs is the correct blocked
+state while the evidence ledger remains open.
+
+### Gate C: Source-Qualified Classification Or Defect Leaf
+
+After the M6 evidence-completeness checker passes, a separate M4 leaf matches
+the M3 input, M4 runtime, and retained receipt fingerprints, then recomputes
+conservation, charge, affinities, complementarity, and unscaled KKT
+stationarity from the source-qualified receipt. Selected analytic/CppAD
+derivatives are compared with bounded numerical perturbations at interior
+points.
 
 The review records one outcome:
 
-- `input_blocked`: no formulation repair;
+- `admission_candidate`: every source-qualified numerical gate passes;
+- `source_qualified_rejection`: evidence is complete, the solve is rejected,
+  and no implementation owner has been proven;
 - `diagnostic_contract_defect`: repair receipt/checker only;
 - `canonical_formulation_defect`: add one red test and repair its owner;
 - `not_reproduced`: resolve build/input identity before repair.
 
-Only the third outcome creates a bug implementation slice.
+Only `canonical_formulation_defect` creates a Bug implementation slice, and it
+blocks this classification leaf until a fresh run is reclassified. Only
+`admission_candidate` can make #330 dependency-ready.
 
 ### Gate D: Smallest Canonical Repair
 
@@ -157,8 +176,9 @@ defective path is removed rather than retained behind a fallback.
 
 ### Gate E: Reactive-Speciation Admission
 
-Issue #330 remains the sole admission gate. It requires Gates A-D, source/model
-tables and any required comparison plot, fresh native/input receipts, and all
+Issue #330 remains the sole admission gate. It requires Gates A-D, an
+`admission_candidate` classification, source/model tables and any required
+comparison plot, fresh native/input receipts, and all
 focused/default/confidence gates.
 
 Admission uses constructor-configured `epcsaft_equilibrium.Equilibrium`, the
@@ -174,19 +194,28 @@ Only `reactive_speciation` may change. All coupled phase families stay closed.
 | CE formulation, NLP, selector, diagnostics, result | M4, `packages/epcsaft-equilibrium` |
 | Typed model configuration and resolved native input | M3, `packages/epcsaft` public contract |
 | Nonideal MEA source ledger and retained model comparison | M6 evidence using the existing nonideal-MEA design |
+| Source-qualified classification or defect routing | Separate M4 leaf after M6 evidence completion |
 | Standalone admission | M4 issue #330 |
 | Reactive phase coupling | M4 issues #331, #372, and #376; outside this spec |
 
 ```text
-source/fitted/formulation records -> typed M3 resolved input
--> typed M4 chemical-system request -> activation selector
--> one CE NlpProblem/Ipopt solve -> complete receipt
--> independent physical/KKT check -> canonical result
--> internal validation OR admitted reactive_speciation
+#328 M4 typed constructor request
+-> #329 M4 component receipt/primitives/checker
+-> M6 source/fitted/formulation evidence and typed M3 resolved input
+-> separate M4 source-qualified classification or defect leaf
+-> #330 selector admission
 ```
 
 Component fixtures enter only at the typed CE request and carry a
 `component_evidence` classification that cannot enter admission evidence.
+In GitHub native dependency terms, preserve the live #329 `blocked_by` #328
+edge. The M6 leaf is `blocked_by` #329, the later
+M4 classification leaf is `blocked_by` M6, and #330 is `blocked_by` that leaf
+and #328. Issue #329 itself is not blocked by M6.
+Tracker publication must remove `status:ready` from #329, apply
+`status:blocked` while #328 is open, and synchronize the #329 mirror and M4
+milestone row. The normal readiness reconciler may restore `status:ready` only
+after all native blockers close.
 
 ## Loud Errors And Stop Gates
 
@@ -201,7 +230,10 @@ seed supplied completion, or selector/result/evidence ownership is incomplete.
 
 - Mutation tests remove each receipt/input family and require loud rejection.
 - Receipt tests verify labels, shapes, hashes, and every continuation trial.
-- Independent tests reconstruct balances, affinities, complementarity, and KKT.
+- Independent component tests reconstruct balances, affinities,
+  complementarity, and KKT without any M6 input.
+- The later source-qualified M4 test consumes the separately completed M6
+  evidence receipt and records one classification before #330 runs.
 - Existing ideal/EOS cases remain component tests; they never replace nonideal
   source evidence.
 - Focused proof includes:
@@ -212,9 +244,11 @@ seed supplied completion, or selector/result/evidence ownership is incomplete.
   uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete
   ```
 
-The last command remains nonzero until the scientific case genuinely passes.
-Admission additionally requires fresh build, docs, Ruff, diff, cleanup, and
-independent thermodynamic/code review.
+The component receipt checker is the completion oracle for #329. The last
+command remains nonzero until the later source-qualified classification is
+`admission_candidate`; an evidence-complete but scientifically rejected M6 run
+does not make it pass. Admission additionally requires fresh build, docs, Ruff,
+diff, cleanup, and independent thermodynamic/code review.
 
 ## Cutover
 
@@ -238,13 +272,17 @@ independent thermodynamic/code review.
 
 ## Execution Gates
 
-1. Source owners must close the input ledger; M4 cannot choose values.
-2. Gate C must identify the root-cause owner before an implementation bug is
-   marked ready.
-3. Issue #328 must reconcile its request schema with constructor-configured
-   `Equilibrium` before #330.
-4. The evidence owner must identify complete literature observations and domain;
+1. Issue #328 closes the typed constructor-request prerequisite.
+2. Gate A then completes #329 independently from source-input readiness.
+3. The M6 source/input/evidence leaf is blocked by #329 and M4 cannot choose
+   its values.
+4. The separate M4 Gate C leaf is blocked by the M6 evidence leaf and must
+   identify the source-qualified classification before an implementation Bug
+   is marked ready.
+5. The evidence owner must identify complete literature observations and domain;
    imported downstream curves alone are insufficient.
+6. Issue #330 is blocked by Gate C and #328; do not attach M6 as a blocker of
+   all #329 work.
 
 ## Decision Ledger
 
@@ -258,3 +296,4 @@ independent thermodynamic/code review.
 | Repair | Failure class does not identify owner | Independent review selects owner | Selected for review |
 | Acceptance | Solver status is insufficient | Require unscaled physical/KKT proof | Selected for review |
 | Interface | Task 15 requires selector ownership | Admit only through canonical `Equilibrium` workflow | Selected for review |
+| Dependency direction | Live tracker state and component diagnostics do not require the nonideal bundle | #328 -> #329 -> M6 evidence -> separate M4 classification/defect leaf -> #330 | Selected for review |

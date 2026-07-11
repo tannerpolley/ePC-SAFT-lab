@@ -2,7 +2,7 @@
 
 Milestones: `M0`, `M1`, `M3`, `M4`, `M5`, `M6`
 Packages: provider, equilibrium, regression, and repository validation
-Status: `draft for review`
+Status: `approved for milestone-owned planning`
 Last reviewed: `2026-07-10`
 
 ## Context
@@ -64,7 +64,7 @@ the active program unless later requested.
 | 19. characterization and size gates | **Verified: sane but partly complete.** Provider size gating and M4 ownership maps already exist. Replace a blunt absolute line limit with a committed baseline, no-growth rule, ratchet-on-shrink, and owner/ADR exception. | M0 governance with package-owned maps | New M0 characterization/ratchet spec and issue; PR #203 and closed #362 are existing evidence. | Precedes behavior-moving decomposition; maps update after Tasks 9-15 stabilize. |
 | 20. equilibrium decomposition | **Verified: relevant.** Build on the selector and canonical result builder; do not recreate them. The May 27 cleanup plan is stale where it calls closed routes production. Decompose only behind characterized contracts. | M4 / equilibrium | New M4 canonical-owner decomposition spec/issue; ADR 0003; closed shared-contract leaf #362. | Leaf-level dependencies use the M0 ratchet and only the active correctness issue for each touched path; the whole tracker is not blocked by #361. |
 | 21. regression and dataset decomposition | **Verified: invalid as one cross-package task.** Fold provider data/provenance/lookup separation into Task 9 and regression targets/compiler/results/persistence separation into Tasks 10-11. | M3 provider; M5 regression | M3 and M5 specs in this reconciliation; reuse #193 for M5. | Occurs during each contract cutover, after characterization; no standalone issue. |
-| 22. full proof and plan retirement | **Verified: closeout is relevant, but plan deletion is wrong.** Run only active local package, scientific, docs, Linux-build, diff, cleanup, and review gates. Retain the July 9 spec/plan, mark them complete, and link durable receipts. | M0 integration | New M0 closeout spec/issue; #194 owns scientific evidence; new M1 issue owns local Linux proof; broad #195 stays deferred. | Blocked by every active domain group. Closeout cannot substitute for an unfinished package task. |
+| 22. full proof and plan retirement | **Verified: closeout is relevant, but plan deletion is wrong.** Run active local package, scientific, docs, Linux-build, diff, cleanup, and review gates. Gross/Sadowski Figures 2-9 remains an active M6 refresh because current public bubble/dew capability rows and registered confidence lanes consume it; unrelated paper bundles remain deferred. Retain the July 9 spec/plan, mark them complete, and link durable receipts. | M0 integration plus focused M6 public-route evidence | New M0 closeout spec/issue; new focused M6 Gross public bubble/dew evidence spec/leaf under #194; new M1 issue owns local Linux proof; broad #195 stays deferred. | Blocked by every active domain group and the focused Gross public-route receipt. Closeout cannot substitute for an unfinished package or capability-evidence task. |
 
 ## Selected Design
 
@@ -94,6 +94,10 @@ the active program unless later requested.
    and tracker from
    [the validation-correctness closeout spec](2026-07-10-m0-validation-correctness-program-closeout.md),
    retaining the source program documents.
+10. **M6 Gross public bubble/dew evidence refresh:** focused prerequisite of
+    Task 22 because current public capability rows cite Figures 2-9. Use
+    [the Gross public-route evidence spec](2026-07-10-m6-gross-2002-public-bubble-dew-evidence-refresh.md)
+    and its M6 plan; keep all unrelated paper repair deferred.
 
 ## Alternatives Considered
 

@@ -3,7 +3,7 @@
 Milestone: `M5 - Regression`
 Package: `packages/epcsaft-regression`
 Issue: [#193](https://github.com/ePC-SAFT/ePC-SAFT/issues/193)
-Status: `draft for review`
+Status: `approved for planning`
 Last reviewed: `2026-07-10`
 
 ## Context

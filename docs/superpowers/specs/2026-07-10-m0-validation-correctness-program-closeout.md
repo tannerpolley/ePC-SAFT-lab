@@ -2,7 +2,7 @@
 
 Milestone: `M0 - Governance`
 Issue: planned M0 closeout issue
-Status: `draft for review`
+Status: `approved for planning`
 Last reviewed: `2026-07-10`
 
 ## Context
@@ -29,6 +29,11 @@ deleted as a completion shortcut.
 - scripts/dev/validation_registry.py defines named repository and equilibrium
   validation lanes, including activation generation and strict Gross and NIST
   production checkers.
+- The public associating `bubble_pressure` and `dew_pressure` rows currently
+  cite the Gross/Sadowski 2002 Figures 2-9 retained bundle. The focused M6
+  refresh of that exact public-route evidence is therefore an active closeout
+  prerequisite; it is not part of the deferred-paper list while those routes
+  remain exposed.
 - M6 owns executable literature, plot, capability, and checker evidence.
 - M1 owns monorepo package layout, extension boundaries, and local Linux
   build/install proof. Existing M1 work proves useful foundations but does not
@@ -52,7 +57,9 @@ deleted as a completion shortcut.
    milestone pages with the same final state.
 6. Retain the source program documents, mark them complete, and link their
    durable replacement rules and receipts.
-7. Finish with a clean Git worktree and an independently reviewed handoff.
+7. Finish with a clean Git worktree, an independently reviewed handoff, and a
+   closeout commit identity recorded outside that commit without
+   self-reference.
 
 ## Non-Goals
 
@@ -92,7 +99,8 @@ all blockers to be resolved, and records the exact final repository state.
 The final machine-readable closeout receipt contains:
 
 - schema version and stable program ID;
-- source specification, plan, final commit, and branch;
+- source specification, plan, tested `proof_input_commit`, and branch;
+- canonical closeout issue identity used for the later external commit record;
 - M3 provider/model-input completion receipt;
 - M4 equilibrium correctness, admission, and decomposition receipts;
 - M5 regression correctness, evidence, and decomposition receipt;
@@ -106,6 +114,12 @@ Each child receipt records its milestone, package, issue, commit, commands,
 environment, result, and retained artifact paths. M0 references those facts; it
 does not copy scientific tables or reclassify package capability records.
 
+The `proof_input_commit` is the clean integrated commit whose package code,
+child receipts, and selected proof commands are accepted before the final
+status-only documentation change. The tracked receipt does not contain a
+`closeout_commit` field: a commit cannot contain its own SHA without changing
+that SHA.
+
 ### M6 scientific receipt
 
 M6 records:
@@ -114,6 +128,9 @@ M6 records:
 - fresh native-source identity for strict native checkers;
 - the exact active M6 evidence lanes backing admitted or explicitly in-scope
   capabilities, with source/model tables, plots, and numerical receipts;
+- an accepted M6 Gross/Sadowski Figures 2-9 public bubble/dew evidence-refresh
+  receipt, or a separately reviewed M4 change that removes/replaces those
+  capability evidence rows before closeout;
 - explicit closed disposition for any non-admitted family;
 - independent thermodynamic and code-review verdicts.
 
@@ -137,15 +154,24 @@ M1 records:
 This receipt is local build/install evidence. External publishing and
 downstream release choreography remain separate release work.
 
-### M0 closeout record
+### M0 closeout record and commit identities
 
 M0 writes a durable receipt under the M0 milestone registry and a human-readable
-summary in the M0 milestone documentation. Both identify the final commit and
-link every child receipt.
+summary in the M0 milestone documentation. Both identify the tested
+`proof_input_commit`, the canonical closeout issue, and every child receipt.
 
 The source specification and plan receive a Complete status block naming the
-completion date/commit, M0 receipt, grouped replacement artifacts, and their
-historical rather than active-queue role.
+completion date, tested proof-input identity, M0 receipt, grouped replacement
+artifacts, and their historical rather than active-queue role.
+
+After those tracked closeout files are committed, the resulting
+`closeout_commit` SHA is recorded in the canonical GitHub closeout issue and in
+the final handoff. A separate live reconciliation verifies that the externally
+recorded SHA exists, is descended from `proof_input_commit`, changes only the
+declared closeout files, and matches the clean local `HEAD`. This post-commit
+record does not rewrite the tracked receipt and therefore cannot be
+self-referential. If external tracker mutation is not authorized or available,
+the process stops at `proof_complete` and does not claim final closeout.
 
 ## Ownership
 
@@ -165,27 +191,34 @@ milestone-owned issues; it does not absorb their file scope.
 ## Interfaces
 
 Receipts use versioned structured data with required fields for identity,
-commands, environment, outputs, artifacts, and result. References use
-repository-relative paths and immutable commits.
+commands, environment, outputs, artifacts, result, `proof_input_commit`, and
+canonical closeout issue. References use repository-relative paths and
+immutable commits. `closeout_commit` is deliberately excluded from tracked
+receipt fields and is validated through the separate external record.
 
 The closeout validator rejects unknown schemas or result states, missing
 identities or artifacts, duplicate ownership, stale native-source identity,
 uncollected proof nodes, missing plotted source data, incomplete capability
-evidence, and any complete status with a blocker.
+evidence, an absent `proof_input_commit`, any tracked self-referential
+`closeout_commit` field, and any complete status with a blocker. The separate
+live reconciler rejects a missing or mismatched external closeout record.
 
 ## Data Flow
 
 1. Each prerequisite milestone issue produces its owned receipt at an accepted
    commit.
-2. The M0 validator loads the receipt graph and verifies paths, identities,
-   issue relationships, and results.
-3. Canonical validation lanes rerun against the final integrated commit.
+2. M0 integrates the accepted children and creates one clean
+   `proof_input_commit`.
+3. The M0 validator loads the receipt graph and verifies paths, identities,
+   issue relationships, results, and selected proof at that commit.
 4. M6 inspects scientific artifacts and M1 verifies isolated Linux artifacts.
 5. M0 reconciles docs, ADRs, capabilities, milestone pages, and issue
-   readiness.
-6. The source program documents are marked complete and linked to the accepted
-   graph.
-7. Final cleanup and Git-state checks run before the handoff.
+   readiness, then marks the source program documents complete in the working
+   tree.
+6. Documentation/static/cleanup proof passes and those declared closeout-only
+   files are committed once.
+7. The resulting `closeout_commit` is recorded in the canonical GitHub issue;
+   separate live reconciliation verifies it without editing tracked files.
 
 ## Error Handling
 
@@ -197,11 +230,15 @@ evidence, and any complete status with a blocker.
   scope changes require a reviewed decision.
 - M0 never edits child numerical results or substitutes a new default.
 - Cleanup never removes unowned work, stashes, or retained evidence.
+- A missing external `closeout_commit` record leaves the state
+  `proof_complete`; it is not represented by guessing a SHA in a tracked file.
 
 ## Stop Gates
 
 - All issues selected into the active program graph are complete at the final
-  integrated commit; deferred paper bundles are listed but are not blockers.
+  integrated commit. Gross/Sadowski Figures 2-9 evidence backing currently
+  exposed bubble/dew routes is active, while Khudaida and paper work unrelated
+  to an exposed capability may remain listed as deferred and nonblocking.
 - M6 scientific/capability proof has fresh native identity.
 - M1 Linux proof covers every declared local combination on the active Python
   runtime.
@@ -212,18 +249,26 @@ evidence, and any complete status with a blocker.
 - No required plot, source table, checker receipt, or issue dependency is
   missing.
 - Git status is clean after repository-scoped cleanup.
+- The external tracker records the actual closeout commit and the separate
+  reconciliation verifies it against local `HEAD`.
 
 ## Testing
 
 - Receipt-schema mutation tests for missing/stale records, artifacts, proof
-  nodes, blockers, and false complete states.
+  nodes, blockers, false complete states, absent proof-input identity, and a
+  forbidden tracked closeout-commit field.
+- External-record tests reject a nonexistent SHA, wrong ancestry, changes
+  outside the declared closeout-only files, and a SHA different from local
+  `HEAD`.
 - Bare and official full collection parity.
 - Full, confidence, equilibrium-confidence, regression, integration, and docs
   validation lanes as registered by the repository.
 - Activation generation and every strict checker backing an exposed
   capability.
-- Only the paper-analysis lanes selected by the active M6 issue graph; deferred
-  Khudaida, Gross, and other non-admitted bundles remain explicit follow-ups.
+- Only the paper-analysis lanes selected by the active M6 issue graph. This
+  includes the focused Gross/Sadowski Figures 2-9 refresh required by current
+  bubble/dew capability evidence; deferred Khudaida, Gross work unrelated to
+  exposed routes, and other non-admitted bundles remain explicit follow-ups.
 - M1 artifact matrix, isolated installs, ELF/runtime-path checks, and the active
   Python-runtime proof.
 - Ruff format/check, strict Sphinx, shell and structured-data validation,
@@ -237,10 +282,12 @@ requires native freshness.
 1. Create the M0 tracker with dependencies on every grouped milestone issue.
 2. Add the receipt schema and fail it against incomplete program state.
 3. Accept M6 and M1 child receipts only after their own issue gates pass.
-4. Run the integrated proof and independent reviews.
+4. Commit the integrated input state, record its SHA as
+   `proof_input_commit`, and run the integrated proof and independent reviews.
 5. Move durable rules into canonical docs/tests, then mark the source
-   specification and plan Complete and link the final receipt.
-6. Preserve those documents, reconcile tracker readiness, and report the clean,
+   specification and plan Complete and link the proof receipt.
+6. Commit only the declared closeout files, record that actual SHA in the
+   external closeout issue, reconcile it live, and report the clean,
    no-publication handoff.
 
 ## Risks
@@ -253,14 +300,18 @@ requires native freshness.
   agreement across declarations, execution, and evidence, not maximum feature
   breadth.
 - Old documents may look active. Control: prominent Complete status and links.
+- A tracked receipt cannot name its own containing commit. Control: bind proof
+  to `proof_input_commit`, record the later closeout commit externally, and
+  reconcile ancestry and changed paths after the commit exists.
 - Local Linux success may be misrepresented as publication support. Control:
   M1 receipt scope is explicit and external release work stays separate.
 
 ## Closeout-Time Facts
 
 No material closeout decision remains. The implementation plan will record the
-final issue numbers, exact accepted commit, and measured artifact identities
-produced by the milestone-owned proof runs.
+final issue numbers, exact `proof_input_commit`, canonical external closeout
+record, and measured artifact identities produced by the milestone-owned proof
+runs.
 
 ## Decision Ledger
 
@@ -272,4 +323,5 @@ produced by the milestone-owned proof runs.
 | Use M1 for local Linux proof | M1 owns package layout, extension boundaries, and install proof | M0 consumes the accepted local Linux receipt | M1 |
 | Accept evidence-backed closed states | Public admission requires complete selector and scientific proof | Closed, aligned capability state can complete | M4/M6 |
 | Retain source documents | Explicit user direction supersedes earlier deletion wording | Mark Complete and link receipts; never delete | M0 |
+| Avoid commit self-reference | A commit SHA changes when tracked receipt content changes | Store `proof_input_commit`; record `closeout_commit` externally after commit | M0 |
 | Keep publication separate | Local correctness proof is not a release event | No PyPI or downstream publication in closeout | M0/M1 |

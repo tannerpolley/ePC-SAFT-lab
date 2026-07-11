@@ -3,7 +3,7 @@
 Milestone: `M3 - EOS`
 Package: `packages/epcsaft`
 Issue: planned M3 tracking issue, `M3: establish versioned state-resolved model input and receipts`
-Status: `draft for review`
+Status: `approved for planning`
 Last reviewed: `2026-07-10`
 
 ## Context

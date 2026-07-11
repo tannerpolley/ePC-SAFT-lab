@@ -2,7 +2,7 @@
 
 Milestone: `M0 - Governance`
 Issue: planned M0 tracking issue
-Status: `draft for review`
+Status: `approved for planning`
 Last reviewed: `2026-07-10`
 
 ## Context
@@ -44,8 +44,9 @@ structural debt downward as package work creates real boundaries.
    resolution, native dispatch, result construction, and evidence.
 3. Govern oversized production files through deterministic baselines,
    no-growth checks, and ratchet-on-shrink updates.
-4. Require every oversized-file exception to name its package owner and either
-   an active decomposition issue or an accepted ADR.
+4. Require every oversized-file exception to name its package owner and a
+   locally resolvable accountability record for either an active decomposition
+   issue or an accepted ADR.
 5. Fold provider data ownership into the M3 typed-model-input program and
    regression ownership into the M5 correctness and evidence program.
 6. Make decomposition preserve post-correction behavior and capability state.
@@ -111,10 +112,12 @@ A milestone-owned machine-readable index records:
 - schema version;
 - package and milestone;
 - path to each package-owned ownership source;
+- path to the versioned local accountability snapshot;
 - oversized production file path;
 - measured baseline line count;
 - package owner;
-- active decomposition issue, or accepted ADR and rationale;
+- stable accountability ID for an active decomposition issue, or an accepted
+  ADR and rationale;
 - maximum allowed line count, initially equal to the accepted baseline.
 
 Repository validation applies these rules on every run:
@@ -130,6 +133,32 @@ Repository validation applies these rules on every run:
 
 This deterministic baseline check does not depend on local branch names or an
 available Git merge base.
+
+### Local accountability snapshot and live reconciliation
+
+The pure repository gate does not query GitHub. A separate versioned M0
+snapshot records each stable accountability ID and enough local evidence to
+resolve it deterministically:
+
+- `kind`: `github_issue` or `adr`;
+- canonical identifier, such as `github:ePC-SAFT/ePC-SAFT#<number>` or
+  `adr:<number>`;
+- owning milestone and package;
+- local issue-mirror path or ADR path;
+- recorded issue state or accepted ADR state; and
+- last live-reconciliation date for GitHub issue records.
+
+For an issue record, the pure validator resolves the local mirror and verifies
+that its issue number, canonical URL, milestone, package, and recorded state
+match the snapshot. For an ADR, it resolves the tracked ADR path and accepted
+identifier. An oversized-file record references only one of these stable local
+IDs; free-form issue text is not accepted.
+
+A separate explicit reconciliation command compares GitHub issue records with
+the live tracker and reports snapshot/mirror drift. It is not called by the
+pure validator, does not make routine repository validation network-dependent,
+and never rewrites the snapshot automatically. A reviewed snapshot/mirror
+update is required before activation when live state has changed.
 
 ## Ownership
 
@@ -154,25 +183,34 @@ can be inspected in repository validation.
 
 The ownership-record and ratchet-index schemas are versioned. Unknown fields,
 duplicate record IDs, missing owners, missing referenced paths, and conflicting
-public owners are validation errors.
+public owners are validation errors. The accountability snapshot is versioned
+separately, and the pure validator rejects missing snapshot IDs, duplicate
+canonical identifiers, mirror/record disagreement, and unresolved ADR paths.
 
 ## Data Flow
 
-1. A package declares its authoritative ownership source in the M0 index.
-2. Repository validation loads each source and checks schema and uniqueness.
-3. Characterization tests exercise the public or internal route named by the
-   record and compare its resolved payload, native dispatch, result builder,
-   and proof identity with the declared owners.
-4. The size validator measures tracked production files against the ratchet
-   index.
-5. A domain decomposition plan consumes the characterized records, updates one
-   owner at a time, and ratchets the affected baseline after verification.
+1. M0 lands the versioned schema, pure validator, and local-accountability
+   contract without activating new cross-package baselines.
+2. Each package writes and tests its authoritative ownership records against
+   that schema; M4 completes its characterization records before M0 activation.
+3. M0 records the characterized package sources, measured baselines, and
+   locally reconciled accountability IDs, then activates the shared gate.
+4. Repository validation loads each source, checks schema and uniqueness, and
+   measures tracked production files against the activated index.
+5. Only after activation does a domain decomposition plan update one owner at
+   a time and ratchet the affected baseline after verification.
+
+This is the required acyclic order: M0 schema/validator -> package
+characterization, including M4 -> M0 activation -> M4 extraction.
 
 ## Error Handling
 
 - Missing or conflicting ownership fails with exact record and path details.
 - A growth violation reports current count, permitted count, owner, and
-  governing issue or ADR.
+  governing local accountability ID.
+- Snapshot or mirror drift reports the exact canonical issue/ADR identifier
+  and differing fields; only the separate live command reports live GitHub
+  drift.
 - The validator never updates baselines automatically.
 - A missing scientific proof cannot be replaced by a structural test.
 - A known closed capability remains closed; structural cleanup never changes
@@ -184,8 +222,10 @@ public owners are validation errors.
   accepted.
 - Do not snapshot M5 regression numerics until Tasks 10 through 12 establish
   the problem actually solved and its admitted evidence.
-- Do not decompose M4 equilibrium before its scientific/certification
-  prerequisites and package characterization gate pass.
+- Do not activate M4 structural baselines until its ownership characterization
+  records pass the M0 schema.
+- Do not decompose M4 equilibrium before the shared M0 gate is activated and
+  its scientific/certification prerequisites pass.
 - Stop if an extraction would require two live owners, a compatibility
   forwarder, or a capability change.
 - Stop when a numerical mismatch cannot be explained by an intentional,
@@ -197,6 +237,10 @@ public owners are validation errors.
   status values.
 - Mutation tests grow an oversized file, omit its issue or ADR, and retain a
   stale higher baseline after shrink; every mutation must fail.
+- Accountability mutations reject an unknown stable ID, mismatched local
+  mirror, duplicate canonical identifier, and missing ADR path.
+- Live-reconciliation tests use recorded tracker responses and prove that live
+  drift is reported separately without changing the snapshot.
 - Package characterization tests prove public entry point to native owner to
   result owner to evidence identity.
 - Existing package confidence and strict scientific checkers remain the
@@ -207,15 +251,18 @@ public owners are validation errors.
 
 1. Record PR #203 and closed #362 as foundations, not unfinished greenfield
    work.
-2. Introduce the M0 schemas and initial accepted baselines without weakening
-   the current provider gate.
-3. Fold the M3 ownership slice into the Task 9 typed-model-input spec and plan.
-4. Fold the M5 ownership slice into the Tasks 10 through 12 correctness and
-   evidence spec and plan, tracked by issue #193.
-5. Execute M4 characterization and decomposition through its dedicated M4
-   specification.
-6. Replace package-specific size checks only after the shared validator proves
+2. Introduce the M0 schemas, pure validator, and local-accountability contract
+   without activating cross-package baselines or weakening the current
+   provider gate.
+3. Fold the M3 ownership slice into the Task 9 typed-model-input spec and plan,
+   the M5 ownership slice into the Tasks 10 through 12 program tracked by
+   issue #193, and complete M4 ownership characterization against the schema.
+4. Reconcile the local accountability snapshot with live GitHub state, record
+   exact measured baselines, and activate the shared M0 gate.
+5. Replace package-specific size checks only after the shared validator proves
    at least the same constraints.
+6. Execute M4 extraction slices only after that activation; ratchet the index
+   after each accepted reduction.
 
 ## Risks
 
@@ -224,7 +271,11 @@ public owners are validation errors.
 - Line-count gaming could create shallow modules. Control: decomposition must
   reduce duplicated decisions or coupling and preserve characterized behavior.
 - Baselines could become permanent exemptions. Control: every non-ADR
-  oversized record names an active decomposition issue and ratchets on shrink.
+  oversized record names a locally resolvable active decomposition issue,
+  live state is reconciled separately, and the baseline ratchets on shrink.
+- A pure gate could silently rely on stale tracker state. Control: version the
+  snapshot/mirror evidence, expose its reconciliation date, and require the
+  separate live reconciliation before activation and closeout.
 - Characterization could freeze a defect. Control: characterization follows
   correctness work and records only accepted behavior.
 
@@ -242,5 +293,7 @@ details without changing this contract.
 | Preserve existing foundations | PR #203 provider gate and closed #362 capability contract | Extend them; do not recreate them | M3/M4 |
 | Use a ratchet instead of forced immediate splitting | Current accepted files exceed the review threshold | Prevent growth and require accountable reduction | M0 |
 | Characterize after correctness | Tasks 9 through 15 intentionally change defective contracts | Snapshot the corrected contract only | M3/M4/M5 |
+| Keep the repository gate pure | GitHub availability is not a deterministic repository input | Resolve versioned local accountability records and reconcile live state separately | M0 |
+| Keep the dependency graph acyclic | M4 records need the schema, while activation needs characterized M4 records | Schema -> characterization -> activation -> extraction | M0/M4 |
 | Split Task 21 ownership | datasets.py is M3 and regression core.py is M5 | Fold each half into its owning program | M3/M5 |
 | Keep scientific evidence ownership package-owned | Canonical evidence contract and package-boundary ADRs | M0 references package sources without copying claims | All package owners |

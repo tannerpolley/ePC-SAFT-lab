@@ -2,7 +2,7 @@
 
 Milestone: `M4 - Equilibrium`
 Issue: planned M4 tracking issue
-Status: `draft for review`
+Status: `approved for planning`
 Last reviewed: `2026-07-10`
 
 ## Context
@@ -15,9 +15,10 @@ closed issue #362. The remaining problem is that route formulation,
 orchestration, result conversion, diagnostics, and binding registration still
 share several very large owners.
 
-This is a behavior-preserving decomposition program. It starts only after the
-relevant M4 correctness and admission decisions are stable and the accepted
-behavior is characterized.
+This is a behavior-preserving decomposition program. M4 characterization starts
+after the relevant correctness decision is stable and consumes the M0 schema;
+extraction starts only after M0 activates the shared ratchet from those
+characterized records.
 
 ## Current Evidence
 
@@ -52,6 +53,8 @@ behavior is characterized.
    and retained scientific evidence.
 6. Reduce accountable structural baselines under the M0 maintainability
    ratchet.
+7. Keep public-green extraction independent from route-gated internal-owner
+   leaves and from deferred paper-program caller migrations.
 
 ## Non-Goals
 
@@ -61,6 +64,8 @@ behavior is characterized.
 - No solver-option tuning to make a characterization test pass.
 - No repair of individual Gross, Khudaida, MEA, or other paper programs.
 - No simultaneous rewrite of the equilibrium package.
+- No edit to deferred paper-validation scripts, data, figures, or result
+  artifacts; their owning M6 or route-correctness issues migrate their callers.
 - No compatibility wrappers, parallel result builders, or old-file backups.
 - No split performed solely to meet a line-count target.
 
@@ -83,7 +88,7 @@ deletes the superseded path, and reruns the same package and scientific proof.
 
 ## Selected Design
 
-### Characterized ownership map
+### Characterized ownership map and activation order
 
 The existing M4 capability records are extended into an ownership map with:
 
@@ -98,8 +103,21 @@ The existing M4 capability records are extended into an ownership map with:
 - pybind registration unit;
 - proof nodes, strict checkers, and retained artifacts.
 
-Closed and internal families are mapped as internal evidence only. Their
-presence in the map does not make them callable.
+Closed and internal families selected for a later M4 extraction leaf are mapped
+as internal evidence only. Their presence in the map does not make them
+callable. Deferred paper programs are evidence consumers, not ownership-map
+entries or files in this decomposition specification.
+
+The ownership schema and active ratchet cannot depend on each other. The fixed
+cross-plan order is:
+
+1. M0 lands the versioned schema and pure validator without activating the M4
+   baselines.
+2. M4 writes and tests its characterized ownership records against that
+   schema.
+3. M0 consumes those records, exact measurements, and local accountability
+   evidence to activate the shared gate.
+4. M4 begins extraction and ratchets each accepted lower baseline.
 
 ### Canonical owner boundaries
 
@@ -113,27 +131,38 @@ presence in the map does not make them callable.
 - ipopt_adapter owns named numerical profiles and normalized solver results.
 - Existing result_builder and certification modules own physical postsolve
   acceptance.
+- Electrolyte candidate generation, minimization, and Stage III refinement are
+  discovery responsibilities; electrolyte postsolve certification remains in
+  the result/certification boundary and is never moved into a discovery module.
 - route_result_bridge and package result adapters own serialization of accepted
   native evidence.
 - Domain registration units expose bindings; one module entry calls them.
 
 ### Extraction slices
 
-1. Characterize all admitted routes and every internal path that later slices
-   touch.
-2. Move remaining result conversion and acceptance assembly out of
-   register_bindings.cpp into the existing result/certification owners.
-3. Split binding registration into domain-owned public, phase-discovery,
-   electrolyte, chemical-equilibrium, and result-support units.
-4. Split two_phase_eos_route.cpp by actual owner boundaries, including shared
-   neutral route mechanics, phase-discovery/refinement, and electrolyte
-   refinement, while retaining shared types only where they are genuinely
-   shared.
-5. Split bubble_dew.cpp by characterized physical formulation and shared
-   boundary-tracing mechanics.
-6. Reduce workflows.py to request normalization and one selector solve lane;
-   delete internal bypasses made obsolete by the extracted native owners.
-7. Ratchet structural baselines after every accepted reduction.
+1. Characterize admitted routes and the package-internal paths selected for
+   later leaves against the inactive M0 schema; do not edit the M0 baseline
+   index in this slice.
+2. After M0 activates the shared gate, move public-route result conversion out
+   of register_bindings.cpp into the existing result owner.
+3. Split public-green binding registration into typed domain units while
+   leaving route-gated internal blocks in their current owner.
+4. Extract the neutral phase-discovery support executed by admitted boundary
+   routes, preserving its scoped completeness status.
+5. Extract public neutral route and bubble/dew boundary mechanics.
+6. Reduce the Python public workflow to request normalization, one selector
+   solve, and one result adapter without moving deferred internal callers.
+7. In separate route-gated electrolyte leaves, move discovery/refinement and
+   route mechanics only after their correctness and caller-cutover gates; move
+   electrolyte postsolve certification to the existing result/certification
+   boundary, not to discovery.
+8. In separate route-gated CE/internal leaves, move remaining package-internal
+   result, registration, and validation owners only after every external caller
+   migration has landed in its owning issue. In particular, move
+   `EquilibriumPhase`/`EquilibriumResult` only after the M6 Gross contract no
+   longer imports their private `workflows` owner and the M4
+   `core/native_results.py` caller is included in the same cutover.
+9. Ratchet structural baselines after every accepted extraction reduction.
 
 The implementation plan may divide these into smaller non-overlapping issues.
 It may not combine them into one unreviewable rewrite.
@@ -152,7 +181,9 @@ phase-equilibrium certification; this specification governs implementation
 ownership. The decomposition tracker is not blocked by the whole #361 future
 admission tree. Each extraction leaf depends only on the accepted M0 ratchet,
 closed shared-contract leaf #362, and any still-open correctness/admission issue
-for the exact route path it touches.
+for the exact route path it touches. M6 and paper-specific issues own changes to
+paper callers; a route-gated M4 leaf may consume their completed caller-cutover
+receipt but does not edit their paths.
 
 ## Interfaces
 
@@ -162,7 +193,9 @@ characterization receipts define the before-and-after compatibility boundary.
 New internal modules expose typed C++ interfaces, not pybind dictionaries.
 Dictionary conversion occurs at the binding/result boundary only. Registration
 functions accept the extension module and register one owned domain; they do
-not solve or certify a route.
+not solve or certify a route. Discovery interfaces return candidates and
+refinement evidence; the result/certification owner alone emits postsolve
+acceptance.
 
 No extraction introduces a second dispatcher, option profile, certification
 policy, or capability table.
@@ -173,8 +206,10 @@ policy, or capability table.
 2. The public workflow sends one normalized request to the selector binding.
 3. Selector admission reads the activation row and rejects ineligible scope.
 4. Selector dispatches to one formulation/NLP owner and the Ipopt adapter.
-5. The formulation returns native solver and physical evidence.
-6. The canonical result builder applies postsolve certification.
+5. The formulation and any scoped discovery owner return native solver,
+   candidate, refinement, and physical evidence.
+6. The canonical result builder applies postsolve certification, including
+   electrolyte postsolve certification where that internal route is eligible.
 7. The result bridge serializes the certified evidence once.
 8. Python constructs the public result without a second native solve or a
    second acceptance decision.
@@ -192,10 +227,14 @@ diagnostic bindings and remain labeled internal.
 - A characterization mismatch stops the current extraction slice. It is not
   normalized away or hidden behind a wrapper.
 - An internal diagnostic cannot set public admission or certification fields.
+- A discovery owner cannot construct or certify the final accepted result.
 
 ## Stop Gates
 
-- The M0 ownership/ratchet schema is accepted.
+- M4 characterization requires the accepted M0 ownership schema but not an
+  activated M4 baseline.
+- Every extraction requires the subsequently activated M0 ownership/ratchet
+  gate; characterization cannot be used to bypass that activation.
 - Closed shared-contract issue #362 and any active correctness/admission issue
   for the touched route establish the route and certification state for that
   slice; unrelated future family admission does not block decomposition.
@@ -205,6 +244,9 @@ diagnostic bindings and remain labeled internal.
   activation rows, strict-checker outcomes, or literature artifacts without a
   separately approved correctness specification.
 - Stop if an extraction requires simultaneous provider or regression changes.
+- Stop a route-gated internal-owner leaf while any deferred external caller
+  still imports or invokes the symbol being moved; no paper path is pulled into
+  this M4 issue to remove that blocker.
 
 ## Testing
 
@@ -213,6 +255,8 @@ diagnostic bindings and remain labeled internal.
   duplicate acceptance, and a second native solve.
 - Before-and-after characterization of requests, activation, native evidence,
   certification, public results, and failures.
+- Source-owner tests prove electrolyte discovery contains no postsolve
+  certification and the result/certification boundary remains its sole owner.
 - Focused native unit tests for every extracted module.
 - M4 API, contract, native-confidence, and equilibrium-confidence lanes.
 - Activation generation and all strict checkers backing admitted routes.
@@ -224,10 +268,13 @@ reuses existing retained evidence rather than regenerating unrelated figures.
 
 ## Cutover
 
-Each slice lands only after all callers use the new canonical owner. The same
-slice deletes the superseded internal function, branch, registration block, or
-wrapper. Includes, build manifests, SDK manifests, tests, docs, and ownership
-records change together.
+Each slice lands only after all callers use the new canonical owner. Public
+green slices are executable once M0 activates the gate. Route-gated internal
+slices remain separate dependent leaves until their correctness and external
+caller-cutover receipts pass. The same M4 slice then deletes the superseded
+internal function, branch, registration block, or wrapper. Includes, build
+manifests, SDK manifests, tests, docs, and ownership records change together;
+deferred paper paths never enter the M4 change set.
 
 The obsolete May 27 cleanup document remains only as a historical record with a
 prominent superseded notice. It is never used as a route or capability source.
@@ -244,6 +291,9 @@ prominent superseded notice. It is never used as a route or capability source.
   duplicated decisions or establish one enforceable owner.
 - Concurrent M4 science work may invalidate snapshots. Control: dependency
   gates and post-correctness characterization.
+- Paper-specific callers may delay deletion. Control: keep their migration in
+  the owning issue and block the corresponding internal-owner leaf instead of
+  adding the paper path to this core plan.
 
 ## Execution-Time Mapping
 
@@ -260,5 +310,8 @@ time and recorded in the implementation plan.
 | Separate from #361 | #361 governs certification contracts, not source decomposition | Create a distinct M4 tracker with leaf-level route dependencies | M4 |
 | Characterize after correctness | Earlier M4 tasks intentionally repair or admit behavior | Preserve the accepted post-correction contract | M4 |
 | Keep closed families closed | Finite internal evidence does not establish public admission | Structural work cannot change activation | M4/M6 |
+| Keep discovery and certification distinct | Candidate discovery does not establish final physical acceptance | Electrolyte postsolve certification stays in result/certification | M4 |
+| Split public and gated leaves | Public routes are green while CE/electrolyte/paper callers have separate gates | Execute public owners first; block internal leaves on their exact dependencies | M4/M6 |
+| Keep the cross-plan graph acyclic | M4 needs the M0 schema and M0 activation needs characterized M4 records | Schema -> M4 characterization -> M0 activation -> M4 extraction | M0/M4 |
 | Use incremental extraction | Current concentration spans several physical domains | Move and delete one canonical owner per reviewed slice | M4 |
 | Supersede old cleanup guidance | The May 27 route table contradicts ADR 0003 | Retain it as non-executable history with a new-spec pointer | M4 |

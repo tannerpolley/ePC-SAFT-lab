@@ -12,10 +12,13 @@
 - Integration target: local `main`
 
 This is a cross-workstream design, not authority for one cross-milestone issue.
-The M6 source-evidence leaf owns the retained source ledger, row-role
-classification, source/model tables, and plots. The M4 execution leaf owns the
-internal CE run, numerical receipt, diagnostics, and any later handoff to issue
-#330. Neither issue edits the other's package-owned behavior.
+Issue #329 first completes the M4 component receipt/checker contract. The M6
+source-evidence leaf is then blocked by #329 and owns the retained source
+ledger, row-role classification, source/model tables, applicable plots, and
+its own evidence-completeness checker. A separate later M4 leaf consumes that
+receipt for source-qualified classification or defect routing before any
+handoff to #330. None of these leaves edits another milestone's package-owned
+behavior.
 
 ## Purpose
 
@@ -26,9 +29,13 @@ workflow must run on Linux through the current typed provider contract and the
 current internal standalone-chemical-equilibrium validation owner.
 
 The migration is complete only when the retained inputs resolve without
-defaults, current local model rows are regenerated on Linux, plots are rendered
-from retained tables, and the repository still reports reactive speciation and
-reactive phase equilibrium as closed public capabilities.
+defaults, every planned current local attempt is regenerated and retained on
+Linux, every accepted model-prediction assertion has a real-data comparison
+plot, the M6 evidence-completeness checker passes, and the repository still
+reports reactive speciation and reactive phase equilibrium as closed public
+capabilities. A run that scientifically rejects every state may complete this
+evidence migration with `admission_candidate=false` and no model-prediction
+claim.
 
 ## Verified Starting State
 
@@ -146,6 +153,9 @@ The data-generation script:
 
 A scientifically rejected solve may be retained as a labeled result row. It
 must not be converted into a successful prediction or omitted from the summary.
+It may satisfy M6 evidence completeness when every planned attempt and receipt
+is present, but it remains ineligible for #330 until the separate M4
+classification records `admission_candidate`.
 
 ### Rendering
 
@@ -153,6 +163,12 @@ The rendering script reads retained source/model tables only. It does not call
 the EOS, CE solver, or parameter loader. It writes same-stem SVG, PNG, and PDF
 files for each retained static figure plus the animation preview/GIF when the
 animation input table is complete.
+
+Every accepted current-model prediction assertion requires a joined real
+literature/model plotted-data table and retained plot. When there are zero
+accepted current predictions, the evidence receipt records
+`plot_status=not_applicable_no_accepted_prediction`; literature and failure
+tables remain retained, and no model-validation plot or assertion is created.
 
 Plots must distinguish literature observations, imported downstream curves,
 and current local predictions by more than color. Titles, axes, units, legends,
@@ -200,7 +216,8 @@ include at least:
 
 - strict model-configuration parse/resolution and receipt tests;
 - provider and equilibrium focused tests covering the input/native seam;
-- standalone-CE checker and current live-failure/closed-capability contracts;
+- the M6-owned evidence-completeness checker, current live-failure records, and
+  closed-capability contracts;
 - generator and renderer tests;
 - project-structure and Linux-path contracts;
 - MPLGallery manifest and plot-bundle checks;
@@ -212,6 +229,10 @@ include at least:
 The final handoff renders every new or changed plot inline using absolute paths
 and includes compact real-data tables for the retained observations behind
 those plots.
+
+The artifact order is acyclic: M6 evidence receipt -> M6 checker output ->
+later M4 source-qualified classification. The evidence receipt does not hash or
+embed its checker output, and M6 does not modify the M4 admission checker.
 
 ## Branch Integration And Remote-Push Boundary
 
@@ -251,13 +272,15 @@ The design is implemented when:
 2. one strict typed model input resolves with traceable active records; if any
    required record remains unverified, the implementation is blocked and is
    not reported as a completed migration;
-3. current Linux execution produces explicit model/failure tables and a resolved
-   configuration receipt;
-4. all static plots and the supported animation are regenerated from retained
-   tables and pass artifact checks;
+3. current Linux execution produces explicit attempt/model/failure tables and
+   a resolved configuration receipt;
+4. every accepted model-prediction assertion has a retained real-data plot;
+   an all-rejected run instead carries the explicit non-admission plot status;
 5. public reactive/phase capabilities remain closed;
-6. focused validation and independent review pass;
-7. the worktree is clean and superseded local branches are removed only after
+6. the M6 evidence-completeness checker passes, including when the scientific
+   result is rejected with `admission_candidate=false`;
+7. focused validation and independent review pass;
+8. the worktree is clean and superseded local branches are removed only after
    their useful content is proven present; and
-8. a remote push, if performed, contains neither the paused Task 9 commits
+9. a remote push, if performed, contains neither the paused Task 9 commits
    nor known failing paper-specific work.
