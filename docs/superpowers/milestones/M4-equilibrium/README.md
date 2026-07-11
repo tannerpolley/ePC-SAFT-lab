@@ -140,7 +140,7 @@ admission.
 #250 added the first source-backed neutral nonassociating LLE showcase fixture:
 Matsuda/NIST perfluorohexane + hexane paired binodal branch rows, Tihic-derived
 pure parameters, a source-fitted binary interaction, finite sampled-candidate
-diagnostics, and retained PNG/SVG figures. The repository truth audit
+diagnostics, and retained PNG/SVG figures. The July 2026 validation-correctness audit
 supersedes the former public-admission interpretation: this fixture remains
 internal and does not prove global phase-set completeness.
 
@@ -178,7 +178,7 @@ closed; any future admission requires globally complete discovery plus the
 current native-selector and canonical-result contracts.
 
 #264 and #189 retain historical multiphase implementation context, but their
-former public-admission claim is superseded by the repository truth audit. The
+former public-admission claim is superseded by the July 2026 validation-correctness audit. The
 native work remains internal diagnostic evidence; `multiphase` is absent from
 the public route map until the solve and canonical result acceptance are owned
 by the native selector and a fresh source-backed admission gate passes.

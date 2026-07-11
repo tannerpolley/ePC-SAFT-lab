@@ -240,7 +240,7 @@ CI lane names still separate different claims:
 
    The current Ubuntu extension-package jobs install
    ``coinor-libipopt-dev`` and pass ``/usr`` as the explicit SDK root. This is
-   honest link, wheel-install, and import evidence for the package boundary;
+   valid link, wheel-install, and import evidence for the package boundary;
    it is not production equilibrium solver evidence. Production Ipopt claims
    still require the pinned SDK artifact and scientific validation lane below.
 

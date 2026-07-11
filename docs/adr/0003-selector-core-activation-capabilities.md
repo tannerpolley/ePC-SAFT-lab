@@ -8,7 +8,7 @@ Accepted.
 
 The package had native equilibrium route implementations and Python-facing route
 surfaces that were broader than the production evidence. Keeping those routes
-callable made `epcsaft.capabilities()` difficult to keep honest and left
+callable made `epcsaft.capabilities()` disagree with executable evidence and left
 deleted or unproven families looking available.
 
 ## Decision

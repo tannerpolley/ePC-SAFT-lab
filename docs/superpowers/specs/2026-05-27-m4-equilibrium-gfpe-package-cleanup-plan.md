@@ -1,5 +1,17 @@
 # GFPE Package Cleanup Plan
 
+> **Status: superseded and non-executable as of 2026-07-10.**
+>
+> Do not use this document to plan work, select public routes, or infer current
+> capability state. Its historical route table predates the accepted
+> activation/selector reset and includes routes that are now closed. Current
+> public equilibrium state is limited to bubble pressure, dew pressure, and
+> scoped single-component VLE exactly as declared by the native activation
+> matrix, ADR 0003, and executable capability evidence. The replacement
+> maintainability design is
+> docs/superpowers/specs/2026-07-10-m4-equilibrium-canonical-owner-decomposition.md.
+> This file is retained only to explain the earlier cleanup direction.
+
 This plan translates the generalized fluid-phase equilibrium doctrine into a
 package cleanup sequence. The goal is a small set of deep modules: one selector
 admission layer, one shared equilibrium NLP, one Ipopt adapter, one certified

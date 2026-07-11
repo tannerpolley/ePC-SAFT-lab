@@ -1,5 +1,11 @@
 # Nonideal MEA Speciation Linux Migration Implementation Plan
 
+> **Current routing:** This cross-workstream plan is retained as branch-migration
+> history and evidence inventory. It is not one executable issue queue. M6 owns
+> source-ledger and retained-artifact closure; M4 owns internal CE execution,
+> diagnostics, and admission consumption. The 2026-07-10 milestone-owned CE and
+> M6 plans supersede its remaining work without discarding completed evidence.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: use
 > `superpowers:subagent-driven-development` in the current session or
 > `superpowers:executing-plans` in a later session. Use
@@ -38,15 +44,18 @@ No push, force push, remote branch deletion, or history rewrite is authorized.
 
 - Approved spec:
   `docs/superpowers/specs/2026-07-10-m4-nonideal-mea-speciation-linux-migration-design.md`
-- Milestone/package owner: M4, `packages/epcsaft-equilibrium`
-- Analysis owner: `analyses/package_validation/standalone_ce`
+- Milestone/package owners: M6 for source/artifact evidence; M4 and
+  `packages/epcsaft-equilibrium` for internal CE execution
+- Analysis ownership: M6 owns retained sources/tables/plots under
+  `analyses/package_validation/standalone_ce`; M4 owns generator/runtime
+  receipts and numerical diagnostics in that analysis
 - Source branch: `codex/m4-ce-nonideal-speciation-plots` at `f3057e11`
 - Integration target: local `main`
 - Branch integration policy: adapt the seven unique commits; do not merge their
   retired `analyses/paper_validation/standalone_ce` paths or false capability
   metadata.
 - Task 9 boundary: the working line may contain the paused typed-input commits,
-  but the publication-safe line intentionally omits them and their known
+  but the remote-push-safe line intentionally omits them and their known
   paper-specific failures. Tasks 4-10 remain conditional on both a closed
   scientific evidence gate and the typed provider contract being available.
 
@@ -137,8 +146,8 @@ keeps reactive speciation closed and requires strict typed model input.
 **Expected Outcome:** Imported evidence is classified and retained in the
 current layout; an executable bundle exists only when every active record and
 temperature domain is proven; Linux generation writes exact receipts and
-honest failure rows; table-only rendering produces verified plot bundles; and
-public capability truth remains unchanged.
+explicit failure rows; table-only rendering produces verified plot bundles;
+and the public capability state remains unchanged.
 
 **Target Output:** Current-layout source tables, a source manifest and blocker
 ledger, a strict typed input folder if evidence closes, Linux generation and
@@ -146,9 +155,11 @@ table-only rendering scripts, retained CSV/JSON/JSONL receipts, eight static
 plot bundles, a complete-input-only animation preview/GIF bundle, MPLGallery registrations,
 updated analysis documentation, and focused verification evidence.
 
-**Owner:** M4 owns equilibrium and analysis behavior; M3 typed provider input
-is consumed as an existing contract; the main thread owns Git integration,
-review, cleanup, and branch decisions.
+**Owner:** M6 owns source-ledger, retained-table, plot, and checker evidence;
+M4 owns equilibrium runtime, generator, numerical receipt, diagnostics, and
+admission consumption; M3 typed provider input is consumed as an existing
+contract; the main thread owns Git integration, review, cleanup, and branch
+decisions.
 
 **Interface:** `epcsaft.Mixture.from_folder`,
 `ResolvedModelInput.evaluate(temperature=..., composition=...)`,
@@ -189,7 +200,7 @@ runtime proof, surname-only citations as literature identity, source-seeded
 success as acceptance, or finite sampled states as global certification.
 
 **Risk:** External evidence may not close the historical model's gaps, and a
-scientifically honest run may still fail balance or stationarity; either result
+A source-backed run may still fail balance or stationarity; either result
 must remain visible and can prevent completion while still yielding useful
 classified evidence.
 
@@ -286,7 +297,7 @@ repository cleanup hook passes.
 
 ### Task 1: Add Migration Contract Tests
 
-**Owner:** M4 analysis contracts
+**Owner:** M6 evidence contracts with the M4 runtime boundary represented
 
 **Use Cases:**
 
@@ -333,7 +344,7 @@ repository cleanup hook passes.
 
 ### Task 2: Classify And Migrate Retained Source Evidence
 
-**Owner:** M4 analysis evidence
+**Owner:** M6 source and retained-artifact evidence
 
 **Use Cases:**
 
@@ -381,7 +392,7 @@ repository cleanup hook passes.
 
 ### Task 3: Close Or Record The Scientific Input Evidence Gate
 
-**Owner:** M4 scientific evidence, reviewed with `chemical-engineer`
+**Owner:** M6 scientific-input evidence, reviewed with `chemical-engineer`
 
 **Use Cases:**
 
@@ -427,7 +438,7 @@ repository cleanup hook passes.
 
 - [ ] **Step 4: Verify the gate**
 
-  Blocked path, including the publication-safe line that omits paused Task 9:
+  Blocked path, including the remote-push-safe line that omits paused Task 9:
 
   ```bash
   uv run --no-sync python run_pytest.py analyses/package_validation/standalone_ce/tests/test_nonideal_figure_workflow.py tests/native/contracts/test_standalone_ce_gate.py tests/workflows/repo/test_project_structure.py -q
@@ -604,7 +615,7 @@ repository cleanup hook passes.
 
 ### Task 7: Render Static Figures And Animation From Tables Only
 
-**Owner:** M4 analysis plotting
+**Owner:** M6 retained-artifact plotting
 
 **Use Cases:**
 
@@ -656,16 +667,16 @@ repository cleanup hook passes.
 
   Commit message: `docs(validation): render nonideal MEA comparison plots`
 
-### Task 8: Register Plot Bundles And Preserve Capability Truth
+### Task 8: Register Plot Bundles And Preserve Capability State
 
-**Owner:** M4 analysis/docs integration
+**Owner:** M6 validation artifact/checker integration
 
 **Use Cases:**
 
-- MPLGallery discovers every truthful completed plot through exact
+- MPLGallery discovers every evidence-complete plot through exact
   current-layout paths and plotted-data snapshots.
 - Repository documentation visibly preserves the closed public route and
-  replaces stale branch completion claims with current receipt-based truth.
+  replaces stale branch completion claims with current receipt-backed status.
 
 **Files:**
 
@@ -681,7 +692,7 @@ repository cleanup hook passes.
   Require eight static manifest rows plus the animation-preview row only when
   its complete 16-state input exists. Require current paths, existing sibling
   files, source and plotted-data links, closed public routes, provider and fresh
-  equilibrium runtime receipts, diagnostic-seed provenance, and honest
+  equilibrium runtime receipts, diagnostic-seed provenance, and explicit
   blocked/accepted CE metrics. Source-seeded success must never support
   capability admission.
 
@@ -720,7 +731,7 @@ repository cleanup hook passes.
 - A reviewer receives fresh provider, equilibrium, analysis, docs, plotting,
   and Linux-path evidence without invoking deferred paper repairs.
 - Independent review can reject a false migration-complete claim before branch
-  cleanup or any later publication decision.
+  cleanup or any later remote-push decision.
 
 **Files:**
 
@@ -806,7 +817,7 @@ repository cleanup hook passes.
 
   Report commits, exact test/checker results, any retained scientific rejection,
   remaining Task 9 paper failures, worktree status, branches, stashes, and
-  publication boundary. Render every changed plot inline with absolute paths
+  remote-push boundary. Render every changed plot inline with absolute paths
   and compact real-data tables.
 
 ## Proof Oracle

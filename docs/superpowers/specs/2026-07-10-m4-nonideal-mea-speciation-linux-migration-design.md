@@ -4,11 +4,18 @@
 
 - Approved design: live regeneration on the current typed-input contract
 - Approval date: 2026-07-10
-- Owner: `M4 - Equilibrium`
+- Owners: `M6 - Validation` for source/artifact evidence; `M4 - Equilibrium`
+  for internal CE execution and admission consumption
 - Package owner: `packages/epcsaft-equilibrium`
 - Analysis owner: `analyses/package_validation/standalone_ce`
 - Source branch: `codex/m4-ce-nonideal-speciation-plots`
 - Integration target: local `main`
+
+This is a cross-workstream design, not authority for one cross-milestone issue.
+The M6 source-evidence leaf owns the retained source ledger, row-role
+classification, source/model tables, and plots. The M4 execution leaf owns the
+internal CE run, numerical receipt, diagnostics, and any later handoff to issue
+#330. Neither issue edits the other's package-owned behavior.
 
 ## Purpose
 
@@ -49,10 +56,10 @@ The branch cannot be merged directly because it:
   provenance under the current strict input contract;
 - records old model outputs as successful even though they were not produced
   by the current resolved-input/native runtime; and
-- describes `reactive_speciation` as public even though current repository truth
+- describes `reactive_speciation` as public even though the current capability contract
   keeps that route closed after the retained standalone-CE failure.
 
-### Current main truth
+### Current Capability State
 
 `analyses/package_validation/standalone_ce/analysis.yaml` is authoritative for
 capability status. Its active-validation and closed-route records must survive
@@ -206,17 +213,17 @@ The final handoff renders every new or changed plot inline using absolute paths
 and includes compact real-data tables for the retained observations behind
 those plots.
 
-## Branch Integration And Publication
+## Branch Integration And Remote-Push Boundary
 
 The seven useful source-branch commits are adapted onto current `main`; the
 stale branch is not merged as history because that would resurrect deleted
 paths and false capability metadata. After the migrated content is committed
 and verified, the local source branch may be removed as superseded.
 
-The already published safe Tasks 1-8 prefix remains on `origin/main`. Local
+The already pushed safe Tasks 1-8 prefix remains on `origin/main`. Local
 Task 9 commits `30bad092`, `bb4d399a`, and `3ab7f93c` stay outside any remote
 push until their 20 deferred paper-specific failures are resolved. The user
-subsequently approved a clean publication line: preserve the current working
+subsequently approved a clean remote-push line: preserve the current working
 tip on `codex/task9-paused`, reconstruct local `main` from `origin/main` with
 only independently verified migration commits, and push that line as a normal
 fast-forward. This preserves all local work and does not authorize a force
@@ -244,7 +251,7 @@ The design is implemented when:
 2. one strict typed model input resolves with traceable active records; if any
    required record remains unverified, the implementation is blocked and is
    not reported as a completed migration;
-3. current Linux execution produces honest model/failure tables and a resolved
+3. current Linux execution produces explicit model/failure tables and a resolved
    configuration receipt;
 4. all static plots and the supported animation are regenerated from retained
    tables and pass artifact checks;
@@ -252,5 +259,5 @@ The design is implemented when:
 6. focused validation and independent review pass;
 7. the worktree is clean and superseded local branches are removed only after
    their useful content is proven present; and
-8. remote publication, if performed, contains neither the paused Task 9 commits
+8. a remote push, if performed, contains neither the paused Task 9 commits
    nor known failing paper-specific work.

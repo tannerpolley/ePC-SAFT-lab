@@ -45,7 +45,7 @@ Single-context repo; read root `CONTEXT.md`, `docs/superpowers/PROJECT_CONTEXT.m
   cross-milestone issue set.
 - Public repo tools, scripts, tests, and docs must use developer-neutral names. Do not add tracked Codex-branded public workflow files.
 - Do not reintroduce Conda, Cython, setuptools editable installs, `setup.py build_ext`, retired sibling-repo workflows, or old compatibility shims.
-- Keep capability claims honest. Do not broaden provider, equilibrium, regression, native, Ceres, Ipopt, or CppAD claims without matching validation evidence.
+- Keep capability claims aligned with executable validation evidence. Do not broaden provider, equilibrium, regression, native, Ceres, Ipopt, or CppAD claims without matching validation evidence.
 - Before adding a file, inspect nearby structure and choose the existing category that matches repo conventions.
 - When deleting tracked files, also remove now-empty owned folders and stale references unless the folder is an intentional documented skeleton.
 - Paper-validation parameter snapshots follow `docs/pages/project_structure.rst`; do not duplicate that layout rule here.

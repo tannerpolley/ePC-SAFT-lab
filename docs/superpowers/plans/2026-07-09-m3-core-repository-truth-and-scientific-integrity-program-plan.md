@@ -1,16 +1,23 @@
-# Repository Truth And Scientific Integrity Implementation Plan
+# Repository Validation Correctness And Reproducibility Implementation Plan
+
+> **Current status:** Tasks 1-8 are complete. Tasks 9-22 in this historical
+> plan are superseded as an execution queue by
+> `docs/superpowers/specs/2026-07-10-m0-validation-correctness-tasks-9-22-roadmap-reconciliation.md`
+> and its milestone-owned plans. The filename remains unchanged for traceable
+> links. “Scientific integrity” in that historical name means protection from
+> false-positive validation, not a moral, publication, or compliance claim.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: use
 > `superpowers:subagent-driven-development` in the current session or
 > `superpowers:executing-plans` in a later session. Every implementation task
 > uses red-green TDD and receives a review before its commit.
 
-**Goal:** Make public thermodynamic capabilities mechanically truthful, remove
+**Goal:** Make declared thermodynamic capabilities mechanically verifiable, remove
 silent scientific input invention, make regression controls effective, admit
 equilibrium routes only through strict real-data proof, harden Linux artifacts,
 and decompose the largest ownership tangles without changing proven behavior.
 
-**Architecture:** Execute truth-first. Repair the repository measurement system
+**Architecture:** Execute validation-first. Repair the repository measurement system
 and claim/evidence contract before scientific or structural changes. Then
 harden provider inputs, regression semantics, equilibrium admission,
 distribution proof, and finally large-module ownership. Each task has one
@@ -26,7 +33,7 @@ Actions, retained CSV/JSON/SVG/PDF scientific artifacts.
 
 - Source spec:
   `docs/superpowers/specs/2026-07-09-m3-core-repository-truth-and-scientific-integrity-program.md`
-- Approved approach: truth-first sequence
+- Approved approach: validation-first sequence
 - Program sponsor: `M3 - Core EOS`
 - Workstream owners: M3 provider/repo, M4 equilibrium, M5 regression, M6
   retained literature artifacts
@@ -115,7 +122,7 @@ expand a sibling milestone without recording the owner.
 **Avoid:** Do not trade a loud scientific failure for a green status flag,
 exception list, synthetic-only proof or compatibility wrapper.
 
-**Risk:** Tightening truth and input contracts will expose unsupported callers
+**Risk:** Tightening validation and input contracts will expose unsupported callers
 and incomplete datasets; each cutover therefore requires characterization and
 an explicit package owner before deletion.
 
@@ -179,7 +186,7 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 - [ ] Identified giant modules have smaller, tested single-owner units and no
       duplicated acceptance policy.
 
-## Phase 1: Truth And Green Gate
+## Phase 1: Measurement And Green Gate
 
 ### Task 1: Make Test Collection Deterministic
 
@@ -368,7 +375,7 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 - Modify: M4 benchmark registries, public docs and route-specific API tests for
   `electrolyte_lle` and `neutral_multiphase_nonassoc`.
 
-- [ ] **Step 1: Add red truthfulness tests**
+- [ ] **Step 1: Add red validation-contract tests**
 
   Assert reactive speciation, electrolyte LLE and neutral multiphase are absent
   from public production exports. The evidence audit also found no independent
@@ -404,7 +411,7 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
   limits. Remove production/admission booleans from retained scientific
   artifacts; live activation plus green proof authorizes admission.
 
-- [ ] **Step 5: Verify truthful green tests**
+- [ ] **Step 5: Verify evidence-backed green tests**
 
   ```bash
   uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py packages/epcsaft-equilibrium/tests/api/test_imports.py tests/native/contracts/test_equilibrium_benchmark_registry.py tests/native/contracts/test_generalized_equilibrium_registry.py -q
@@ -490,7 +497,7 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 
 - An integrator sees one acceptance proof for collection, capabilities,
   selector cutover and the retired duplicate paths.
-- Documentation makes the truthful gate visible to future developers.
+- Documentation makes the validation gate visible to future developers.
 
 **Files:**
 
@@ -527,7 +534,7 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 
   Commit message: `docs: define the truthful repository green gate`
 
-## Phase 2: Provider Input Integrity
+## Phase 2: Provider Input Correctness
 
 ### Task 7: Characterize And Remove Invented Component Defaults
 

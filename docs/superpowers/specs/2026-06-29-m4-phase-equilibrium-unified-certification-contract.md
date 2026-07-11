@@ -105,6 +105,62 @@ The first implementation gate applies to production-exposed routes only. Planned
 or private routes may remain declared as planned, internal, or diagnostic, but
 they must not publish capability claims until they pass the contract.
 
+## Task 15 Reconciliation And Future Admission Leaves
+
+Task 15 of the 2026-07-09 validation-correctness program is a routing rule, not one
+implementation task. Its named families have different variables, derivatives,
+phase-discovery requirements, source evidence, and blockers. They must never be
+batch-admitted by one issue, one checker result, or one activation change.
+
+The current capability state is unchanged: the public selector exposes `bubble_pressure`,
+`dew_pressure`, and scoped nonassociating hydrocarbon
+`single_component_vle`. Neutral LLE, electrolyte LLE, neutral TP flash,
+neutral multiphase, standalone reactive speciation, reactive LLE, reactive
+electrolyte LLE, and CPE remain internal, planned, or closed as recorded by the
+native activation matrix.
+
+Remaining work is routed as follows:
+
+- **Standalone reactive speciation:** issue #330 is the only admission gate. It
+  follows the diagnostic, repair, typed-input, and source-evidence gates in
+  `2026-07-10-m4-standalone-ce-diagnostic-repair-and-admission.md`. It cannot
+  admit a phase-splitting or CPE route.
+- **Neutral LLE:** create a future successor leaf under live family parent #363
+  for phase discovery complete within its declared route, state, and search
+  scope, selector dispatch, canonical result construction, and independent
+  source-backed validation. Closed #364-#366 remain historical local/sampled
+  evidence and are not reopened as active parents.
+- **Electrolyte LLE:** create a separate successor leaf under live family parent
+  #363. It requires source-complete typed electrolyte input, charge-neutral
+  phase discovery complete within its declared route, state, and search scope,
+  exact active-model derivatives, Stage III/postsolve residuals, selector
+  ownership, and retained literature/model comparison. Closed #191, #314,
+  #343, #350, #370, and #371 are inputs and history, not current admission.
+- **Neutral multiphase:** create a future successor leaf under live parent #361
+  for phase-set discovery complete within its declared route, state, and search
+  scope, canonical selector/result ownership, and source-backed
+  multiphase validation. Finite sampled-candidate replay remains internal
+  diagnostic evidence.
+- **Neutral TP flash:** create a different successor leaf under live parent
+  #361. It requires a
+  live source-backed flash fixture, selector-owned seed/discovery path,
+  material/pressure/transfer closure, and postsolve acceptance. Workbook or
+  inverse-consistency evidence alone is insufficient.
+- **Reactive and coupled phase equilibrium:** issues #331, #372, and #376 remain
+  blocked future work. They are not part of the standalone Task 15 slice.
+
+Closed governance parents #364, #370, and #374 remain historical completed
+tranches. New successor leaves attach to the live broad parent (#363 for LLE;
+#361 for flash/multiphase) so closed issues are not reopened or made to imply
+new proof.
+
+Each future leaf changes at most one activation family and must prove its own
+negative selector-bypass tests, source/input receipt, exact derivative path,
+independent physical residuals, retained plot when predictions are computed,
+and capability/registry equality. A passing family leaf gives no evidence for a
+sibling family. Until a leaf passes, its activation row, public routes, and
+proof routes remain empty.
+
 ## Issue Hierarchy Policy
 
 The M4 tracker should use native GitHub sub-issues:
@@ -113,9 +169,12 @@ The M4 tracker should use native GitHub sub-issues:
 - one direct core-contract implementation leaf under that parent;
 - broad family parents for LLE, VLE, flash/multiphase, boundary routes, and
   reactive/coupled phase equilibrium;
-- detailed LLE parent issues for neutral nonassociating LLE, associating LLE,
-  electrolyte LLE, and reactive electrolyte LLE;
-- PR-sized leaf issues under the detailed family parents.
+- detailed LLE parent issues for the initial neutral nonassociating LLE,
+  associating LLE, electrolyte LLE, and reactive electrolyte LLE contract
+  tranches;
+- PR-sized initial leaves under those detailed parents; after a detailed parent
+  is closed, a new admission successor attaches directly to its still-open
+  broad family parent rather than reopening completed governance history.
 
 Existing electrolyte history remains retained evidence. The existing #191
 electrolyte GFPE/HELD2 issue becomes part of the electrolyte LLE subtree, with

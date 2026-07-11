@@ -138,7 +138,7 @@ _Avoid_: hand inspection, partial transcript, stale note
 
 **Completion Evidence**:
 The production code, public-interface exercise, native path, derivative path, real data or benchmark, and regression test evidence needed before a workflow can be called complete.
-_Avoid_: documented limitation, honest incompleteness, dependency-only proof
+_Avoid_: documented limitation without a closure path, incomplete proof, dependency-only proof
 
 ## Relationships
 

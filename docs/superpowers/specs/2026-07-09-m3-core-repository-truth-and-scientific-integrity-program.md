@@ -1,8 +1,23 @@
-# ePC-SAFT Repository Truth And Scientific Integrity Program
+# ePC-SAFT Repository Validation Correctness And Reproducibility Program
+
+> **Historical-path note:** The filename preserves the program's original
+> title so existing links and commits remain traceable. In current project
+> language, “scientific integrity” means validation correctness: tests exercise
+> the model and native problem they claim to exercise, inputs are reproducible,
+> and missing evidence cannot become a passing result. It is not a moral,
+> publication, compliance, or public-certification program.
+
+## Current Status And Scope
+
+- Tasks 1-8 are complete in the repository history.
+- Tasks 9-22 are reorganized by package and milestone in
+  [the 2026-07-10 roadmap reconciliation](2026-07-10-m0-validation-correctness-tasks-9-22-roadmap-reconciliation.md).
+- This document remains the historical requirement record. It is not the
+  executable queue for Tasks 9-22 after that reconciliation is approved.
 
 ## Approval And Ownership
 
-- Approved design: truth-first execution sequence
+- Approved design: validation-first execution sequence
 - Approval date: 2026-07-09
 - Program sponsor: `M3 - Core EOS`
 - Primary repo owner: `packages/epcsaft`
@@ -20,8 +35,9 @@ to move ownership.
 
 ## Purpose
 
-Make the repository mechanically truthful, scientifically traceable, and
-maintainable enough that a passing capability claim means all of the following:
+Make repository validation mechanically verifiable, scientifically traceable,
+and maintainable enough that a passing capability claim means all of the
+following:
 
 1. the public route exists through the canonical package boundary;
 2. its complete test node is collected by the official test runner;
@@ -97,7 +113,7 @@ same branching into more files is not sufficient.
 
 ## Verified Audit Findings
 
-### P0: official repository truth is red
+### P0: the official repository validation gate is red
 
 1. `run_pytest.py --all --collect-only -q` collects 828 tests and exits with
    three import-file-mismatch errors caused by duplicate package-local test
@@ -223,7 +239,7 @@ ownership. These are correctness risks, not cosmetic organization concerns.
 
 ## Chosen Strategy
 
-The approved order is truth-first.
+The approved order is validation-first.
 
 Two alternatives were rejected:
 
@@ -232,12 +248,12 @@ Two alternatives were rejected:
 - Architecture-first would split giant files before the repository can prove
   which behavior is correct and which behavior should be deleted.
 
-Truth-first establishes a trustworthy measurement system, then makes the
+Validation-first establishes a reliable measurement system, then makes the
 scientific and structural changes against that system.
 
 ## Program Architecture
 
-### Phase 1: Truth And Green Gate
+### Phase 1: Measurement And Green Gate
 
 Owner: M3 for repository validation; M4 for equilibrium evidence, claims and
 selector corrections.
@@ -262,7 +278,7 @@ Required outcomes:
    ownership, independent literature evidence and the advertised global
    stability proof all exist. Bubble/dew temperature routes are closed because
    their retained workbook checks are inverse-consistency component evidence,
-   not independent literature proof. The immediate truthful surface is two
+   not independent literature proof. The immediate evidence-backed surface is two
    families and three routes: bubble pressure, dew pressure and nonassociating
    methane/ethane/propane single-component VLE within the retained NIST
    temperature domains.
@@ -275,10 +291,10 @@ Required outcomes:
 10. `run_pytest.py -q` exits zero without allowlists that hide architecture or
    scientific failures.
 
-Phase 1 is complete only when the repository can tell the truth about later
-phases.
+Phase 1 is complete only when the repository can measure later phases
+reliably.
 
-### Phase 2: Provider Input Integrity
+### Phase 2: Provider Input Correctness
 
 Owner: M3, `packages/epcsaft`.
 

@@ -5,6 +5,19 @@ Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/321`
 Status: `draft`
 Last synced: `2026-06-26`
 
+## Remaining-Work Supersession
+
+This document remains the historical foundation for the CE/CPE boundary,
+reaction and standard-state contracts, one-NLP architecture, oracle harness,
+and original issue tree under #321. Its remaining diagnostic, formulation
+repair, and standalone `reactive_speciation` admission work is superseded by
+`docs/superpowers/specs/2026-07-10-m4-standalone-ce-diagnostic-repair-and-admission.md`.
+
+Where the historical text below describes `reactive_speciation` as a public or
+activated surface, the current native activation matrix and the 2026-07-10 spec
+govern: standalone CE remains internal validation, issue #330 remains blocked,
+and reactive LLE, reactive electrolyte LLE, and CPE remain closed.
+
 ## Summary
 
 Create a standalone chemical-equilibrium and speciation tranche for

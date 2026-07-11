@@ -9,7 +9,7 @@ This document explains:
 1. What the package is supposed to be.
 2. Why the package needs the current backend, derivative, equilibrium, regression, and benchmark work.
 3. What downstream projects require.
-4. What prior agents got wrong.
+4. What prior validation attempts missed.
 5. What “complete” means now.
 
 This document is authoritative over older planning language that allowed audit-only closure, inventory-only closure, staged-only closure, diagnostic-only closure, or documented limitations as completion.
@@ -286,9 +286,10 @@ Python may not own production optimizer loops, residual packing, or solver itera
 
 ---
 
-# 5. What prior agents got wrong
+# 5. Validation failure modes to avoid
 
-Prior agents often completed a narrow safe slice and marked the issue done.
+Prior work sometimes completed a narrow safe slice and marked the broader
+issue done.
 
 That is no longer allowed.
 
@@ -305,7 +306,8 @@ Common failure modes:
 - association sensitivity deferred without implementing the actual required path
 - GoalBuddy final audit marked `full_outcome_complete: true` despite known missing required workflows
 
-A PR may not close an issue by being honest about incompleteness. Honesty is required, but incompleteness means the issue remains open.
+Documenting incompleteness does not complete an issue. Remaining work stays
+open or moves to explicit child issues.
 
 ---
 
@@ -578,12 +580,12 @@ parameter sensitivities, and pure/binary/electrolyte regression workflows.
 - all required target families supported
 - all binary parameter families supported
 - real parameter movement tests
-- regression result schemas and capability evidence stay honest
+- regression result schemas and capability evidence match executable behavior
 
 ## M6 - Validation
 
 Executable literature benchmarks, registry evidence, capability evidence,
-docs/test proof, and release-quality validation gates.
+docs/test proof, and reproducible validation gates.
 
 - every named benchmark executable
 - every benchmark has fixture, command, expected result, tolerance
