@@ -10,11 +10,17 @@ Project fields, local docs, templates, and completion standards agree.
 
 ## Current Open Issues
 
-No open M0 governance issue mirrors are currently tracked.
+| Issue | Role | Readiness | Summary |
+| --- | --- | --- | --- |
+| [#431](../../issues/2026-07-11-m0-governance-issue-0431-m0-characterize-ownership-and-maintainability-ratchets.md) | rollup | `ready` | Track the package-aware ownership index and measured structural ratchets. |
+| [#432](../../issues/2026-07-11-m0-governance-issue-0432-m0-define-versioned-ownership-index-and-pure-ratchet-validator.md) | leaf | `ready` | Define the inactive schema and deterministic offline validator. |
+| [#433](../../issues/2026-07-11-m0-governance-issue-0433-m0-activate-measured-ownership-baselines-and-repository-ratchet-gate.md) | leaf | `blocked` | Activate measured baselines after the M3/M5 cutovers and M4 characterization. |
+| [#434](../../issues/2026-07-11-m0-governance-issue-0434-m0-close-tasks-9-22-validation-correctness-program.md) | leaf | `blocked` | Assemble exact terminal receipts and close the Tasks 9-22 program. |
 
 ## Current Plans
 
-No active M0 governance plans are currently tracked.
+- [Characterized ownership and maintainability ratchets](../../plans/2026-07-10-m0-characterized-ownership-and-maintainability-ratchets-plan.md)
+- [Validation-correctness program closeout](../../plans/2026-07-10-m0-validation-correctness-program-closeout-plan.md)
 
 ## Retained Workflow
 

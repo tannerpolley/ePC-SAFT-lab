@@ -650,7 +650,7 @@ Create the issues in this dependency order:
    - Blocked by: CE core issue
    - Goal Command: `/goal Add standalone reactive_speciation API/result schema without CPE claims.`
 
-9. Child: `M4 CE: build standalone validation ladder`
+9. Child: `M4 CE: complete primitive receipts and independent component checker`
    - Type: `Task`
    - Classification: `AFK`
    - Blocked by: oracle harness and API schema issues

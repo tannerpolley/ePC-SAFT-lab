@@ -2,8 +2,12 @@
 
 Milestone: `M6 - Validation`
 Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/194`
-Status: `open`
-Last synced: `2026-05-30`
+Status: `historical; superseded for execution`
+Last reconciled: `2026-07-10`
+
+> Historical backlog anchor only. Do not execute this document. Live #194 now
+> routes work through the focused July 10 M6 regression, Gross, and standalone
+> CE evidence plans plus the refreshed #192 evidence gate.
 
 ## Summary
 
@@ -17,7 +21,7 @@ command-backed fixtures, tolerances, sources, and registry entries.
   tolerance, and command requirements.
 - [ ] Define capability evidence rules for provider, equilibrium, regression,
   and cross-package validation lanes.
-- [ ] Separate release-quality validation from ordinary PR local-proof gates.
+- [ ] Separate reproducible benchmark and capability-evidence validation from ordinary PR local-proof gates.
 - [ ] Define registry/docs/test ownership so evidence cannot drift from
   implementation.
 
@@ -29,5 +33,5 @@ until future implementation issues add executable fixtures and command receipts.
 ## Validation
 
 - `uv run python scripts/dev/validate_project.py docs`
-- GitHub Project audit: issue #194 belongs to `M6 - Validation`, package
-  `benchmark`, readiness `needs design`, release target `future`.
+- GitHub Project routing target: `ePC-SAFT Roadmap`; live Project membership was
+  not verifiable with the active token during the July 10 reconciliation.

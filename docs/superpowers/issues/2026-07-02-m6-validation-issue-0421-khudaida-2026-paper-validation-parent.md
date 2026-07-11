@@ -14,7 +14,7 @@ source_spec: docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with
 source_plan: docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
 afk_hitl: AFK
 branch: codex/issue-0421-khudaida-2026-paper-validation-parent
-last_synced: "2026-07-03"
+last_synced: "2026-07-10"
 ---
 
 # M6 Khudaida 2026 paper validation with Figiel parameter provenance
@@ -24,7 +24,7 @@ last_synced: "2026-07-03"
 **Issue Type:** Task
 **Sub-Issue Role:** plan-wrapper
 **Parent Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/420
-**Parent Mirror:** docs/superpowers/issues/2026-07-02-m6-validation-issue-0420-paper-validation-campaign-parent.md
+**Parent Mirror:** docs/superpowers/issues/2026-07-02-m6-validation-issue-0420-m6-paper-validation-campaign-parent.md
 **Child Issues:** https://github.com/ePC-SAFT/ePC-SAFT/issues/406, https://github.com/ePC-SAFT/ePC-SAFT/issues/407, https://github.com/ePC-SAFT/ePC-SAFT/issues/408, https://github.com/ePC-SAFT/ePC-SAFT/issues/409, https://github.com/ePC-SAFT/ePC-SAFT/issues/410, https://github.com/ePC-SAFT/ePC-SAFT/issues/411, https://github.com/ePC-SAFT/ePC-SAFT/issues/412, https://github.com/ePC-SAFT/ePC-SAFT/issues/413, https://github.com/ePC-SAFT/ePC-SAFT/issues/414, https://github.com/ePC-SAFT/ePC-SAFT/issues/415, https://github.com/ePC-SAFT/ePC-SAFT/issues/416, https://github.com/ePC-SAFT/ePC-SAFT/issues/417
 **Source Spec:** docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md
 **Source Plan:** docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
@@ -65,7 +65,7 @@ the public package route; misses open or block on M4/M5 follow-up issues.
 - [ ] The final campaign checker reports complete accepted evidence or exact
   source-backed blockers.
 
-## Blocked By
+## Blocked by
 
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/428
 

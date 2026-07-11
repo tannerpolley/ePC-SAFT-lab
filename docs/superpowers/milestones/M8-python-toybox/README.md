@@ -16,7 +16,7 @@ ownership stays with the package milestones:
 - `M4 - Equilibrium`: equilibrium package objectives, Jacobians, Hessians,
   Ipopt contracts, route behavior, and production equilibrium admission.
 - `M6 - Validation`: executable literature benchmark evidence and
-  release-quality validation gates.
+  reproducible validation gates.
 
 M8 may produce evidence that later becomes M3, M4, or M6 work. It must not
 claim provider, equilibrium, or benchmark capability by itself.
@@ -54,7 +54,7 @@ admission evidence rather than production solver architecture.
 | Spec | Category | Summary |
 | --- | --- | --- |
 | [Picard autodiff and exact implicit sensitivity baseline hardening](../../specs/2026-06-04-m8-python-toybox-picard-autodiff-and-exact-implicit-sensitivity-baseline-hardening.md) | derivatives | Compare JAX autodiff through the explicit Picard model against exact implicit sensitivity baselines and parameter sensitivities. |
-| [Associating-compound pressure density validation lane](../../specs/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane.md) | property validation | Build honest pressure-density and vapor-pressure/liquid-density style plots for associating compounds only. |
+| [Associating-compound pressure density validation lane](../../specs/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane.md) | property validation | Build source-backed pressure-density and vapor-pressure/liquid-density style plots for associating compounds only. |
 | [Pure-component saturation pressure solver](../../specs/2026-06-04-m8-python-toybox-pure-component-saturation-pressure-solver.md) | property validation | Add a SciPy pure-component saturation solver so toybox pressure plots become true vapor-pressure predictions. |
 | [Explicit closure admission decision](../../specs/2026-06-04-m8-python-toybox-explicit-closure-admission-decision.md) | admission | Use fixed-grid relative-error, simulation-timing, and retained-figure evidence to recommend the final #161 Picard disposition. |
 | [Equilibrium relevance probe for Picard closure error](../../specs/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error.md) | equilibrium probe | Probe whether Picard closure error breaks objective, Jacobian, and Hessian quality before any M4 implementation work. |
@@ -86,7 +86,7 @@ admission evidence rather than production solver architecture.
 | Issue | Status | Depends On | Summary |
 | --- | --- | --- | --- |
 | [#221](https://github.com/ePC-SAFT/ePC-SAFT/issues/221) | closed | none | Hardened Picard autodiff and exact implicit sensitivity baselines in the Python toybox. |
-| [#222](https://github.com/ePC-SAFT/ePC-SAFT/issues/222) | closed | none | Added associating-compound pressure-density validation with honest data points and dotted exact-vs-Picard curves. |
+| [#222](https://github.com/ePC-SAFT/ePC-SAFT/issues/222) | closed | none | Added associating-compound pressure-density validation with retained source-data points and dotted exact-vs-Picard curves. |
 | [#223](https://github.com/ePC-SAFT/ePC-SAFT/issues/223) | closed | #231 | Produced the final Picard fixed-grid relative-error and simulation-timing packet for #161 disposition. |
 | [#224](https://github.com/ePC-SAFT/ePC-SAFT/issues/224) | closed | none | Probed whether Picard closure error is dangerous for later equilibrium objective, Jacobian, and Hessian work. |
 | [#227](https://github.com/ePC-SAFT/ePC-SAFT/issues/227) | closed | none | Added a SciPy pure-component saturation solver so toybox pressure plots become true vapor-pressure predictions. |

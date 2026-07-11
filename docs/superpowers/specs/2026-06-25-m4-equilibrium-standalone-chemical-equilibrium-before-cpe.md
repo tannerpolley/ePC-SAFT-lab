@@ -198,7 +198,7 @@ Child issues:
      diagnostics, errors, and activation reporting for CE only.
    - Acceptance: public API does not claim reactive LLE or electrolyte CPE.
 
-8. `M4 CE: build standalone validation ladder`
+8. `M4 CE: complete primitive receipts and independent component checker`
    - Type: `Task`
    - Scope: analytic ideal reactions, multi-reaction rank tests, charged
      speciation/electroneutrality tests, Ascani 2023 homogeneous CE, MEA

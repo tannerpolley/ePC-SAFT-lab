@@ -2,8 +2,13 @@
 
 Milestone: `M5 - Regression`
 Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/193`
-Status: `open`
-Last synced: `2026-05-30`
+Status: `historical; superseded for execution`
+Last reconciled: `2026-07-10`
+
+> Historical backlog anchor only. Do not execute this document. Live #193 now
+> uses the focused July 10 native-contract and scoped-readmission specs/plans:
+> `2026-07-10-m5-regression-traceable-native-problem-contract.md` and
+> `2026-07-10-m5-m6-regression-real-data-admission.md`.
 
 ## Summary
 
@@ -31,6 +36,5 @@ Future decomposition can split it after the design gaps are concrete.
 ## Validation
 
 - `uv run python scripts/dev/validate_project.py docs`
-- GitHub Project audit: issue #193 belongs to `M5 - Regression`, package
-  `regression`, backend `Ceres`, readiness `needs design`, release target
-  `regression-0.x`.
+- GitHub Project routing target: `ePC-SAFT Roadmap`; live Project membership was
+  not verifiable with the active token during the July 10 reconciliation.

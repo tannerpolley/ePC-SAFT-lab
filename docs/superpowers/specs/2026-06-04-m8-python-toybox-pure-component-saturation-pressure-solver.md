@@ -22,7 +22,7 @@ it must not claim production provider, equilibrium, or benchmark capability.
   Python-only EOS/equilibrium-style analysis to M8 before provider,
   equilibrium, or benchmark admission.
 - `docs/superpowers/specs/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane.md`
-  created honest pressure-density plots but still treated pressure residuals as
+  created source-backed pressure-density plots but still treated pressure residuals as
   fixed-state diagnostics, not saturation predictions.
 - `analyses/package_validation/explicit_association_toybox/references/legacy_pcsaft_electrolyte.py`
   contains legacy `pcsaft_vaporP`/`vaporPfit` style workflows that can inform a

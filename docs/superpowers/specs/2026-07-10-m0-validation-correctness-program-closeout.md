@@ -1,8 +1,8 @@
 # Validation Correctness And Reproducibility Program Closeout
 
 Milestone: `M0 - Governance`
-Issue: planned M0 closeout issue
-Status: `approved for planning`
+Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/434`
+Status: `approved; tracker published`
 Last reviewed: `2026-07-10`
 
 ## Context

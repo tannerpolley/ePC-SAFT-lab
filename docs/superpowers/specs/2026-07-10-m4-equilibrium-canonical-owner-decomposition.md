@@ -1,8 +1,8 @@
 # M4 Equilibrium Canonical-Owner Decomposition
 
 Milestone: `M4 - Equilibrium`
-Issue: planned M4 tracking issue
-Status: `approved for planning`
+Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/462`
+Status: `approved; tracker published`
 Last reviewed: `2026-07-10`
 
 ## Context

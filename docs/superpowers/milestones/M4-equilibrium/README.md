@@ -28,6 +28,8 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Gross 2002 full figure replication](../../specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md) | `association` | Require source-backed or digitized curve-level replication of Gross/Sadowski 2002 Figures 1-10, retained scorecards, and a strict full-replication checker before electrolyte work resumes. |
 | [Adaptive branch tracing validation](../../specs/2026-06-24-m4-equilibrium-adaptive-branch-tracing-and-validation.md) | `association` | Add internal boundary-route branch tracing so accepted VLE paper-validation curves carry solved-anchor, segment-density, exact-Hessian, and postsolve proof. |
 | [Phase-equilibrium unified certification contract](../../specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md) | `lle`/`vle`/`electrolyte`/`reactive` | Defines one enforceable production-route certification lifecycle with family-specific residual blocks, detailed LLE subtrees, and native GitHub sub-issue hierarchy under #361. |
+| [Standalone CE diagnostic repair and admission](../../specs/2026-07-10-m4-standalone-ce-diagnostic-repair-and-admission.md) | `reactive` | Separates typed request/receipt completion, independent component checking, source-qualified evidence, classification, and final admission. |
+| [Canonical-owner decomposition](../../specs/2026-07-10-m4-equilibrium-canonical-owner-decomposition.md) | `equilibrium` | Decomposes existing owners behind characterization and exact route/caller gates without changing behavior or capability state. |
 
 ## Current Plans
 
@@ -84,18 +86,19 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 ## Current Open Issues
 
-Open M4 work is now split into the unified phase-equilibrium certification tree
-and the remaining CE/CPE lane. The phase-equilibrium tree is rooted at #361 and
-keeps #191 open under the electrolyte LLE subtree until the reopened closeout
-failures and shared contract gates are resolved.
+Open M4 work is split into the unified phase-equilibrium certification tree,
+the remaining CE/CPE lane, the M3 resolved-input consumer, and a separate
+canonical-owner decomposition tree. Certification is rooted at #361;
+decomposition is rooted at #462 and never substitutes source movement for a
+route acceptance proof.
 
 ### Unified Phase-Equilibrium Certification Tree
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#361](../../issues/2026-06-29-m4-equilibrium-issue-0361-unify-phase-equilibrium-certification-contracts.md) | `phase-equilibrium` | `Ipopt` | `blocked` | Parent for one enforceable production-route certification contract across PE route families. |
-| [#362](../../issues/2026-06-29-m4-equilibrium-issue-0362-implement-shared-production-route-certification-contract.md) | `phase-equilibrium` | `Ipopt` | `ready` | First executable leaf: shared certification shape for production-exposed PE routes. |
-| [#363](../../issues/2026-06-29-m4-equilibrium-issue-0363-govern-lle-family-certification.md) | `lle` | `Ipopt` | `blocked` | Parent for LLE family certification. |
+| [#361](../../issues/2026-06-29-m4-equilibrium-issue-0361-m4-pe-unify-phase-equilibrium-certification-contracts.md) | `phase-equilibrium` | `Ipopt` | `blocked` | Parent for one enforceable production-route certification contract across PE route families. |
+| [#362](../../issues/2026-06-29-m4-equilibrium-issue-0362-implement-shared-production-route-certification-contract.md) | `closed` | `Ipopt` | `complete` | Historical shared certification-contract leaf; closed before the July 10 successor graph. |
+| [#363](../../issues/2026-06-29-m4-equilibrium-issue-0363-m4-pe-govern-lle-family-certification.md) | `lle` | `Ipopt` | `blocked` | Parent for LLE family certification. |
 | [#364](../../issues/2026-06-29-m4-equilibrium-issue-0364-govern-neutral-nonassociating-lle-certification.md) | `closed` | `Ipopt` | `complete` | Parent neutral nonassociating LLE certification closes after #365 and #366 by this proof/sync PR. |
 | [#365](../../issues/2026-06-29-m4-equilibrium-issue-0365-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md) | `closed` | `Ipopt` | `complete` | Fixed neutral LLE Stage II replay-to-Stage III accepted-result receipt by PR #379. |
 | [#366](../../issues/2026-06-30-m4-equilibrium-issue-0366-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md) | `closed` | `Ipopt` | `complete` | Connected source-backed neutral nonassociating LLE evidence to the shared contract by PR #380. |
@@ -109,6 +112,10 @@ failures and shared contract gates are resolved.
 | [#374](../../issues/2026-06-29-m4-equilibrium-issue-0374-govern-flash-and-multiphase-certification.md) | `closed` | `Ipopt` | `complete` | Parent flash/multiphase certification closes after assigning phase-set and postsolve ownership under #361 by this proof/sync PR. |
 | [#375](../../issues/2026-06-29-m4-equilibrium-issue-0375-govern-boundary-route-certification.md) | `closed` | `Ipopt` | `complete` | Parent boundary-route certification closes after assigning trace and boundary admission ownership under #361 by this proof/sync PR. |
 | [#376](../../issues/2026-06-29-m4-equilibrium-issue-0376-govern-reactive-and-coupled-phase-equilibrium-certification.md) | `cpe` | `Ipopt` | `blocked` | Parent for reactive/coupled PE certification; #331 is now a native sub-issue here. |
+| [#458](../../issues/2026-07-11-m4-equilibrium-issue-0458-m4-lle-re-admit-neutral-lle-only-after-scoped-phase-discovery-proof.md) | `neutral_lle` | `Ipopt` | `needs design` | Non-executable future-admission rollup under #363; finite sampled candidates are insufficient. |
+| [#459](../../issues/2026-07-11-m4-equilibrium-issue-0459-m4-lle-re-admit-electrolyte-lle-only-after-scoped-charge-neutral-proof.md) | `electrolyte_lle` | `Ipopt` | `needs design` | Non-executable charge-neutral future-admission rollup under #363. |
+| [#460](../../issues/2026-07-11-m4-equilibrium-issue-0460-m4-pe-admit-neutral-multiphase-only-after-scoped-phase-set-discovery.md) | `neutral_multiphase` | `Ipopt` | `needs design` | Non-executable future-admission rollup under #361 requiring scoped complete discovery. |
+| [#461](../../issues/2026-07-11-m4-equilibrium-issue-0461-m4-pe-admit-neutral-tp-flash-only-after-live-source-backed-proof.md) | `neutral_tp_flash` | `Ipopt` | `needs design` | Non-executable future-admission rollup under #361 requiring live source-backed proof. |
 
 ### Electrolyte HELD2 Closeout State
 
@@ -124,9 +131,27 @@ native-selector admission change passes the complete gate.
 | --- | --- | --- | --- | --- |
 | [#321](../../issues/2026-06-26-m4-equilibrium-issue-0321-m4-ce-standalone-chemical-speciation-equilibrium-foundation-before-cpe.md) | `ce` | `Ipopt` | `ready` | Standalone chemical/speciation equilibrium foundation before coupled CPE work. |
 | [#328](../../issues/2026-06-26-m4-equilibrium-issue-0328-m4-ce-design-standalone-speciation-public-api-and-result-schema.md) | `ce` | `Ipopt` | `ready` | Design the standalone CE public API and result schema. |
-| [#329](../../issues/2026-06-26-m4-equilibrium-issue-0329-m4-ce-build-standalone-validation-ladder.md) | `ce` | `Ipopt` | `ready` | Build the standalone CE validation ladder. |
+| [#329](../../issues/2026-06-26-m4-equilibrium-issue-0329-m4-ce-complete-primitive-receipts-and-independent-component-checker.md) | `ce` | `Ipopt` | `blocked` | Complete primitive receipts and an independent component checker after #328. |
 | [#330](../../issues/2026-06-26-m4-equilibrium-issue-0330-m4-ce-activate-standalone-ce-only-after-gates-pass.md) | `ce` | `Ipopt` | `blocked` | Activate standalone CE only after the CE foundation, API, and validation gates pass. |
 | [#331](../../issues/2026-06-26-m4-equilibrium-issue-0331-m4-cpe-define-simultaneous-phase-plus-chemistry-interface-contract.md) | `cpe` | `Ipopt` | `blocked` | Define the simultaneous phase-plus-chemistry interface contract after standalone CE is governed. |
+| [#457](../../issues/2026-07-11-m4-equilibrium-issue-0457-m4-ce-classify-source-qualified-nonideal-mea-outcome-and-repair-exact-defect.md) | `ce` | `Ipopt` | `blocked` | Classify accepted M6 MEA evidence and repair only a reproduced M4 defect; rejection does not activate CE. |
+
+### Resolved-Input Consumer And Canonical-Owner Decomposition
+
+| Issue | Capability | Backend | Readiness | Summary |
+| --- | --- | --- | --- | --- |
+| [#443](../../issues/2026-07-11-m4-equilibrium-issue-0443-m4-consume-provider-resolved-input-sdk-v1.md) | `equilibrium` | `Ipopt` | `blocked` | Consume M3 resolved-input SDK v1 without a second serializer or capability change. |
+| [#462](../../issues/2026-07-11-m4-equilibrium-issue-0462-m4-decompose-equilibrium-extension-around-canonical-owners.md) | `equilibrium` | `Ipopt` | `ready` | Non-executable decomposition tracker separate from #361 certification. |
+| [#463](../../issues/2026-07-11-m4-equilibrium-issue-0463-m4-characterize-equilibrium-ownership-against-the-shared-ratchet-schema.md) | `equilibrium` | `Ipopt` | `blocked` | Characterize current owners against the inactive M0 schema. |
+| [#464](../../issues/2026-07-11-m4-equilibrium-issue-0464-m4-extract-public-green-equilibrium-owners-without-behavior-drift.md) | `equilibrium` | `Ipopt` | `blocked` | Extract only current public-green owners after ratchet activation. |
+| [#465](../../issues/2026-07-11-m4-equilibrium-issue-0465-m4-extract-route-gated-electrolyte-native-owners.md) | `electrolyte` | `Ipopt` | `blocked` | Extract gated electrolyte owners after exact charge-neutral correctness gates. |
+| [#466](../../issues/2026-07-11-m4-equilibrium-issue-0466-m4-retire-route-gated-internal-binding-and-python-owners.md) | `equilibrium` | `Ipopt` | `blocked` | Retire internal owners only after CE/electrolyte/Gross caller cutovers. |
+
+Current plans:
+
+- [Standalone CE diagnostic repair and admission](../../plans/2026-07-10-m4-standalone-ce-diagnostic-repair-and-admission-plan.md)
+- [Provider resolved-input SDK v1 consumer](../../plans/2026-07-10-m4-equilibrium-provider-resolved-input-sdk-v1-consumer-plan.md)
+- [Canonical-owner decomposition](../../plans/2026-07-10-m4-equilibrium-canonical-owner-decomposition-plan.md)
 
 ## Queue Guard
 

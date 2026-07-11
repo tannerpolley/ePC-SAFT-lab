@@ -6,81 +6,86 @@ state: open
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: equilibrium
-capability: null
+capability: reactive
 backend: Ipopt
-readiness: ready
-release_target: equilibrium-0.x
-source_spec: docs/superpowers/specs/2026-06-25-m4-equilibrium-standalone-chemical-equilibrium-before-cpe.md
-source_plan: docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
-afk_hitl: AFK
+readiness: "ready"
+release_target: future
+source_spec: docs/superpowers/specs/2026-07-10-m4-standalone-ce-diagnostic-repair-and-admission.md
+source_plan: docs/superpowers/plans/2026-07-10-m4-standalone-ce-diagnostic-repair-and-admission-plan.md
+afk_hitl: HITL
 branch: codex/issue-0321-m4-ce-standalone-chemical-speciation-equilibrium-foundation-before-cpe
-last_synced: "2026-06-26"
+last_synced: "2026-07-10"
 ---
 
 # M4 CE: standalone chemical/speciation equilibrium foundation before CPE
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/321
 **GitHub Milestone:** M4 - Equilibrium
-**Issue Type:** feature
-**Source Spec:** docs/superpowers/specs/2026-06-25-m4-equilibrium-standalone-chemical-equilibrium-before-cpe.md
-**Source Plan:** docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
-**AFK/HITL:** AFK
-**Classification:** AFK
-**Labels:** enhancement,docs,validation,equilibrium,area:equilibrium,backend:ipopt,type:feature,status:ready
-**Goal Command:** /goal Create the standalone CE issue backbone and keep CE/CPE capability boundaries evidence-backed.
+**Issue Type:** Feature
+**Source Spec:** docs/superpowers/specs/2026-07-10-m4-standalone-ce-diagnostic-repair-and-admission.md
+**Source Plan:** docs/superpowers/plans/2026-07-10-m4-standalone-ce-diagnostic-repair-and-admission-plan.md
+**Plan Slice:** Non-executable CE parent; children #328/#329/#457/#330 execute
+**Package Owner:** `equilibrium`
+**AFK/HITL:** HITL
+**Classification:** HITL
+**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
+**Goal Command:** None until prerequisites and explicit scheduling permit execution.
 **Execution Mode:** Ask at runtime
-**Worktree Policy:** Native Codex worktree thread first
-**Integration Policy:** Worker PR reviewed by main thread
-**TDD Policy:** Required
-**Parallelization Plan:** None
-**Reviewer Role:** Main thread orchestrator
-**Script Gate Mode:** Safety only
+**Worktree Policy:** Native Codex worktree task first
+**Integration Policy:** Main-thread review and local integration
+**TDD Policy:** Owned by executable child leaves
+**Parallelization Plan:** Only non-overlapping owner slices after dependencies pass
+**Reviewer Role:** Independent reviewer plus main-thread integrator
+**Script Gate Mode:** Safety plus proof oracle
+**Sub-Issue Role:** rollup
+**Executable:** false
+**Parent:** None
+**Project Membership:** Unverified because the active token lacks `read:project`; milestone/type/subissue/dependency state is live and verified.
 
 ## Outcome Summary
 
-**Outcome Source:** docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md#outcome-proof
-**Intent:** Create and track the standalone CE implementation backbone before CPE work.
-**Target Output:** All child issues exist, are linked, and keep CPE blocked until CE and PE gates are proven.
-**Owner:** M4 equilibrium package owner for packages/epcsaft-equilibrium.
-**Interface:** Source plan, issue mirror, route-specific tests, validation checker evidence, registry/capability payloads, and GitHub issue state.
-**Cutover:** Replace placeholder or broad closed-ticket state only for this issue's accepted slice; keep unsupported CE/CPE surfaces closed.
-**Replaced Path:** Prior prototype evidence, broad closed tickets, or placeholder-only docs cannot stand in for this issue's proof.
-**Acceptance Proof:** All child issues exist, are linked, and keep CPE blocked until CE and PE gates are proven.
-**Stop Criteria:** Stop if the slice requires implicit standard-state conventions, unproven derivative evidence, unsupported phase coupling, or capability claims beyond this issue.
-**Avoid:** Do not add downstream application metrics, regression work, release claims, or reactive phase route admission outside this issue scope.
+**Outcome Source:** docs/superpowers/plans/2026-07-10-m4-standalone-ce-diagnostic-repair-and-admission-plan.md#outcome-proof
+**Intent:** Track the remaining standalone chemical-equilibrium request, checker, evidence, classification, and admission sequence before coupled CPE.
+**Owner:** M4 - Equilibrium / `equilibrium`.
+**Plan Slice:** Non-executable CE parent; children #328/#329/#457/#330 execute.
+**Proof:** The issue-specific acceptance criteria, dependency state, and source-plan oracle below are authoritative.
 
 ## Project Merge
 
 **Merge Owner:** Main thread orchestrator
-**Merge Gate:** Native UI approval required
-**Merge Policy:** Repo default
-**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Merge Gate:** Separate user approval before any remote push or merge
+**Merge Policy:** Follow the repository's issue-resolution and review policy
+**Worktree Cleanup Policy:** Remove only task-owned scratch after verification
 **Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
 
 ## What To Build
 
-Create and track the standalone CE implementation backbone before CPE work.
+Track the remaining standalone chemical-equilibrium request, checker, evidence, classification, and admission sequence before coupled CPE.
 
 ## Acceptance Criteria
 
-- [ ] Implement the issue slice described in the source plan.
-- [ ] Add or update focused tests named in the source plan for this slice.
-- [ ] Update docs, registry, capability payloads, and retained validation artifacts when this slice owns them.
-- [ ] Run the slice proof oracle plus the plan validators before handoff.
-- [ ] Preserve CE, PE, and CPE capability boundaries in user-facing text and capability payloads.
+- [ ] Keep this mirror and live issue as a non-executable rollup.
+- [ ] Route implementation only through hydrated executable leaves.
+- [ ] Keep subissue/dependency state synchronized with the source plans.
+- [ ] Do not infer capability admission from rollup state.
 
 ## Blocked by
 
-None
+- None.
 
 ## Non-goals
 
-- Reactive LLE production support outside the standalone CE activation slice.
-- Reactive electrolyte LLE production support outside later CPE issue sets.
-- Downstream application metrics, parameter regression, or release publication.
+- Work only in the owner and plan slice named above.
+- Preserve current public route state unless this issue is a separately proven admission leaf.
+- Keep provider serialization and retained paper artifacts in their M3/M6 owners.
 
 ## Proof Oracle
 
-- uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
-- uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
-- Slice-specific commands from docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md Task section for this issue.
+```bash
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-10-m4-standalone-ce-diagnostic-repair-and-admission-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-10-m4-standalone-ce-diagnostic-repair-and-admission-plan.md
+uv run --no-sync python scripts/validate_issue_mirror.py --issue-file <this mirror> --milestone-required
+uv run --no-sync python scripts/dev/validate_project.py docs
+git diff --check
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
+```

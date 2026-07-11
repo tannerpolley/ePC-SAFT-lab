@@ -2,8 +2,8 @@
 
 Milestone: `M3 - EOS`
 Package: `packages/epcsaft`
-Issue: planned M3 tracking issue, `M3: establish versioned state-resolved model input and receipts`
-Status: `approved for planning`
+Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/439` (`M3: establish versioned state-resolved model input`)
+Status: `approved; tracker published`
 Last reviewed: `2026-07-10`
 
 ## Context

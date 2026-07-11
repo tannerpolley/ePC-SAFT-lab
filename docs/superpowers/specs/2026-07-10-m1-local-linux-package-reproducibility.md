@@ -1,8 +1,8 @@
 # M1 Local Linux Package Reproducibility
 
 Milestone: `M1 - Packages`
-Issue: planned M1 tracking issue
-Status: `approved for planning`
+Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/435`
+Status: `approved; tracker published`
 Last synced: `2026-07-10`
 
 ## Summary

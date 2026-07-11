@@ -9,19 +9,19 @@ Last synced: `2026-06-04`
 
 Create a Python-only toybox validation lane for real associating compounds. The
 lane should compare exact implicit association and the retained Picard closure
-against honest pressure-density, vapor-pressure, and liquid-density reference
+against source-backed pressure-density, vapor-pressure, and liquid-density reference
 data, using readable figures that resemble literature validation plots rather
 than abstract closure-ranking bars.
 
-This is exploratory M8 work. If the evidence becomes release-quality benchmark
-material, a later M6 validation plan or issue can promote it.
+This is exploratory M8 work. If the evidence becomes reusable checker-gated
+benchmark material, a later M6 validation plan or issue can promote it.
 
 ## Project Context Evidence Used
 
 - `docs/superpowers/milestones/M8-python-toybox/README.md` routes Python-only
   cross-EOS/equilibrium analysis into the toybox milestone.
 - `docs/superpowers/specs/2026-06-03-m3-eos-paper-backed-association-closure-validation-matrix-design.md`
-  defines paper-backed topology rows and requires honest source metadata.
+  defines paper-backed topology rows and requires traceable source metadata.
 - `docs/superpowers/specs/2026-06-03-m3-eos-explicit-association-derivative-property-propagation-evidence.md`
   identifies fixed-state pressure residuals as useful warnings, not VLE
   validation.

@@ -113,7 +113,7 @@ Test complete for this program means:
   reaction affinities, bound complementarity, and unscaled Lagrangian
   stationarity from retained primitives without calling the CE production
   solver;
-- CppAD/analytic derivative rows match bounded central perturbations at
+- CppAD/analytic derivative rows match bounded symmetric two-sided reference evaluations at
   interior component-fixture states within the tolerance recorded by the test;
 - after #328 closes, issue #329 closes from the component receipt/checker proof
   alone and has no dependency on the M6 source leaf;
@@ -447,7 +447,7 @@ slice. Before implementation dispatch, tracker publication must also label
   from CE production modules. Recompute `C@n-b`, charge when present,
   `nu@mu`, stationarity `grad_f + J.T@lambda - z_L + z_U`, bound
   complementarity, and scaled/unscaled norms. At bounded interior component
-  states, compare retained exact derivatives with central perturbations used
+  states, compare retained exact derivatives with symmetric two-sided reference evaluations used
   only as a diagnostic test oracle, never as a production derivative path.
 
 - [ ] **Step 4: Record the component-contract result.** Run the checker against

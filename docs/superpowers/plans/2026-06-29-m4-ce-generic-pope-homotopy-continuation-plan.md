@@ -254,7 +254,7 @@ Test complete means all of the following are true:
 - Modify: `analyses/package_validation/standalone_ce/shared/results/summary.json`
 - Modify: `docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md`
 - Modify: `docs/superpowers/issues/2026-06-26-m4-equilibrium-issue-0326-m4-ce-add-single-ce-nlp-activation-path.md`
-- Modify: `docs/superpowers/issues/2026-06-26-m4-equilibrium-issue-0329-m4-ce-build-standalone-validation-ladder.md`
+- Modify: `docs/superpowers/issues/2026-06-26-m4-equilibrium-issue-0329-m4-ce-complete-primitive-receipts-and-independent-component-checker.md`
 
 - [ ] **Step 1: Write failing checker tests.** Require continuation trace evidence, max-min seed evidence, no-oracle MEA proof, and clean activation metadata.
 - [ ] **Step 2: Run checker tests and verify failure.** Run `uv run --no-sync python run_pytest.py tests/native/contracts/test_standalone_ce_gate.py -q`. Expected: checker lacks new evidence requirements.

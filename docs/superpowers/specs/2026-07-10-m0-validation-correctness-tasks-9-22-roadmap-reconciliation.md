@@ -2,7 +2,7 @@
 
 Milestones: `M0`, `M1`, `M3`, `M4`, `M5`, `M6`
 Packages: provider, equilibrium, regression, and repository validation
-Status: `approved for milestone-owned planning`
+Status: `tracker graph published; implementation not started by this pass`
 Last reviewed: `2026-07-10`
 
 ## Context
@@ -99,12 +99,42 @@ the active program unless later requested.
     [the Gross public-route evidence spec](2026-07-10-m6-gross-2002-public-bubble-dew-evidence-refresh.md)
     and its M6 plan; keep all unrelated paper repair deferred.
 
+## Published Issue Map
+
+The approved graph was published on 2026-07-10 local time (2026-07-11 UTC).
+It reuses eleven existing issues and creates 37 new issues. A proposed duplicate
+CE component-checker issue was removed because that scope belongs to corrected
+#329; independent review then added distinct #467 for the post-lane M6 combined
+regression evidence gate so #452 can close after framework Task 1.
+
+| Workstream | Tracker and leaves |
+| --- | --- |
+| M0 ownership and closeout | #431 parent; #432 schema; #433 activation; #434 program closeout |
+| M1 current-host Linux proof | #435 parent; #436 environment receipt; #437 artifact build; #438 isolated installs, smokes, ELF closure, and final cutover |
+| M3 resolved model input | #439 parent; #440 configuration; #441 resolved compiler; #442 provider cutover; M4 consumer #443; #444 final SDK/deletion |
+| M5 regression contract/admission | Reused #193 parent; #445-#451 leaves |
+| M6 exact evidence | Reused #194 parent; #452 framework, #453 NIST, #454 Susial, #467 combined regression gate, #455 Gross, and #456 MEA; reused #192/#236 current public evidence; reused #420 deferred paper campaigns |
+| M4 standalone CE | Reused #321 parent; #328 typed request; corrected #329 component checker; #456 M6 evidence; #457 classification; #330 admission |
+| M4 future route admission | #458/#459 under #363; #460/#461 under #361; all four are non-executable `status:needs-design` rollups and completion blockers |
+| M4 canonical-owner decomposition | #462 parent; #463 characterization; #464 public-green extraction; #465 gated electrolyte extraction; #466 gated internal-owner retirement |
+
+Native subissue and dependency relationships are live and were checked as an
+acyclic graph. Broad parents #193/#194 remain `status:ready` without artificial
+blocker edges; exact execution leaves carry prerequisites. GitHub Project-board
+membership is unverified because the active token lacks `read:project`, so the
+local mirrors record that limitation instead of asserting membership.
+
 ## Alternatives Considered
 
 ### Keep the original six phases and one cross-milestone plan
 
 This preserves numbering but repeats the scope explosion seen in paused Task 9
 and violates one-milestone issue ownership.
+
+Here, "paused Task 9" refers only to the abandoned monolithic branch and its
+304-file implementation slice. The bounded #440 configuration-contract leaf is
+technically ready for later work, but it is intentionally not `agent-ready` and
+must not start until the user explicitly resumes Task 9 implementation.
 
 ### Create one issue for every original task
 
@@ -167,13 +197,13 @@ No release matrix, manylinux tag, or multi-Python proof is implied.
 
 ## Migration And Cutover
 
-Write milestone-owned specs first, then implementation plans, then update or
-create GitHub issues and dependency edges. Existing backlog #193/#194
-source links must be corrected from retired `docs/milestones/...` paths to
-`docs/superpowers/...`. Old plans are marked superseded when their capability
-boundary conflicts with current ADRs. The July 9 task numbers remain in this
-reconciliation and closeout record; implementation commits follow the new
-owner groups.
+Milestone-owned specs and implementation plans now precede the published issue
+graph. Existing #193/#194 were refreshed rather than duplicated, and their
+retired `docs/milestones/...` references were replaced by canonical
+`docs/superpowers/...` sources. Old plans remain historical where useful, but
+their capability boundary cannot override current ADRs or the published leaves.
+The July 9 task numbers remain in this reconciliation and closeout record;
+implementation commits follow the new owner groups.
 
 ## Risks
 
@@ -190,11 +220,13 @@ owner groups.
 
 ## Publication And Execution Facts
 
-- Exact new issue numbers do not exist until GitHub creates the approved M0,
-  M1, M3, and M4 trackers.
-- Exact extraction boundaries for Tasks 19-20 remain unknown until corrected
-  behavior from Tasks 9-15 is stable; the conservative rule is no behavior move
-  without a current characterization map.
+- GitHub issues #431-#467 are the 37 new milestone-owned records; #192, #193,
+  #194, #236, #321, #328, #329, #330, #361, #363, and #420 are refreshed
+  existing records.
+- Publication changed tracker/docs state only. No implementation, scientific
+  regeneration, capability admission, push, release, or paper repair occurred.
+- Exact extraction movement remains blocked behind #432 -> #463 -> #433 and
+  the route/caller dependencies named by #464-#466.
 
 ## Decision Ledger
 
@@ -202,7 +234,7 @@ owner groups.
 | --- | --- | --- | --- | --- | --- |
 | Program framing | User clarification, 2026-07-10 | Optimize for private local validation correctness and reproducibility. | Public-release work is removed from the active program. | No | M0 |
 | Task traceability | July 9 plan | Preserve task numbers in this reconciliation only. | New plans organize by owner. | No | M0 |
-| Task 9 | Code/paused-branch audit | One M3 resolved-input group; paper repair separate. | Avoid another 304-file slice. | No | M3 |
+| Task 9 | Code/paused-branch audit | One M3 resolved-input group; paper repair separate. | The monolithic branch remains paused; #440 is a bounded later leaf and requires explicit resumption. | No | M3 |
 | Tasks 10-11 | Shared compiler/receipt ownership | Merge under #193. | One target-to-native problem contract. | No | M5 |
 | Task 12 | Tracker and artifact ownership | One spec, separate M5/M6 plans and children. | One milestone per issue. | No | M5/M6 |
 | Tasks 13-14 | Live CE evidence | Refresh existing CE tree and diagnose before repair. | Tuning cannot precede evidence. | No | M4 |
@@ -211,4 +243,4 @@ owner groups.
 | Task 19 | Existing gates/maps | Use baseline/no-growth ratchets, not line count as architecture proof. | Existing progress is retained. | No | M0/packages |
 | Task 21 | Package boundary policy | Fold each half into its owning contract group. | No cross-milestone refactor issue. | No | M3/M5 |
 | Task 22 | Later user instruction | Retain and mark source spec/plan complete. | No deletion of requested history. | No | M0 |
-| New issue numbers | GitHub state | Assign only on issue creation. | No fictional tracker IDs. | Yes | M0 |
+| New issue numbers | Live GitHub publication receipt | #431-#467 assigned to the 37 new records; reuse eleven existing issues. | Mirrors and milestone pages may now use exact IDs. | No | M0 |
