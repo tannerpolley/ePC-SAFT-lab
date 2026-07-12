@@ -8,6 +8,12 @@ Status: `draft`
 Created: `2026-06-11`
 Updated: `2026-06-13`
 
+> **Source-faithful supersession (2026-07-12):** Preserve this document's
+> adoption-gap and reliability history. The current M4 doctrine supersedes its
+> classification of sampled replay as a verified Stage II dual loop, local
+> route refinement as canonical Stage III, and boundary routes as derived from
+> HELD.
+
 ## Summary
 
 This spec is the durable M4 contract for full HELD 1.0 adoption before

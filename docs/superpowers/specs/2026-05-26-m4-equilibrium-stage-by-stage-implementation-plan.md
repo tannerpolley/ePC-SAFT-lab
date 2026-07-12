@@ -18,19 +18,27 @@ Stage labels in this file are planning labels only. They are not Python route
 strings, C++ selector keys, registry keys, capability keys, or public API
 names.
 
+> **Source-faithful terminology correction (2026-07-12):** The recovery
+> specification and M4 algorithm doctrines govern HELD, HELD2, Stage III, and
+> boundary-route identity. Treat Stage 9 sampled-candidate and local-refinement
+> receipts as component evidence, not completed Stage II or canonical Stage
+> III. Direct bubble/dew routes do not inherit HELD status.
+
 ## Source Hierarchy
 
 Use this order when two documents disagree:
 
 1. `docs/latex/equations.tex` for EOS contribution equations.
-2. `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md` for GFPE doctrine,
+2. `docs/superpowers/specs/2026-07-12-m4-equilibrium-source-faithful-recovery-and-curated-migration.md`
+   for source-faithful algorithm identity and supersession.
+3. `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md` for GFPE doctrine,
    mathematical form, family order, and admission policy.
-3. `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml` for executable family
+4. `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml` for executable family
    rows, derived subworkflows, reference cases, and production flags.
-4. This file for implementation sequencing and stage exit evidence.
-5. `docs/superpowers/PROJECT_CONTEXT.md` for package-wide boundaries and completion
+5. This file for implementation sequencing and stage exit evidence.
+6. `docs/superpowers/PROJECT_CONTEXT.md` for package-wide boundaries and completion
    standards.
-6. Generated views such as `docs/equations.md`, `docs/equations_registry.yaml`,
+7. Generated views such as `docs/equations.md`, `docs/equations_registry.yaml`,
    `docs/algorithms.md`, and `docs/algorithms_registry.yaml` for navigation
    and consistency checks only.
 
@@ -872,18 +880,19 @@ Substeps:
 
 Acceptance checks:
 
-- Tests distinguish deterministic screening, continuous TPD, HELD Stage I,
-  HELD Stage II, and HELD Stage III.
-- Registry rows can name which HELD gates are passed for each family.
+- Tests distinguish deterministic screening, continuous TPD, and Stage I
+  component diagnostics from a source-faithful Stage II controller and Stage
+  III free-energy problem.
+- Registry rows can name executed operations without promoting sampled audits
+  or local correctors to completed HELD stages.
 - Production exposure remains false until the relevant HELD ladder is
   complete.
-- Current neutral evidence reports deterministic screening as seed support,
-  continuous TPD and HELD Stage I only when all continuous TPD starts converge,
-  HELD Stage II as a candidate-bound audit plus replayable dual-loop candidate
-  metadata, and current Ipopt solves as Stage III refinement only after the
-  route solve itself converges and consumes the Stage II replay seed. A Stage II
-  open candidate bound gap remains incomplete HELD evidence; a closed audit
-  without replay metadata is not enough to satisfy the Stage II gate.
+- Current neutral evidence reports deterministic screening as seed support and
+  continuous TPD or Stage I component diagnostics only when all starts
+  converge. Its candidate-bound audit and replay metadata do not execute the
+  Stage II upper/lower loop. Current Ipopt route refinements remain local
+  correction evidence even when they converge and consume a replay seed; they
+  do not execute canonical Stage III free-energy minimization.
 - The executable Stage 9 checker reports any iteration-limit continuous TPD
   result as incomplete evidence, not as convergence.
 - Public utility `flash` may keep deterministic TPD postsolve certification

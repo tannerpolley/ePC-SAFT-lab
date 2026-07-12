@@ -288,27 +288,35 @@ Use only the layers required by the active stage:
 - Create: `docs/superpowers/milestones/M4-equilibrium/algorithms/strong-electrolyte-held2.md`
 - Create: `docs/superpowers/milestones/M4-equilibrium/algorithms/ascani-electrolyte-equilibrium.md`
 - Create: `docs/superpowers/milestones/M4-equilibrium/algorithms/chemical-and-coupled-equilibrium.md`
-- Test: `tests/workflows/repo/test_project_structure.py`
+- Create: `tests/workflows/repo/test_equilibrium_doctrine.py`
+- Preserve: every existing test file
 
 **Interfaces:**
 
 - Produces the algorithm vocabulary consumed by Tasks 2, 7, 9, and 10.
 - Does not change runtime activation or implementation.
 
-- [ ] Write RED semantic repository-contract assertions for source identity,
+- [x] Write a new RED semantic repository-contract test for source identity,
   separate algorithm names, canonical Stage III objective, and forbidden
   active completion claims. Do not assert prose wording, heading layout, or
   source line numbers.
-- [ ] Run the focused repository tests and confirm they fail on current mixed
+- [x] Run the focused repository tests and confirm they fail on current mixed
   doctrine.
-- [ ] Write the four bounded doctrine files and reduce the generalized document
+- [x] Write the four bounded doctrine files and reduce the generalized document
   to package architecture plus links.
-- [ ] Mark historical specifications as superseded where their algorithm
+- [x] Mark historical specifications as superseded where their algorithm
   completion language conflicts; do not rewrite their historical results.
-- [ ] Run focused contracts, docs validation, strict Sphinx, Ruff on changed
+- [x] Run focused contracts, docs validation, strict Sphinx, Ruff on changed
   Python tests, and `git diff --check`.
-- [ ] Request independent scientific review against the four local source
+- [x] Request independent scientific review against the four local source
   documents and commit `docs(equilibrium): correct algorithm doctrine`.
+
+**Stage 1 checkpoint (2026-07-12):** The user accepted this task as the bounded
+scope record, authorized one new doctrine-contract test while preserving every
+existing test, and authorized a direct local commit on `main`. The RED contract
+failed against the mixed doctrine, the final source-fidelity and scope reviews
+approved the corrected diff, and the checkpoint commit is the commit named
+above.
 
 ### Task 2: Separate M4 Runtime Architecture From M6 Evidence
 

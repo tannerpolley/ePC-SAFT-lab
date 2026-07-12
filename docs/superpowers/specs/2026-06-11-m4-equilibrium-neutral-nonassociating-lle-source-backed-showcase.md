@@ -8,6 +8,11 @@ Status: `implemented-by-issue-250`
 Created: `2026-06-11`
 Updated: `2026-06-13`
 
+> **Source-faithful supersession (2026-07-12):** Preserve the fixture, model
+> comparison, and retained figure as internal evidence. They prove neither a
+> completed Pereira Stage II dual loop, canonical HELD Stage III, nor public
+> neutral LLE admission.
+
 ## Summary
 
 Current `main` has a production-exposed neutral nonassociating `lle` utility

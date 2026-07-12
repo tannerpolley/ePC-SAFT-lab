@@ -233,8 +233,8 @@ Deliverables:
 - corrected Stage III and boundary-route terminology;
 - explicit supersession notes on historical overclaims.
 
-Guard: documentation changes may not alter activation, source code, tests, or
-retained results.
+Guard: documentation changes may add a new repository doctrine-contract test,
+but may not alter activation, source code, existing tests, or retained results.
 
 Proof: source-anchor contract tests, docs validation, strict Sphinx, and a
 search proving no active doctrine calls sampled-candidate bookkeeping a

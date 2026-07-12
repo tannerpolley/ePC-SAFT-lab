@@ -5,6 +5,12 @@ Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/191`
 Status: `open`
 Last synced: `2026-06-26`
 
+> **Source-faithful supersession (2026-07-12):** Preserve the issue and child
+> receipts as implementation history. Counterion-pair coordinates and
+> mean-ionic residuals belong to the Ascani formulation, not the Perdomo
+> modified-mole HELD2 identity, and the retained local equation solve is not
+> canonical HELD2 Stage III.
+
 ## Summary
 
 Prove electrolyte GFPE and HELD2.0 validation gates without treating public

@@ -5,6 +5,11 @@ Affected package: `packages/epcsaft-equilibrium`
 Status: `active`
 Created: `2026-06-11`
 
+> **Source-faithful supersession (2026-07-12):** Keep the native-freshness
+> receipt mechanism. The current M4 doctrine supersedes this document's
+> interpretation of sampled candidate replay and current-route refinement as
+> completed Pereira Stage II and Stage III.
+
 ## Summary
 
 This spec records the post-merge truth for HELD 1.0 after #241 and #188:

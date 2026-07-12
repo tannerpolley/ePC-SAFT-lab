@@ -1,5 +1,10 @@
 # Strict Multiphase Fugacity Residual Refinement Implementation Plan
 
+> **Source-faithful supersession (2026-07-12):** Preserve the exact
+> fugacity-residual NLP as local correction and certification evidence. It does
+> not replace direct total free-energy minimization as the defining Pereira
+> HELD Stage III problem.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add the #189 child that turns neutral generalized multiphase Stage III refinement into an exact derivative-backed fugacity-residual route so #261 can pass strict phase-equilibrium certification without relaxing its postsolve tolerances.

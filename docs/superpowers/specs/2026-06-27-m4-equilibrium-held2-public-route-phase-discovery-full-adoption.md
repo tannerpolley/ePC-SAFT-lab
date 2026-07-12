@@ -1,5 +1,11 @@
 # M4 HELD2 Public Route Phase Discovery Full Adoption
 
+> **Source-faithful supersession (2026-07-12):** Preserve this document's
+> controller and test decomposition as historical planning. A future Perdomo
+> HELD2 child design must use modified-mole coordinates and direct total
+> free-energy Stage III; it must name Ascani counterion-pair work as a separate
+> algorithm family.
+
 ## Purpose
 
 Lay out the missing implementation backbone for full HELD2-style electrolyte
