@@ -30,11 +30,13 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Phase-equilibrium unified certification contract](../../specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md) | `lle`/`vle`/`electrolyte`/`reactive` | Defines one enforceable production-route certification lifecycle with family-specific residual blocks, detailed LLE subtrees, and native GitHub sub-issue hierarchy under #361. |
 | [Standalone CE diagnostic repair and admission](../../specs/2026-07-10-m4-standalone-ce-diagnostic-repair-and-admission.md) | `reactive` | Separates typed request/receipt completion, independent component checking, source-qualified evidence, classification, and final admission. |
 | [Canonical-owner decomposition](../../specs/2026-07-10-m4-equilibrium-canonical-owner-decomposition.md) | `equilibrium` | Decomposes existing owners behind characterization and exact route/caller gates without changing behavior or capability state. |
+| [Source-faithful equilibrium recovery and curated migration](../../specs/2026-07-12-m4-equilibrium-source-faithful-recovery-and-curated-migration.md) | `equilibrium` | Corrects HELD/HELD2 algorithm identity, preserves valuable local-NLP work, and defines the guarded twelve-stage path from doctrine through curated-repository migration. |
 
 ## Current Plans
 
 | Plan | Capability | Summary |
 | --- | --- | --- |
+| [Source-faithful equilibrium recovery and curated migration program](../../plans/2026-07-12-m4-equilibrium-source-faithful-recovery-and-curated-migration-plan.md) | `equilibrium` | Coordinates twelve independently gated stages; future agents select one stage and approve its bounded child plan rather than executing the program as one branch. |
 | [Single-component VLE route plan](../../plans/2026-06-04-m4-equilibrium-single-component-vle-route-plan.md) | `vle` | Implement production pure-component saturation solving in `epcsaft-equilibrium` as an independent M4 route plan. |
 | [Fresh-native HELD/GFPE validation receipts plan](../../plans/2026-06-12-m4-equilibrium-fresh-native-held-gfpe-validation-receipts-plan.md) | `lle` | Add receipt-backed validation evidence so stale native artifacts cannot misreport HELD Stage II/III status. |
 | [Pereira-style HELD neutral LLE reliability plan](../../plans/2026-06-12-m4-equilibrium-pereira-held-neutral-lle-reliability-plan.md) | `lle` | Retains the full-campaign neutral LLE reliability gate before associating GFPE borrows the neutral HELD path. |
