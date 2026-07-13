@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
 from .._types import InputError
 from ..model.options import ModelOptions
-from ..model.parameters import ParameterSet, ParameterSource
+from ..model.parameters import ParameterSet
+from ..model.resolved_input import ResolvedModelInput
+from ..state.native_adapter import ePCSAFTMixture
 
 
 class Mixture:
@@ -18,28 +20,21 @@ class Mixture:
         self,
         parameters: ParameterSet,
         *,
-        model_options: ModelOptions | Mapping[str, object] | None = None,
+        model_options: ModelOptions,
         components: Sequence[str] | None = None,
     ) -> None:
         if not isinstance(parameters, ParameterSet):
             raise InputError("Mixture requires a ParameterSet.")
-        self.parameters = parameters
-        self.model_options = ModelOptions._from_stage4_legacy_runtime_options(model_options)
-        self.components = tuple(str(component) for component in (components or parameters.components))
-        if not self.components:
-            raise InputError("Mixture requires at least one component.")
-        if set(self.components) != set(parameters.components):
-            raise InputError("Mixture components must match the ParameterSet components.")
-        charged = any(abs(float(record.charge)) > 0.0 for record in parameters.pure_records)
-        self._runtime_parameters = ParameterSource(parameters).to_runtime_dict()
-        resolved_runtime_options = (
-            ModelOptions._to_stage4_legacy_runtime_options(self.model_options, parameters)
-            if charged
-            else None
+        if not isinstance(model_options, ModelOptions):
+            raise InputError("Mixture requires an explicit ModelOptions selection.")
+        self.model_options = model_options
+        self.resolved_model_input = ResolvedModelInput.resolve(
+            parameters,
+            model_options,
+            components=components,
         )
-        if resolved_runtime_options is not None:
-            self._runtime_parameters.update(resolved_runtime_options)
-        self._runtime = None
+        self.components = self.resolved_model_input.components
+        self._runtime_mixture = ePCSAFTMixture(self.resolved_model_input)
 
     @classmethod
     def from_folder(
@@ -47,7 +42,7 @@ class Mixture:
         path: str | Path,
         *,
         components: Sequence[str],
-        model_options: ModelOptions | Mapping[str, object] | str | Path | None = None,
+        model_options: ModelOptions | str | Path | None = None,
     ) -> Mixture:
         """Load a configured mixture from a parameter/options folder."""
 
@@ -55,12 +50,8 @@ class Mixture:
         if not labels:
             raise InputError("Mixture.from_folder requires at least one component.")
         root = Path(path).expanduser()
-        options = ModelOptions._from_stage4_legacy_runtime_options(root if model_options is None else model_options)
-        params = ParameterSet.from_folder(
-            root,
-            components=labels,
-            user_options=ModelOptions._to_stage4_legacy_runtime_options(options),
-        )
+        options = ModelOptions.from_user_options(root if model_options is None else model_options)
+        params = ParameterSet.from_folder(root, components=labels)
         return cls(params, model_options=options, components=labels)
 
     @property
@@ -70,11 +61,7 @@ class Mixture:
         return len(self.components)
 
     @property
-    def native(self) -> Any:
-        """Return the internal native mixture adapter."""
+    def configuration_receipt(self) -> dict[str, Any]:
+        """Return a detached receipt for the compiled provider definition."""
 
-        if self._runtime is None:
-            from ..state.native_adapter import ePCSAFTMixture as _RuntimeMixture
-
-            self._runtime = _RuntimeMixture.from_params(self._runtime_parameters, species=self.components)
-        return self._runtime
+        return self.resolved_model_input.configuration_receipt

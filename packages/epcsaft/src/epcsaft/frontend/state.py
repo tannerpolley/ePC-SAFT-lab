@@ -10,6 +10,7 @@ import numpy as np
 from .._types import InputError
 from ..model.options import as_float_array, require_cppad_backend
 from ..state.eos_views import CONTRIBUTION_PUBLIC_NAMES
+from ..state.input_validation import validate_canonical_composition
 from .mixture import Mixture
 
 R_GAS = 8.31446261815324
@@ -32,14 +33,22 @@ class State:
         if not isinstance(mixture, Mixture):
             raise InputError("State requires a Mixture.")
         self.mixture = mixture
-        self._runtime = mixture.native.state(
-            T=float(T),
-            x=np.asarray(x, dtype=float),
+        canonical_x = validate_canonical_composition(x, mixture.ncomp)
+        self.evaluated_model_input = mixture.resolved_model_input.evaluate(
+            temperature=T,
+            composition=canonical_x,
+        )
+        self._runtime = mixture._runtime_mixture.state(
+            evaluated_input=self.evaluated_model_input.native_handle,
+            temperature=float(T),
+            composition=canonical_x,
             P=P,
             rho=rho,
             phase=phase,
             rho_guess=rho_guess,
         )
+        if self._runtime.configuration_fingerprint() != self.evaluated_model_input.snapshot_fingerprint_sha256:
+            raise RuntimeError("native state did not consume the evaluated provider input")
         self._pressure_density_result: dict[str, Any] | None = None
         self._ln_fugacity_composition_result: dict[str, Any] | None = None
 
@@ -54,6 +63,12 @@ class State:
         """Return the state mole-fraction composition."""
 
         return np.asarray(self._runtime._x, dtype=float)
+
+    @property
+    def configuration_receipt(self) -> dict[str, Any]:
+        """Return a detached receipt for the evaluated provider snapshot."""
+
+        return self.evaluated_model_input.receipt
 
     def molar_density(self) -> float:
         """Return the molar density."""

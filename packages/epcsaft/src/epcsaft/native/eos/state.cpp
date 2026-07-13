@@ -22,7 +22,7 @@ static int gcd_int(int a, int b) {
 }
 
 static void build_charge_metadata_cpp(
-    const add_args& args,
+    const ProviderParameterAccessV1<double>& args,
     bool& has_ionic,
     vector<int>& cation_indices,
     vector<int>& anion_indices,
@@ -194,7 +194,7 @@ static BornDerivativeResult build_born_parameter_derivative_result_cpp(
 
 }  // namespace state_detail
 
-ChargeGroups collect_charge_groups(const add_args& args, size_t ncomp) {
+ChargeGroups collect_charge_groups(const ProviderParameterAccessV1<double>& args, size_t ncomp) {
     ChargeGroups groups;
     groups.cations.reserve(ncomp);
     groups.anions.reserve(ncomp);
@@ -216,11 +216,16 @@ ChargeGroups collect_charge_groups(const add_args& args, size_t ncomp) {
     return groups;
 }
 
-ePCSAFTMixtureNative::ePCSAFTMixtureNative(const add_args& args)
-    : args_(args), has_ionic_(false)
+ePCSAFTMixtureNative::ePCSAFTMixtureNative(std::shared_ptr<ProviderResolvedInputHandleV1> handle)
+    : handle_(std::move(handle)), has_ionic_(false)
 {
+    if (!handle_) {
+        throw ValueError("NativeMixture requires a ProviderResolvedInputHandleV1.");
+    }
+    snapshot_ = handle_->shared_snapshot();
+    const SnapshotParameterAccessV1 access(*snapshot_);
     state_detail::build_charge_metadata_cpp(
-        args_,
+        access,
         has_ionic_,
         cation_indices_,
         anion_indices_,
@@ -232,14 +237,14 @@ ePCSAFTMixtureNative::ePCSAFTMixtureNative(const add_args& args)
     );
 }
 
-const add_args& ePCSAFTMixtureNative::args() const
+const NativeEvaluatedInputSnapshot& ePCSAFTMixtureNative::snapshot() const
 {
-    return args_;
+    return *snapshot_;
 }
 
 size_t ePCSAFTMixtureNative::ncomp() const
 {
-    return args_.m.size();
+    return snapshot_->m.size();
 }
 
 bool ePCSAFTMixtureNative::has_ionic() const
@@ -303,7 +308,7 @@ double ePCSAFTMixtureNative::solve_density_with_guess(
         throw ValueError("rho_guess must be finite and positive.");
     }
 
-    const LegacyAddArgsParameterAccessV1 cppargs(args_);
+    const SnapshotParameterAccessV1 cppargs(*snapshot_);
     DensityRootCandidate candidate;
     double rho_root = 0.0;
     if (density_root_from_seed_cpp(t, p, x, cppargs, rho_guess, &candidate, &rho_root)) {
@@ -330,7 +335,7 @@ double ePCSAFTMixtureNative::solve_density_with_guess(
 
 double ePCSAFTMixtureNative::solve_density_scoped(double t, double p, const vector<double>& x, int phase, const std::string& scope)
 {
-    const LegacyAddArgsParameterAccessV1 cppargs(args_);
+    const SnapshotParameterAccessV1 cppargs(*snapshot_);
     double* seed = nullptr;
     bool* seed_valid = nullptr;
     if (phase == 0) {
@@ -532,6 +537,11 @@ const vector<double>& ePCSAFTStateNative::composition() const
     return x_;
 }
 
+std::string ePCSAFTStateNative::configuration_fingerprint() const
+{
+    return mixture_->snapshot().snapshot_fingerprint_sha256;
+}
+
 double ePCSAFTStateNative::pressure()
 {
     if (pressure_cached_) {
@@ -540,7 +550,7 @@ double ePCSAFTStateNative::pressure()
     if (!density_cached_) {
         throw ValueError("ePCSAFTStateNative cannot compute pressure without density or pressure data.");
     }
-    const add_args& args = mixture_->args();
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
     p_ = p_cpp(t_, rho_, x_, args);
     pressure_cached_ = true;
     return p_;
@@ -561,110 +571,103 @@ double ePCSAFTStateNative::density()
 
 double ePCSAFTStateNative::compressibility_factor()
 {
-    const add_args& args = mixture_->args();
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
     return Z_cpp(t_, density(), x_, args);
 }
 
 CompressibilityFactorResult ePCSAFTStateNative::compressibility_factor_result()
 {
-    const add_args& args = mixture_->args();
-    const LegacyAddArgsParameterAccessV1 access(args);
-    return compressibility_factor_result_cpp(t_, density(), x_, access);
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
+    return compressibility_factor_result_cpp(t_, density(), x_, args);
 }
 
 double ePCSAFTStateNative::residual_helmholtz()
 {
-    const add_args& args = mixture_->args();
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
     return ares_cpp(t_, density(), x_, args);
 }
 
 ScalarContributionTerms ePCSAFTStateNative::residual_helmholtz_result()
 {
-    const add_args& args = mixture_->args();
-    const LegacyAddArgsParameterAccessV1 access(args);
-    return residual_helmholtz_result_cpp(t_, density(), x_, access);
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
+    return residual_helmholtz_result_cpp(t_, density(), x_, args);
 }
 
 double ePCSAFTStateNative::temperature_derivative_residual_helmholtz()
 {
-    const add_args& args = mixture_->args();
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
     return dadt_cpp(t_, density(), x_, args);
 }
 
 ScalarContributionTerms ePCSAFTStateNative::temperature_derivative_residual_helmholtz_result()
 {
-    const add_args& args = mixture_->args();
-    const LegacyAddArgsParameterAccessV1 access(args);
-    return temperature_derivative_residual_helmholtz_result_cpp(t_, density(), x_, access);
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
+    return temperature_derivative_residual_helmholtz_result_cpp(t_, density(), x_, args);
 }
 
 double ePCSAFTStateNative::residual_enthalpy()
 {
-    const add_args& args = mixture_->args();
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
     return hres_cpp(t_, density(), x_, args);
 }
 
 double ePCSAFTStateNative::residual_entropy()
 {
-    const add_args& args = mixture_->args();
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
     return sres_cpp(t_, density(), x_, args);
 }
 
 double ePCSAFTStateNative::residual_gibbs()
 {
-    const add_args& args = mixture_->args();
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
     return gres_cpp(t_, density(), x_, args);
 }
 
 vector<double> ePCSAFTStateNative::residual_chemical_potential()
 {
-    const add_args& args = mixture_->args();
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
     return mures_cpp(t_, density(), x_, args);
 }
 
 ResidualChemicalPotentialResult ePCSAFTStateNative::residual_chemical_potential_result()
 {
-    const add_args& args = mixture_->args();
-    const LegacyAddArgsParameterAccessV1 access(args);
-    return residual_chemical_potential_result_cpp(t_, density(), x_, access);
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
+    return residual_chemical_potential_result_cpp(t_, density(), x_, args);
 }
 
 CompositionContributionResult ePCSAFTStateNative::composition_derivative_residual_helmholtz_result()
 {
-    const add_args& args = mixture_->args();
-    const LegacyAddArgsParameterAccessV1 access(args);
-    return composition_derivative_residual_helmholtz_result_cpp(t_, density(), x_, access);
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
+    return composition_derivative_residual_helmholtz_result_cpp(t_, density(), x_, args);
 }
 
 vector<double> ePCSAFTStateNative::ln_fugacity_coefficient()
 {
-    const add_args& args = mixture_->args();
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
     return lnfug_cpp(t_, density(), x_, args);
 }
 
 vector<double> ePCSAFTStateNative::fugacity_coefficient()
 {
-    const add_args& args = mixture_->args();
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
     return fugcoef_cpp(t_, density(), x_, args);
 }
 
 FugacityContributionResult ePCSAFTStateNative::fugacity_coefficient_result()
 {
-    const add_args& args = mixture_->args();
-    const LegacyAddArgsParameterAccessV1 access(args);
-    return fugacity_coefficient_result_cpp(t_, density(), x_, access);
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
+    return fugacity_coefficient_result_cpp(t_, density(), x_, args);
 }
 
 BornDerivativeResult ePCSAFTStateNative::born_parameter_derivatives()
 {
-    const add_args& args = mixture_->args();
-    const LegacyAddArgsParameterAccessV1 access(args);
-    return state_detail::build_born_parameter_derivative_result_cpp(t_, density(), phase_, x_, access);
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
+    return state_detail::build_born_parameter_derivative_result_cpp(t_, density(), phase_, x_, args);
 }
 
 vector<double> ePCSAFTStateNative::relative_permittivity()
 {
-    const add_args& args = mixture_->args();
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
     vector<double> out;
     out.push_back(dielectric_eps_cpp(x_, args));
     vector<double> deps = dielectric_diff_cpp(x_, args);
@@ -702,7 +705,7 @@ ActivityCoefficientNative ePCSAFTStateNative::activity_coefficient_native(
     if (include_aux && !has_solvent_override && activity_coefficient_cached_) {
         return activity_coefficient_cache_;
     }
-    const add_args& args = mixture_->args();
+    const SnapshotParameterAccessV1 args(mixture_->snapshot());
     double rho = density();
     double p = pressure();
     ActivityCoefficientNative out = activity_coefficient_values_cpp(

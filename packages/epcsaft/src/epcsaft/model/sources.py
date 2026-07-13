@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import copy
-import json
 from collections.abc import Mapping
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -29,41 +27,3 @@ def copy_parameter_mapping(payload: Mapping[str, Any] | None) -> dict[str, Any]:
     if payload is None:
         return {}
     return {str(key): copy_parameter_value(value) for key, value in payload.items()}
-
-
-def deep_update_parameter_mapping(
-    base: Mapping[str, Any] | None,
-    updates: Mapping[str, Any] | None,
-) -> dict[str, Any]:
-    merged = copy_parameter_mapping(base)
-    for key, value in copy_parameter_mapping(updates).items():
-        if isinstance(merged.get(key), Mapping) and isinstance(value, Mapping):
-            merged[key] = deep_update_parameter_mapping(merged[key], value)
-        else:
-            merged[key] = value
-    return merged
-
-
-def load_canonical_user_options(dataset_dir: str | Path) -> dict[str, Any]:
-    """Load the dataset-owned model configuration object."""
-
-    path = Path(dataset_dir) / "user_options.json"
-    if not path.exists():
-        return {}
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, Mapping):
-        raise ValueError(f"Dataset '{path}' model configuration must be a JSON object.")
-    if "canonical_user_options" in payload:
-        raise ValueError(
-            f"Dataset '{path}' must contain the top-level model configuration object directly; "
-            "the legacy canonical_user_options envelope is rejected."
-        )
-
-    elec_model = payload.get("elec_model", {})
-    if isinstance(elec_model, Mapping) and "polar_model" in elec_model:
-        raise ValueError(
-            f"Dataset '{Path(dataset_dir)}' canonical_user_options still contains removed key "
-            "'elec_model.polar_model'."
-        )
-
-    return copy_parameter_mapping(payload)

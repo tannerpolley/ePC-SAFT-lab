@@ -524,7 +524,7 @@ double den_cpp(double t, double p, vector<double> x, int phase, const ProviderPa
     phase : int
         The phase for which the calculation is performed. Options: 0 (liquid),
         1 (vapor).
-    cppargs : add_args
+    cppargs : provider parameter access
         A struct containing additional arguments that can be passed for
         use in PC-SAFT:
 

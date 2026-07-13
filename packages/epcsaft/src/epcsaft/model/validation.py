@@ -32,16 +32,11 @@ def validate_dataset_bundle(
     }
     try:
         parameter_set = _load_parameter_set(dataset, labels, x=x, T=T, user_options=user_options)
-        params = parameter_set._to_stage4_legacy_runtime_dict()
+        parameter_set.validate()
     except (InputError, FileNotFoundError, KeyError, TypeError, ValueError) as exc:
         errors.append(str(exc))
         return _validation_report(labels, errors, warnings, provenance)
 
-    params["z"] = np.asarray([record.charge for record in parameter_set.pure_records], dtype=float)
-    _check_vector_lengths(params, labels, errors)
-    charges = _check_charges(params, labels, errors)
-    _check_born(params, labels, charges, errors)
-    _check_binary_matrices(params, labels, errors, warnings)
     _check_reactions(labels, reactions or (), errors)
     provenance["parameter_metadata"] = dict(parameter_set.metadata)
     return _validation_report(labels, errors, warnings, provenance)
@@ -75,8 +70,9 @@ def _load_parameter_set(
         if user_options:
             raise InputError("Canonical mapping validation does not accept separate user_options.")
         return ParameterSet.from_dict(dataset, species=species)
-    composition = np.full(len(species), 1.0 / max(len(species), 1), dtype=float) if x is None else x
-    return ParameterSet.from_dataset(dataset, species, composition, T, user_options=user_options)
+    if x is not None or T != 298.15 or user_options is not None:
+        raise InputError("schema-3 bundle validation does not accept runtime conditions or options.")
+    return ParameterSet.from_dataset(dataset, species)
 
 
 def _check_vector_lengths(params: Mapping[str, Any], species: list[str], errors: list[str]) -> None:

@@ -68,13 +68,12 @@ def load_source_bundle_selection(
     root = Path(path).expanduser()
     if not root.is_dir():
         raise InputError(f"source bundle folder '{root}' does not exist.")
-    retired = sorted(
-        name
-        for name in ("user_options.json", "model_options.json")
-        if (root / name).exists()
+    admitted_json = {"parameter_set.json", MODEL_CONFIGURATION_FILENAME}
+    unsupported = sorted(
+        candidate.name for candidate in root.glob("*.json") if candidate.name not in admitted_json
     )
-    if retired:
-        raise InputError(f"source bundle contains retired filename(s): {', '.join(retired)}.")
+    if unsupported:
+        raise InputError(f"source bundle contains unsupported JSON file(s): {', '.join(unsupported)}.")
     parameter_path = root / "parameter_set.json"
     configuration_path = root / MODEL_CONFIGURATION_FILENAME
     if not parameter_path.is_file():

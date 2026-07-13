@@ -175,10 +175,54 @@ struct ResolvedNativeInput {
     std::vector<StructuralZeroEvidence> structural_zeros;
 };
 
-// The inherited add_args storage is the snapshot's one native parameter store.
-// It permits the additive checkpoint to execute existing kernels by const base
-// reference without constructing a compatibility payload or a second field copy.
-struct NativeEvaluatedInputSnapshot final : add_args {
+struct NativeEvaluatedInputSnapshot final {
+    std::vector<double> m;
+    std::vector<double> s;
+    std::vector<double> e;
+    std::vector<double> k_ij;
+    std::vector<double> e_assoc;
+    std::vector<double> vol_a;
+    std::vector<double> z;
+    std::vector<double> dielc;
+    std::vector<double> mw;
+    std::vector<double> mixed_rel_perm_a;
+    std::vector<double> mixed_rel_perm_b;
+    std::vector<double> mixed_rel_perm_c;
+    std::vector<int> mixed_rel_perm_mask;
+    int mixed_rel_perm_water_index{-1};
+    int dielc_rule{0};
+    int dielc_diff_mode{0};
+    int hc_dadx_diff_mode{0};
+    int disp_dadx_diff_mode{0};
+    int assoc_dadx_diff_mode{0};
+    int d_ion_mode{0};
+    int mu_DH_diff_mode{0};
+    int mu_DH_comp_dep_rel_perm{0};
+    int mu_DH_include_sum_term{0};
+    int include_born_model{0};
+    int d_born_mode{0};
+    int born_solvation_shell_model{0};
+    int born_dielectric_saturation{0};
+    int born_bulk_mode{0};
+    int mu_born_diff_mode{0};
+    int mu_born_comp_dep_rel_perm{0};
+    int mu_born_include_sum_term{0};
+    int mu_born_comp_dep_delta_d{0};
+    std::vector<double> d_born;
+    std::vector<double> f_solv;
+    int born_model{0};
+    int born_radius_model{0};
+    int born_diff_mode{0};
+    int born_eps_mode{0};
+    int DH_model{0};
+    std::vector<int> assoc_num;
+    std::vector<int> assoc_matrix;
+    std::vector<double> k_hb;
+    std::vector<double> l_ij;
+    std::string parameter_source_label;
+    std::string parameter_provenance_status;
+    std::string binary_interaction_provenance_status;
+    std::vector<std::string> parameter_provenance_fields;
     std::string contract_id{"provider_resolved_input_handle_v1"};
     std::string schema{"epcsaft.resolved-model-input"};
     int schema_version{1};

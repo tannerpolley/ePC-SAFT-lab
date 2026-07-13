@@ -249,145 +249,28 @@ def test_active_association_parameters_require_typed_discrete_topology() -> None
         )
 
 
-def test_every_legacy_native_field_has_one_snapshot_or_typed_formulation_owner() -> None:
-    header = Path(epcsaft.__file__).resolve().parent / "native" / "model" / "native_types.h"
-    block = re.search(r"struct add_args \{(?P<body>.*?)\n\};", header.read_text(encoding="utf-8"), re.S)
+def test_every_native_parameter_field_has_one_snapshot_or_typed_formulation_owner() -> None:
+    header = Path(epcsaft.__file__).resolve().parent / "native" / "model" / "resolved_input.h"
+    block = re.search(
+        r"struct NativeEvaluatedInputSnapshot final \{(?P<body>.*?)\n\};",
+        header.read_text(encoding="utf-8"),
+        re.S,
+    )
     assert block is not None
+    parameter_fields = block.group("body").split(
+        'std::string contract_id{"provider_resolved_input_handle_v1"};',
+        maxsplit=1,
+    )[0]
     fields = set(
         re.findall(
-            r"(?:vector<[^>]+>|std::string|int)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?:=[^;]+)?;",
-            block.group("body"),
+            r"(?:vector<[^>]+>|std::string|int)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?:\{[^;]*\}|=[^;]+)?;",
+            parameter_fields,
         )
     )
     accounting = _core._native_resolved_input_field_accounting()
 
     assert set(accounting) == fields
     assert all(value.startswith(("snapshot.", "snapshot.formulation.")) for value in accounting.values())
-
-
-def test_legacy_and_snapshot_parameter_access_are_noncopying_and_fieldwise_equal() -> None:
-    handle = _handle()
-    args = _core.NativeArgs()
-    args.m = [1.0, 1.6069]
-    args.s = [3.7039, 3.5206]
-    args.e = [150.03, 191.42]
-    args.mw = [0.016043, 0.03007]
-    args.z = [0.0, 0.0]
-    args.e_assoc = [0.0, 0.0]
-    args.vol_a = [0.0, 0.0]
-    args.k_ij = [0.0, 0.0, 0.0, 0.0]
-    args.l_ij = [0.0, 0.0, 0.0, 0.0]
-    args.k_hb = [0.0, 0.0, 0.0, 0.0]
-    args.dielc = [1.0, 1.0]
-    args.d_born = [3.0, 3.0]
-    args.f_solv = [1.0, 1.0]
-
-    report = _core._native_provider_parameter_access_parity(args, handle)
-
-    assert report["all_equal"] is True
-    assert report["legacy_storage_address"] != report["snapshot_storage_address"]
-    assert report["pair_sigma"] == pytest.approx((3.61225, 3.61225))
-    expected_epsilon = (150.03 * 191.42) ** 0.5
-    assert report["pair_epsilon"] == pytest.approx((expected_epsilon, expected_epsilon))
-
-
-def _fully_initialized_legacy_args():
-    args = _core.NativeArgs()
-    args.m = [1.0, 1.6069]
-    args.s = [3.7039, 3.5206]
-    args.e = [150.03, 191.42]
-    args.k_ij = [0.0, 0.0, 0.0, 0.0]
-    args.e_assoc = [0.0, 0.0]
-    args.vol_a = [0.0, 0.0]
-    args.z = [0.0, 0.0]
-    args.dielc = [1.0, 1.0]
-    args.mw = [0.016043, 0.03007]
-    args.mixed_rel_perm_a = []
-    args.mixed_rel_perm_b = []
-    args.mixed_rel_perm_c = []
-    args.mixed_rel_perm_mask = []
-    args.mixed_rel_perm_water_index = -1
-    args.dielc_rule = 0
-    args.dielc_diff_mode = 2
-    args.hc_dadx_diff_mode = 2
-    args.disp_dadx_diff_mode = 2
-    args.assoc_dadx_diff_mode = 3
-    args.d_ion_mode = 0
-    args.mu_DH_diff_mode = 2
-    args.mu_DH_comp_dep_rel_perm = 0
-    args.mu_DH_include_sum_term = 0
-    args.include_born_model = 0
-    args.d_born_mode = 0
-    args.born_solvation_shell_model = 0
-    args.born_dielectric_saturation = 0
-    args.born_bulk_mode = 0
-    args.mu_born_diff_mode = 2
-    args.mu_born_comp_dep_rel_perm = 0
-    args.mu_born_include_sum_term = 0
-    args.mu_born_comp_dep_delta_d = 0
-    args.d_born = [3.0, 3.0]
-    args.f_solv = [1.0, 1.0]
-    args.born_model = 0
-    args.born_radius_model = 1
-    args.born_diff_mode = 4
-    args.born_eps_mode = 0
-    args.DH_model = 0
-    args.assoc_num = [0, 0]
-    args.assoc_matrix = []
-    args.k_hb = [0.0, 0.0, 0.0, 0.0]
-    args.l_ij = [0.0, 0.0, 0.0, 0.0]
-    args.parameter_source_label = "legacy-parity-fixture"
-    args.parameter_provenance_status = "fixture"
-    args.binary_interaction_provenance_status = "fixture"
-    args.parameter_provenance_fields = []
-    return args
-
-
-def test_legacy_and_snapshot_paths_execute_identical_provider_kernels() -> None:
-    report = _core._native_provider_parameter_kernel_parity(
-        _fully_initialized_legacy_args(),
-        _handle(),
-        100.0,
-    )
-
-    for field in (
-        "ares",
-        "compressibility",
-        "pressure",
-        "density_residual",
-        "ln_fugacity",
-        "composition_dadx",
-        "temperature_derivative",
-    ):
-        legacy, snapshot = report[field]
-        assert snapshot == pytest.approx(legacy, rel=1.0e-12, abs=1.0e-12)
-    for field in ("cppad_contributions", "cppad_pressure_density"):
-        item = report[field]
-        assert item["snapshot_value"] == pytest.approx(item["legacy_value"], rel=1.0e-12, abs=1.0e-12)
-        assert item["snapshot_jacobian"] == pytest.approx(
-            item["legacy_jacobian"], rel=1.0e-12, abs=1.0e-12
-        )
-        assert item["outputs_equal"] is True
-        assert item["variables_equal"] is True
-        assert item["shape_equal"] is True
-    for field in (
-        "binary_k_ij_derivatives",
-        "component_sigma_derivatives",
-        "component_epsilon_derivatives",
-    ):
-        item = report[field]
-        assert item["snapshot_scalars"] == pytest.approx(
-            item["legacy_scalars"], rel=1.0e-12, abs=1.0e-12
-        )
-        assert item["snapshot_mu_res"] == pytest.approx(
-            item["legacy_mu_res"], rel=1.0e-12, abs=1.0e-12
-        )
-        assert item["snapshot_lnphi"] == pytest.approx(
-            item["legacy_lnphi"], rel=1.0e-12, abs=1.0e-12
-        )
-        assert item["snapshot_dlnphi_total"] == pytest.approx(
-            item["legacy_dlnphi_total"], rel=1.0e-12, abs=1.0e-12
-        )
 
 
 def test_handle_properties_are_detached_and_condition_identity_is_exact() -> None:
@@ -537,3 +420,17 @@ def test_definition_fingerprint_is_record_order_independent_but_source_sensitive
         _handle(_replace_scientific_record(selection, changed_source)).definition_fingerprint_sha256
         != _handle(selection).definition_fingerprint_sha256
     )
+
+
+def test_writable_and_raw_native_provider_bypasses_are_absent() -> None:
+    from epcsaft.state import native_adapter
+
+    assert not hasattr(_core, "NativeArgs")
+    assert not hasattr(native_adapter.ePCSAFTMixture, "from_params")
+    assert not hasattr(native_adapter.ePCSAFTMixture, "from_dataset")
+
+    handle = _handle()
+    with pytest.raises(TypeError):
+        _core.NativeMixture({})
+    with pytest.raises(TypeError):
+        _core.NativeMixture(handle, [1.0, 0.0])

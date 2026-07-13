@@ -241,8 +241,6 @@ using thermo_detail::EosPhasePressureDerivativeResult;
 using thermo_detail::MixtureState;
 
 // Canonical provider kernels consume the non-owning parameter-access seam.
-// The add_args entry points declared in native_types.h remain compatibility
-// entry points through Task 5 and construct LegacyAddArgsParameterAccessV1.
 double Z_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs);
 vector<double> mures_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs);
 vector<double> lnfug_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs);
@@ -315,28 +313,16 @@ VectorContributionTerms make_vector_terms(
     const vector<double> &total
 );
 MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt);
-inline MixtureState mixture_state_cpp(
-    double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return mixture_state_cpp(t, rho, x, access, include_dt);
-}
 DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta);
 double dh_kappa_cpp(double den, double t, double eps, double q2_sum);
 double dh_chi_cpp(double kappa, double diameter);
 AssociationSetup association_setup_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t);
-ChargeGroups collect_charge_groups(const add_args& args, size_t ncomp);
+ChargeGroups collect_charge_groups(const ProviderParameterAccessV1<double>& args, size_t ncomp);
 double z_term_scale_cpp(const vector<double> &z_term, double target_total);
 ScalarContributionTerms normalized_dadrho_terms_cpp(const ScalarContributionTerms &raw_terms);
 ScalarContributionTerms compressibility_terms_from_dadrho_cpp(const DadrhoResult &result);
 std::string density_failure_message_cpp(const std::string &outcome, double t, double p, const vector<double> &x, int phase);
 DensitySolveResult density_solve_report_cpp(double t, double p, vector<double> x, int phase, const ProviderParameterAccessV1<double> &cppargs);
-inline DensitySolveResult density_solve_report_cpp(
-    double t, double p, vector<double> x, int phase, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return density_solve_report_cpp(t, p, std::move(x), phase, access);
-}
 bool density_root_from_seed_cpp(
     double t,
     double p,
@@ -427,291 +413,6 @@ CompositionContributionResult composition_derivative_residual_helmholtz_result_c
 ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs);
 FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs);
 ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs);
-
-inline double Z_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return Z_cpp(t, rho, std::move(x), access);
-}
-
-inline vector<double> mures_cpp(
-    double t, double rho, vector<double> x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return mures_cpp(t, rho, std::move(x), access);
-}
-
-inline vector<double> lnfug_cpp(
-    double t, double rho, vector<double> x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return lnfug_cpp(t, rho, std::move(x), access);
-}
-
-inline vector<double> fugcoef_cpp(
-    double t, double rho, vector<double> x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return fugcoef_cpp(t, rho, std::move(x), access);
-}
-
-inline double p_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return p_cpp(t, rho, std::move(x), access);
-}
-
-inline double den_cpp(
-    double t, double p, vector<double> x, int phase, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return den_cpp(t, p, std::move(x), phase, access);
-}
-
-inline double ares_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return ares_cpp(t, rho, std::move(x), access);
-}
-
-inline NeutralBinaryKijPhaseDerivatives neutral_binary_kij_phase_derivatives_cpp(
-    double t,
-    double rho,
-    const vector<double> &x,
-    const add_args &cppargs,
-    int k_index
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return neutral_binary_kij_phase_derivatives_cpp(t, rho, x, access, k_index);
-}
-
-inline NeutralBinaryKijPhaseDerivatives neutral_binary_pair_parameter_phase_derivatives_cpp(
-    double t,
-    double rho,
-    const vector<double> &x,
-    const add_args &cppargs,
-    int parameter_index,
-    const std::string &parameter_name
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return neutral_binary_pair_parameter_phase_derivatives_cpp(
-        t, rho, x, access, parameter_index, parameter_name
-    );
-}
-
-inline NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_cpp(
-    double t,
-    double rho,
-    const vector<double> &x,
-    const add_args &cppargs,
-    int target_kind,
-    int target_index
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return generic_component_parameter_phase_derivatives_cpp(
-        t, rho, x, access, target_kind, target_index
-    );
-}
-
-inline double dadt_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return dadt_cpp(t, rho, std::move(x), access);
-}
-
-inline double hres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return hres_cpp(t, rho, std::move(x), access);
-}
-
-inline double sres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return sres_cpp(t, rho, std::move(x), access);
-}
-
-inline double gres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return gres_cpp(t, rho, std::move(x), access);
-}
-
-inline double dielectric_eps_cpp(vector<double> x, const add_args &cppargs) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return dielectric_eps_cpp(std::move(x), access);
-}
-
-inline vector<double> dielectric_diff_cpp(vector<double> x, const add_args &cppargs) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return dielectric_diff_cpp(std::move(x), access);
-}
-
-inline double density_root_residual_cpp(
-    double rhomolar,
-    double t,
-    double p,
-    vector<double> x,
-    const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return density_root_residual_cpp(rhomolar, t, p, std::move(x), access);
-}
-
-inline double density_brent_cpp(
-    double t,
-    double p,
-    vector<double> x,
-    const add_args &cppargs,
-    double a,
-    double b,
-    double macheps,
-    double tol_abs,
-    int maxiter
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return density_brent_cpp(
-        t, p, std::move(x), access, a, b, macheps, tol_abs, maxiter
-    );
-}
-
-inline double reduced_density_to_molar(
-    double nu,
-    double t,
-    int ncomp,
-    vector<double> x,
-    const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return reduced_density_to_molar(nu, t, ncomp, std::move(x), access);
-}
-
-inline CompressibilityFactorResult compressibility_factor_result_cpp(
-    double t, double rho, vector<double> x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return compressibility_factor_result_cpp(t, rho, std::move(x), access);
-}
-
-inline ScalarContributionTerms residual_helmholtz_result_cpp(
-    double t, double rho, vector<double> x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return residual_helmholtz_result_cpp(t, rho, std::move(x), access);
-}
-
-inline CompositionContributionResult composition_derivative_residual_helmholtz_result_cpp(
-    double t, double rho, vector<double> x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return composition_derivative_residual_helmholtz_result_cpp(t, rho, std::move(x), access);
-}
-
-inline ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(
-    double t, double rho, vector<double> x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return residual_chemical_potential_result_cpp(t, rho, std::move(x), access);
-}
-
-inline FugacityContributionResult fugacity_coefficient_result_cpp(
-    double t, double rho, vector<double> x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return fugacity_coefficient_result_cpp(t, rho, std::move(x), access);
-}
-
-inline ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp(
-    double t, double rho, vector<double> x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return temperature_derivative_residual_helmholtz_result_cpp(t, rho, std::move(x), access);
-}
-
-inline EosLocalPhaseDerivativeBundle eos_local_phase_helmholtz_derivatives_cpp(
-    double t,
-    const vector<double> &amounts,
-    double volume,
-    const add_args &cppargs,
-    bool include_temperature
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return eos_local_phase_helmholtz_derivatives_cpp(
-        t, amounts, volume, access, include_temperature
-    );
-}
-
-inline EosPhasePressureDerivativeResult eos_phase_pressure_derivatives_cpp(
-    double t, const vector<double> &amounts, double volume, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return eos_phase_pressure_derivatives_cpp(t, amounts, volume, access);
-}
-
-inline EosPhaseAssociationDerivativeCorrectionResult eos_phase_association_derivative_corrections_cpp(
-    double t, const vector<double> &amounts, double volume, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return eos_phase_association_derivative_corrections_cpp(t, amounts, volume, access);
-}
-
-inline epcsaft::native::cppad_support::CppADDerivativeResult cppad_eos_contribution_derivatives_cpp(
-    double t, double rho, const vector<double> &x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return cppad_eos_contribution_derivatives_cpp(t, rho, x, access);
-}
-
-inline epcsaft::native::cppad_support::CppADDerivativeResult cppad_pressure_density_derivative_cpp(
-    double t, double rho, const vector<double> &x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return cppad_pressure_density_derivative_cpp(t, rho, x, access);
-}
-
-inline epcsaft::native::cppad_support::CppADDerivativeResult cppad_pure_neutral_parameter_derivatives_cpp(
-    double t, double rho, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return cppad_pure_neutral_parameter_derivatives_cpp(t, rho, access);
-}
-
-inline PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_composition_sensitivity_cpp(
-    double t, double p, vector<double> x, int phase, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return phase_state_ln_fugacity_composition_sensitivity_cpp(
-        t, p, std::move(x), phase, access
-    );
-}
-
-inline PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_explicit_density_composition_sensitivity_cpp(
-    double t, double rho, vector<double> x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return phase_state_ln_fugacity_explicit_density_composition_sensitivity_cpp(
-        t, rho, std::move(x), access
-    );
-}
-
-inline double dielectric_constant_rule_cpp(
-    int rule, const vector<double> &x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return dielectric_constant_rule_cpp(rule, x, access);
-}
-
-inline vector<double> dielectric_derivative_rule_cpp(
-    int rule, const vector<double> &x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return dielectric_derivative_rule_cpp(rule, x, access);
-}
-
-inline DielectricState dielectric_state_cpp(const vector<double> &x, const add_args &cppargs) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return dielectric_state_cpp(x, access);
-}
-
-inline DadrhoResult dadrho_result_cpp(
-    double t, double rho, vector<double> x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return dadrho_result_cpp(t, rho, std::move(x), access);
-}
 ActivityCoefficientNative activity_coefficient_values_cpp(
     ePCSAFTMixtureNative* mixture,
     double t,
@@ -719,7 +420,7 @@ ActivityCoefficientNative activity_coefficient_values_cpp(
     double p,
     int phase,
     const vector<double>& x,
-    const add_args& args,
+    const ProviderParameterAccessV1<double>& args,
     const vector<int>& cation_indices,
     const vector<int>& anion_indices,
     const vector<int>& solvent_indices,

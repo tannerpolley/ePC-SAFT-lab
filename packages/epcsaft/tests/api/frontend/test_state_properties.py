@@ -9,16 +9,26 @@ from support.hydrocarbon_cases import (
     HYDROCARBON_LIQUID_RHO,
     HYDROCARBON_LIQUID_X,
     HYDROCARBON_T,
-    hydrocarbon_parameter_set,
 )
-from support.runtime_cases import ionic_parameter_set
+from support.model_configurations import (
+    neutral_model_options,
+    neutral_scientific_parameter_set,
+    scientific_hydrocarbon_parameter_set,
+)
+
+
+def _hydrocarbon_mixture() -> epcsaft.Mixture:
+    return epcsaft.Mixture(
+        scientific_hydrocarbon_parameter_set(),
+        model_options=neutral_model_options(),
+    )
 
 
 def test_mixture_owns_only_components_parameters_and_model_options() -> None:
     mixture = epcsaft.Mixture(
-        hydrocarbon_parameter_set(),
+        scientific_hydrocarbon_parameter_set(),
         components=HYDROCARBON_COMPONENTS,
-        model_options=epcsaft.ModelOptions(),
+        model_options=neutral_model_options(),
     )
 
     assert mixture.components == HYDROCARBON_COMPONENTS
@@ -28,7 +38,7 @@ def test_mixture_owns_only_components_parameters_and_model_options() -> None:
 
 
 def test_state_is_initialized_from_mixture_and_conditions() -> None:
-    mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
+    mixture = _hydrocarbon_mixture()
 
     state = epcsaft.State(
         mixture,
@@ -46,7 +56,7 @@ def test_state_is_initialized_from_mixture_and_conditions() -> None:
 
 def test_cppad_state_proves_hydrocarbon_values_and_derivatives() -> None:
     state = epcsaft.State(
-        epcsaft.Mixture(hydrocarbon_parameter_set()),
+        _hydrocarbon_mixture(),
         T=HYDROCARBON_T,
         P=HYDROCARBON_BUBBLE_P,
         x=HYDROCARBON_LIQUID_X,
@@ -70,7 +80,7 @@ def test_cppad_state_proves_hydrocarbon_values_and_derivatives() -> None:
 
 def test_state_exposes_residual_property_aliases_and_contributions() -> None:
     state = epcsaft.State(
-        epcsaft.Mixture(hydrocarbon_parameter_set()),
+        _hydrocarbon_mixture(),
         T=HYDROCARBON_T,
         P=HYDROCARBON_BUBBLE_P,
         x=HYDROCARBON_LIQUID_X,
@@ -88,25 +98,27 @@ def test_state_exposes_residual_property_aliases_and_contributions() -> None:
     assert state.ares_contribution("dispersion") == pytest.approx(contributions["dispersion"])
 
 
-def test_active_association_model_options_emit_implicit_assoc_mode() -> None:
-    assoc_parameters = ionic_parameter_set()
-    assoc_options = epcsaft.ModelOptions().to_runtime_options(assoc_parameters)
+def test_state_evaluates_provider_input_once_and_native_consumes_exact_snapshot(monkeypatch) -> None:
+    parameters = neutral_scientific_parameter_set()
+    mixture = epcsaft.Mixture(parameters, model_options=neutral_model_options())
+    submitted = np.asarray([0.4, 0.6], dtype=np.float64)
+    evaluations = 0
+    original = epcsaft.ResolvedModelInput.evaluate
 
-    assert assoc_options["elec_model"]["assoc_model"]["dadx_differential_mode"] == "auto"
+    def counted_evaluate(self, *, temperature, composition):
+        nonlocal evaluations
+        evaluations += 1
+        return original(self, temperature=temperature, composition=composition)
 
-    assoc_mixture = epcsaft.Mixture(assoc_parameters, model_options=epcsaft.ModelOptions())
+    monkeypatch.setattr(epcsaft.ResolvedModelInput, "evaluate", counted_evaluate)
 
-    assert assoc_mixture._runtime_parameters["elec_model"]["hc_model"]["dadx_differential_mode"] == "cppad"
-    assert assoc_mixture._runtime_parameters["elec_model"]["disp_model"]["dadx_differential_mode"] == "cppad"
-    assert assoc_mixture._runtime_parameters["elec_model"]["assoc_model"]["dadx_differential_mode"] == "auto"
+    state = epcsaft.State(mixture, T=300.0, rho=100.0, x=submitted, phase="liq")
 
-
-def test_nonassociating_model_options_preserve_explicit_cppad_assoc_mode() -> None:
-    parameters = ionic_parameter_set(association=False)
-    options = epcsaft.ModelOptions().to_runtime_options(parameters)
-
-    assert options["elec_model"]["assoc_model"]["dadx_differential_mode"] == "cppad"
-
-    mixture = epcsaft.Mixture(parameters, model_options=epcsaft.ModelOptions())
-
-    assert mixture._runtime_parameters["elec_model"]["assoc_model"]["dadx_differential_mode"] == "cppad"
+    assert evaluations == 1
+    assert np.asarray(
+        state.configuration_receipt["state"]["canonical_composition"], dtype=np.float64
+    ).tobytes() == submitted.tobytes()
+    assert (
+        state._runtime.configuration_fingerprint()
+        == state.evaluated_model_input.snapshot_fingerprint_sha256
+    )

@@ -118,7 +118,7 @@ def test_source_bundle_rejects_missing_configuration_retired_names_and_component
     retired = tmp_path / "retired"
     _write_bundle(retired)
     (retired / "user_options.json").write_text("{}\n", encoding="utf-8")
-    with pytest.raises(InputError, match="retired"):
+    with pytest.raises(InputError, match="unsupported"):
         _api("load_source_bundle_selection")(retired, components=("Methane",))
 
     reordered = tmp_path / "reordered"

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ast
 import json
 from pathlib import Path
 
@@ -8,7 +7,7 @@ import epcsaft
 import epcsaft.model as model
 import pytest
 from epcsaft._types import InputError
-from epcsaft.model.parameters import ParameterSource, PureRecord
+from epcsaft.model.parameters import ParameterSource
 
 SCHEMA3_KEYS = {
     "schema",
@@ -70,28 +69,6 @@ def _schema3_parameter_set():
         components=(component,),
         pure_records=records,
         metadata={"source": "Gross and Sadowski 2001 Table 2"},
-    )
-
-
-def _legacy_parameter_set() -> epcsaft.ParameterSet:
-    return epcsaft.ParameterSet.from_records(
-        (
-            PureRecord(
-                component="Methane",
-                molar_mass=0.016043,
-                m=1.0,
-                sigma=3.7039,
-                epsilon_k=150.03,
-                charge=0.0,
-                epsilon_k_ab=0.0,
-                kappa_ab=0.0,
-                association_scheme=None,
-                relative_permittivity=1.0,
-                born_diameter=0.0,
-                solvation_factor=1.0,
-            ),
-        ),
-        metadata={"source": "Gross and Sadowski 2001 Table 2", "source_backed": True},
     )
 
 
@@ -170,39 +147,15 @@ def test_schema3_enforces_record_categories_and_complete_binary_source_coverage(
         )
 
 
-def test_schema3_is_rejected_by_both_legacy_serializer_gates() -> None:
+def test_schema3_has_no_runtime_serializer_gates() -> None:
     parameters = _schema3_parameter_set()
 
-    with pytest.raises(InputError, match="scientific_v3"):
-        parameters._to_stage4_legacy_runtime_dict()
-    with pytest.raises(InputError, match="scientific_v3"):
-        ParameterSource(parameters).to_runtime_dict()
+    assert not hasattr(parameters, "_to_stage4_legacy_runtime_dict")
+    assert not hasattr(ParameterSource(parameters), "to_runtime_dict")
+    assert not hasattr(parameters, "runtime_options")
 
 
-def test_legacy_parameter_source_remains_the_only_public_runtime_serializer() -> None:
-    payload = ParameterSource(_legacy_parameter_set()).to_runtime_dict()
-
-    assert payload["m"].tolist() == [1.0]
-    assert payload["s"].tolist() == [3.7039]
-    assert payload["e"].tolist() == [150.03]
-
-
-def test_private_legacy_serializer_has_the_exact_direct_caller_allowlist() -> None:
-    source_root = Path(epcsaft.__file__).resolve().parent
-    callers: set[str] = set()
-    for path in source_root.rglob("*.py"):
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        for node in ast.walk(tree):
-            if (
-                isinstance(node, ast.Call)
-                and isinstance(node.func, ast.Attribute)
-                and node.func.attr == "_to_stage4_legacy_runtime_dict"
-            ):
-                callers.add(path.relative_to(source_root).as_posix())
-
-    assert callers == {
-        "model/parameters.py",
-        "model/datasets.py",
-        "model/validation.py",
-        "state/native_payload.py",
-    }
+def test_schema2_and_legacy_record_construction_are_rejected() -> None:
+    with pytest.raises(InputError, match="schema-3"):
+        epcsaft.ParameterSet.from_dict({"schema": "epcsaft.parameter-set", "schema_version": 2})
+    assert not hasattr(epcsaft.ParameterSet, "from_records")

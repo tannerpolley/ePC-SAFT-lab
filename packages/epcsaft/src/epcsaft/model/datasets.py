@@ -1,22 +1,16 @@
-"""Dataset-driven parameter loader for the ePC-SAFT runtime.
+"""Legacy dataset utilities retained outside the strict provider loader.
 
 This module reads external parameter dataset directories with the expected
 on-disk layout. The historical ``data/reference/epcsaft_parameters`` source
 tree is now a pointer-only location; full paper-validation bundles live under
 ``analyses/paper_validation/<paper_id>/parameters``.
 
-Public API:
-    - get_prop_dict(dataset_name, species, x, T, user_options=None)
-    - default_user_options()
-    - minimize_user_options(user_options)
-    - _resolve_runtime_options(user_options)
-    - molality_to_molefraction(...)
-    - molefraction_to_molality(...)
+The provider entry point in this module accepts only a schema-3 parameter
+document and performs no runtime option or condition resolution.
 """
 
 from __future__ import annotations
 
-import copy
 import csv
 import math
 import re
@@ -26,12 +20,6 @@ from pathlib import Path
 import numpy as np
 
 from .._types import InputError
-from .sources import (
-    deep_update_parameter_mapping as _deep_update,
-)
-from .sources import (
-    load_canonical_user_options as _load_canonical_user_options,
-)
 
 BASE_KEYS = ["MW", "m", "s", "e", "e_assoc", "vol_a", "assoc_scheme", "z", "dielc"]
 OPTIONAL_KEYS = ["d_born", "f_solv"]
@@ -75,39 +63,6 @@ _LOG_T_RE = re.compile(
     flags=re.IGNORECASE,
 )
 
-_REL_PERM_RULE_ALIASES = {
-    "constant": 0,
-    "rule0": 0,
-    "linear": 1,
-    "linear-molefraction": 1,
-    "linear-mixing-mole": 1,
-    "rule1": 1,
-    "rule1a": 7,
-    "linear-saltfraction": 7,
-    "linear-mixing-salt": 7,
-    "linear-massfraction": 2,
-    "linear-mixing-weight": 2,
-    "rule2": 2,
-    "combined": 3,
-    "rule3": 3,
-    "salt-free-massfraction": 9,
-    "salt_free_massfraction": 9,
-    "salt-free-solvent-massfraction": 9,
-    "salt_free_solvent_massfraction": 9,
-    "salt-free-solvent-weight": 9,
-    "salt_free_solvent_weight": 9,
-    "rule9": 9,
-    "empirical": 4,
-    "rule4": 4,
-    "rule5": 5,
-    "rule6": 6,
-    "aqueous-organic": 8,
-    "aqueous_organic": 8,
-    "mixed-aqueous-organic": 8,
-    "mixed_aqueous_organic": 8,
-    "rule8": 8,
-}
-
 SOLVENT_COMPONENT_TO_TOKEN = {
     "H2O": "water",
     "Methanol": "methanol",
@@ -117,135 +72,8 @@ SOLVENT_COMPONENT_TO_TOKEN = {
 }
 
 SOLVENT_TOKEN_ORDER = {"water": 0, "methanol": 1, "ethanol": 2, "propanol": 3, "butanol": 4}
-_DIFF_MODE_ALIASES = {
-    "auto": 3,
-    "automatic": 3,
-    "implicit": 3,
-    "analytic_implicit": 3,
-    "cppad_implicit": 3,
-    "cppad_implicit_association": 3,
-    "analytic": 0,
-    "analytical": 0,
-    "cppad": 2,
-}
-_D_ION_MODE_ALIASES = {
-    "t_indep": 0,
-    "t_dep_1": 1,
-    "t_dep_2": 2,
-}
-_D_BORN_MODE_ALIASES = {
-    "t_indep": 0,
-    "t_dep_1": 1,
-    "t_dep_2": 2,
-    "fitted_param": 3,
-}
-_BULK_MODE_ALIASES = {
-    "mix": 0,
-    "bulk": 0,
-    "solvent": 1,
-}
-_CANONICAL_CONTRIBUTION_MODEL = {
-    "dadx_differential_mode": "auto",
-}
-_CANONICAL_ELEC_MODEL = {
-    "rel_perm": {
-        "rule": 1,
-        "differential_mode": "auto",
-    },
-    "hc_model": dict(_CANONICAL_CONTRIBUTION_MODEL),
-    "disp_model": dict(_CANONICAL_CONTRIBUTION_MODEL),
-    "assoc_model": dict(_CANONICAL_CONTRIBUTION_MODEL),
-    "DH_model": {
-        # Preserve current behavior (ionic diameter uses 0.88*sigma by default).
-        "d_ion_mode": 1,
-        "bjeruum_treatment": False,
-        "mu_DH_model": {
-            "differential_mode": "auto",
-            "comp_dep_rel_perm": True,
-            "include_sum_term": True,
-        },
-    },
-    "include_born_model": True,
-    "born_model": {
-        "d_Born_mode": 0,
-        "solvation_shell_model": True,
-        "dielectric_saturation": True,
-        "bulk_mode": "mix",
-        "mu_born_model": {
-            "differential_mode": "auto",
-            "comp_dep_rel_perm": True,
-            "include_sum_term": True,
-            "comp_dep_delta_d": True,
-        },
-    },
-}
-_DEFAULT_USER_OPTIONS = {
-    "solvated_ion_diameter_mixing_rule": False,
-    "ion_dispersion_mixing_rule": True,
-    "elec_model": {
-        "differential_mode": "autodiff",
-        "relative_permittivity_rule": "component_linear",
-        "born_model": {
-            "enabled": True,
-            "born_diameter_rule": "sigma",
-            "solvation_shell_model": True,
-            "dielectric_saturation": True,
-            "bulk_mode": "mix",
-        },
-    },
-}
 
 _DATASET_CACHE: dict[str, dict] = {}
-_MISSING = object()
-
-
-def _coerce_bool(value) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, np.integer)):
-        return bool(value)
-    if isinstance(value, str):
-        v = value.strip().lower()
-        if v in {"1", "true", "yes", "y", "on"}:
-            return True
-        if v in {"0", "false", "no", "n", "off"}:
-            return False
-    raise ValueError(f"Cannot coerce value '{value}' to bool.")
-
-
-def _prune_default_overrides(payload, defaults):
-    if isinstance(payload, dict):
-        if not isinstance(defaults, dict):
-            return copy.deepcopy(payload)
-        pruned = {}
-        for key, value in payload.items():
-            default_value = defaults.get(key, _MISSING)
-            if default_value is _MISSING:
-                pruned[key] = copy.deepcopy(value)
-                continue
-            candidate = _prune_default_overrides(value, default_value)
-            if candidate is not _MISSING:
-                pruned[key] = candidate
-        return pruned if pruned else _MISSING
-    return _MISSING if payload == defaults else copy.deepcopy(payload)
-
-
-def default_user_options() -> dict:
-    """Return a deep copy of the package's canonical user-option defaults."""
-
-    return copy.deepcopy(_DEFAULT_USER_OPTIONS)
-
-
-def minimize_user_options(user_options: dict | None) -> dict:
-    """Drop any user-option entries that are identical to package defaults."""
-
-    if user_options is None:
-        return {}
-    if not isinstance(user_options, dict):
-        raise TypeError("user_options must be a dict.")
-    _resolve_runtime_options(user_options)
-    pruned = _prune_default_overrides(user_options, _DEFAULT_USER_OPTIONS)
-    return {} if pruned is _MISSING else pruned
 
 
 def _normalize_component(name: str) -> str:
@@ -889,7 +717,6 @@ def _load_dataset(dataset_name_or_path) -> dict:
         "sole_pure_set_key": sole_pure_set_key,
         "mixed_rel_perm": _load_mixed_rel_perm(rel_perm_coeff_path),
         "mixed_rel_perm_tables": _load_mixed_rel_perm_tables(rel_perm_dir),
-        "canonical_user_options": _load_canonical_user_options(dataset_dir),
     }
     _DATASET_CACHE[cache_key] = data
     return data
@@ -1026,305 +853,6 @@ def _resolve_component_field_with_source(
     source_key = _normalize_pure_set_key(pure_set_key) if pure_set_key else dataset.get("sole_pure_set_key")
     value = _resolve_component_field(dataset, component, field, T, pure_set_key=source_key)
     return value, source_key
-
-
-def _as_rule_number(value, aliases: dict[str, int]) -> int:
-    if isinstance(value, (int, np.integer)):
-        return int(value)
-    if isinstance(value, str):
-        key = value.strip().lower()
-        if key.isdigit() or (key.startswith("-") and key[1:].isdigit()):
-            return int(key)
-        if key in aliases:
-            return int(aliases[key])
-    if not aliases and isinstance(value, str):
-        key = value.strip().lower()
-        if key.isdigit() or (key.startswith("-") and key[1:].isdigit()):
-            return int(key)
-    raise ValueError(f"Unknown rule option '{value}'. Supported aliases: {sorted(aliases.keys())}.")
-
-
-def _resolve_born_bulk_mode(value) -> int:
-    if isinstance(value, (int, np.integer)):
-        mode = int(value)
-        if mode in (0, 1):
-            return mode
-    key = str(value).strip().lower()
-    if key in _BULK_MODE_ALIASES:
-        return int(_BULK_MODE_ALIASES[key])
-    raise ValueError("born bulk_mode must be one of {'mix','solvent'} (or 0/1).")
-
-
-def _resolve_d_ion_mode(value) -> int:
-    if isinstance(value, (int, np.integer)):
-        mode = int(value)
-    else:
-        key = str(value).strip().lower()
-        if key.isdigit() or (key.startswith("-") and key[1:].isdigit()):
-            mode = int(key)
-        elif key in _D_ION_MODE_ALIASES:
-            mode = int(_D_ION_MODE_ALIASES[key])
-        else:
-            raise ValueError(
-                f"Unknown d_ion_mode '{value}'. Supported values are 0,1,2 and aliases {sorted(_D_ION_MODE_ALIASES.keys())}."
-            )
-    if mode < 0 or mode > 2:
-        raise ValueError("d_ion_mode must be in {0,1,2}.")
-    return mode
-
-
-def _resolve_d_born_mode(value) -> int:
-    if isinstance(value, (int, np.integer)):
-        mode = int(value)
-    else:
-        key = str(value).strip().lower()
-        if key.isdigit() or (key.startswith("-") and key[1:].isdigit()):
-            mode = int(key)
-        elif key in _D_BORN_MODE_ALIASES:
-            mode = int(_D_BORN_MODE_ALIASES[key])
-        else:
-            raise ValueError(
-                f"Unknown d_Born_mode '{value}'. Supported values are 0,1,2,3 and aliases {sorted(_D_BORN_MODE_ALIASES.keys())}."
-            )
-    if mode < 0 or mode > 3:
-        raise ValueError("d_Born_mode must be in {0,1,2,3}.")
-    return mode
-
-
-def _ensure_allowed_keys(mapping: dict, allowed: set[str], label: str) -> None:
-    unknown = sorted(set(mapping) - set(allowed))
-    if unknown:
-        raise KeyError(f"{label} contains unsupported key(s): {unknown}.")
-
-
-def _normalize_elec_model(model) -> dict:
-    out = copy.deepcopy(_CANONICAL_ELEC_MODEL)
-    if model is None:
-        return out
-    if not isinstance(model, dict):
-        raise TypeError(f"elec_model must be a dict, got {type(model).__name__}.")
-
-    _ensure_allowed_keys(
-        model,
-        {"rel_perm", "hc_model", "disp_model", "assoc_model", "DH_model", "include_born_model", "born_model"},
-        "elec_model",
-    )
-
-    if "rel_perm" in model:
-        if not isinstance(model["rel_perm"], dict):
-            raise TypeError("elec_model['rel_perm'] must be a dict.")
-        _ensure_allowed_keys(model["rel_perm"], {"rule", "differential_mode"}, "elec_model['rel_perm']")
-        out["rel_perm"] = _deep_update(out["rel_perm"], model["rel_perm"])
-
-    for key in ("hc_model", "disp_model", "assoc_model"):
-        if key in model:
-            if not isinstance(model[key], dict):
-                raise TypeError(f"elec_model['{key}'] must be a dict.")
-            _ensure_allowed_keys(model[key], {"dadx_differential_mode"}, f"elec_model['{key}']")
-            out[key] = _deep_update(out[key], model[key])
-
-    if "DH_model" in model:
-        if not isinstance(model["DH_model"], dict):
-            raise TypeError("elec_model['DH_model'] must be a dict.")
-        _ensure_allowed_keys(
-            model["DH_model"], {"d_ion_mode", "bjeruum_treatment", "mu_DH_model"}, "elec_model['DH_model']"
-        )
-        out["DH_model"] = _deep_update(out["DH_model"], model["DH_model"])
-
-    if "include_born_model" in model:
-        out["include_born_model"] = _coerce_bool(model["include_born_model"])
-
-    if "born_model" in model:
-        if not isinstance(model["born_model"], dict):
-            raise TypeError("elec_model['born_model'] must be a dict.")
-        _ensure_allowed_keys(
-            model["born_model"],
-            {"d_Born_mode", "solvation_shell_model", "dielectric_saturation", "bulk_mode", "mu_born_model"},
-            "elec_model['born_model']",
-        )
-        out["born_model"] = _deep_update(out["born_model"], model["born_model"])
-
-    # Canonical coercions.
-    out["rel_perm"]["rule"] = _as_rule_number(out["rel_perm"]["rule"], _REL_PERM_RULE_ALIASES)
-    out["rel_perm"]["differential_mode"] = _as_rule_number(out["rel_perm"]["differential_mode"], _DIFF_MODE_ALIASES)
-    for key in ("hc_model", "disp_model", "assoc_model"):
-        out[key]["dadx_differential_mode"] = _as_rule_number(out[key]["dadx_differential_mode"], _DIFF_MODE_ALIASES)
-    out["DH_model"]["d_ion_mode"] = _resolve_d_ion_mode(out["DH_model"]["d_ion_mode"])
-    out["DH_model"]["bjeruum_treatment"] = _coerce_bool(out["DH_model"]["bjeruum_treatment"])
-    mu_dh_model = out["DH_model"].get("mu_DH_model", {})
-    if not isinstance(mu_dh_model, dict):
-        raise TypeError("elec_model['DH_model']['mu_DH_model'] must be a dict.")
-    _ensure_allowed_keys(
-        mu_dh_model,
-        {"differential_mode", "comp_dep_rel_perm", "include_sum_term"},
-        "elec_model['DH_model']['mu_DH_model']",
-    )
-    out["DH_model"]["mu_DH_model"] = _deep_update(_CANONICAL_ELEC_MODEL["DH_model"]["mu_DH_model"], mu_dh_model)
-    out["DH_model"]["mu_DH_model"]["differential_mode"] = _as_rule_number(
-        out["DH_model"]["mu_DH_model"]["differential_mode"], _DIFF_MODE_ALIASES
-    )
-    out["DH_model"]["mu_DH_model"]["comp_dep_rel_perm"] = _coerce_bool(
-        out["DH_model"]["mu_DH_model"]["comp_dep_rel_perm"]
-    )
-    out["DH_model"]["mu_DH_model"]["include_sum_term"] = _coerce_bool(
-        out["DH_model"]["mu_DH_model"]["include_sum_term"]
-    )
-    out["include_born_model"] = _coerce_bool(out["include_born_model"])
-
-    born = out["born_model"]
-    born["d_Born_mode"] = _resolve_d_born_mode(born["d_Born_mode"])
-    born["solvation_shell_model"] = _coerce_bool(born["solvation_shell_model"])
-    born["dielectric_saturation"] = _coerce_bool(born["dielectric_saturation"])
-    born["bulk_mode"] = "solvent" if _resolve_born_bulk_mode(born["bulk_mode"]) == 1 else "mix"
-
-    mu_born_model = born.get("mu_born_model", {})
-    if not isinstance(mu_born_model, dict):
-        raise TypeError("elec_model['born_model']['mu_born_model'] must be a dict.")
-    _ensure_allowed_keys(
-        mu_born_model,
-        {"differential_mode", "comp_dep_rel_perm", "include_sum_term", "comp_dep_delta_d"},
-        "elec_model['born_model']['mu_born_model']",
-    )
-    born["mu_born_model"] = _deep_update(_CANONICAL_ELEC_MODEL["born_model"]["mu_born_model"], mu_born_model)
-    born["mu_born_model"]["differential_mode"] = _as_rule_number(
-        born["mu_born_model"]["differential_mode"], _DIFF_MODE_ALIASES
-    )
-    born["mu_born_model"]["comp_dep_rel_perm"] = _coerce_bool(born["mu_born_model"]["comp_dep_rel_perm"])
-    born["mu_born_model"]["include_sum_term"] = _coerce_bool(born["mu_born_model"]["include_sum_term"])
-    born["mu_born_model"]["comp_dep_delta_d"] = _coerce_bool(born["mu_born_model"]["comp_dep_delta_d"])
-
-    return out
-
-
-def _flatten_model_to_runtime(model: dict) -> dict:
-    rel_perm = model["rel_perm"]
-    dh_model = model["DH_model"]
-    mu_dh = dh_model["mu_DH_model"]
-    born = model["born_model"]
-    mu_born = born["mu_born_model"]
-
-    include_born_model = _coerce_bool(model["include_born_model"])
-    solvation_shell_model = _coerce_bool(born["solvation_shell_model"])
-    dielectric_saturation = _coerce_bool(born["dielectric_saturation"])
-    born_bulk_mode = _resolve_born_bulk_mode(born["bulk_mode"])
-    mu_dh_diff_mode = _as_rule_number(mu_dh["differential_mode"], _DIFF_MODE_ALIASES)
-    mu_born_diff_mode = _as_rule_number(mu_born["differential_mode"], _DIFF_MODE_ALIASES)
-
-    return {
-        "dielc_rule": int(rel_perm["rule"]),
-        "dielc_diff_mode": int(rel_perm["differential_mode"]),
-        "hc_dadx_diff_mode": int(_as_rule_number(model["hc_model"]["dadx_differential_mode"], _DIFF_MODE_ALIASES)),
-        "disp_dadx_diff_mode": int(_as_rule_number(model["disp_model"]["dadx_differential_mode"], _DIFF_MODE_ALIASES)),
-        "assoc_dadx_diff_mode": int(
-            _as_rule_number(model["assoc_model"]["dadx_differential_mode"], _DIFF_MODE_ALIASES)
-        ),
-        "d_ion_mode": int(_resolve_d_ion_mode(dh_model["d_ion_mode"])),
-        "bjeruum_treatment": _coerce_bool(dh_model["bjeruum_treatment"]),
-        "mu_DH_diff_mode": int(mu_dh_diff_mode),
-        "mu_DH_comp_dep_rel_perm": _coerce_bool(mu_dh["comp_dep_rel_perm"]),
-        "mu_DH_include_sum_term": _coerce_bool(mu_dh["include_sum_term"]),
-        "include_born_model": include_born_model,
-        "d_Born_mode": int(_resolve_d_born_mode(born["d_Born_mode"])),
-        "born_solvation_shell_model": solvation_shell_model,
-        "born_dielectric_saturation": dielectric_saturation,
-        "born_bulk_mode": int(born_bulk_mode),
-        "mu_born_diff_mode": int(mu_born_diff_mode),
-        "mu_born_comp_dep_rel_perm": _coerce_bool(mu_born["comp_dep_rel_perm"]),
-        "mu_born_include_sum_term": _coerce_bool(mu_born["include_sum_term"]),
-        "mu_born_comp_dep_delta_d": _coerce_bool(mu_born["comp_dep_delta_d"]),
-    }
-
-
-_PUBLIC_MODEL_OPTION_KEYS = {"differential_mode", "relative_permittivity_rule", "born_model"}
-
-
-def _looks_like_public_model_options(user_options: dict) -> bool:
-    if not user_options:
-        return True
-    if set(user_options) & _PUBLIC_MODEL_OPTION_KEYS:
-        return True
-    elec_model = user_options.get("elec_model")
-    if isinstance(elec_model, dict):
-        internal_elec_keys = {
-            "rel_perm",
-            "hc_model",
-            "disp_model",
-            "assoc_model",
-            "DH_model",
-            "include_born_model",
-        }
-        if set(elec_model) & internal_elec_keys:
-            return False
-        if set(elec_model) & _PUBLIC_MODEL_OPTION_KEYS:
-            return True
-        born_model = elec_model.get("born_model")
-        if isinstance(born_model, dict) and set(born_model) & {"d_Born_mode", "mu_born_model"}:
-            return False
-        if isinstance(born_model, dict) and set(born_model) & {
-            "enabled",
-            "born_diameter_rule",
-            "solvation_shell_model",
-            "dielectric_saturation",
-        }:
-            return True
-    return False
-
-
-def _public_model_options_to_internal(user_options: dict) -> dict:
-    from .options import ModelOptions
-
-    model_payload: dict
-    if "elec_model" in user_options:
-        model_payload = {"elec_model": copy.deepcopy(user_options.get("elec_model", {}))}
-    else:
-        model_payload = {
-            key: copy.deepcopy(user_options[key])
-            for key in user_options
-            if key in _PUBLIC_MODEL_OPTION_KEYS
-        }
-    legacy_options = ModelOptions._from_stage4_legacy_runtime_options(model_payload)
-    internal = ModelOptions._to_stage4_legacy_runtime_options(legacy_options)
-    internal["elec_model"]["assoc_model"]["dadx_differential_mode"] = "auto"
-    if "solvated_ion_diameter_mixing_rule" in user_options:
-        internal["solvated_ion_diameter_mixing_rule"] = _coerce_bool(user_options["solvated_ion_diameter_mixing_rule"])
-    if "ion_dispersion_mixing_rule" in user_options:
-        internal["ion_dispersion_mixing_rule"] = _coerce_bool(user_options["ion_dispersion_mixing_rule"])
-    return internal
-
-
-def _resolve_runtime_options(user_options=None) -> dict:
-    """Normalize user options into the canonical runtime model schema."""
-    if user_options is None:
-        user_options = {}
-    if not isinstance(user_options, dict):
-        raise TypeError("user_options must be a dict.")
-
-    if _looks_like_public_model_options(user_options):
-        user_options = _public_model_options_to_internal(user_options)
-
-    allowed = {
-        "elec_model",
-        "solvated_ion_diameter_mixing_rule",
-        "ion_dispersion_mixing_rule",
-    }
-    unknown = set(user_options) - allowed
-    if unknown:
-        raise KeyError(f"Unknown user_options key(s): {sorted(unknown)}")
-
-    model = _normalize_elec_model(user_options.get("elec_model", {}))
-    runtime = _flatten_model_to_runtime(model)
-    runtime["solvated_ion_diameter_mixing_rule"] = _coerce_bool(
-        user_options.get("solvated_ion_diameter_mixing_rule", False)
-    )
-    runtime["ion_dispersion_mixing_rule"] = _coerce_bool(user_options.get("ion_dispersion_mixing_rule", True))
-
-    return {
-        "runtime": runtime,
-        "model": model,
-        "preset_key": "dataset_canonical",
-        "preset": {},
-        "catalog": None,
-    }
 
 
 def _as_composition_array(x, size: int) -> np.ndarray:
@@ -1725,86 +1253,6 @@ def molefraction_to_molality(
     return cation_fraction / (cation_count * solvent_fraction * mass_values[solvent])
 
 
-def _resolve_dataset_runtime_payload(
-    dataset_name: str | Path, species: Iterable[str], x, T: float, user_options: dict | None = None
-) -> dict:
-    """Resolve source-backed pure data and runtime options without interaction serialization."""
-    dataset = _load_dataset(dataset_name)
-    species = list(species)
-    components = [_normalize_component(s) for s in species]
-    x_arr = _as_composition_array(x, len(components))
-    pure_set_key = dataset.get("sole_pure_set_key")
-
-    merged_options = _deep_update(dataset["canonical_user_options"], user_options or {})
-    resolved = _resolve_runtime_options(merged_options)
-    runtime = resolved["runtime"]
-
-    prop_dic: dict = {}
-    for field in BASE_KEYS:
-        values = [_resolve_component_field(dataset, comp, field, T, pure_set_key=pure_set_key) for comp in components]
-        if field == "assoc_scheme":
-            prop_dic[field] = [None if not str(value or "").strip() else str(value) for value in values]
-        else:
-            prop_dic[field] = np.asarray(values, dtype=float)
-
-    for field in OPTIONAL_KEYS:
-        values = [_resolve_component_field(dataset, comp, field, T, pure_set_key=pure_set_key) for comp in components]
-        prop_dic[field] = np.asarray(values, dtype=float)
-
-    n = len(species)
-    mixed_rel_perm = dataset.get("mixed_rel_perm", {})
-    if mixed_rel_perm:
-        prop_dic["mixed_rel_perm_a"] = np.zeros(n, dtype=float)
-        prop_dic["mixed_rel_perm_b"] = np.zeros(n, dtype=float)
-        prop_dic["mixed_rel_perm_c"] = np.zeros(n, dtype=float)
-        prop_dic["mixed_rel_perm_mask"] = np.zeros(n, dtype=int)
-        water_index = -1
-        for i, comp in enumerate(components):
-            if comp == "H2O":
-                water_index = i
-            coeffs = mixed_rel_perm.get(comp)
-            if coeffs is None:
-                continue
-            prop_dic["mixed_rel_perm_a"][i] = float(coeffs["a"])
-            prop_dic["mixed_rel_perm_b"][i] = float(coeffs["b"])
-            prop_dic["mixed_rel_perm_c"][i] = float(coeffs["c"])
-            prop_dic["mixed_rel_perm_mask"][i] = 1
-        prop_dic["mixed_rel_perm_water_index"] = int(water_index)
-
-    _apply_constant_mixed_rel_perm_precompute(
-        prop_dic=prop_dic,
-        dataset=dataset,
-        components=components,
-        x=x_arr,
-        rel_perm_rule=runtime["dielc_rule"],
-    )
-    _apply_mixed_solvent_ion_sigma(
-        prop_dic=prop_dic,
-        dataset=dataset,
-        components=components,
-        x=x_arr,
-        T=T,
-        enabled=bool(runtime["solvated_ion_diameter_mixing_rule"]),
-    )
-    _apply_mixed_solvent_ion_dispersion(
-        prop_dic=prop_dic,
-        dataset=dataset,
-        components=components,
-        x=x_arr,
-        T=T,
-        enabled=bool(runtime["ion_dispersion_mixing_rule"]),
-    )
-
-    if np.all(np.abs(prop_dic["z"]) < 1e-12):
-        prop_dic["z"] = np.array([])
-
-    prop_dic["elec_model"] = copy.deepcopy(resolved["model"])
-    prop_dic["elec_model_dataset"] = dataset_name
-    prop_dic["solvated_ion_diameter_mixing_rule"] = bool(runtime["solvated_ion_diameter_mixing_rule"])
-    prop_dic["ion_dispersion_mixing_rule"] = bool(runtime["ion_dispersion_mixing_rule"])
-    return prop_dic
-
-
 def load_parameter_set(
     dataset_name: str | Path,
     species: Iterable[str],
@@ -1812,94 +1260,12 @@ def load_parameter_set(
     T: float,
     user_options: dict | None = None,
 ):
-    """Resolve an explicit dataset path into canonical parameter records."""
+    """Load one strict definitions-only schema-3 parameter document."""
 
-    from .parameters import (
-        ConstantInteractionRecord,
-        LinearTemperatureInteractionRecord,
-        ParameterSet,
-        PureRecord,
-        StructuralZeroPolicy,
-    )
+    from .parameters import ParameterSet
 
+    if x is not None or T != 298.15 or user_options is not None:
+        raise ValueError("schema-3 parameter loading does not accept runtime conditions or options.")
     labels = tuple(str(label) for label in species)
-    payload = _resolve_dataset_runtime_payload(dataset_name, labels, x, T, user_options=user_options)
-    schemes = list(payload["assoc_scheme"])
-    pure_records = tuple(
-        PureRecord(
-            component=label,
-            molar_mass=float(payload["MW"][index]),
-            m=float(payload["m"][index]),
-            sigma=float(payload["s"][index]),
-            epsilon_k=float(payload["e"][index]),
-            charge=(float(payload["z"][index]) if np.asarray(payload["z"]).size else 0.0),
-            epsilon_k_ab=float(payload["e_assoc"][index]),
-            kappa_ab=float(payload["vol_a"][index]),
-            association_scheme=schemes[index],
-            relative_permittivity=float(payload["dielc"][index]),
-            born_diameter=float(payload["d_born"][index]),
-            solvation_factor=float(payload["f_solv"][index]),
-        )
-        for index, label in enumerate(labels)
-    )
-    loaded_interactions = _load_source_interactions(dataset_name, labels)
-    interactions = []
-    interaction_policies = []
-    for item in loaded_interactions:
-        if isinstance(item, StructuralZeroPolicy):
-            interaction_policies.append(item)
-        elif isinstance(item, (ConstantInteractionRecord, LinearTemperatureInteractionRecord)):
-            interactions.append(item)
-        else:
-            raise TypeError(f"Unexpected loaded interaction type: {type(item).__name__}.")
-
-    parameter_keys = {
-        "MW",
-        "m",
-        "s",
-        "e",
-        "e_assoc",
-        "vol_a",
-        "assoc_scheme",
-        "z",
-        "dielc",
-        "d_born",
-        "f_solv",
-    }
-    runtime_options = {key: value for key, value in payload.items() if key not in parameter_keys}
-    dataset = _load_dataset(dataset_name)
-    source_key = dataset.get("sole_pure_set_key")
-    rows = dataset.get("pure_sets", {}).get(source_key, {}) if source_key else {}
-    normalized_labels = tuple(_normalize_component(label) for label in labels)
-    sources = [str(rows[label].get("source", "")).strip() for label in normalized_labels if label in rows]
-    metadata = {
-        "dataset": str(dataset_name),
-        "source": "; ".join(dict.fromkeys(source for source in sources if source)),
-        "source_backed": len(sources) == len(labels) and all(sources),
-        "T": float(T),
-    }
-    return ParameterSet.from_records(
-        pure_records,
-        interactions,
-        interaction_policies=interaction_policies,
-        metadata=metadata,
-        runtime_options=runtime_options,
-    )
-
-
-def get_prop_dict(
-    dataset_name: str | Path,
-    species: Iterable[str],
-    x,
-    T: float,
-    user_options: dict | None = None,
-) -> dict:
-    """Build a runtime payload through the canonical typed ParameterSet owner."""
-
-    return load_parameter_set(
-        dataset_name,
-        species,
-        x,
-        T,
-        user_options=user_options,
-    )._to_stage4_legacy_runtime_dict()
+    path = Path(dataset_name).expanduser()
+    return ParameterSet.from_json(path, species=labels)

@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 import numpy as np
 
 from .. import _core
@@ -42,19 +40,7 @@ from .eos_views import (
 from .eos_views import (
     vector_terms_dict as _vector_terms_dict,
 )
-from .native_payload import (
-    _canonical_runtime_parameter_payload,
-    _relative_permittivity_backend,
-    _resolve_solvent_override,
-    _state_rel_perm_rule_and_mode,
-    check_association,
-    check_input,
-    create_assoc_matrix,
-    create_struct,
-    ensure_numpy_input,
-    np_to_vector_double,
-    np_to_vector_int,
-)
+from .input_validation import validate_canonical_composition
 
 _NATIVE_CALL_ERRORS = (
     InputError,
@@ -74,6 +60,45 @@ _DERIVATIVE_VALUE_ERRORS = (
     ArithmeticError,
 )
 
+
+def np_to_vector_double(value):
+    return np.asarray(value, dtype=float).ravel().tolist()
+
+
+def check_input(composition, conditions):
+    if abs(float(np.sum(composition)) - 1.0) > 1.0e-7:
+        raise InputError(f"The mole fractions do not sum to 1. x = {composition}")
+    for name, value in conditions.items():
+        if not np.isfinite(float(value)) or float(value) <= 0.0:
+            raise InputError(f"{name} must be finite and positive.")
+
+
+def _resolve_solvent_override(handle, species, solvent):
+    charge = np.asarray(handle.charge_number, dtype=float).ravel()
+    if not np.any(np.abs(charge) > 1.0e-12):
+        if solvent is not None:
+            raise InputError("solvent override requires ionic provider input.")
+        return False, -1
+    neutral = np.flatnonzero(np.abs(charge) <= 1.0e-12)
+    if neutral.size == 0:
+        if solvent is not None:
+            raise InputError("solvent override requires at least one neutral solvent species.")
+        return False, -1
+    if solvent is None:
+        return False, -1
+    if isinstance(solvent, (int, np.integer)):
+        index = int(solvent)
+    else:
+        label = str(solvent)
+        if label not in species:
+            raise InputError(f"Unknown solvent label '{label}'. Available species={list(species)}")
+        index = species.index(label)
+    if index < 0 or index >= charge.size:
+        raise InputError(f"solvent index out of bounds: {index} (ncomp={int(charge.size)})")
+    if abs(float(charge[index])) > 1.0e-12:
+        raise InputError("solvent override must reference a neutral species (z=0).")
+    return True, index
+
 def _state_construction_error_message(T, x, phase, ncomp, mode_name, variable_name, variable_value, exc):
     return (
         f"{mode_name}-based state solve failed for "
@@ -84,42 +109,16 @@ def _state_construction_error_message(T, x, phase, ncomp, mode_name, variable_na
 
 
 class ePCSAFTMixture:
-    """Native-backed ePC-SAFT parameter model and state factory."""
+    """State factory bound to one compiled provider definition."""
 
-    def __init__(self, params=None, species=None):
-        """Create a mixture from a resolved parameter payload."""
-        self._native = None
-        self._params = None
-        self._species = None
-        if params is not None:
-            self._init_from_params(params, species)
+    def __init__(self, resolved_model_input):
+        """Create a state factory from one strict resolved provider input."""
+        from ..model.resolved_input import ResolvedModelInput
 
-    @classmethod
-    def from_params(cls, params, species=None):
-        """Construct a mixture from an already-resolved parameter dict."""
-        params, species = _canonical_runtime_parameter_payload(params, species)
-        return cls(params=params, species=species)
-
-    @classmethod
-    def from_dataset(cls, dataset_name, species, x, T, user_options=None):
-        """Construct a mixture by resolving packaged dataset parameters."""
-        from ..model.parameters import ParameterSource
-
-        params = ParameterSource(dataset_name, species=species).to_parameter_set(x=x, T=T, user_options=user_options)
-        return cls.from_params(params)
-
-    def _init_from_params(self, params, species=None):
-        """Initialize the native mixture from a normalized parameter payload."""
-        params, species = _canonical_runtime_parameter_payload(params, species)
-        params = check_association(params)
-        cppargs = create_struct(params)
-        self._native = _core.NativeMixture(cppargs)
-        self._params = params
-        if species is None:
-            ncomp = int(np.asarray(params["m"], dtype=float).size)
-            self._species = [str(i) for i in range(ncomp)]
-        else:
-            self._species = [str(s) for s in species]
+        if not isinstance(resolved_model_input, ResolvedModelInput):
+            raise InputError("ePCSAFTMixture requires a ResolvedModelInput.")
+        self._resolved_model_input = resolved_model_input
+        self._species = list(resolved_model_input.components)
 
     @property
     def species(self):
@@ -127,33 +126,21 @@ class ePCSAFTMixture:
         return list(self._species)
 
     @property
-    def parameters(self):
-        """Return a deep copy of the resolved parameter payload."""
-        return deepcopy(self._params)
-
-    @property
     def ncomp(self):
         """Return the number of components in the mixture."""
-        return int(self._native.ncomp())
+        return len(self._species)
 
-    def clear_runtime_caches(self):
-        """Clear internal runtime caches used for repeated state/reference evaluations."""
-        self._native.clear_runtime_caches()
-
-    def reset_runtime_cache_stats(self):
-        """Reset runtime cache hit/rejection counters without clearing cached values."""
-        self._native.reset_runtime_cache_stats()
-
-    def runtime_cache_stats(self):
-        """Return native runtime cache counters for profiling and validation."""
-        return {
-            "reference_state_cache_hits": int(self._native.reference_state_cache_hits()),
-            "reference_state_cache_misses": int(self._native.reference_state_cache_misses()),
-            "density_warm_start_hits": int(self._native.density_warm_start_hits()),
-            "density_warm_start_rejections": int(self._native.density_warm_start_rejections()),
-        }
-
-    def state(self, T, x, P=None, rho=None, phase="liq", rho_guess=None):
+    def state(
+        self,
+        *,
+        evaluated_input,
+        temperature,
+        composition,
+        P=None,
+        rho=None,
+        phase="liq",
+        rho_guess=None,
+    ):
         """Create an immutable thermodynamic state for the mixture.
 
         States built from pressure resolve and cache density during construction.
@@ -161,7 +148,16 @@ class ePCSAFTMixture:
         """
         if (P is None) == (rho is None):
             raise InputError("Provide exactly one of P or rho when constructing a state.")
-        return ePCSAFTState(self, T, x, P=P, rho=rho, phase=phase, rho_guess=rho_guess)
+        return ePCSAFTState(
+            self,
+            evaluated_input=evaluated_input,
+            temperature=temperature,
+            composition=composition,
+            P=P,
+            rho=rho,
+            phase=phase,
+            rho_guess=rho_guess,
+        )
 
     def check_density(self, T, x, P, rho, *, phase="liq", rtol=1.0e-6, atol=1.0e-3):
         """Return pressure-consistency diagnostics for an externally supplied density."""
@@ -171,7 +167,14 @@ class ePCSAFTMixture:
             raise InputError("rtol must be finite and non-negative.")
         if not np.isfinite(float(atol)) or float(atol) < 0.0:
             raise InputError("atol must be finite and non-negative.")
-        state = self.state(T=T, x=x, rho=rho, phase=phase)
+        evaluated = self._resolved_model_input.evaluate(temperature=T, composition=x)
+        state = self.state(
+            evaluated_input=evaluated.native_handle,
+            temperature=T,
+            composition=x,
+            rho=rho,
+            phase=phase,
+        )
         pressure_target = float(P)
         pressure_from_density = float(state.pressure())
         pressure_residual = pressure_from_density - pressure_target
@@ -196,7 +199,18 @@ class ePCSAFTMixture:
 class ePCSAFTState:
     """Immutable thermodynamic state bound to one mixture."""
 
-    def __init__(self, mixture, T, x, P=None, rho=None, phase="liq", rho_guess=None):
+    def __init__(
+        self,
+        mixture,
+        *,
+        evaluated_input,
+        temperature,
+        composition,
+        P=None,
+        rho=None,
+        phase="liq",
+        rho_guess=None,
+    ):
         """Create a state with exactly one intensive variable fixed.
 
         Pressure-based states solve the internal T, P, x -> rho closure eagerly.
@@ -204,13 +218,15 @@ class ePCSAFTState:
         if not isinstance(mixture, ePCSAFTMixture):
             raise InputError("mixture must be a ePCSAFTMixture instance.")
         mix = mixture
-        x, _params = ensure_numpy_input(x, mix._params)
-        x = np.asarray(x, dtype=float).flatten()
+        if not isinstance(evaluated_input, _core.ProviderResolvedInputHandleV1):
+            raise InputError("state construction requires a ProviderResolvedInputHandleV1.")
+        x = validate_canonical_composition(composition, mix.ncomp)
+        T = float(temperature)
         ncomp = int(mix.ncomp)
-        if x.size != ncomp:
-            raise InputError(f"State composition length ({int(x.size)}) must match mixture component count ({ncomp}).")
-        # ensure_numpy_input may normalize a scalar mixture parameter path, but the
-        # state should retain the original mixture data unchanged.
+        if T != float(evaluated_input.temperature_K):
+            raise InputError("state temperature must exactly match the evaluated provider input.")
+        if x.tolist() != list(evaluated_input.canonical_composition):
+            raise InputError("state composition must exactly match the evaluated provider input.")
         phase_num = phase_to_int(phase)
         has_p = P is not None
         has_rho = rho is not None
@@ -225,10 +241,11 @@ class ePCSAFTState:
             check_input(x, {"temperature": T, "pressure": P})
         else:
             check_input(x, {"temperature": T, "density": rho})
-        cpp_x = np_to_vector_double(x)
+        cpp_x = np.asarray(x, dtype=float).ravel().tolist()
+        native_mixture = _core.NativeMixture(evaluated_input)
         try:
             self._native = _core.NativeState(
-                mix._native,
+                native_mixture,
                 float(T),
                 cpp_x,
                 phase_num,
@@ -247,8 +264,8 @@ class ePCSAFTState:
                 T, x, phase, ncomp, mode_name, variable_name, variable_value, exc
             )
             diagnostics = None
-            if has_p and hasattr(mix._native, "last_density_diagnostics"):
-                diagnostics = dict(mix._native.last_density_diagnostics())
+            if has_p and hasattr(native_mixture, "last_density_diagnostics"):
+                diagnostics = dict(native_mixture.last_density_diagnostics())
                 for context in diagnostics.get("density_failure_contexts", []):
                     context["phase_label"] = "state"
                     context["phase_kind"] = "vap" if phase_num == 1 else "liq"
@@ -257,11 +274,18 @@ class ePCSAFTState:
                     diagnostics["density_scan_summary"]["phase_kind"] = "vap" if phase_num == 1 else "liq"
             raise SolutionError(message, diagnostics) from exc
         self._mixture = mixture
+        self._evaluated_input = evaluated_input
+        self._native_mixture = native_mixture
         self._x = np.asarray(x, dtype=float)
         self._T = float(T)
         self._P = None if P is None else float(P)
         self._rho = None if rho is None else float(rho)
         self._phase = phase_num
+
+    def configuration_fingerprint(self):
+        """Return the exact immutable provider snapshot consumed by native state."""
+
+        return str(self._native.configuration_fingerprint())
 
     @property
     def mixture(self):
@@ -306,16 +330,15 @@ class ePCSAFTState:
 
     def mass_density(self):
         """Return the mass density of the bound state in kg/m^3."""
-        mix = self._mixture
-        mw = np.asarray(mix._params.get("MW", []), dtype=float).flatten()
+        mw = np.asarray(self._evaluated_input.molecular_weight_kg_per_mol, dtype=float).flatten()
         if mw.size == 0:
             raise InputError("Mass density requires component molecular weights in kg/mol.")
         if mw.size != self._x.size:
             raise InputError("Mass density requires one molecular-weight value per component.")
         return float(self.molar_density() * float(np.dot(np.asarray(self._x, dtype=float), mw)))
 
-    def _native_args_copy(self):
-        return create_struct(self._mixture._params)
+    def _native_input_handle(self):
+        return self._evaluated_input
 
     def _neutral_binary_kij_property_derivatives(self):
         if int(self._x.size) != 2:
@@ -325,7 +348,7 @@ class ePCSAFTState:
                 self._T,
                 self.molar_density(),
                 np_to_vector_double(self._x),
-                self._native_args_copy(),
+                self._native_input_handle(),
             )
         except _NATIVE_CALL_ERRORS:
             return None
@@ -363,7 +386,7 @@ class ePCSAFTState:
             raw = _core._native_cppad_pure_neutral_parameters(
                 self._T,
                 self.molar_density(),
-                self._native_args_copy(),
+                self._native_input_handle(),
             )
         except _NATIVE_CALL_ERRORS:
             return None
@@ -376,15 +399,18 @@ class ePCSAFTState:
     def _associating_component_parameter_derivatives(self):
         if int(self._x.size) != 1:
             return None
-        assoc_num = np.asarray(self._mixture._params.get("assoc_num", []), dtype=int).flatten()
-        if assoc_num.size != 1 or int(assoc_num[0]) <= 0:
+        association_energy = np.asarray(self._evaluated_input.association_energy_K, dtype=float).flatten()
+        association_volume = np.asarray(self._evaluated_input.association_volume, dtype=float).flatten()
+        if association_energy.size != 1 or not np.any(
+            (association_energy > 0.0) & (association_volume > 0.0)
+        ):
             return None
         try:
             raw = _core._native_cppad_association_component_parameters(
                 self._T,
                 self.molar_density(),
                 np_to_vector_double(self._x),
-                self._native_args_copy(),
+                self._native_input_handle(),
                 0,
             )
         except _NATIVE_CALL_ERRORS:
@@ -410,7 +436,7 @@ class ePCSAFTState:
                 self._T,
                 self.molar_density(),
                 np_to_vector_double(self._x),
-                self._native_args_copy(),
+                self._native_input_handle(),
             )
         except _NATIVE_CALL_ERRORS as exc:
             _unsupported_derivative(f"pressure-density derivative backend failed: {exc}")
@@ -600,7 +626,7 @@ class ePCSAFTState:
                 self._P,
                 np_to_vector_double(self._x),
                 self._phase,
-                self._native_args_copy(),
+                self._native_input_handle(),
             )
         except _NATIVE_CALL_ERRORS as exc:
             _unsupported_derivative(f"phase-state ln-fugacity composition sensitivity backend failed: {exc}")
@@ -786,7 +812,7 @@ class ePCSAFTState:
             _unsupported_derivative(f"relative-permittivity derivative backend failed: {exc}")
         return _derivative_result_payload(
             supported=True,
-            backend=_relative_permittivity_backend(self._mixture._params),
+            backend="cppad",
             message="relative-permittivity composition derivative available",
             value=[float(epsilon)],
             jacobian=np.asarray(deps_dx, dtype=float).reshape((1, int(self._x.size))),
@@ -798,14 +824,12 @@ class ePCSAFTState:
 
     def relative_permittivity_parameter_derivative_result(self):
         """Return relative-permittivity parameter derivatives for supported dielectric rules."""
-        params = self._mixture._params
         try:
             epsilon, _ = self.relative_permittivity()
         except _DERIVATIVE_VALUE_ERRORS as exc:
             _unsupported_derivative(f"relative-permittivity derivative backend failed: {exc}")
-        rule, _mode = _state_rel_perm_rule_and_mode(params)
-        dielc = np.asarray(params.get("dielc", []), dtype=float).flatten()
-        if rule != 1 or dielc.size != self._x.size:
+        dielc = np.asarray(self._evaluated_input.pure_relative_permittivity, dtype=float).flatten()
+        if dielc.size != self._x.size:
             _unsupported_derivative(
                 "relative-permittivity parameter derivatives are implemented for linear mole-fraction mixing only."
             )
@@ -865,7 +889,9 @@ class ePCSAFTState:
 
         composition = self._composition_derivative_residual_helmholtz_result()
         details = dict(composition["derivative_backend"])
-        assoc_active = bool(np.asarray(self._mixture._params.get("assoc_num", []), dtype=int).size)
+        assoc_active = bool(
+            np.any(np.asarray(self._evaluated_input.association_energy_K, dtype=float) > 0.0)
+        )
         for key, quantity, eqid in (
             ("hc", "hard_chain", "ares_hc"),
             ("disp", "dispersion", "ares_disp"),
@@ -1074,7 +1100,9 @@ class ePCSAFTState:
         species = self._mixture.species if species is None else [str(s) for s in species]
         if len(species) != self._x.size:
             raise InputError(f"species length ({len(species)}) must match composition length ({self._x.size}).")
-        has_solvent_override, solvent_index = _resolve_solvent_override(self._mixture, species, solvent)
+        has_solvent_override, solvent_index = _resolve_solvent_override(
+            self._evaluated_input, species, solvent
+        )
         include_aux_c = bool(include_aux)
         has_solvent_override_c = bool(has_solvent_override)
         solvent_index_c = int(solvent_index)
@@ -1119,7 +1147,9 @@ class ePCSAFTState:
         species = self._mixture.species if species is None else [str(s) for s in species]
         if len(species) != self._x.size:
             raise InputError(f"species length ({len(species)}) must match composition length ({self._x.size}).")
-        has_solvent_override, solvent_index = _resolve_solvent_override(self._mixture, species, solvent)
+        has_solvent_override, solvent_index = _resolve_solvent_override(
+            self._evaluated_input, species, solvent
+        )
         include_aux_c = False
         has_solvent_override_c = bool(has_solvent_override)
         solvent_index_c = int(solvent_index)

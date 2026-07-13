@@ -40,7 +40,7 @@ vector<double> build_infinite_dilution_reference_cpp(
 ReferenceStateValue reference_state_from_cache_or_build_cpp(
     ePCSAFTMixtureNative* mixture,
     const ReferenceStateKey& key,
-    const add_args& args
+    const ProviderParameterAccessV1<double>& args
 ) {
     if (mixture == nullptr) {
         throw ValueError("activity_coefficient requires a valid mixture cache owner.");
@@ -62,10 +62,9 @@ vector<double> miac_gamma_vector_cpp(
     double t,
     double rho,
     const vector<double>& x,
-    const add_args& cppargs
+    const ProviderParameterAccessV1<double>& args
 )
 {
-    add_args args = cppargs;
     const int ncomp = static_cast<int>(x.size());
     if (args.z.empty() || std::all_of(args.z.begin(), args.z.end(), [](double v) { return std::abs(v) <= 1e-12; })) {
         throw ValueError("miac requires ionic species (non-zero z).");
@@ -108,10 +107,9 @@ vector<double> gsolv_values_cpp(
     double p,
     int phase,
     const vector<double>& x,
-    const add_args& cppargs
+    const ProviderParameterAccessV1<double>& args
 )
 {
-    add_args args = cppargs;
     const int ncomp = static_cast<int>(x.size());
     if (args.z.empty() || std::all_of(args.z.begin(), args.z.end(), [](double v) { return std::abs(v) <= 1e-12; })) {
         throw ValueError("gsolv requires ionic species in params['z'].");
@@ -213,7 +211,11 @@ double normalize_mw_cpp(double mw)
     return mw;
 }
 
-double solvent_pool_mix_mw_cpp(const vector<double>& x, const add_args& args, const vector<int>& solvent_pool)
+double solvent_pool_mix_mw_cpp(
+    const vector<double>& x,
+    const ProviderParameterAccessV1<double>& args,
+    const vector<int>& solvent_pool
+)
 {
     if (solvent_pool.empty()) {
         throw ValueError("activity_coefficient requires a non-empty solvent pool.");
@@ -247,7 +249,7 @@ double solvent_pool_mix_mw_cpp(const vector<double>& x, const add_args& args, co
 
 void validate_activity_inputs_cpp(
     const vector<double>& x,
-    const add_args& args,
+    const ProviderParameterAccessV1<double>& args,
     const vector<int>& cation_indices,
     const vector<int>& anion_indices,
     const vector<int>& pair_cation_indices,
@@ -302,7 +304,7 @@ void assign_activity_aux_cpp(
     double p,
     int phase,
     const vector<double>& x,
-    const add_args& args,
+    const ProviderParameterAccessV1<double>& args,
     bool include_aux
 ) {
     out.component_activity_coefficients = miac_gamma_vector_cpp(mixture, t, rho, x, args);
@@ -319,7 +321,7 @@ void assign_activity_aux_cpp(
 void assign_pair_activity_cpp(
     ActivityCoefficientNative& out,
     const vector<double>& x,
-    const add_args& args,
+    const ProviderParameterAccessV1<double>& args,
     const vector<int>& solvent_indices,
     bool has_solvent_override
 ) {
@@ -363,7 +365,7 @@ double osmotic_coefficient_cpp(
     double p,
     int phase,
     const vector<double>& x,
-    const add_args& args,
+    const ProviderParameterAccessV1<double>& args,
     int solvent_index
 ) {
     double mw_solvent = normalize_mw_cpp(args.mw[solvent_index]);
@@ -413,7 +415,7 @@ ActivityCoefficientNative activity_coefficient_values_impl_cpp(
     double p,
     int phase,
     const vector<double>& x,
-    const add_args& args,
+    const ProviderParameterAccessV1<double>& args,
     const vector<int>& cation_indices,
     const vector<int>& anion_indices,
     const vector<int>& solvent_indices,
@@ -472,7 +474,7 @@ ActivityCoefficientNative activity_coefficient_values_cpp(
     double p,
     int phase,
     const vector<double>& x,
-    const add_args& args,
+    const ProviderParameterAccessV1<double>& args,
     const vector<int>& cation_indices,
     const vector<int>& anion_indices,
     const vector<int>& solvent_indices,

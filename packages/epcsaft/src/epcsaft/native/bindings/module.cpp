@@ -13,97 +13,9 @@
 #include "eos/core_internal.h"
 #include "eos/contributions/contribution_internal.h"
 
-epcsaft::native::cppad_support::CppADDerivativeResult cppad_eos_contribution_derivatives_cpp(
-    double t,
-    double rho,
-    const std::vector<double>& x,
-    const add_args& cppargs
-);
-epcsaft::native::cppad_support::CppADDerivativeResult cppad_pressure_density_derivative_cpp(
-    double t,
-    double rho,
-    const std::vector<double>& x,
-    const add_args& cppargs
-);
-PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_composition_sensitivity_cpp(
-    double t,
-    double p,
-    std::vector<double> x,
-    int phase,
-    const add_args& cppargs
-);
-NeutralBinaryKijPhaseDerivatives neutral_binary_pair_parameter_phase_derivatives_cpp(
-    double t,
-    double rho,
-    const std::vector<double>& x,
-    const add_args& cppargs,
-    int parameter_index,
-    const std::string& parameter_name
-);
-NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_cpp(
-    double t,
-    double rho,
-    const std::vector<double>& x,
-    const add_args& cppargs,
-    int target_kind,
-    int target_index
-);
-
 namespace py = pybind11;
 
 using namespace epcsaft::native::bindings;
-
-py::dict native_args_payload(const add_args& args) {
-    py::dict out;
-    out["m"] = args.m;
-    out["s"] = args.s;
-    out["e"] = args.e;
-    out["k_ij"] = args.k_ij;
-    out["e_assoc"] = args.e_assoc;
-    out["vol_a"] = args.vol_a;
-    out["z"] = args.z;
-    out["dielc"] = args.dielc;
-    out["mw"] = args.mw;
-    out["mixed_rel_perm_a"] = args.mixed_rel_perm_a;
-    out["mixed_rel_perm_b"] = args.mixed_rel_perm_b;
-    out["mixed_rel_perm_c"] = args.mixed_rel_perm_c;
-    out["mixed_rel_perm_mask"] = args.mixed_rel_perm_mask;
-    out["mixed_rel_perm_water_index"] = args.mixed_rel_perm_water_index;
-    out["dielc_rule"] = args.dielc_rule;
-    out["dielc_diff_mode"] = args.dielc_diff_mode;
-    out["hc_dadx_diff_mode"] = args.hc_dadx_diff_mode;
-    out["disp_dadx_diff_mode"] = args.disp_dadx_diff_mode;
-    out["assoc_dadx_diff_mode"] = args.assoc_dadx_diff_mode;
-    out["d_ion_mode"] = args.d_ion_mode;
-    out["mu_DH_diff_mode"] = args.mu_DH_diff_mode;
-    out["mu_DH_comp_dep_rel_perm"] = args.mu_DH_comp_dep_rel_perm;
-    out["mu_DH_include_sum_term"] = args.mu_DH_include_sum_term;
-    out["include_born_model"] = args.include_born_model;
-    out["d_born_mode"] = args.d_born_mode;
-    out["born_solvation_shell_model"] = args.born_solvation_shell_model;
-    out["born_dielectric_saturation"] = args.born_dielectric_saturation;
-    out["born_bulk_mode"] = args.born_bulk_mode;
-    out["mu_born_diff_mode"] = args.mu_born_diff_mode;
-    out["mu_born_comp_dep_rel_perm"] = args.mu_born_comp_dep_rel_perm;
-    out["mu_born_include_sum_term"] = args.mu_born_include_sum_term;
-    out["mu_born_comp_dep_delta_d"] = args.mu_born_comp_dep_delta_d;
-    out["d_born"] = args.d_born;
-    out["f_solv"] = args.f_solv;
-    out["born_model"] = args.born_model;
-    out["born_radius_model"] = args.born_radius_model;
-    out["born_diff_mode"] = args.born_diff_mode;
-    out["born_eps_mode"] = args.born_eps_mode;
-    out["DH_model"] = args.DH_model;
-    out["assoc_num"] = args.assoc_num;
-    out["assoc_matrix"] = args.assoc_matrix;
-    out["k_hb"] = args.k_hb;
-    out["l_ij"] = args.l_ij;
-    out["parameter_source_label"] = args.parameter_source_label;
-    out["parameter_provenance_status"] = args.parameter_provenance_status;
-    out["binary_interaction_provenance_status"] = args.binary_interaction_provenance_status;
-    out["parameter_provenance_fields"] = args.parameter_provenance_fields;
-    return out;
-}
 
 PYBIND11_MODULE(_core, m) {
     m.doc() = "pybind11 native backend for epcsaft";
@@ -133,8 +45,9 @@ PYBIND11_MODULE(_core, m) {
         out["provider_only_core"] = !equilibrium_native_enabled && !regression_native_enabled;
         return out;
     });
-    m.def("_native_cppad_eos_contributions", [](double t, double rho, const std::vector<double>& x, const add_args& args) {
-        return cppad_smoke_to_dict(cppad_eos_contribution_derivatives_cpp(t, rho, x, args));
+    m.def("_native_cppad_eos_contributions", [](double t, double rho, const std::vector<double>& x, const std::shared_ptr<ProviderResolvedInputHandleV1>& handle) {
+        const SnapshotParameterAccessV1 input(handle->snapshot());
+        return cppad_smoke_to_dict(cppad_eos_contribution_derivatives_cpp(t, rho, x, input));
     });
     m.def(
         "_native_association_site_fraction_solve",
@@ -162,62 +75,68 @@ PYBIND11_MODULE(_core, m) {
         py::arg("update_tolerance") = 1.0e-15,
         py::arg("residual_tolerance") = 1.0e-10
     );
-    m.def("_native_cppad_pressure_density", [](double t, double rho, const std::vector<double>& x, const add_args& args) {
-        return cppad_smoke_to_dict(cppad_pressure_density_derivative_cpp(t, rho, x, args));
+    m.def("_native_cppad_pressure_density", [](double t, double rho, const std::vector<double>& x, const std::shared_ptr<ProviderResolvedInputHandleV1>& handle) {
+        const SnapshotParameterAccessV1 input(handle->snapshot());
+        return cppad_smoke_to_dict(cppad_pressure_density_derivative_cpp(t, rho, x, input));
     });
     m.def("_native_phase_state_ln_fugacity_composition_sensitivity", [](
         double t,
         double p,
         const std::vector<double>& x,
         int phase,
-        const add_args& args
+        const std::shared_ptr<ProviderResolvedInputHandleV1>& handle
     ) {
+        const SnapshotParameterAccessV1 input(handle->snapshot());
         return phase_state_sensitivity_to_dict(
-            phase_state_ln_fugacity_composition_sensitivity_cpp(t, p, x, phase, args)
+            phase_state_ln_fugacity_composition_sensitivity_cpp(t, p, x, phase, input)
         );
     });
-    m.def("_native_cppad_pure_neutral_parameters", [](double t, double rho, const add_args& args) {
-        return cppad_smoke_to_dict(cppad_pure_neutral_parameter_derivatives_cpp(t, rho, args));
+    m.def("_native_cppad_pure_neutral_parameters", [](double t, double rho, const std::shared_ptr<ProviderResolvedInputHandleV1>& handle) {
+        const SnapshotParameterAccessV1 input(handle->snapshot());
+        return cppad_smoke_to_dict(cppad_pure_neutral_parameter_derivatives_cpp(t, rho, input));
     });
     m.def("_native_cppad_association_component_parameters", [](
         double t,
         double rho,
         const std::vector<double>& x,
-        const add_args& args,
+        const std::shared_ptr<ProviderResolvedInputHandleV1>& handle,
         int component_index
     ) {
+        const SnapshotParameterAccessV1 input(handle->snapshot());
         NeutralBinaryKijPhaseDerivatives e_assoc =
-            generic_component_parameter_phase_derivatives_cpp(t, rho, x, args, 3, component_index);
+            generic_component_parameter_phase_derivatives_cpp(t, rho, x, input, 3, component_index);
         NeutralBinaryKijPhaseDerivatives vol_a =
-            generic_component_parameter_phase_derivatives_cpp(t, rho, x, args, 4, component_index);
+            generic_component_parameter_phase_derivatives_cpp(t, rho, x, input, 4, component_index);
         return association_component_parameter_derivatives_to_dict(e_assoc, vol_a);
     });
-    m.def("_native_cppad_neutral_binary_kij_properties", [](double t, double rho, const std::vector<double>& x, const add_args& args) {
-        NeutralBinaryKijPhaseDerivatives forward = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 1, "k_ij");
-        NeutralBinaryKijPhaseDerivatives reverse = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 2, "k_ij");
+    m.def("_native_cppad_neutral_binary_kij_properties", [](double t, double rho, const std::vector<double>& x, const std::shared_ptr<ProviderResolvedInputHandleV1>& handle) {
+        const SnapshotParameterAccessV1 input(handle->snapshot());
+        NeutralBinaryKijPhaseDerivatives forward = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, input, 1, "k_ij");
+        NeutralBinaryKijPhaseDerivatives reverse = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, input, 2, "k_ij");
         return neutral_binary_kij_property_derivatives_to_dict(forward, reverse);
     });
-    m.def("_native_cppad_neutral_binary_pair_properties", [](double t, double rho, const std::vector<double>& x, const add_args& args) {
-        NeutralBinaryKijPhaseDerivatives kij_forward = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 1, "k_ij");
-        NeutralBinaryKijPhaseDerivatives kij_reverse = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 2, "k_ij");
+    m.def("_native_cppad_neutral_binary_pair_properties", [](double t, double rho, const std::vector<double>& x, const std::shared_ptr<ProviderResolvedInputHandleV1>& handle) {
+        const SnapshotParameterAccessV1 input(handle->snapshot());
+        NeutralBinaryKijPhaseDerivatives kij_forward = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, input, 1, "k_ij");
+        NeutralBinaryKijPhaseDerivatives kij_reverse = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, input, 2, "k_ij");
         std::unique_ptr<NeutralBinaryKijPhaseDerivatives> lij_forward;
         std::unique_ptr<NeutralBinaryKijPhaseDerivatives> lij_reverse;
         std::unique_ptr<NeutralBinaryKijPhaseDerivatives> khb_forward;
         std::unique_ptr<NeutralBinaryKijPhaseDerivatives> khb_reverse;
-        if (args.l_ij.size() == 4) {
+        if (input.l_ij.size() == 4) {
             lij_forward = std::make_unique<NeutralBinaryKijPhaseDerivatives>(
-                neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 1, "l_ij")
+                neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, input, 1, "l_ij")
             );
             lij_reverse = std::make_unique<NeutralBinaryKijPhaseDerivatives>(
-                neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 2, "l_ij")
+                neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, input, 2, "l_ij")
             );
         }
-        if (args.k_hb.size() == 4) {
+        if (input.k_hb.size() == 4) {
             khb_forward = std::make_unique<NeutralBinaryKijPhaseDerivatives>(
-                neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 1, "k_hb_ij")
+                neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, input, 1, "k_hb_ij")
             );
             khb_reverse = std::make_unique<NeutralBinaryKijPhaseDerivatives>(
-                neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 2, "k_hb_ij")
+                neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, input, 2, "k_hb_ij")
             );
         }
         return neutral_binary_pair_property_derivatives_to_dict(
@@ -229,56 +148,6 @@ PYBIND11_MODULE(_core, m) {
             khb_reverse.get()
         );
     });
-
-    py::class_<add_args>(m, "NativeArgs")
-        .def(py::init<>())
-        .def_readwrite("m", &add_args::m)
-        .def_readwrite("s", &add_args::s)
-        .def_readwrite("e", &add_args::e)
-        .def_readwrite("k_ij", &add_args::k_ij)
-        .def_readwrite("e_assoc", &add_args::e_assoc)
-        .def_readwrite("vol_a", &add_args::vol_a)
-        .def_readwrite("z", &add_args::z)
-        .def_readwrite("dielc", &add_args::dielc)
-        .def_readwrite("mw", &add_args::mw)
-        .def_readwrite("mixed_rel_perm_a", &add_args::mixed_rel_perm_a)
-        .def_readwrite("mixed_rel_perm_b", &add_args::mixed_rel_perm_b)
-        .def_readwrite("mixed_rel_perm_c", &add_args::mixed_rel_perm_c)
-        .def_readwrite("mixed_rel_perm_mask", &add_args::mixed_rel_perm_mask)
-        .def_readwrite("mixed_rel_perm_water_index", &add_args::mixed_rel_perm_water_index)
-        .def_readwrite("dielc_rule", &add_args::dielc_rule)
-        .def_readwrite("dielc_diff_mode", &add_args::dielc_diff_mode)
-        .def_readwrite("hc_dadx_diff_mode", &add_args::hc_dadx_diff_mode)
-        .def_readwrite("disp_dadx_diff_mode", &add_args::disp_dadx_diff_mode)
-        .def_readwrite("assoc_dadx_diff_mode", &add_args::assoc_dadx_diff_mode)
-        .def_readwrite("d_ion_mode", &add_args::d_ion_mode)
-        .def_readwrite("mu_DH_diff_mode", &add_args::mu_DH_diff_mode)
-        .def_readwrite("mu_DH_comp_dep_rel_perm", &add_args::mu_DH_comp_dep_rel_perm)
-        .def_readwrite("mu_DH_include_sum_term", &add_args::mu_DH_include_sum_term)
-        .def_readwrite("include_born_model", &add_args::include_born_model)
-        .def_readwrite("d_born_mode", &add_args::d_born_mode)
-        .def_readwrite("born_solvation_shell_model", &add_args::born_solvation_shell_model)
-        .def_readwrite("born_dielectric_saturation", &add_args::born_dielectric_saturation)
-        .def_readwrite("born_bulk_mode", &add_args::born_bulk_mode)
-        .def_readwrite("mu_born_diff_mode", &add_args::mu_born_diff_mode)
-        .def_readwrite("mu_born_comp_dep_rel_perm", &add_args::mu_born_comp_dep_rel_perm)
-        .def_readwrite("mu_born_include_sum_term", &add_args::mu_born_include_sum_term)
-        .def_readwrite("mu_born_comp_dep_delta_d", &add_args::mu_born_comp_dep_delta_d)
-        .def_readwrite("d_born", &add_args::d_born)
-        .def_readwrite("f_solv", &add_args::f_solv)
-        .def_readwrite("born_model", &add_args::born_model)
-        .def_readwrite("born_radius_model", &add_args::born_radius_model)
-        .def_readwrite("born_diff_mode", &add_args::born_diff_mode)
-        .def_readwrite("born_eps_mode", &add_args::born_eps_mode)
-        .def_readwrite("DH_model", &add_args::DH_model)
-        .def_readwrite("assoc_num", &add_args::assoc_num)
-        .def_readwrite("assoc_matrix", &add_args::assoc_matrix)
-        .def_readwrite("k_hb", &add_args::k_hb)
-        .def_readwrite("l_ij", &add_args::l_ij)
-        .def_readwrite("parameter_source_label", &add_args::parameter_source_label)
-        .def_readwrite("parameter_provenance_status", &add_args::parameter_provenance_status)
-        .def_readwrite("binary_interaction_provenance_status", &add_args::binary_interaction_provenance_status)
-        .def_readwrite("parameter_provenance_fields", &add_args::parameter_provenance_fields);
 
     py::class_<ScalarContributionTerms>(m, "ScalarContributionTerms")
         .def_readonly("hc", &ScalarContributionTerms::hc)
@@ -336,11 +205,8 @@ PYBIND11_MODULE(_core, m) {
         .def_readonly("osmotic_coefficient", &ActivityCoefficientNative::osmotic_coefficient);
 
     py::class_<ePCSAFTMixtureNative, std::shared_ptr<ePCSAFTMixtureNative>>(m, "NativeMixture")
-        .def(py::init<const add_args&>())
+        .def(py::init<std::shared_ptr<ProviderResolvedInputHandleV1>>())
         .def("ncomp", &ePCSAFTMixtureNative::ncomp)
-        .def("_native_args_payload", [](const ePCSAFTMixtureNative& mixture) {
-            return native_args_payload(mixture.args());
-        })
         .def("clear_runtime_caches", &ePCSAFTMixtureNative::clear_runtime_caches)
         .def("reset_runtime_cache_stats", &ePCSAFTMixtureNative::reset_runtime_cache_stats)
         .def("reference_state_cache_hits", &ePCSAFTMixtureNative::reference_state_cache_hits)
@@ -366,6 +232,7 @@ PYBIND11_MODULE(_core, m) {
         .def("temperature", &ePCSAFTStateNative::temperature)
         .def("phase", &ePCSAFTStateNative::phase)
         .def("composition", &ePCSAFTStateNative::composition)
+        .def("configuration_fingerprint", &ePCSAFTStateNative::configuration_fingerprint)
         .def("pressure", &ePCSAFTStateNative::pressure)
         .def("density", &ePCSAFTStateNative::density)
         .def("compressibility_factor", &ePCSAFTStateNative::compressibility_factor)

@@ -8,11 +8,12 @@ from typing import Any
 import numpy as np
 
 from .._types import InputError
-from .native_adapter import ePCSAFTMixture
+from ..frontend.mixture import Mixture
+from ..frontend.state import State
 
 
 def evaluate_fugacity_coefficients(
-    mixture: ePCSAFTMixture,
+    mixture: Mixture,
     *,
     T: float,
     x: Any,
@@ -24,10 +25,10 @@ def evaluate_fugacity_coefficients(
 ) -> dict[str, Any]:
     """Evaluate fugacity coefficients plus resolved density for one state."""
 
-    if not isinstance(mixture, ePCSAFTMixture):
-        raise InputError("mixture must be an ePCSAFTMixture instance.")
-    state = mixture.state(T=T, x=x, P=P, rho=rho, phase=phase, rho_guess=rho_guess)
-    ln_phi = np.asarray(state.fugacity_coefficient(natural_log=True), dtype=float)
+    if not isinstance(mixture, Mixture):
+        raise InputError("mixture must be a Mixture instance.")
+    state = State(mixture, T=T, x=x, P=P, rho=rho, phase=phase, rho_guess=rho_guess)
+    ln_phi = np.asarray(state.ln_fugacity_coefficients(), dtype=float)
     phi = np.exp(ln_phi)
     return {
         "ln_fugacity_coefficient": ln_phi,
@@ -36,13 +37,13 @@ def evaluate_fugacity_coefficients(
         "natural_log": bool(natural_log),
         "density": float(state.molar_density()),
         "pressure": float(state.pressure()),
-        "temperature": float(state.T),
+        "temperature": float(state.temperature),
         "phase": _phase_label(phase),
     }
 
 
 def evaluate_fugacity_coefficients_batch(
-    mixture: ePCSAFTMixture,
+    mixture: Mixture,
     *,
     rows: Sequence[Mapping[str, Any]],
     natural_log: bool = True,

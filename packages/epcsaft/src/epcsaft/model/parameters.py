@@ -1,4 +1,4 @@
-"""Strict canonical parameter records and native-payload serialization."""
+"""Strict source-bearing provider parameter definitions."""
 
 from __future__ import annotations
 
@@ -25,41 +25,7 @@ from .correlations import (
 from .sources import (
     copy_parameter_mapping as _copy_payload_mapping,
 )
-from .sources import (
-    copy_parameter_value as _copy_payload_value,
-)
-from .sources import (
-    deep_update_parameter_mapping as _deep_update_mapping,
-)
-from .sources import (
-    load_canonical_user_options as _load_canonical_user_options,
-)
 
-_PURE_PARAMETER_KEYS = {
-    "MW",
-    "molar_mass",
-    "m",
-    "s",
-    "sigma",
-    "e",
-    "epsilon_k",
-    "z",
-    "charge",
-    "e_assoc",
-    "epsilon_k_ab",
-    "vol_a",
-    "kappa_ab",
-    "assoc_scheme",
-    "association_scheme",
-    "dielc",
-    "relative_permittivity",
-    "d_born",
-    "born_diameter",
-    "f_solv",
-    "solvation_factor",
-}
-_BINARY_PARAMETER_KEYS = {"k_ij", "l_ij", "k_hb", "k_hb_ij"}
-_GENERATED_PARAMETER_KEYS = {"assoc_num", "assoc_matrix"}
 _PROVENANCE_METADATA_KEYS = (
     "source",
     "dataset",
@@ -70,34 +36,8 @@ _PROVENANCE_METADATA_KEYS = (
     "source_file",
     "source_path",
 )
-_STRUCTURAL_KEYS = {
-    "schema",
-    "schema_version",
-    "components",
-    "pure_records",
-    "interactions",
-    "interaction_policies",
-    "metadata",
-    "runtime_options",
-}
-_PARAMETER_PAYLOAD_KEYS = _PURE_PARAMETER_KEYS | _BINARY_PARAMETER_KEYS | _GENERATED_PARAMETER_KEYS | _STRUCTURAL_KEYS
-_NATIVE_RUNTIME_PASSTHROUGH_KEYS = {
-    "mixed_rel_perm_a",
-    "mixed_rel_perm_b",
-    "mixed_rel_perm_c",
-    "mixed_rel_perm_mask",
-    "mixed_rel_perm_water_index",
-    "mixed_ion_sigma",
-    "mixed_ion_sigma_applied",
-    "mixed_ion_sigma_sources",
-    "mixed_ion_dispersion",
-    "mixed_ion_dispersion_applied",
-    "mixed_ion_dispersion_sources",
-}
-
 PARAMETER_SET_SCHEMA = "epcsaft.parameter-set"
 PARAMETER_SET_SCHEMA_VERSION = 3
-_LEGACY_PARAMETER_SET_SCHEMA_VERSION = 2
 _SCHEMA3_TOP_LEVEL_KEYS = {
     "schema",
     "schema_version",
@@ -107,16 +47,6 @@ _SCHEMA3_TOP_LEVEL_KEYS = {
     "interactions",
     "interaction_policies",
     "metadata",
-}
-_CANONICAL_TOP_LEVEL_KEYS = {
-    "schema",
-    "schema_version",
-    "components",
-    "pure_records",
-    "interactions",
-    "interaction_policies",
-    "metadata",
-    "runtime_options",
 }
 _INTERACTION_FAMILIES = ("k_ij", "l_ij", "k_hb_ij")
 _INTERACTION_RUNTIME_KEYS = {"k_ij": "k_ij", "l_ij": "l_ij", "k_hb_ij": "k_hb"}
@@ -406,16 +336,15 @@ class PermittivityRecord:
 
 @dataclass(frozen=True, slots=True)
 class ParameterSet:
-    """Versioned scientific definitions or the temporary legacy parity set."""
+    """Versioned scientific provider definitions."""
 
     components: tuple[str, ...]
-    pure_records: tuple[PureRecord | ScientificRecord, ...]
+    pure_records: tuple[ScientificRecord, ...]
     formulation_records: tuple[ScientificRecord, ...] = ()
-    interactions: tuple[InteractionRecord | ScientificInteractionRecord, ...] = ()
-    interaction_policies: tuple[StructuralZeroPolicy | ScientificStructuralZero, ...] = ()
+    interactions: tuple[ScientificInteractionRecord, ...] = ()
+    interaction_policies: tuple[ScientificStructuralZero, ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
-    runtime_options: Mapping[str, Any] = field(default_factory=dict)
-    _schema_origin: str = field(default="legacy_v2_gate", repr=False)
+    _schema_origin: str = field(default="scientific_v3", repr=False)
 
     def __post_init__(self) -> None:
         components = tuple(str(component) for component in self.components)
@@ -425,36 +354,15 @@ class ParameterSet:
         object.__setattr__(self, "interactions", tuple(self.interactions))
         object.__setattr__(self, "interaction_policies", tuple(self.interaction_policies))
         object.__setattr__(self, "metadata", dict(self.metadata))
-        object.__setattr__(self, "runtime_options", _copy_payload_mapping(self.runtime_options))
-        if self._schema_origin not in {"legacy_v2_gate", "scientific_v3"}:
-            raise InputError("ParameterSet schema origin is not admitted.")
+        if self._schema_origin != "scientific_v3":
+            raise InputError("ParameterSet accepts only definitions-only schema-3 input.")
         self.validate()
 
     @property
     def schema_origin(self) -> str:
-        """Return the temporary additive-gate schema ownership tag."""
+        """Return the strict definitions schema ownership tag."""
 
         return self._schema_origin
-
-    @classmethod
-    def from_records(
-        cls,
-        pure_records: Sequence[PureRecord],
-        interactions: Sequence[InteractionRecord] | None = None,
-        *,
-        interaction_policies: Sequence[StructuralZeroPolicy] | None = None,
-        metadata: Mapping[str, Any] | None = None,
-        runtime_options: Mapping[str, Any] | None = None,
-    ) -> ParameterSet:
-        pure = tuple(pure_records)
-        return cls(
-            components=tuple(str(record.component) for record in pure),
-            pure_records=pure,
-            interactions=tuple(interactions or ()),
-            interaction_policies=tuple(interaction_policies or ()),
-            metadata=dict(metadata or {}),
-            runtime_options=_copy_payload_mapping(runtime_options),
-        )
 
     @classmethod
     def from_schema3_records(
@@ -476,7 +384,6 @@ class ParameterSet:
             interactions=tuple(interactions),
             interaction_policies=tuple(interaction_policies),
             metadata=dict(metadata or {}),
-            runtime_options={},
             _schema_origin="scientific_v3",
         )
 
@@ -527,63 +434,12 @@ class ParameterSet:
     ) -> ParameterSet:
         if not isinstance(payload, Mapping):
             raise InputError("ParameterSet.from_dict requires a mapping in the versioned canonical schema.")
-        canonical = {str(key): value for key, value in payload.items()}
-        schema_version = canonical.get("schema_version")
-        if (
-            canonical.get("schema") != PARAMETER_SET_SCHEMA
-            or type(schema_version) is not int
-            or schema_version != _LEGACY_PARAMETER_SET_SCHEMA_VERSION
-        ):
-            raise InputError(
-                "ParameterSet.from_dict accepts only the versioned canonical schema "
-                "'epcsaft.parameter-set' with schema_version 2; "
-                "parallel-array and unversioned payloads are rejected."
-            )
-        return cls._from_canonical_payload(canonical, species=species, metadata=metadata)
-
-    @classmethod
-    def _from_canonical_payload(
-        cls,
-        payload: Mapping[str, Any],
-        *,
-        species: Sequence[str] | None = None,
-        metadata: Mapping[str, Any] | None = None,
-    ) -> ParameterSet:
-        unknown = sorted(set(payload) - _CANONICAL_TOP_LEVEL_KEYS)
-        if unknown:
-            raise InputError(f"canonical parameter payload contains unsupported key(s): {', '.join(unknown)}.")
-        payload_components_raw = _canonical_array(payload, "components")
-        pure_payloads = _canonical_array(payload, "pure_records")
-        interaction_payloads = _canonical_array(payload, "interactions")
-        policy_payloads = _canonical_array(payload, "interaction_policies")
-        if not pure_payloads:
-            raise InputError("canonical parameter payload must include pure_records.")
-        if not payload_components_raw:
-            raise InputError("canonical parameter payload components must contain at least one component label.")
-        payload_components = tuple(
-            _nonblank_identity(item, f"components[{index}]")
-            for index, item in enumerate(payload_components_raw)
-        )
-        if species is not None and tuple(str(item) for item in species) != payload_components:
-            raise InputError("canonical parameter dataset species must match payload components in order.")
-        payload_metadata_raw = payload.get("metadata", {})
-        runtime_options_raw = payload.get("runtime_options", {})
-        if not isinstance(payload_metadata_raw, Mapping):
-            raise InputError("canonical parameter payload metadata must be a JSON object.")
-        if not isinstance(runtime_options_raw, Mapping):
-            raise InputError("canonical parameter payload runtime_options must be a JSON object.")
-        if metadata is not None and not isinstance(metadata, Mapping):
-            raise InputError("ParameterSet.from_dict metadata override must be a mapping.")
-        payload_metadata = _copy_payload_mapping(payload_metadata_raw)
-        payload_metadata.update(_copy_payload_mapping(metadata))
-        return cls(
-            components=payload_components,
-            pure_records=tuple(_pure_record_from_canonical(item) for item in pure_payloads),
-            interactions=tuple(_interaction_record_from_canonical(item) for item in interaction_payloads),
-            interaction_policies=tuple(_structural_zero_policy_from_canonical(item) for item in policy_payloads),
-            metadata=payload_metadata,
-            runtime_options=_copy_payload_mapping(runtime_options_raw),
-        )
+        if metadata is not None:
+            raise InputError("schema-3 metadata must be carried in the parameter document.")
+        parameters = cls.from_schema3(payload)
+        if species is not None and tuple(str(item) for item in species) != parameters.components:
+            raise InputError("schema-3 parameter components must match the requested order.")
+        return parameters
 
     @classmethod
     def from_json(
@@ -593,7 +449,7 @@ class ParameterSet:
         species: Sequence[str] | None = None,
         metadata: Mapping[str, Any] | None = None,
     ) -> ParameterSet:
-        """Load a canonical parameter-set JSON file or folder."""
+        """Load a definitions-only schema-3 parameter-set JSON file or folder."""
         json_path = Path(path).expanduser()
         if json_path.is_dir():
             json_path = json_path / "parameter_set.json"
@@ -611,32 +467,13 @@ class ParameterSet:
         T: float = 298.15,
         user_options: Mapping[str, Any] | None = None,
     ) -> ParameterSet:
-        from .datasets import load_parameter_set
-
         dataset_path = Path(dataset_name).expanduser()
         canonical_path = dataset_path / "parameter_set.json"
-        if dataset_path.is_dir() and canonical_path.exists():
-            params = cls.from_json(
-                canonical_path,
-                species=species,
-                metadata={"dataset": str(dataset_name), "T": float(T)},
-            )
-            runtime_options = _deep_update_mapping(
-                params.runtime_options,
-                _load_canonical_user_options(dataset_path),
-            )
-            runtime_options = _deep_update_mapping(runtime_options, user_options or {})
-            return cls(
-                components=params.components,
-                pure_records=params.pure_records,
-                interactions=params.interactions,
-                interaction_policies=params.interaction_policies,
-                metadata=params.metadata,
-                runtime_options=runtime_options,
-            )
-
-        composition = x if x is not None else [1.0 / len(species)] * len(species)
-        return load_parameter_set(dataset_name, species, composition, T, user_options=user_options)
+        if x is not None or T != 298.15 or user_options is not None:
+            raise InputError("schema-3 parameter loading does not accept runtime conditions or options.")
+        if not canonical_path.is_file():
+            raise InputError(f"Dataset '{dataset_path}' must contain a schema-3 parameter_set.json.")
+        return cls.from_json(canonical_path, species=species)
 
     @classmethod
     def from_folder(
@@ -644,7 +481,6 @@ class ParameterSet:
         path: str | Path,
         *,
         components: Sequence[str] | None = None,
-        user_options: Mapping[str, Any] | None = None,
     ) -> ParameterSet:
         """Load parameters from a canonical parameter-set folder."""
 
@@ -654,86 +490,10 @@ class ParameterSet:
         canonical_path = root / "parameter_set.json"
         if not canonical_path.is_file():
             raise InputError(f"Parameter folder '{root}' must contain parameter_set.json.")
-        params = cls.from_json(canonical_path, species=components)
-        return _parameter_set_with_runtime_options(params, user_options)
+        return cls.from_json(canonical_path, species=components)
 
     def validate(self) -> dict[str, Any]:
-        if self._schema_origin == "scientific_v3":
-            return self._validate_scientific_v3()
-        errors: list[str] = []
-        if len(set(self.components)) != len(self.components):
-            errors.append("ParameterSet components must be unique.")
-        seen = set()
-        for record in self.pure_records:
-            label = str(record.component)
-            if label in seen:
-                errors.append(f"Duplicate component record for {label}.")
-            seen.add(label)
-            for field_name in ("molar_mass", "m", "sigma", "epsilon_k"):
-                value = float(getattr(record, field_name))
-                if not np.isfinite(value) or value <= 0.0:
-                    errors.append(f"{label}.{field_name} must be finite and positive.")
-        missing = [label for label in self.components if label not in seen]
-        if missing:
-            errors.append(f"Missing pure records for components: {', '.join(missing)}.")
-        known = set(self.components)
-        undeclared = sorted(seen - known)
-        if undeclared:
-            errors.append(f"ParameterSet contains pure records for undeclared components: {', '.join(undeclared)}.")
-        covered_interactions: dict[tuple[str, frozenset[str]], str] = {}
-        for field_name, owner, records, record_types in (
-            (
-                "interactions",
-                "interaction record",
-                self.interactions,
-                (ConstantInteractionRecord, LinearTemperatureInteractionRecord),
-            ),
-            (
-                "interaction_policies",
-                "structural-zero policy",
-                self.interaction_policies,
-                (StructuralZeroPolicy,),
-            ),
-        ):
-            for record in records:
-                if not isinstance(record, record_types):
-                    errors.append(f"ParameterSet {field_name} must contain only its typed record class.")
-                    continue
-                for label in record.components:
-                    if label not in known:
-                        errors.append(f"{owner} references unknown component {label}.")
-                key = _interaction_key(record.family, record.components)
-                previous = covered_interactions.get(key)
-                if previous is not None:
-                    left, right = sorted(record.components)
-                    errors.append(
-                        f"Duplicate interaction coverage for {record.family} pair {left}|{right}: "
-                        f"{previous} and {owner}."
-                    )
-                else:
-                    covered_interactions[key] = owner
-        for left_index, left in enumerate(self.components):
-            for right in self.components[left_index + 1 :]:
-                for family in _INTERACTION_FAMILIES:
-                    if _interaction_key(family, (left, right)) not in covered_interactions:
-                        errors.append(f"Missing interaction data for {family} pair {left}|{right}.")
-        reserved = sorted(set(self.runtime_options) & _PARAMETER_PAYLOAD_KEYS)
-        if reserved:
-            errors.append(f"runtime_options cannot override parameter payload keys: {', '.join(reserved)}.")
-        source_backed = self.metadata.get("source_backed", False)
-        if "source_backed" in self.metadata and type(source_backed) is not bool:
-            errors.append("metadata.source_backed must be a boolean.")
-        elif source_backed and not _provenance_metadata_fields(self.metadata):
-            errors.append("source_backed parameter metadata requires a nonblank source identity.")
-        if errors:
-            raise InputError("; ".join(errors))
-        return {
-            "valid": True,
-            "component_count": len(self.components),
-            "interaction_count": len(self.interactions),
-            "structural_zero_policy_count": len(self.interaction_policies),
-            "runtime_option_count": len(self.runtime_options),
-        }
+        return self._validate_scientific_v3()
 
     def _validate_scientific_v3(self) -> dict[str, Any]:
         errors: list[str] = []
@@ -741,8 +501,6 @@ class ParameterSet:
             errors.append("schema-3 ParameterSet requires at least one component.")
         if len(set(self.components)) != len(self.components):
             errors.append("schema-3 ParameterSet components must be unique.")
-        if self.runtime_options:
-            errors.append("scientific_v3 ParameterSet cannot contain runtime options.")
         if any(not isinstance(record, ScientificRecord) for record in self.pure_records):
             errors.append("schema-3 pure_records must contain only ScientificRecord values.")
         if any(not isinstance(record, ScientificRecord) for record in self.formulation_records):
@@ -854,78 +612,22 @@ class ParameterSet:
             "structural_zero_policy_count": len(self.interaction_policies),
         }
 
-    def _to_stage4_legacy_runtime_dict(
-        self,
-        user_options: Mapping[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        if self._schema_origin != "legacy_v2_gate":
-            raise InputError(
-                f"{self._schema_origin} ParameterSet cannot enter the Stage 4 legacy runtime serializer."
-            )
-        records = {str(record.component): record for record in self.pure_records}
-        ordered = [records[label] for label in self.components]
-        charge_vector = np.asarray([record.charge for record in ordered], dtype=float)
-        payload: dict[str, Any] = {
-            "MW": np.asarray([record.molar_mass for record in ordered], dtype=float),
-            "m": np.asarray([record.m for record in ordered], dtype=float),
-            "s": np.asarray([record.sigma for record in ordered], dtype=float),
-            "e": np.asarray([record.epsilon_k for record in ordered], dtype=float),
-            "e_assoc": np.asarray([record.epsilon_k_ab for record in ordered], dtype=float),
-            "vol_a": np.asarray([record.kappa_ab for record in ordered], dtype=float),
-            "assoc_scheme": [
-                None if record.association_scheme in (None, "") else str(record.association_scheme)
-                for record in ordered
-            ],
-            "z": charge_vector if np.any(np.abs(charge_vector) > 1.0e-12) else np.asarray([], dtype=float),
-            "dielc": np.asarray([record.relative_permittivity for record in ordered], dtype=float),
-            "d_born": np.asarray([record.born_diameter for record in ordered], dtype=float),
-            "f_solv": np.asarray([record.solvation_factor for record in ordered], dtype=float),
-        }
-        matrices, interaction_receipt = _interaction_matrices(self, self.components)
-        payload.update(matrices)
-        runtime_options = _normalize_runtime_user_options(_deep_update_mapping(self.runtime_options, user_options or {}))
-        reserved = sorted(set(runtime_options) & _PARAMETER_PAYLOAD_KEYS)
-        if reserved:
-            raise InputError(f"runtime_options cannot override parameter payload keys: {', '.join(reserved)}.")
-        payload.update(runtime_options)
-        payload.update(_runtime_parameter_provenance_payload(self.metadata, interaction_receipt))
-        return payload
-
     def to_json(self, path: str | Path | None = None) -> str:
-        if self._schema_origin == "scientific_v3":
-            payload = {
-                "schema": PARAMETER_SET_SCHEMA,
-                "schema_version": PARAMETER_SET_SCHEMA_VERSION,
-                "components": list(self.components),
-                "pure_records": [scientific_record_to_json(record) for record in self.pure_records],
-                "formulation_records": [
-                    scientific_record_to_json(record) for record in self.formulation_records
-                ],
-                "interactions": [
-                    scientific_interaction_to_json(record) for record in self.interactions
-                ],
-                "interaction_policies": [
-                    scientific_structural_zero_to_json(policy) for policy in self.interaction_policies
-                ],
-                "metadata": _json_ready(self.metadata),
-            }
-            text = json.dumps(payload, indent=2, sort_keys=True, allow_nan=False)
-            if path is not None:
-                Path(path).write_text(text + "\n", encoding="utf-8")
-            return text
         payload = {
             "schema": PARAMETER_SET_SCHEMA,
-            "schema_version": _LEGACY_PARAMETER_SET_SCHEMA_VERSION,
+            "schema_version": PARAMETER_SET_SCHEMA_VERSION,
             "components": list(self.components),
-            "pure_records": [_pure_record_json(record) for record in self.pure_records],
-            "interactions": [_interaction_record_json(record) for record in self.interactions],
+            "pure_records": [scientific_record_to_json(record) for record in self.pure_records],
+            "formulation_records": [
+                scientific_record_to_json(record) for record in self.formulation_records
+            ],
+            "interactions": [scientific_interaction_to_json(record) for record in self.interactions],
             "interaction_policies": [
-                _structural_zero_policy_json(policy) for policy in self.interaction_policies
+                scientific_structural_zero_to_json(policy) for policy in self.interaction_policies
             ],
             "metadata": _json_ready(self.metadata),
-            "runtime_options": _json_ready(self.runtime_options),
         }
-        text = json.dumps(payload, indent=2, sort_keys=True)
+        text = json.dumps(payload, indent=2, sort_keys=True, allow_nan=False)
         if path is not None:
             Path(path).write_text(text + "\n", encoding="utf-8")
         return text
@@ -966,33 +668,17 @@ class ParameterSource:
         user_options: Mapping[str, Any] | None = None,
     ) -> ParameterSet:
         """Resolve this source into a canonical parameter set."""
+        if x is not None or T != 298.15 or user_options is not None:
+            raise InputError("ParameterSource schema-3 resolution does not accept runtime conditions or options.")
         labels = _resolve_parameter_source_species(self.species, species)
         if isinstance(self.source, ParameterSet):
             _require_parameter_source_species(labels, self.source.components, "ParameterSet")
-            return _parameter_set_with_runtime_options(self.source, user_options)
+            return self.source
         if isinstance(self.source, Mapping):
-            params = ParameterSet.from_dict(self.source, species=labels)
-            return _parameter_set_with_runtime_options(params, user_options)
+            return ParameterSet.from_dict(self.source, species=labels)
         if labels is None:
             raise InputError("ParameterSource species must be provided for dataset sources.")
-        composition = x if x is not None else [1.0 / len(labels)] * len(labels)
-        return ParameterSet.from_dataset(self.source, labels, composition, T, user_options=user_options)
-
-    def to_runtime_dict(
-        self,
-        species: Sequence[str] | None = None,
-        x: Sequence[float] | None = None,
-        T: float = 298.15,
-        user_options: Mapping[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        """Resolve this source into the native runtime payload."""
-        return self.to_parameter_set(
-            species=species,
-            x=x,
-            T=T,
-            user_options=user_options,
-        )._to_stage4_legacy_runtime_dict()
-
+        return ParameterSet.from_dataset(self.source, labels)
 
 def _pure_record_from_canonical(payload: Mapping[str, Any]) -> PureRecord:
     if not isinstance(payload, Mapping):
@@ -1220,59 +906,6 @@ def _require_parameter_source_species(
         return
     if tuple(str(item) for item in requested) != tuple(str(item) for item in available):
         raise InputError(f"{label} species order must match ParameterSource species.")
-
-
-def _parameter_set_with_runtime_options(
-    params: ParameterSet,
-    user_options: Mapping[str, Any] | None,
-) -> ParameterSet:
-    if not user_options:
-        return params
-    return ParameterSet(
-        components=params.components,
-        pure_records=params.pure_records,
-        interactions=params.interactions,
-        interaction_policies=params.interaction_policies,
-        metadata=params.metadata,
-        runtime_options=_deep_update_mapping(params.runtime_options, user_options),
-    )
-
-
-def _normalize_runtime_user_options(runtime_options: Mapping[str, Any]) -> dict[str, Any]:
-    if not runtime_options:
-        return {}
-    option_keys = {
-        "elec_model",
-        "solvated_ion_diameter_mixing_rule",
-        "ion_dispersion_mixing_rule",
-        "differential_mode",
-        "relative_permittivity_rule",
-        "born_model",
-    }
-    metadata_keys = {"elec_model_dataset"}
-    if not (set(runtime_options) & option_keys):
-        return _copy_payload_mapping(runtime_options)
-
-    from .datasets import _resolve_runtime_options
-
-    metadata = {
-        str(key): _copy_payload_value(value)
-        for key, value in runtime_options.items()
-        if str(key) in metadata_keys or str(key) in _NATIVE_RUNTIME_PASSTHROUGH_KEYS
-    }
-    option_payload = {
-        str(key): value
-        for key, value in runtime_options.items()
-        if str(key) not in metadata_keys and str(key) not in _NATIVE_RUNTIME_PASSTHROUGH_KEYS
-    }
-    resolved = _resolve_runtime_options(option_payload)
-    normalized = {
-        "elec_model": resolved["model"],
-        "solvated_ion_diameter_mixing_rule": bool(resolved["runtime"]["solvated_ion_diameter_mixing_rule"]),
-        "ion_dispersion_mixing_rule": bool(resolved["runtime"]["ion_dispersion_mixing_rule"]),
-    }
-    normalized.update(metadata)
-    return normalized
 
 
 def _interaction_matrices(

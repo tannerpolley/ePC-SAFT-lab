@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import ast
 import copy
 import json
 from pathlib import Path
 
 import epcsaft
 import pytest
-from epcsaft.model.parameters import PureRecord
+from support.model_configurations import neutral_scientific_parameter_set
 
 MODEL_CONFIGURATION_SCHEMA = "epcsaft.model-configuration"
 MODEL_CONFIGURATION_SCHEMA_VERSION = 1
@@ -56,28 +55,6 @@ EXPLICIT_ELECTROLYTE_CONFIGURATION = {
 
 def _parse(payload: dict[str, object]) -> epcsaft.ModelOptions:
     return epcsaft.ModelOptions.from_user_options(copy.deepcopy(payload))
-
-
-def _one_component_parameter_set(*, charge: float = 1.0) -> epcsaft.ParameterSet:
-    return epcsaft.ParameterSet.from_records(
-        (
-            PureRecord(
-                component="Na+" if charge else "Neon",
-                molar_mass=0.02298,
-                m=1.0,
-                sigma=2.8232,
-                epsilon_k=230.0,
-                charge=charge,
-                epsilon_k_ab=0.0,
-                kappa_ab=0.0,
-                association_scheme=None,
-                relative_permittivity=8.0,
-                born_diameter=3.445,
-                solvation_factor=1.0,
-            ),
-        ),
-        metadata={"source": "Stage 4 legacy parity characterization", "source_backed": True},
-    )
 
 
 def test_explicit_neutral_configuration_has_a_detached_deterministic_receipt() -> None:
@@ -268,9 +245,9 @@ def test_folder_requires_only_the_canonical_configuration_filename(tmp_path: Pat
 
     with pytest.raises(epcsaft.InputError, match=MODEL_CONFIGURATION_FILENAME):
         epcsaft.ModelOptions.from_user_options(missing)
-    with pytest.raises(epcsaft.InputError, match="retired"):
+    with pytest.raises(epcsaft.InputError, match="unsupported"):
         epcsaft.ModelOptions.from_user_options(retired)
-    with pytest.raises(epcsaft.InputError, match="retired"):
+    with pytest.raises(epcsaft.InputError, match="unsupported"):
         epcsaft.ModelOptions.from_user_options(both)
     assert epcsaft.ModelOptions.from_user_options(canonical).receipt == EXPLICIT_NEUTRAL_CONFIGURATION
 
@@ -286,57 +263,19 @@ def test_json_duplicate_keys_are_rejected(tmp_path: Path) -> None:
         epcsaft.ModelOptions.from_user_options(path)
 
 
-def test_strict_configuration_cannot_enter_the_temporary_legacy_path() -> None:
+def test_strict_configuration_is_the_only_mixture_configuration_path() -> None:
     strict = _parse(EXPLICIT_NEUTRAL_CONFIGURATION)
+    mixture = epcsaft.Mixture(neutral_scientific_parameter_set(), model_options=strict)
 
-    with pytest.raises(epcsaft.InputError, match="strict version-1"):
-        epcsaft.Mixture(_one_component_parameter_set(), model_options=strict)
-
-
-def test_legacy_electrolyte_runtime_option_bytes_are_unchanged() -> None:
-    mixture = epcsaft.Mixture(_one_component_parameter_set())
-    selected = {
-        key: mixture._runtime_parameters[key]
-        for key in ("elec_model", "solvated_ion_diameter_mixing_rule", "ion_dispersion_mixing_rule")
-    }
-
-    assert json.dumps(selected, sort_keys=True, separators=(",", ":")) == (
-        '{"elec_model":{"DH_model":{"bjeruum_treatment":false,"d_ion_mode":"t_dep_1",'
-        '"mu_DH_model":{"comp_dep_rel_perm":true,"differential_mode":"cppad","include_sum_term":true}},'
-        '"assoc_model":{"dadx_differential_mode":"cppad"},"born_model":{"bulk_mode":"mix",'
-        '"d_Born_mode":"t_indep","dielectric_saturation":true,"mu_born_model":'
-        '{"comp_dep_delta_d":true,"comp_dep_rel_perm":true,"differential_mode":"cppad",'
-        '"include_sum_term":true},"solvation_shell_model":true},"disp_model":'
-        '{"dadx_differential_mode":"cppad"},"hc_model":{"dadx_differential_mode":"cppad"},'
-        '"include_born_model":true,"rel_perm":{"differential_mode":"cppad","rule":"linear"}},'
-        '"ion_dispersion_mixing_rule":true,"solvated_ion_diameter_mixing_rule":false}'
-    )
+    assert mixture.model_options is strict
+    assert mixture.configuration_receipt["configuration"] == strict.receipt
 
 
-def test_legacy_neutral_runtime_payload_does_not_gain_electrolyte_policy() -> None:
-    mixture = epcsaft.Mixture(_one_component_parameter_set(charge=0.0))
+def test_temporary_legacy_option_owners_are_absent() -> None:
+    import epcsaft.model.options as options_module
 
-    assert "elec_model" not in mixture._runtime_parameters
-    assert "solvated_ion_diameter_mixing_rule" not in mixture._runtime_parameters
-    assert "ion_dispersion_mixing_rule" not in mixture._runtime_parameters
-
-
-def test_temporary_legacy_option_methods_have_the_exact_caller_allowlist() -> None:
-    source_root = Path(epcsaft.__file__).resolve().parent
-    method_names = {
-        "_from_stage4_legacy_runtime_options",
-        "_to_stage4_legacy_runtime_options",
-    }
-    callers: dict[str, set[str]] = {name: set() for name in method_names}
-    for path in source_root.rglob("*.py"):
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
-                continue
-            if node.func.attr in method_names:
-                callers[node.func.attr].add(path.relative_to(source_root).as_posix())
-
-    expected = {"frontend/mixture.py", "model/datasets.py"}
-    assert callers == {name: expected for name in method_names}
+    assert not hasattr(epcsaft.ModelOptions, "_from_stage4_legacy_runtime_options")
+    assert not hasattr(epcsaft.ModelOptions, "_to_stage4_legacy_runtime_options")
+    assert not hasattr(options_module, "LegacyRuntimeOptionsState")
     assert "LegacyRuntimeOptionsState" not in epcsaft.__all__
     assert not hasattr(epcsaft, "LegacyRuntimeOptionsState")

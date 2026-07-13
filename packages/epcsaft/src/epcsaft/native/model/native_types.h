@@ -20,56 +20,6 @@ const static double perm_vac = 8.854187817e-22; //permittivity in vacuum, C V^-1
 
 const static double HUGE_DBL = std::numeric_limits<double>::infinity();
 
-struct add_args {
-    vector<double> m;
-    vector<double> s;
-    vector<double> e;
-    vector<double> k_ij;
-    vector<double> e_assoc;
-    vector<double> vol_a;
-    vector<double> z;
-    vector<double> dielc;
-    vector<double> mw;
-    vector<double> mixed_rel_perm_a;
-    vector<double> mixed_rel_perm_b;
-    vector<double> mixed_rel_perm_c;
-    vector<int> mixed_rel_perm_mask;
-    int mixed_rel_perm_water_index;
-    int dielc_rule;
-    int dielc_diff_mode;
-    int hc_dadx_diff_mode;
-    int disp_dadx_diff_mode;
-    int assoc_dadx_diff_mode;
-    int d_ion_mode;
-    int mu_DH_diff_mode;
-    int mu_DH_comp_dep_rel_perm;
-    int mu_DH_include_sum_term;
-    int include_born_model;
-    int d_born_mode;
-    int born_solvation_shell_model;
-    int born_dielectric_saturation;
-    int born_bulk_mode;
-    int mu_born_diff_mode;
-    int mu_born_comp_dep_rel_perm;
-    int mu_born_include_sum_term;
-    int mu_born_comp_dep_delta_d;
-    vector<double> d_born;
-    vector<double> f_solv;
-    int born_model;
-    int born_radius_model;
-    int born_diff_mode;
-    int born_eps_mode;
-    int DH_model;
-    vector<int> assoc_num;
-    vector<int> assoc_matrix;
-    vector<double> k_hb;
-    vector<double> l_ij;
-    std::string parameter_source_label = "runtime_payload";
-    std::string parameter_provenance_status = "runtime_payload_without_source_provenance";
-    std::string binary_interaction_provenance_status = "runtime_payload_binary_matrix";
-    vector<std::string> parameter_provenance_fields;
-};
-
 struct ActivityCoefficientNative {
     vector<double> component_activity_coefficients;
     vector<double> mean_ionic_activity_coefficients_mole_fraction;
@@ -364,6 +314,8 @@ struct PhaseStateCompositionSensitivityResult {
 };
 
 class ePCSAFTMixtureNative;
+class ProviderResolvedInputHandleV1;
+struct NativeEvaluatedInputSnapshot;
 
 class ePCSAFTStateNative {
 public:
@@ -394,6 +346,7 @@ public:
     FugacityContributionResult fugacity_coefficient_result();
     BornDerivativeResult born_parameter_derivatives();
     vector<double> relative_permittivity();
+    std::string configuration_fingerprint() const;
     double osmotic_coefficient();
     vector<double> solvation_free_energy();
     ActivityCoefficientNative activity_coefficient_native(
@@ -419,8 +372,8 @@ private:
 
 class ePCSAFTMixtureNative : public std::enable_shared_from_this<ePCSAFTMixtureNative> {
 public:
-    explicit ePCSAFTMixtureNative(const add_args& args);
-    const add_args& args() const;
+    explicit ePCSAFTMixtureNative(std::shared_ptr<ProviderResolvedInputHandleV1> handle);
+    const NativeEvaluatedInputSnapshot& snapshot() const;
     std::shared_ptr<ePCSAFTStateNative> state(double t, vector<double> x, int phase,
         bool has_p, double p, bool has_rho, double rho, bool has_rho_guess = false, double rho_guess = 0.0);
     size_t ncomp() const;
@@ -446,7 +399,8 @@ public:
     size_t density_warm_start_rejections() const;
 
 private:
-    add_args args_;
+    std::shared_ptr<ProviderResolvedInputHandleV1> handle_;
+    std::shared_ptr<const NativeEvaluatedInputSnapshot> snapshot_;
     bool has_ionic_;
     vector<int> cation_indices_;
     vector<int> anion_indices_;
@@ -468,41 +422,6 @@ private:
     size_t density_warm_start_rejections_ = 0;
 };
 
-double Z_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
-vector<double> mures_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
-vector<double> lnfug_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
-vector<double> fugcoef_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
-double p_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
-double den_cpp(double t, double p, vector<double> x, int phase, const add_args &cppargs);
-double ares_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
-NeutralBinaryKijPhaseDerivatives neutral_binary_kij_phase_derivatives_cpp(
-    double t,
-    double rho,
-    const vector<double> &x,
-    const add_args &cppargs,
-    int k_index
-);
-NeutralBinaryKijPhaseDerivatives neutral_binary_pair_parameter_phase_derivatives_cpp(
-    double t,
-    double rho,
-    const vector<double> &x,
-    const add_args &cppargs,
-    int parameter_index,
-    const std::string &parameter_name
-);
-NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_cpp(
-    double t,
-    double rho,
-    const vector<double> &x,
-    const add_args &cppargs,
-    int target_kind,
-    int target_index
-);
-double dadt_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
-double hres_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
-double sres_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
-double gres_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
-
 // functions used to solve for XA and its derivatives
 vector<double> XA_find(vector<double> XA_guess, vector<double> delta_ij, double den,
     vector<double> x);
@@ -510,46 +429,6 @@ vector<double> dXAdx_find(vector<int> assoc_num, vector<double> delta_ij,
     double den, vector<double> XA, vector<double> ddelta_dx, vector<double> x);
 vector<double> dXAdt_find(vector<double> delta_ij, double den,
     vector<double> XA, vector<double> ddelta_dt, vector<double> x);
-
-double dielectric_eps_cpp(vector<double> x, const add_args &cppargs);
-vector<double> dielectric_diff_cpp(vector<double> x, const add_args &cppargs);
-PureNeutralRegressionResult fit_pure_neutral_ceres_cpp(
-    const add_args &base_args,
-    const vector<PureNeutralRegressionDensityRecord> &density_records,
-    double density_scale,
-    const vector<PureNeutralRegressionVLERecord> &pure_vle_records,
-    double pure_vle_scale,
-    const vector<double> &x0,
-    const vector<double> &lower,
-    const vector<double> &upper
-);
-PureNeutralRegressionDebugResult evaluate_pure_neutral_objective_debug_cpp(
-    const add_args &base_args,
-    const vector<PureNeutralRegressionDensityRecord> &density_records,
-    double density_scale,
-    const vector<PureNeutralRegressionVLERecord> &pure_vle_records,
-    double pure_vle_scale,
-    const vector<double> &x
-);
-GenericRegressionDebugResult evaluate_generic_regression_debug_cpp(
-    const vector<add_args> &base_args_by_record,
-    const vector<GenericRegressionRecord> &records,
-    const vector<int> &target_kinds,
-    const vector<int> &target_indices,
-    const vector<int> &target_indices_2,
-    const vector<double> &x
-);
-GenericRegressionResult fit_generic_ceres_cpp(
-    const vector<add_args> &base_args_by_record,
-    const vector<GenericRegressionRecord> &records,
-    const vector<int> &target_kinds,
-    const vector<int> &target_indices,
-    const vector<int> &target_indices_2,
-    const vector<double> &x0,
-    const vector<double> &lower,
-    const vector<double> &upper,
-    int max_nfev
-);
 
 class ValueError: public std::exception
 {
@@ -572,14 +451,9 @@ private:
 };
 
 // density and composition helpers
-double density_root_residual_cpp(double rhomolar, double t, double p, vector<double> x, const add_args &cppargs);
-double density_brent_cpp(double t, double p, vector<double> x, const add_args &cppargs, double a, double b,
-    double macheps, double tol_abs, int maxiter);
-double reduced_density_to_molar(double nu, double t, int ncomp, vector<double> x, const add_args &cppargs);
 vector<double> association_site_fractions_cpp(vector<double> XA_guess, vector<double> delta_ij, double den,
     vector<double> x);
 vector<double> association_site_fraction_dt_cpp(vector<double> delta_ij, double den,
     vector<double> XA, vector<double> ddelta_dt, vector<double> x);
 vector<double> association_site_fraction_dx_cpp(vector<int> assoc_num, vector<double> delta_ij,
     double den, vector<double> XA, vector<double> ddelta_dx, vector<double> x);
-

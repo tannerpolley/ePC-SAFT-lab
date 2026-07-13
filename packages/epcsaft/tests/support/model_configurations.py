@@ -118,6 +118,111 @@ def neutral_scientific_parameter_set(
     )
 
 
+def scientific_hydrocarbon_parameter_set() -> epcsaft.ParameterSet:
+    """Return the source-backed three-component continuity fixture."""
+
+    components = ("Methane", "Ethane", "Propane")
+    values = {
+        "Methane": (0.016043, 1.0, 3.7039, 150.03),
+        "Ethane": (0.030070, 1.6069, 3.5206, 191.42),
+        "Propane": (0.044097, 2.0020, 3.6184, 208.11),
+    }
+    source = epcsaft.ScientificSource(
+        kind="literature",
+        locator="Gross and Sadowski 2001 Tables 2 and 4",
+    )
+    domain = epcsaft.TemperatureDomain(
+        minimum_K=100.0,
+        maximum_K=500.0,
+        evidence=epcsaft.DomainEvidence(
+            kind="source_validity",
+            source="Stage 4 hydrocarbon continuity interval",
+        ),
+    )
+
+    def record(component: str, field: str, value: float, units: str) -> epcsaft.ScientificRecord:
+        return epcsaft.ScientificRecord(
+            record_id=f"{component}-{field}",
+            component=component,
+            field=field,
+            units=units,
+            source=source,
+            dependency_signature=epcsaft.DependencySignature(variables=()),
+            temperature_domain=domain,
+            definition=epcsaft.ConstantCorrelation(value=value),
+        )
+
+    pure_records = []
+    formulation_records = []
+    for component in components:
+        molar_mass, segment_count, sigma, epsilon = values[component]
+        pure_records.extend(
+            (
+                record(component, "molar_mass_kg_per_mol", molar_mass, "kg/mol"),
+                record(component, "segment_count", segment_count, "dimensionless"),
+                record(component, "sigma_angstrom", sigma, "angstrom"),
+                record(component, "epsilon_k_K", epsilon, "K"),
+                record(component, "charge_number", 0.0, "dimensionless"),
+                record(component, "association_energy_K", 0.0, "K"),
+                record(component, "association_volume", 0.0, "dimensionless"),
+            )
+        )
+        formulation_records.extend(
+            (
+                record(component, "relative_permittivity", 1.0, "dimensionless"),
+                record(component, "born_diameter_angstrom", 3.0, "angstrom"),
+                record(component, "solvation_factor", 1.0, "dimensionless"),
+            )
+        )
+    interactions = tuple(
+        epcsaft.ScientificInteractionRecord(
+            record_id=f"{left}-{right}-k_ij",
+            family="k_ij",
+            components=(left, right),
+            units="dimensionless",
+            source=source,
+            dependency_signature=epcsaft.DependencySignature(variables=()),
+            temperature_domain=domain,
+            definition=epcsaft.ConstantCorrelation(value=value),
+        )
+        for left, right, value in (
+            ("Methane", "Ethane", 3.0e-4),
+            ("Methane", "Propane", 1.15e-2),
+            ("Ethane", "Propane", 5.10e-3),
+        )
+    )
+    zeros = tuple(
+        epcsaft.ScientificStructuralZero(
+            record_id=f"{left}-{right}-{family}-zero",
+            family=family,
+            components=(left, right),
+            reason=reason,
+            source=epcsaft.ScientificSource(kind="model_structural_zero", locator=locator),
+        )
+        for left, right in (
+            ("Methane", "Ethane"),
+            ("Methane", "Propane"),
+            ("Ethane", "Propane"),
+        )
+        for family, reason, locator in (
+            ("l_ij", "The cited Lorentz rule supplies no correction.", "EqID sigma_mixing"),
+            (
+                "k_hb_ij",
+                "The hydrocarbon pair has inactive association topology.",
+                "EqID kappa_assoc_mixing",
+            ),
+        )
+    )
+    return epcsaft.ParameterSet.from_schema3_records(
+        components=components,
+        pure_records=tuple(pure_records),
+        formulation_records=tuple(formulation_records),
+        interactions=interactions,
+        interaction_policies=zeros,
+        metadata={"source": "Gross and Sadowski 2001 Tables 2 and 4", "source_backed": True},
+    )
+
+
 def with_temperature_dependent_sigma(parameters: epcsaft.ParameterSet) -> epcsaft.ParameterSet:
     """Replace one constant record with a source-backed temperature definition."""
 

@@ -297,8 +297,10 @@ void initialize_parameter_store(NativeEvaluatedInputSnapshot& snapshot, std::siz
     snapshot.mixed_rel_perm_water_index = -1;
     snapshot.dielc_rule = snapshot.formulation.relative_permittivity_rule;
     snapshot.dielc_diff_mode = 2;
-    snapshot.hc_dadx_diff_mode = 2;
-    snapshot.disp_dadx_diff_mode = 2;
+    // Preserve the established provider backend routing: automatic selection
+    // retains the exact analytic neutral route and selects CppAD where needed.
+    snapshot.hc_dadx_diff_mode = 3;
+    snapshot.disp_dadx_diff_mode = 3;
     snapshot.assoc_dadx_diff_mode = 3;
     snapshot.d_ion_mode = snapshot.formulation.ion_diameter_mode;
     snapshot.mu_DH_diff_mode = 2;

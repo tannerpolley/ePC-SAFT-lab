@@ -58,8 +58,7 @@ struct ProviderParameterAccessV1<double> {
     const std::string& binary_interaction_provenance_status;
     const std::vector<std::string>& parameter_provenance_fields;
 
-protected:
-    explicit ProviderParameterAccessV1(const add_args& input)
+    explicit ProviderParameterAccessV1(const NativeEvaluatedInputSnapshot& input)
         : m(input.m),
           s(input.s),
           e(input.e),
@@ -163,11 +162,6 @@ protected:
           parameter_provenance_status(input.parameter_provenance_status),
           binary_interaction_provenance_status(input.binary_interaction_provenance_status),
           parameter_provenance_fields(input.parameter_provenance_fields) {}
-};
-
-struct LegacyAddArgsParameterAccessV1 final : ProviderParameterAccessV1<double> {
-    explicit LegacyAddArgsParameterAccessV1(const add_args& input)
-        : ProviderParameterAccessV1<double>(input) {}
 };
 
 struct SnapshotParameterAccessV1 final : ProviderParameterAccessV1<double> {

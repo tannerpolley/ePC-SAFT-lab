@@ -89,12 +89,6 @@ using thermo_detail::ContributionDadxResult;
 using thermo_detail::IonIntermediateState;
 
 HardChainState hard_chain_state_cpp(const MixtureState &thermo, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs);
-inline HardChainState hard_chain_state_cpp(
-    const MixtureState &thermo, const vector<double> &x, const add_args &cppargs
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return hard_chain_state_cpp(thermo, x, access);
-}
 #ifdef EPCSAFT_HAS_CPPAD
 CppADHardChainState hard_chain_state_cppad_cpp(double den, const vector<double> &d, const vector<CppADScalar> &x, const ProviderParameterAccessV1<double> &cppargs);
 #endif
@@ -110,21 +104,6 @@ AssociationIntermediateState association_intermediate_state_cpp(
     bool include_dx,
     const vector<double> *dghs_dt = nullptr
 );
-inline AssociationIntermediateState association_intermediate_state_cpp(
-    const MixtureState &thermo,
-    const HardChainState &hc_state,
-    double t,
-    const vector<double> &x,
-    const add_args &cppargs,
-    bool include_dt,
-    bool include_dx,
-    const vector<double> *dghs_dt = nullptr
-) {
-    const LegacyAddArgsParameterAccessV1 access(cppargs);
-    return association_intermediate_state_cpp(
-        thermo, hc_state, t, x, access, include_dt, include_dx, dghs_dt
-    );
-}
 AssociationSolveResult association_site_fraction_solve_result_cpp(
     const vector<double> &delta_ij,
     double den,
