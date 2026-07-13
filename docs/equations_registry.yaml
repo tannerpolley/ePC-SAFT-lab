@@ -17,7 +17,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 566
       comment_line: 557
-      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {"
+      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "mw_bar"
   section: "Parameter Setup"
   subsection: "Base Mixture Quantities"
@@ -35,7 +35,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 104
       comment_line: 96
-      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "mw_solvent_bar"
   section: "Parameter Setup"
   subsection: "Base Mixture Quantities"
@@ -53,7 +53,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 104
       comment_line: 97
-      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "solvent_ion_sets"
   section: "Parameter Setup"
   subsection: "Base Mixture Quantities"
@@ -71,7 +71,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 104
       comment_line: 98
-      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "x_solvent_total"
   section: "Parameter Setup"
   subsection: "Base Mixture Quantities"
@@ -89,7 +89,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 104
       comment_line: 99
-      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "d_segment"
   section: "Parameter Setup"
   subsection: "Size and Diameter Rules"
@@ -107,7 +107,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 566
       comment_line: 558
-      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {"
+      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "d_segment_dT"
   section: "Parameter Setup"
   subsection: "Size and Diameter Rules"
@@ -127,7 +127,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 566
       comment_line: 559
-      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {"
+      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "half_d_identity"
   section: "Parameter Setup"
   subsection: "Size and Diameter Rules"
@@ -165,7 +165,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 566
       comment_line: 560
-      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {"
+      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "d_ij"
   section: "Parameter Setup"
   subsection: "Pair Mixing Rules"
@@ -197,7 +197,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 566
       comment_line: 561
-      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {"
+      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "epsilon_ij_mixing"
   section: "Parameter Setup"
   subsection: "Pair Mixing Rules"
@@ -217,7 +217,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 566
       comment_line: 562
-      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {"
+      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "epsilon_ij_ionic_zero"
   section: "Parameter Setup"
   subsection: "Pair Mixing Rules"
@@ -236,7 +236,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 566
       comment_line: 563
-      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {"
+      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "epsilon_assoc_mixing"
   section: "Parameter Setup"
   subsection: "Pair Mixing Rules"
@@ -272,7 +272,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 424
       comment_line: 423
-      context: "double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const add_args &cppargs) {"
 - eqid: "epsr_mix_rule"
   section: "Parameter Setup"
   subsection: "Relative Permittivity"
@@ -296,7 +296,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 16
       comment_line: 14
-      context: "Scalar mixed_dielectric_constant_scalar_cpp(const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "Scalar mixed_dielectric_constant_scalar_cpp(const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "depsr_dxi_mole"
   section: "Parameter Setup"
   subsection: "Relative Permittivity"
@@ -315,7 +315,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 624
       comment_line: 618
-      context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "depsr_dxi_mass"
   section: "Parameter Setup"
   subsection: "Relative Permittivity"
@@ -335,7 +335,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 624
       comment_line: 619
-      context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "depsr_dxi_combo"
   section: "Parameter Setup"
   subsection: "Relative Permittivity"
@@ -359,7 +359,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 624
       comment_line: 620
-      context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "epsr_solvent_mass"
   section: "Parameter Setup"
   subsection: "Relative Permittivity"
@@ -377,7 +377,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 104
       comment_line: 100
-      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "epsr_salt_free"
   section: "Parameter Setup"
   subsection: "Relative Permittivity"
@@ -395,7 +395,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 104
       comment_line: 101
-      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "epsr_mix_suppressed"
   section: "Parameter Setup"
   subsection: "Relative Permittivity"
@@ -417,7 +417,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 16
       comment_line: 15
-      context: "Scalar mixed_dielectric_constant_scalar_cpp(const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "Scalar mixed_dielectric_constant_scalar_cpp(const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "epsr_sf"
   section: "Parameter Setup"
   subsection: "Relative Permittivity"
@@ -443,7 +443,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 104
       comment_line: 102
-      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "x_ion_total"
   section: "Parameter Setup"
   subsection: "Relative Permittivity"
@@ -468,7 +468,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 104
       comment_line: 103
-      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "depsr_sf_dxi"
   section: "Parameter Setup"
   subsection: "Relative Permittivity"
@@ -494,7 +494,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 624
       comment_line: 621
-      context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "depsr_mix_dxi"
   section: "Parameter Setup"
   subsection: "Relative Permittivity"
@@ -517,7 +517,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 624
       comment_line: 622
-      context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "depsr_mix_dxi_piecewise"
   section: "Parameter Setup"
   subsection: "Relative Permittivity"
@@ -544,7 +544,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 624
       comment_line: 623
-      context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "zeta_n"
   section: "Density"
   subsection: "Packing-Fraction Moments"
@@ -562,7 +562,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp"
       line: 32
       comment_line: 29
-      context: "static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "zeta_n_xk"
   section: "Density"
   subsection: "Packing-Fraction Moments"
@@ -580,7 +580,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp"
       line: 32
       comment_line: 30
-      context: "static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "zeta_n_dT"
   section: "Density"
   subsection: "Packing-Fraction Moments"
@@ -598,7 +598,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp"
       line: 213
       comment_line: 212
-      context: "vector<double> dzeta_dt_cpp(const MixtureState &thermo, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "vector<double> dzeta_dt_cpp(const MixtureState &thermo, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "zeta3_eta"
   section: "Density"
   subsection: "Packing Fraction"
@@ -616,7 +616,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp"
       line: 32
       comment_line: 31
-      context: "static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const add_args &cppargs) {"
 - eqid: "rho_from_eta"
   section: "Density"
   subsection: "Density Conversion"
@@ -634,7 +634,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/properties/density.cpp"
       line: 644
       comment_line: 642
-      context: "double reduced_density_to_molar(double nu, double t, int ncomp, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "double reduced_density_to_molar(double nu, double t, int ncomp, vector<double> x, const add_args &cppargs) {"
 - eqid: "rho_reduced"
   section: "Density"
   subsection: "Density Conversion"
@@ -654,7 +654,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/properties/density.cpp"
       line: 644
       comment_line: 643
-      context: "double reduced_density_to_molar(double nu, double t, int ncomp, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "double reduced_density_to_molar(double nu, double t, int ncomp, vector<double> x, const add_args &cppargs) {"
 - eqid: "density_derivative_invariant"
   section: "Density"
   subsection: "Density Conversion"
@@ -688,7 +688,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/properties/compressibility.cpp"
       line: 79
       comment_line: 78
-      context: "double p_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "double p_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
 - eqid: "z_from_rho"
   section: "Density"
   subsection: "Pressure-Density Closure"
@@ -712,7 +712,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/properties/compressibility.cpp"
       line: 66
       comment_line: 64
-      context: "CompressibilityFactorResult compressibility_factor_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "CompressibilityFactorResult compressibility_factor_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
 - eqid: "density_solve_residual"
   section: "Density"
   subsection: "Pressure-Density Closure"
@@ -736,7 +736,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/properties/density.cpp"
       line: 796
       comment_line: 795
-      context: "double density_root_residual_cpp(double rhomolar, double t, double p, vector<double> x, const ProviderParameterAccessV1<double> &cppargs){"
+      context: "double density_root_residual_cpp(double rhomolar, double t, double p, vector<double> x, const add_args &cppargs){"
 - eqid: "ares_hs"
   section: "Contribution Intermediates"
   subsection: "Hard-Chain"
@@ -821,7 +821,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp"
       line: 111
       comment_line: 110
-      context: "static vector<double> dadx_hs_cpp(const MixtureState &thermo, const HardChainState &hc_state, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "static vector<double> dadx_hs_cpp(const MixtureState &thermo, const HardChainState &hc_state, const add_args &cppargs) {"
 - eqid: "hs_ares_dT"
   section: "Contribution Intermediates"
   subsection: "Hard-Chain"
@@ -1032,7 +1032,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp"
       line: 68
       comment_line: 61
-      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "c1_dT"
   section: "Contribution Intermediates"
   subsection: "Dispersion"
@@ -1071,7 +1071,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 566
       comment_line: 564
-      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {"
+      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "m2epssigma3_xk"
   section: "Contribution Intermediates"
   subsection: "Dispersion"
@@ -1091,7 +1091,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp"
       line: 68
       comment_line: 62
-      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "m2epssigma3_dT"
   section: "Contribution Intermediates"
   subsection: "Dispersion"
@@ -1129,7 +1129,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 566
       comment_line: 565
-      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {"
+      context: "MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {"
 - eqid: "m2eps2sigma3_xk"
   section: "Contribution Intermediates"
   subsection: "Dispersion"
@@ -1149,7 +1149,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp"
       line: 68
       comment_line: 63
-      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "m2eps2sigma3_dT"
   section: "Contribution Intermediates"
   subsection: "Dispersion"
@@ -1229,7 +1229,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp"
       line: 68
       comment_line: 64
-      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "i1_dT"
   section: "Contribution Intermediates"
   subsection: "Dispersion"
@@ -1309,7 +1309,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp"
       line: 68
       comment_line: 65
-      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "i2_dT"
   section: "Contribution Intermediates"
   subsection: "Dispersion"
@@ -1371,7 +1371,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp"
       line: 68
       comment_line: 66
-      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "b_i_mbar"
   section: "Contribution Intermediates"
   subsection: "Dispersion"
@@ -1413,7 +1413,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp"
       line: 68
       comment_line: 67
-      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "x_assoc_site"
   section: "Contribution Intermediates"
   subsection: "Association"
@@ -1546,7 +1546,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
       line: 294
       comment_line: 292
-      context: "AssociationSetup association_setup_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {"
+      context: "AssociationSetup association_setup_cpp(const vector<double> &x, const add_args &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {"
 - eqid: "delta_assoc"
   section: "Contribution Intermediates"
   subsection: "Association"
@@ -1565,7 +1565,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
       line: 294
       comment_line: 293
-      context: "AssociationSetup association_setup_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {"
+      context: "AssociationSetup association_setup_cpp(const vector<double> &x, const add_args &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {"
 - eqid: "ddelta_assoc_drho"
   section: "Contribution Intermediates"
   subsection: "Association"
@@ -1869,7 +1869,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp"
       line: 471
       comment_line: 470
-      context: "double ion_born_radius_cpp(int i, double t, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "double ion_born_radius_cpp(int i, double t, const add_args &cppargs) {"
 - eqid: "f_mix"
   section: "Contribution Intermediates"
   subsection: "Born"
@@ -1887,7 +1887,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp"
       line: 14
       comment_line: 8
-      context: "BornGeometryData born_geometry_data_cpp(vector<double> x, const ProviderParameterAccessV1<double> &cppargs, double t, double eps_r, double eps_r_ion) {"
+      context: "BornGeometryData born_geometry_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {"
 - eqid: "delta_d_born"
   section: "Contribution Intermediates"
   subsection: "Born"
@@ -1905,7 +1905,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp"
       line: 14
       comment_line: 9
-      context: "BornGeometryData born_geometry_data_cpp(vector<double> x, const ProviderParameterAccessV1<double> &cppargs, double t, double eps_r, double eps_r_ion) {"
+      context: "BornGeometryData born_geometry_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {"
 - eqid: "ddelta_d_dxi"
   section: "Contribution Intermediates"
   subsection: "Born"
@@ -1925,7 +1925,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp"
       line: 14
       comment_line: 10
-      context: "BornGeometryData born_geometry_data_cpp(vector<double> x, const ProviderParameterAccessV1<double> &cppargs, double t, double eps_r, double eps_r_ion) {"
+      context: "BornGeometryData born_geometry_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {"
 - eqid: "dterm_born"
   section: "Contribution Intermediates"
   subsection: "Born"
@@ -1945,7 +1945,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp"
       line: 14
       comment_line: 11
-      context: "BornGeometryData born_geometry_data_cpp(vector<double> x, const ProviderParameterAccessV1<double> &cppargs, double t, double eps_r, double eps_r_ion) {"
+      context: "BornGeometryData born_geometry_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {"
 - eqid: "dterm_ssm"
   section: "Contribution Intermediates"
   subsection: "Born"
@@ -1967,7 +1967,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp"
       line: 14
       comment_line: 12
-      context: "BornGeometryData born_geometry_data_cpp(vector<double> x, const ProviderParameterAccessV1<double> &cppargs, double t, double eps_r, double eps_r_ion) {"
+      context: "BornGeometryData born_geometry_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {"
 - eqid: "dterm_ds"
   section: "Contribution Intermediates"
   subsection: "Born"
@@ -1989,7 +1989,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp"
       line: 14
       comment_line: 13
-      context: "BornGeometryData born_geometry_data_cpp(vector<double> x, const ProviderParameterAccessV1<double> &cppargs, double t, double eps_r, double eps_r_ion) {"
+      context: "BornGeometryData born_geometry_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {"
 - eqid: "ares_total"
   section: "Residual Helmholtz Energy"
   subsection: ""
@@ -2007,7 +2007,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/residual/helmholtz.cpp"
       line: 19
       comment_line: 18
-      context: "AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "dares_dT"
   section: "Residual Helmholtz Energy"
   subsection: ""
@@ -2080,7 +2080,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp"
       line: 251
       comment_line: 250
-      context: "double dadrho_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "double dadrho_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "hc_ares_dxk"
   section: "Residual Helmholtz Energy"
   subsection: "Hard-Chain Reference Contribution"
@@ -2107,7 +2107,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp"
       line: 274
       comment_line: 273
-      context: "ContributionDadxResult dadx_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "hc_ares_dT"
   section: "Residual Helmholtz Energy"
   subsection: "Hard-Chain Reference Contribution"
@@ -2130,7 +2130,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp"
       line: 263
       comment_line: 262
-      context: "double dadt_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &dzeta_dt, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "double dadt_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &dzeta_dt, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "ares_disp"
   section: "Residual Helmholtz Energy"
   subsection: "Dispersion Contribution"
@@ -2194,7 +2194,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp"
       line: 68
       comment_line: 60
-      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "disp_ares_dT"
   section: "Residual Helmholtz Energy"
   subsection: "Dispersion Contribution"
@@ -2280,7 +2280,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
       line: 562
       comment_line: 561
-      context: "ContributionDadxResult dadx_assoc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const AssociationIntermediateState &assoc_state, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_assoc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const AssociationIntermediateState &assoc_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "assoc_ares_dT"
   section: "Residual Helmholtz Energy"
   subsection: "Association Contribution"
@@ -2383,7 +2383,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp"
       line: 104
       comment_line: 103
-      context: "ContributionDadxResult dadx_ion_cpp(const IonIntermediateState &ion_state, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_ion_cpp(const IonIntermediateState &ion_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "dh_ares_dT"
   section: "Residual Helmholtz Energy"
   subsection: "Debye and Huckel Contribution"
@@ -2403,7 +2403,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp"
       line: 87
       comment_line: 86
-      context: "double dadt_ion_cpp(const IonIntermediateState &ion_state, double t, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "double dadt_ion_cpp(const IonIntermediateState &ion_state, double t, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "ares_born"
   section: "Residual Helmholtz Energy"
   subsection: "Born Contribution"
@@ -2477,7 +2477,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp"
       line: 234
       comment_line: 232
-      context: "ContributionDadxResult dadx_born_cpp(const BornIntermediateState &born_state, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_born_cpp(const BornIntermediateState &born_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "born_ares_ssmds_dxi"
   section: "Residual Helmholtz Energy"
   subsection: "Born Contribution"
@@ -2527,7 +2527,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp"
       line: 234
       comment_line: 233
-      context: "ContributionDadxResult dadx_born_cpp(const BornIntermediateState &born_state, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ContributionDadxResult dadx_born_cpp(const BornIntermediateState &born_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "born_ares_dT"
   section: "Residual Helmholtz Energy"
   subsection: "Born Contribution"
@@ -2632,7 +2632,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/properties/compressibility.cpp"
       line: 66
       comment_line: 65
-      context: "CompressibilityFactorResult compressibility_factor_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "CompressibilityFactorResult compressibility_factor_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
 - eqid: "z_alpha"
   section: "Compressibility Factor"
   subsection: ""
@@ -2673,7 +2673,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/properties/chemical_potential.cpp"
       line: 58
       comment_line: 56
-      context: "ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
 - eqid: "mu_res_from_ares"
   section: "Chemical Potential"
   subsection: ""
@@ -2715,7 +2715,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/properties/chemical_potential.cpp"
       line: 58
       comment_line: 57
-      context: "ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
 - eqid: "mu_alpha"
   section: "Chemical Potential"
   subsection: ""
@@ -2770,7 +2770,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/properties/fugacity.cpp"
       line: 88
       comment_line: 86
-      context: "FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
 - eqid: "lnphi_total_sum"
   section: "Fugacity Coefficient"
   subsection: ""
@@ -2798,7 +2798,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/properties/fugacity.cpp"
       line: 88
       comment_line: 87
-      context: "FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
 - eqid: "lnphi_alpha"
   section: "Fugacity Coefficient"
   subsection: ""
@@ -3081,7 +3081,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/residual/thermodynamic_properties.cpp"
       line: 4
       comment_line: 3
-      context: "double hres_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "double hres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
 - eqid: "s_res_from_s_vol"
   section: "Enthalpy, Entropy, and Gibbs Free Energy"
   subsection: "Entropy"
@@ -3113,7 +3113,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/residual/thermodynamic_properties.cpp"
       line: 18
       comment_line: 17
-      context: "double sres_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "double sres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
 - eqid: "g_res_from_hs"
   section: "Enthalpy, Entropy, and Gibbs Free Energy"
   subsection: "Gibbs Free Energy"
@@ -3145,7 +3145,7 @@
     - file: "packages/epcsaft/src/epcsaft/native/eos/residual/thermodynamic_properties.cpp"
       line: 11
       comment_line: 10
-      context: "double gres_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {"
+      context: "double gres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
 - eqid: "delta_g_solv_inf_x"
   section: "Enthalpy, Entropy, and Gibbs Free Energy"
   subsection: "Gibbs Free Energy"
