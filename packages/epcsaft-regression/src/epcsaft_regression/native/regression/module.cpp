@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "model/native_types.h"
+#include "model/resolved_input.h"
 
 namespace py = pybind11;
 
@@ -378,6 +379,24 @@ py::dict evaluate_generic_native_debug_binding(
 PYBIND11_MODULE(_native_core, m) {
     py::module_::import("epcsaft._core");
     m.doc() = "package-owned native backend for epcsaft-regression";
+
+    m.def("_native_provider_resolved_input_handle_probe", [](
+        const std::shared_ptr<ProviderResolvedInputHandleV1>& handle
+    ) {
+        if (!handle) throw ValueError("provider resolved-input handle is required");
+        const NativeEvaluatedInputSnapshot& snapshot = handle->snapshot();
+        py::dict identity;
+        identity["contract_id"] = snapshot.contract_id;
+        identity["schema"] = snapshot.schema;
+        identity["schema_version"] = snapshot.schema_version;
+        identity["definition_fingerprint_sha256"] = snapshot.definition_fingerprint_sha256;
+        identity["snapshot_fingerprint_sha256"] = snapshot.snapshot_fingerprint_sha256;
+        identity["component_order"] = snapshot.component_order;
+        identity["temperature_K"] = snapshot.temperature_K;
+        identity["composition_basis"] = snapshot.composition_basis;
+        identity["canonical_composition"] = snapshot.canonical_composition;
+        return identity;
+    });
 
     m.def("_native_ceres_smoke", []() {
         py::dict out;
