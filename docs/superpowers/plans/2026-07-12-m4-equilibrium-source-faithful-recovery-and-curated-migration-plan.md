@@ -379,17 +379,28 @@ above.
 - Treats filenames and caller locations as refreshable checkpoint evidence;
   durable tests enforce responsibility and evidence invariants instead.
 
-- [ ] Refresh file, symbol, binding, direct-Ipopt-call, and public/internal
+- [x] Refresh file, symbol, binding, direct-Ipopt-call, and public/internal
   caller inventories from current source.
-- [ ] Write RED ownership tests for one owner per concern and complete
+- [x] Write RED ownership tests for one owner per concern and complete
   preservation decisions.
-- [ ] Build the equilibrium profile fresh and record source/native identity.
-- [ ] Add accepted records for public routes and valuable closed components;
+- [x] Build the equilibrium profile fresh and record source/native identity.
+- [x] Add accepted records for public routes and valuable closed components;
   label failed outputs as failed evidence, not desired parity.
-- [ ] Run ownership, activation, source-manifest, API, and focused native
+- [x] Run ownership, activation, source-manifest, API, and focused native
   characterization tests.
-- [ ] Request code and scientific review and commit
+- [x] Request code and scientific review and commit
   `test(equilibrium): characterize preservation owners`.
+
+**Stage 3 checkpoint (2026-07-12):** The user approved the bounded designs,
+authorized new characterization tests and direct local work on `main`, and
+requested Stage 3 completion. Ownership tests failed RED before the records
+existed. The final checkpoint records a matching 110-file source/native
+identity, all current native bindings, representative owner/caller symbols,
+the provider-payload serializer and equilibrium defaults, and all four
+preservation decisions. The M0 machine schema is not landed, so this checkpoint
+consumes only its documented contract and makes no machine-schema validation
+claim; Stage 5 extraction remains gated on M0 activation. Independent contract
+and scientific re-reviews found no remaining Stage 3 blocker.
 
 ### Task 4: Complete The Provider Resolved-Input Boundary
 

@@ -13,9 +13,11 @@ from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.capability_evidence import (
     CAPABILITY_EVIDENCE_BY_FAMILY,
     DEVELOPMENT_COMPONENT_EVIDENCE,
+    EQUILIBRIUM_OWNERSHIP_BY_ID,
     PROOF_EVIDENCE_BY_ID,
     complete_evidence_families,
     production_capability_evidence,
+    validate_equilibrium_ownership_records,
     validate_proof_collection,
     validate_repo_evidence_targets,
 )
@@ -132,6 +134,46 @@ def test_production_families_are_exactly_complete_evidence_families() -> None:
         assert record["data_sources"]
         assert record["artifact_paths"]
         assert record["acceptance_metrics"]
+
+
+def test_activation_families_are_covered_by_characterized_owners_without_exposure_drift() -> None:
+    validate_equilibrium_ownership_records(EQUILIBRIUM_OWNERSHIP_BY_ID)
+    native_rows = list(_core._native_equilibrium_activation_matrix())
+    native_families = {str(row["key"]) for row in native_rows}
+    owner_families = {
+        str(family)
+        for record in EQUILIBRIUM_OWNERSHIP_BY_ID.values()
+        for family in record["selector_families"]
+    }
+    public_route_owner_map = {
+        str(route): str(record["selector_families"][0])
+        for record in EQUILIBRIUM_OWNERSHIP_BY_ID.values()
+        for route in record["public_routes"]
+    }
+
+    assert owner_families <= native_families
+    assert {
+        "neutral_tp_flash",
+        "neutral_lle",
+        "neutral_multiphase_nonassoc",
+        "electrolyte_lle",
+        "reactive_speciation",
+    } <= owner_families
+    assert public_route_owner_map == PUBLIC_ROUTE_FAMILIES
+    assert _admitted_public_route_map(native_rows) == PUBLIC_ROUTE_FAMILIES
+
+    for family, evidence in CAPABILITY_EVIDENCE_BY_FAMILY.items():
+        family_records = [
+            record
+            for record in EQUILIBRIUM_OWNERSHIP_BY_ID.values()
+            if record["visibility"] == "production"
+            and record["selector_families"] == (family,)
+        ]
+        assert len(family_records) == 1
+        ownership = family_records[0]
+        assert ownership["public_entrypoint"] == evidence["public_entrypoint"]
+        assert ownership["supported_scope"] == evidence["input_scope"]
+        assert ownership["proof_ids"] == evidence["proof_ids"]
 
 
 def test_production_evidence_requires_passing_generated_checker_receipts() -> None:

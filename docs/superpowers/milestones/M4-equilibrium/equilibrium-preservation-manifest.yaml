@@ -1,0 +1,677 @@
+schema_version: 1
+package: epcsaft-equilibrium
+milestone: M4 - Equilibrium
+ownership_schema_basis: docs/superpowers/specs/2026-07-10-m0-characterized-ownership-and-maintainability-ratchets.md#ownership-records
+ownership_source: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/capability_evidence.py
+activation_authority: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h
+preservation_decisions:
+  preserve_directly: Keep the current responsibility and owner through migration.
+  preserve_concept_rewrite_owner: Keep the responsibility and proof, then move it to the stage-selected canonical owner.
+  validation_only: Retain the evidence without treating its output as desired runtime parity.
+  retire: Remove the named alias, branch, or binding after its callers move; retain any separately classified mathematics.
+scientific_invariants:
+  neutral_global_algorithm_identity: held_incomplete_component_work
+  held_stage_iii_canonical_objective: direct_total_free_energy_minimization
+  held_stage_iii_residual_solve_role: optional_correction_or_diagnostic
+  electrolyte_algorithm_identity: ascani_counterion_pair_not_perdomo_modified_mole_held2
+  electrolyte_certificate_basis: independent_formulation_specific_modified_potential_or_mean_ionic
+  individual_ion_equality_convention: explicit_galvani_required
+  chemical_equilibrium_family_boundary: standalone_ce_separate_from_cpe
+  failed_evidence_item_ids:
+    - failed_nonideal_mea_ce_output
+    - failed_khudaida_electrolyte_output
+  retired_false_identity_item_ids:
+    - misleading_held_and_held2_diagnostic_surface
+checkpoint:
+  date: "2026-07-12"
+  source_commit_before_characterization: 8c6a5df207b96f35fcbae8adb394ac82322b015c
+  m0_machine_schema_state: documented_contract_only_not_activated
+  m0_documented_contract_deviation:
+    scope: stage_3_characterization_only
+    authorization_basis: user_requested_stage_3_completion_after_approving_all_bounded_designs
+    limitation: No claim of validation against a landed M0 machine schema or validator.
+    extraction_gate: activate_the_m0_machine_schema_before_stage_5_extraction
+  native_source_manifest: packages/epcsaft-equilibrium/cmake/equilibrium_native_sources.json
+  native_freshness_owner: scripts/validation/native_freshness.py
+  build_refresh_command: uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
+  source_identity_algorithm: sha256-relative-path-content-v1
+  source_identity_before_build: 21310c566dda99dbb90cb182c01f46d84279d9a1faeb69fbd84b1f7ddc584e1b
+  source_identity_file_count: 110
+  runtime_receipt_required_fields:
+    - git_commit
+    - native_module_path
+    - checker_command
+    - build_refresh_command
+    - freshness_mode
+    - source_identity_algorithm
+    - source_identity_scope
+    - source_identity_limit
+    - source_identity_file_count
+    - current_source_identity
+    - embedded_source_identity_algorithm
+    - embedded_source_identity_scope
+    - embedded_source_identity_limit
+    - embedded_source_identity_file_count
+    - embedded_source_identity
+    - source_identity_matches
+  native_runtime_receipt:
+    git_commit: 8c6a5df207b96f35fcbae8adb394ac82322b015c
+    native_module_name: epcsaft_equilibrium._native_core
+    native_module_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/_native_core.cpython-313-x86_64-linux-gnu.so
+    native_module_path_kind: runtime_path_relativized_to_repository_root
+    checker_command:
+      - uv
+      - run
+      - --no-sync
+      - python
+      - run_pytest.py
+      - tests/native/contracts/test_native_freshness_receipt.py
+      - -q
+    build_refresh_command: uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
+    freshness_mode: embedded_source_identity
+    source_identity_algorithm: sha256-relative-path-content-v1
+    source_identity_scope: equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph
+    source_identity_limit: >-
+      Covers the canonical equilibrium object/module/header manifest, every
+      listed equilibrium file, this shared CMake loader/identity helper, the
+      provider source manifest contract, the exact manifest-listed provider
+      target .cpp files, and the .h/.hpp header contracts reachable from
+      manifest include roots. Root/standalone target compile definitions,
+      include/link flags, compiler identity, generated dependency sources, and
+      dependency binaries are outside this source receipt.
+    source_identity_file_count: 110
+    current_source_identity: 21310c566dda99dbb90cb182c01f46d84279d9a1faeb69fbd84b1f7ddc584e1b
+    embedded_source_identity_algorithm: sha256-relative-path-content-v1
+    embedded_source_identity_scope: equilibrium-explicit-source-manifest-and-provider-manifest-driven-target-graph
+    embedded_source_identity_limit: >-
+      Covers the canonical equilibrium object/module/header manifest, every
+      listed equilibrium file, this shared CMake loader/identity helper, the
+      provider source manifest contract, the exact manifest-listed provider
+      target .cpp files, and the .h/.hpp header contracts reachable from
+      manifest include roots. Root/standalone target compile definitions,
+      include/link flags, compiler identity, generated dependency sources, and
+      dependency binaries are outside this source receipt.
+    embedded_source_identity_file_count: 110
+    embedded_source_identity: 21310c566dda99dbb90cb182c01f46d84279d9a1faeb69fbd84b1f7ddc584e1b
+    source_identity_matches: true
+  direct_ipopt_application_owners:
+    - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp
+  direct_ipopt_application_calls:
+    - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp::IpoptApplicationFactory
+    - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp::IpoptApplication.Initialize
+    - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp::IpoptApplication.OptimizeTNLP
+  solve_adapter_callers:
+    - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activated_equilibrium_nlp.cpp
+    - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/continuation_driver.cpp
+    - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/feasible_initialization.cpp
+    - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp
+    - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp
+  symbol_inventory:
+    - concern: runtime_activation
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h
+      symbols:
+        - selector_route_activation_matrix
+        - problem_family_activation_matrix
+      representative_caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_plan.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+    - concern: selector_dispatch
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp
+      symbols:
+        - evaluate_selector_contract
+        - solve_selector_route
+      representative_caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+    - concern: local_nlp_contract
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/nlp_problem.h
+      symbols:
+        - NlpProblem
+        - validate_nlp_problem_shape
+      representative_caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activated_equilibrium_nlp.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/chemical_equilibrium_nlp.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp
+    - concern: ipopt_adapter
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp
+      symbols:
+        - solve_ipopt_nlp
+        - ipopt_solve_options_for_profile
+        - ipopt_solve_result_allows_postsolve
+      representative_caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activated_equilibrium_nlp.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/continuation_driver.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/feasible_initialization.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp
+    - concern: association_block
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/association_block.cpp
+      symbols:
+        - evaluate_association_mass_action_block
+      representative_caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/eos_phase_block.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/derivatives/phase_block_derivatives.cpp
+    - concern: exact_phase_derivatives
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/derivatives/phase_block_derivatives.cpp
+      symbols:
+        - evaluate_temperature_route_phase_block
+      representative_caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/eos_phase_block.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp
+    - concern: electrolyte_block
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/electrolyte_block.cpp
+      symbols:
+        - evaluate_phase_charge_block
+        - evaluate_electrolyte_contribution_block
+      representative_caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/eos_phase_block.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp
+    - concern: chemical_equilibrium_nlp
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/chemical_equilibrium_nlp.cpp
+      symbols:
+        - HomogeneousChemicalEquilibriumNlp
+        - evaluate_physical_proof_residual_system
+      representative_caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activated_equilibrium_nlp.cpp
+    - concern: native_result_certification
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/results/result_builder.cpp
+      symbols:
+        - certify_neutral_phase_discovery
+        - certify_neutral_postsolve
+        - certify_electrolyte_postsolve
+        - build_neutral_route_physical_evidence
+      representative_caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp
+  binding_inventory:
+    source_paths:
+      - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/module.cpp
+      - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+    total_binding_count: 40
+    nonproduction_binding_count: 39
+    public_execution_binding: _native_equilibrium_selector_route_result
+    all_bindings:
+      - _native_equilibrium_build_identity
+      - _native_equilibrium_activation_matrix
+      - _native_equilibrium_selector_route_contracts
+      - _native_equilibrium_activation_plan_contract
+      - _native_equilibrium_selector_contract
+      - _native_activated_neutral_tp_flash_nlp_contract
+      - _native_equilibrium_selector_route_result
+      - _native_associating_single_component_vle_validation_result
+      - _native_equilibrium_cloud_shadow_route_result
+      - _native_second_order_assembly_smoke
+      - _native_variable_transform_smoke
+      - _native_ipopt_smoke
+      - _native_nlp_shape_validation_smoke
+      - _native_ipopt_quadratic_smoke
+      - _native_continuation_driver_smoke
+      - _native_ideal_reaction_smoke
+      - _native_chemical_equilibrium_block
+      - _native_ce_feasible_initialization
+      - _native_chemical_equilibrium_nlp_activation
+      - _native_eos_phase_block
+      - _native_saturation_block
+      - _native_eos_phase_system
+      - _native_phase_equilibrium_residual_block_contract
+      - _native_association_mass_action_block
+      - _native_electrolyte_contribution_block
+      - _native_neutral_two_phase_eos_nlp_contract
+      - _native_neutral_multiphase_eos_nlp_contract
+      - _native_neutral_two_phase_eos_postsolve
+      - _native_neutral_multiphase_eos_postsolve
+      - _native_neutral_multiphase_fugacity_residual_route_result
+      - _native_neutral_tpd_phase_discovery
+      - _native_electrolyte_bubble_t_reduced_nlp_probe
+      - _native_electrolyte_bubble_t_route_result
+      - _native_electrolyte_tpd_phase_discovery
+      - _native_electrolyte_held2_continuous_tpd_minimizer
+      - _native_electrolyte_held2_phase_discovery
+      - _native_electrolyte_stage_iii_refinement
+      - _native_electrolyte_postsolve_certification
+      - _native_result_builder_complete_sampled_candidate_bound_audit
+      - _native_result_builder_certify_electrolyte_stage_iii_refinement
+    other_bindings_role: metadata_contract_probe_or_internal_validation
+  model_serializer_and_default_inventory:
+    - concern: provider_model_payload_consumer
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+      symbols:
+        - required_native_arg_field
+        - native_args_from_payload
+        - native_args_from_mixture_object
+      provider_payload_sources:
+        - Mixture._native_args_payload
+        - Mixture._native
+        - ePCSAFTMixtureNative.args
+      payload_fields:
+        - m
+        - s
+        - e
+        - k_ij
+        - e_assoc
+        - vol_a
+        - z
+        - dielc
+        - mw
+        - mixed_rel_perm_a
+        - mixed_rel_perm_b
+        - mixed_rel_perm_c
+        - mixed_rel_perm_mask
+        - mixed_rel_perm_water_index
+        - dielc_rule
+        - dielc_diff_mode
+        - hc_dadx_diff_mode
+        - disp_dadx_diff_mode
+        - assoc_dadx_diff_mode
+        - d_ion_mode
+        - mu_DH_diff_mode
+        - mu_DH_comp_dep_rel_perm
+        - mu_DH_include_sum_term
+        - include_born_model
+        - d_born_mode
+        - born_solvation_shell_model
+        - born_dielectric_saturation
+        - born_bulk_mode
+        - mu_born_diff_mode
+        - mu_born_comp_dep_rel_perm
+        - mu_born_include_sum_term
+        - mu_born_comp_dep_delta_d
+        - d_born
+        - f_solv
+        - born_model
+        - born_radius_model
+        - born_diff_mode
+        - born_eps_mode
+        - DH_model
+        - assoc_num
+        - assoc_matrix
+        - k_hb
+        - l_ij
+        - parameter_source_label
+        - parameter_provenance_status
+        - binary_interaction_provenance_status
+        - parameter_provenance_fields
+      default_behavior: every_payload_field_is_required_no_equilibrium_default
+      stage_4_disposition: replace_with_one_provider_owned_resolved_input
+    - concern: selector_request_serializer
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/core/native_requests.py
+      symbols:
+        - NativeSelectorRouteSpec
+        - EQUILIBRIUM_ROUTE_SPECS
+        - selector_request_payload
+      serialized_fields:
+        - route
+        - composition
+        - composition_role
+        - temperature
+        - pressure
+      default_behavior: optional_state_conditions_are_omitted_not_invented
+      stage_4_disposition: preserve_route_request_separate_from_model_definition
+    - concern: standalone_ce_schema_serializer
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/core/native_requests.py
+      symbols:
+        - chemical_equilibrium_schema_payload
+      serialized_fields:
+        - species_labels
+        - reaction_labels
+        - conservation_labels
+        - conservation_matrix
+        - charge_vector
+        - stoichiometric_matrix
+        - feed_amounts
+        - conservation_totals
+        - reaction_rank
+        - conservation_rank
+        - diagnostics
+      default_behavior: compiled_schema_fields_are_required_no_model_default
+      stage_4_disposition: preserve_as_stage_10_ce_schema_not_provider_eos_input
+    - concern: solver_option_defaults
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py
+      symbols:
+        - EquilibriumSolverOptions
+        - _normalize_options
+        - _native_ipopt_control_kwargs
+      defaults:
+        max_iterations: 180
+        tolerance: 1.0e-6
+        min_composition: 1.0e-12
+        timeout_seconds: null
+        hessian_mode: auto
+        ipopt_iteration_history_limit: 20
+        ipopt_print_level: 0
+        ipopt_linear_solver: auto
+        ipopt_acceptable_tolerance: null
+        ipopt_constraint_violation_tolerance: null
+        ipopt_dual_infeasibility_tolerance: null
+        ipopt_complementarity_tolerance: null
+        continuation_state: null
+      stage_4_disposition: preserve_as_numerical_controls_not_model_parameters
+    - concern: derived_tolerance_defaults
+      owner_path: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/core/native_requests.py
+      symbols:
+        - _CHEMICAL_POTENTIAL_TOLERANCE_FLOOR
+        - _PHASE_DISTANCE_TOLERANCE_FLOOR
+        - selector_route_solver_tolerances
+        - neutral_two_phase_eos_tolerances
+      defaults:
+        chemical_potential_tolerance_floor: 1.0e-7
+        phase_distance_tolerance_floor: 1.0e-4
+      stage_4_disposition: preserve_as_certification_tolerances_not_model_parameters
+  path_inventory_role: refreshable_checkpoint_evidence_not_stable_api
+records:
+  - item_id: activation_selector_core
+    responsibility: public route activation and selector admission
+    decision: preserve_directly
+    ownership_record_ids:
+      - public_pressure_boundary_routes
+      - public_single_component_saturation
+    evidence_disposition: accepted_production_behavior
+    desired_parity: true
+    evidence_refs:
+      - packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py
+    scientific_guard: Public routes remain bubble pressure, dew pressure, and scoped single-component VLE.
+    migration_guard: Keep the native activation descriptor as the sole runtime exposure authority.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp
+      caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+
+  - item_id: public_pressure_boundary_routes
+    responsibility: public_pressure_boundary_routes
+    decision: preserve_concept_rewrite_owner
+    ownership_record_ids:
+      - public_pressure_boundary_routes
+    evidence_disposition: accepted_production_behavior
+    desired_parity: true
+    evidence_refs:
+      - packages/epcsaft-equilibrium/tests/api/test_equilibrium.py
+      - scripts/validation/check_gross_2002_full_replication.py
+    scientific_guard: Direct pressure-boundary routes do not execute a complete HELD discovery controller.
+    migration_guard: Stage 6 must preserve schemas, statuses, tolerances, attempt counts, and activation while consolidating the formulation owner.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/core/native_requests.py
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp
+      caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/equilibrium.py
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+
+  - item_id: public_single_component_saturation
+    responsibility: public_single_component_saturation
+    decision: preserve_concept_rewrite_owner
+    ownership_record_ids:
+      - public_single_component_saturation
+    evidence_disposition: accepted_production_behavior
+    desired_parity: true
+    evidence_refs:
+      - packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py
+      - scripts/validation/check_single_component_vle_nist_saturation.py
+    scientific_guard: Preserve the admitted nonassociating methane, ethane, and propane scope without expansion.
+    migration_guard: Stage 6 must move this route into the typed saturation owner and delete the displaced branch.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/core/native_requests.py
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp
+      caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/equilibrium.py
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+
+  - item_id: local_nlp_ipopt_adapter
+    responsibility: local_nlp_and_ipopt_adapter
+    decision: preserve_directly
+    ownership_record_ids:
+      - public_pressure_boundary_routes
+      - public_single_component_saturation
+      - neutral_local_equilibrium_components
+      - associating_equilibrium_components
+      - electrolyte_equilibrium_components
+      - standalone_chemical_equilibrium_components
+    evidence_disposition: accepted_component_behavior
+    desired_parity: true
+    evidence_refs:
+      - packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py
+      - tests/native/contracts/test_native_freshness_receipt.py
+    scientific_guard: The adapter accepts typed local NLPs and owns the only direct Ipopt application calls.
+    migration_guard: Later stages may move callers but must not create another Ipopt application or attempt-policy owner.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/nlp_problem.h
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp
+      caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activated_equilibrium_nlp.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+
+  - item_id: exact_phase_derivative_assembly
+    responsibility: exact_phase_derivatives
+    decision: preserve_directly
+    ownership_record_ids:
+      - public_pressure_boundary_routes
+      - public_single_component_saturation
+      - neutral_local_equilibrium_components
+      - associating_equilibrium_components
+      - electrolyte_equilibrium_components
+      - standalone_chemical_equilibrium_components
+    evidence_disposition: accepted_component_behavior
+    desired_parity: true
+    evidence_refs:
+      - packages/epcsaft-equilibrium/tests/native/blocks/test_eos_phase_block.py
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_phase_equilibrium_residual_block_contract.py
+    scientific_guard: Preserve analytic, CppAD, and implicit first- and second-order derivatives.
+    migration_guard: Every extraction must retain exact callback evidence and the existing derivative backend receipts.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/derivatives/phase_block_derivatives.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/derivatives/phase_system_derivatives.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/derivatives/route_second_order.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/second_order.cpp
+      caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/eos_phase_block.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activated_equilibrium_nlp.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+
+  - item_id: association_components
+    responsibility: association_mass_action_and_implicit_derivatives
+    decision: preserve_directly
+    ownership_record_ids:
+      - associating_equilibrium_components
+    evidence_disposition: accepted_internal_component_behavior
+    desired_parity: true
+    evidence_refs:
+      - packages/epcsaft-equilibrium/tests/native/blocks/test_association_block.py
+      - packages/epcsaft-equilibrium/tests/native/results/test_associating_lle_reference_values.py
+    scientific_guard: Association changes phase thermodynamics and derivatives without defining another discovery controller.
+    migration_guard: Stage 8 must reuse the neutral controller and retain mass-action plus implicit-sensitivity proof.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/association_block.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/eos_phase_block.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/derivatives/phase_block_derivatives.cpp
+      caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+
+  - item_id: neutral_phase_discovery
+    responsibility: neutral_phase_discovery_and_local_refinement
+    decision: preserve_concept_rewrite_owner
+    ownership_record_ids:
+      - neutral_local_equilibrium_components
+    evidence_disposition: accepted_components_global_phase_completeness_unproven
+    desired_parity: true
+    evidence_refs:
+      - packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py
+      - scripts/validation/check_generalized_phase_set.py
+    scientific_guard: Sampled candidate screening and local residual refinement do not complete Pereira HELD Stage II or Stage III.
+    migration_guard: Stage 7 may reuse seeds, local NLPs, and diagnostics after it adds the source-defined controller and direct free-energy Stage III.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/results/held_certification.cpp
+      caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp
+        - scripts/validation/check_generalized_phase_set.py
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+
+  - item_id: electrolyte_counterion_pair_components
+    responsibility: electrolyte_electroneutral_and_counterion_pair_components
+    decision: preserve_concept_rewrite_owner
+    ownership_record_ids:
+      - electrolyte_equilibrium_components
+    evidence_disposition: accepted_components_failed_model_reproduction_retained
+    desired_parity: true
+    evidence_refs:
+      - tests/native/contracts/test_electrolyte_held2_phase_discovery.py
+      - tests/native/contracts/test_electrolyte_postsolve_certification.py
+    scientific_guard: >-
+      Classify counterion-pair and mean-ionic mechanics as Ascani-family
+      component evidence, separate from Perdomo modified-mole HELD2. Certify
+      with independent formulation-specific modified-potential or mean-ionic
+      conditions; generic individual-ion chemical-potential equality requires
+      an explicit Galvani convention.
+    migration_guard: Stage 9 must assign explicit formulation owners and keep the projected residual path as an optional correction or diagnostic.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/electrolyte_block.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/results/result_builder.cpp
+      caller_paths:
+        - scripts/validation/check_electrolyte_held2_phase_discovery.py
+        - scripts/validation/check_electrolyte_postsolve_certification.py
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+
+  - item_id: native_postsolve_certification
+    responsibility: native_postsolve_certification
+    decision: preserve_concept_rewrite_owner
+    ownership_record_ids:
+      - public_pressure_boundary_routes
+      - public_single_component_saturation
+      - neutral_local_equilibrium_components
+      - associating_equilibrium_components
+      - electrolyte_equilibrium_components
+    evidence_disposition: accepted_component_behavior
+    desired_parity: true
+    evidence_refs:
+      - packages/epcsaft-equilibrium/tests/native/results/test_result_builder.py
+      - tests/native/contracts/test_electrolyte_postsolve_certification.py
+    scientific_guard: Final acceptance belongs to native result and certification owners, not discovery or Python conversion.
+    migration_guard: Stage 5 must consolidate the certificate owner and delete duplicate acceptance reconstruction.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/results/result_builder.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/results/held_certification.cpp
+      caller_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+
+  - item_id: standalone_chemical_equilibrium_components
+    responsibility: standalone_chemical_equilibrium_schema_and_local_nlp
+    decision: preserve_concept_rewrite_owner
+    ownership_record_ids:
+      - standalone_chemical_equilibrium_components
+    evidence_disposition: accepted_components_failed_nonideal_output_retained
+    desired_parity: true
+    evidence_refs:
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_nlp_activation.py
+      - tests/native/contracts/test_standalone_ce_gate.py
+    scientific_guard: Preserve homogeneous CE conservation and reaction stationarity as a separate family from simultaneous CPE.
+    migration_guard: Stage 10 must repair or reject the nonideal evidence before any CE admission or CPE design consumes it.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/chemical_equilibrium.py
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/chemical_equilibrium_block.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/chemical_equilibrium_nlp.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/chemical_equilibrium_objective.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activated_equilibrium_nlp.cpp
+      caller_paths:
+        - scripts/validation/check_standalone_ce_gate.py
+        - tests/native/contracts/test_standalone_ce_gate.py
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+
+  - item_id: failed_nonideal_mea_ce_output
+    responsibility: failed nonideal MEA chemical-equilibrium output
+    decision: validation_only
+    ownership_record_ids:
+      - standalone_chemical_equilibrium_components
+    evidence_disposition: failed_evidence
+    desired_parity: false
+    evidence_refs:
+      - analyses/package_validation/standalone_ce/shared/results/summary.json
+      - tests/native/contracts/test_standalone_ce_gate.py
+    scientific_guard: The retained balance and stationarity residuals fail their admission thresholds.
+    migration_guard: Retain the failure receipt and never snapshot its numerical output as desired solver parity.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/chemical_equilibrium_nlp.cpp
+      caller_paths:
+        - scripts/validation/check_standalone_ce_gate.py
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+      artifact_paths:
+        - analyses/package_validation/standalone_ce/shared/results/summary.json
+
+  - item_id: failed_khudaida_electrolyte_output
+    responsibility: failed Khudaida electrolyte reproduction output
+    decision: validation_only
+    ownership_record_ids:
+      - electrolyte_equilibrium_components
+    evidence_disposition: failed_evidence
+    desired_parity: false
+    evidence_refs:
+      - packages/epcsaft-equilibrium/tests/api/test_khudaida_internal_electrolyte_validation.py
+      - scripts/validation/check_electrolyte_public_admission.py
+    scientific_guard: Parameter-provenance rejection and zero accepted salted tie-lines do not define desired equilibrium output.
+    migration_guard: Retain the failure evidence while Stage 9 separates algorithm identity from M6 model reproduction.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp
+      caller_paths:
+        - scripts/validation/check_electrolyte_public_admission.py
+        - packages/epcsaft-equilibrium/tests/api/test_khudaida_internal_electrolyte_validation.py
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
+
+  - item_id: misleading_held_and_held2_diagnostic_surface
+    responsibility: historical HELD completion aliases and private diagnostic bindings
+    decision: retire
+    ownership_record_ids:
+      - neutral_local_equilibrium_components
+      - electrolyte_equilibrium_components
+    evidence_disposition: superseded_identity_metadata
+    desired_parity: false
+    evidence_refs:
+      - docs/superpowers/milestones/M4-equilibrium/algorithms/neutral-held.md
+      - docs/superpowers/milestones/M4-equilibrium/algorithms/strong-electrolyte-held2.md
+      - docs/superpowers/milestones/M4-equilibrium/algorithms/ascani-electrolyte-equilibrium.md
+    scientific_guard: Retire false algorithm labels while preserving separately classified seed, coordinate, derivative, and postsolve mathematics.
+    migration_guard: Remove each alias or binding only after the owning stage migrates its callers and proof records.
+    checkpoint_inventory:
+      owner_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/results/held_certification.cpp
+      caller_paths:
+        - scripts/validation/check_electrolyte_held2_phase_discovery.py
+        - scripts/validation/check_generalized_phase_set.py
+      binding_paths:
+        - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
