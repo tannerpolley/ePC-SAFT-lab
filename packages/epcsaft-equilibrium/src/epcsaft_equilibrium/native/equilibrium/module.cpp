@@ -1,6 +1,8 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include "bindings/equilibrium_bindings.h"
+#include "model/resolved_input.h"
 
 namespace py = pybind11;
 
@@ -34,6 +36,23 @@ PYBIND11_MODULE(_native_core, m) {
         identity["source_scope"] = EPCSAFT_EQUILIBRIUM_NATIVE_SOURCE_IDENTITY_SCOPE;
         identity["source_file_count"] = EPCSAFT_EQUILIBRIUM_NATIVE_SOURCE_FILE_COUNT;
         identity["scope_limit"] = EPCSAFT_EQUILIBRIUM_NATIVE_SOURCE_IDENTITY_LIMIT;
+        return identity;
+    });
+    m.def("_native_provider_resolved_input_handle_probe", [](
+        const std::shared_ptr<ProviderResolvedInputHandleV1>& handle
+    ) {
+        if (!handle) throw ValueError("provider resolved-input handle is required");
+        const NativeEvaluatedInputSnapshot& snapshot = handle->snapshot();
+        py::dict identity;
+        identity["contract_id"] = snapshot.contract_id;
+        identity["schema"] = snapshot.schema;
+        identity["schema_version"] = snapshot.schema_version;
+        identity["definition_fingerprint_sha256"] = snapshot.definition_fingerprint_sha256;
+        identity["snapshot_fingerprint_sha256"] = snapshot.snapshot_fingerprint_sha256;
+        identity["component_order"] = snapshot.component_order;
+        identity["temperature_K"] = snapshot.temperature_K;
+        identity["composition_basis"] = snapshot.composition_basis;
+        identity["canonical_composition"] = snapshot.canonical_composition;
         return identity;
     });
     register_equilibrium_bindings(m);
