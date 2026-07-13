@@ -1,0 +1,410 @@
+schema_version: 3
+registry_role: m4_equilibrium_algorithm_admission
+milestone_owner: M4 - Equilibrium
+source_document: docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md
+activation_authority: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h
+m6_evidence_registry: docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml
+policy:
+  label_policy: family_label values are planning labels only, not runtime keys or public route strings.
+  deterministic_screening_policy: Current deterministic TPD/candidate screening is seed and certification support, not full
+    HELD.
+  domain_safety_policy: All generalized routes require route-owned bounds, a smooth VariableTransform wrapper, and Ipopt internal
+    barrier handling of explicit bounds and constraints.
+  custom_barrier_policy: Production thermodynamic objectives must not include permanent custom barrier terms.
+  documentation_scope: algorithm_contracts_admission_gates_and_local_proof_only
+  admission_readiness_policy: Family readiness records algorithm and local-proof maturity only. Runtime route exposure is
+    owned exclusively by the native activation descriptor.
+admission_readiness_vocabulary:
+  planned: Algorithm family is planned and has not completed its local proof gates.
+  component_evidence_only: Component or local proof exists, but the complete algorithm-admission gate set is incomplete.
+  admission_ready: All M4 algorithm and local-proof gates are complete; runtime exposure still requires a separate native
+    activation change.
+generalized_admission_gates:
+- infrastructure_gate
+- continuous_tpd_minimization
+- held_stage_i_stability
+- held_stage_ii_dual_phase_discovery
+- held_stage_iii_ipopt_refinement
+- exact_gradient_jacobian_hessian
+- route_domain_bounds
+- variable_transform_chain_rule
+- ipopt_barrier_bounds_constraints
+- postsolve_phase_set_certification
+family_rows:
+- family_label: PE-Neutral TP Flash
+  family_kind: phase_equilibrium
+  scope: Internal neutral, nonelectrolyte, nonreactive TP flash and LLE validation ladder; sampled-candidate evidence does
+    not admit a public route.
+  primary_problem: TP flash at fixed T, P, and feed composition.
+  knowns:
+  - T
+  - P
+  - feed_composition
+  physical_variables:
+  - phase_species_amounts
+  - phase_volumes
+  objective_family: pressure_transformed_helmholtz
+  hard_constraints:
+  - material_balance
+  - phase_pressure_consistency
+  - chemical_potential_equality
+  derivative_contract: exact_gradient_jacobian_hessian_required_before_generalized_exposure
+  phase_discovery_status: sampled_candidate_stage_ii_component_diagnostic_not_global_held
+  phase_discovery_gate_status:
+    deterministic_screening: implemented_seed_and_certification_support_not_full_held
+    continuous_tpd_minimization: implemented_neutral_coordinate_search_convergence_required
+    held_stage_i_stability: implemented_neutral_multi_start_convergence_required
+    held_stage_ii_candidate_bound_audit: sampled_candidate_bound_audit_only_not_global
+    held_stage_ii_dual_phase_discovery: sampled_candidate_dual_loop_component_evidence_not_global_held
+    held_stage_iii_ipopt_refinement: internal_refinement_evidence_does_not_admit_public_route
+  required_gates:
+  - infrastructure_gate
+  - continuous_tpd_minimization
+  - held_stage_i_stability
+  - held_stage_ii_dual_phase_discovery
+  - held_stage_iii_ipopt_refinement
+  - postsolve_phase_set_certification
+  forbidden_shortcuts:
+  - optimizer_success_only
+  - deterministic_screening_as_full_held
+  - public_utility_route_as_generalized_production
+  readiness_status: component_evidence_only
+- family_label: PE-Associating TP Flash
+  family_kind: phase_equilibrium
+  scope: Internal neutral associating TP flash, VLE, and LLE validation; the retained methanol/cyclohexane fixture is component
+    evidence and admits no public LLE route.
+  primary_problem: Associating TP flash with PC-SAFT association mass-action consistency.
+  knowns:
+  - T
+  - P
+  - feed_composition
+  physical_variables:
+  - phase_species_amounts
+  - phase_volumes
+  - association_state
+  objective_family: pressure_transformed_helmholtz_association
+  hard_constraints:
+  - material_balance
+  - phase_pressure_consistency
+  - chemical_potential_equality
+  - association_mass_action
+  derivative_contract: exact_association_gradient_jacobian_hessian_required_before_exposure
+  phase_discovery_status: sampled_candidate_component_diagnostics_no_global_held
+  required_gates:
+  - infrastructure_gate
+  - exact_association_derivatives
+  - association_mass_action_certification
+  - neutral_phase_discovery_reuse
+  - postsolve_phase_set_certification
+  forbidden_shortcuts:
+  - explicit_approx_final_production
+  - narrow_bubble_route_as_general_associating_validation
+  readiness_status: component_evidence_only
+- family_label: PE-Electrolyte LLE/TP Flash
+  family_kind: phase_equilibrium
+  scope: Strong-electrolyte LLE algorithm planning with Perdomo modified-mole HELD2 and Ascani counterion-pair equilibrium
+    kept as separate formulations; retained receipts are Ascani-family component evidence only.
+  primary_problem: Electrolyte LLE/TP flash with formulation-specific independent ionic transfer conditions.
+  knowns:
+  - T
+  - P
+  - feed_composition
+  physical_variables:
+  - reduced_charge_neutral_species_amounts
+  - neutral_species_amounts
+  - phase_volumes
+  objective_family: pressure_transformed_helmholtz_electrolyte
+  hard_constraints:
+  - material_balance
+  - charge_balance
+  - phase_pressure_consistency
+  - formulation_specific_independent_ionic_condition
+  algorithm_contracts:
+    perdomo_modified_mole_held2:
+      coordinate_system: modified_mole
+      stage_iii_primary_problem: direct_total_free_energy_minimization
+      independent_ionic_condition: modified_potential_equality
+      readiness_status: planned
+    ascani_counterion_pair:
+      coordinate_system: counterion_pair
+      phase_addition_controller: successive_phase_addition
+      independent_ionic_condition: mean_ionic_potential_equality
+      readiness_status: component_evidence_only
+  derivative_contract: born_ssm_ds_exact_hessian_required_before_electrolyte_validation
+  phase_discovery_status: retained_component_diagnostics_selector_integration_and_perdomo_figiel_validation_pending
+  phase_discovery_contract:
+    completed_issue: 350
+    algorithm_family: ascani_counterion_pair
+    historical_label: HELD2
+    scope: 'Retained #344-#350 counterion-pair and mean-ionic diagnostics are Ascani-family component evidence. The historical
+      HELD2 label does not establish Perdomo modified-mole controller parity.'
+    required_payload_groups:
+    - prerequisite_gate_receipts_269_300_302
+    - charged_species_ordering_and_charges
+    - counterion_pair_matrix_rank_nch_minus_one
+    - reduced_coordinate_lift_back_lift_residuals
+    - finite_reduced_tpd_candidate_metrics
+    - pair_based_mean_ionic_residual_bookkeeping
+    - stage_i_stability_certificate
+    - historical_stage_ii_labeled_bound_history_and_replay
+    - local_reduced_variable_residual_refinement
+    - postsolve_explicit_ion_phase_set_certification
+    - shared_phase_equilibrium_certification
+    required_matrix_tests:
+    - nacl_single_salt_rank_one
+    - na_k_cl_common_anion_rank_two
+    - k_cl_na_so4_multivalent_rank_three
+    required_negative_tests:
+    - reject_hardcoded_nacl_only_evidence
+    - reject_missing_multi_ion_source_fixture
+    - reject_raw_single_ion_transfer_acceptance
+    - reject_incomplete_prerequisite_gates
+    - reject_premature_stage_iii_or_postsolve_completion
+  required_gates:
+  - infrastructure_gate
+  - born_ssm_ds_exact_hessian
+  - reduced_electroneutral_variable_basis
+  - electrolyte_tpd
+  - perdomo_modified_mole_controller
+  - perdomo_direct_free_energy_stage_iii
+  - ascani_counterion_pair_component_evidence
+  - ascani_successive_phase_addition_controller
+  - electrolyte_postsolve_phase_set_certification
+  - formulation_specific_ionic_transfer_certification
+  - electrolyte_gfpe_closed_admission_source_gate
+  forbidden_shortcuts:
+  - raw_ionic_chemical_potential_transfer
+  - electrolyte_validation_before_born_ssm_ds_exact_hessian
+  readiness_status: component_evidence_only
+- family_label: PE-Generalized Multiphase
+  family_kind: phase_equilibrium
+  scope: Internal more-than-two-phase sampled-candidate diagnostics; the public route is closed and global candidate completeness
+    is unproven.
+  primary_problem: Unknown phase count TP flash with globally complete phase discovery and postsolve certification.
+  knowns:
+  - T
+  - P
+  - feed_composition
+  physical_variables:
+  - phase_count
+  - phase_species_amounts
+  - phase_volumes
+  objective_family: pressure_transformed_helmholtz
+  hard_constraints:
+  - material_balance
+  - phase_pressure_consistency
+  - transferable_potential_equality
+  derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
+  phase_discovery_status: neutral_internal_sampled_candidate_replay_global_completeness_unproven
+  required_gates:
+  - infrastructure_gate
+  - held_stage_i_stability
+  - held_stage_ii_dual_phase_discovery
+  - held_stage_iii_ipopt_refinement
+  - mass_balance_candidate_selection
+  - phase_set_completeness
+  - strict_multiphase_fugacity_residual_route
+  - exact_reduced_fugacity_residual_derivatives
+  - sampled_candidate_set_replay_consumed
+  forbidden_shortcuts:
+  - selected_two_phase_only
+  - per_phase_tpd_only
+  readiness_status: component_evidence_only
+- family_label: CE Standalone Reactive Speciation
+  family_kind: chemical_equilibrium
+  scope: Internal homogeneous single-phase chemical-equilibrium validation; the live MEA final proof fails.
+  primary_problem: Chemical equilibrium without phase split.
+  knowns:
+  - T
+  - P
+  - feed_composition
+  - reaction_set
+  physical_variables:
+  - species_amounts
+  - reaction_extents_or_element_basis
+  objective_family: gibbs_or_helmholtz_chemical_equilibrium
+  hard_constraints:
+  - element_balance
+  - reaction_affinity
+  - standard_state_convention
+  derivative_contract: exact_derivatives_required_before_exposure
+  phase_discovery_status: not_applicable_homogeneous_single_phase
+  required_gates:
+  - homogeneous_single_phase_only
+  - reaction_set_schema
+  - reaction_constant_convention
+  - standard_state_registry
+  - reaction_affinity_certification
+  - exact_chemical_potential_derivatives
+  - ce_validation_ladder
+  forbidden_shortcuts:
+  - hidden_standard_state
+  readiness_status: component_evidence_only
+- family_label: CPE Simultaneous Phase-Chemistry Contract
+  family_kind: combined_phase_chemical_equilibrium
+  scope: Simultaneous phase split and chemical/speciation equilibrium after PE and CE validation gates exist.
+  primary_problem: Combined phase and reaction equilibrium.
+  knowns:
+  - T
+  - P
+  - feed_composition
+  - reaction_set
+  physical_variables:
+  - phase_species_amounts
+  - phase_volumes
+  - reaction_variables
+  objective_family: pressure_transformed_helmholtz_with_reaction_affinity
+  hard_constraints:
+  - material_balance
+  - phase_pressure_consistency
+  - transferable_potential_equality
+  - reaction_affinity
+  derivative_contract: exact_coupled_derivatives_required_before_exposure
+  phase_discovery_status: blocked_until_pe_and_ce_validation_gates
+  required_gates:
+  - pe_family_validation
+  - ce_family_validation
+  - phase_equilibrium_validation
+  - chemical_equilibrium_validation
+  - standard_state_registry
+  - reaction_affinity_certification
+  - coupled_phase_reaction_certification
+  - exact_coupled_derivatives
+  - simultaneous_objective_certification
+  activation_dependencies:
+    phase_equilibrium:
+    - held_stage_i_stability
+    - held_stage_ii_dual_phase_discovery
+    - held_stage_iii_ipopt_refinement
+    - postsolve_phase_set_certification
+    chemical_equilibrium:
+    - standard_state_registry
+    - reaction_affinity_certification
+    - exact_chemical_potential_derivatives
+    - ce_validation_ladder
+  interface_contract:
+    status: blocked_future_interface
+    spec_path: docs/superpowers/specs/2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md
+    must_solve_simultaneously: true
+    variables:
+    - phase_species_amounts
+    - phase_volumes
+    - reaction_variables
+    constraints:
+    - material_balance
+    - phase_pressure_consistency
+    - transferable_potential_equality
+    - reaction_affinity
+    - phase_charge_when_applicable
+    pe_blockers:
+    - held_stage_i_stability
+    - held_stage_ii_dual_phase_discovery
+    - held_stage_iii_ipopt_refinement
+    - postsolve_phase_set_certification
+    ce_blockers:
+    - standard_state_registry
+    - reaction_affinity_certification
+    - exact_chemical_potential_derivatives
+    - ce_validation_ladder
+    disallowed_evidence:
+    - phase_only_validation
+    - ce_only_validation
+    - sequential_speciation_plus_flash
+  forbidden_shortcuts:
+  - phase_only_validation_as_cpe_validation
+  - ce_only_validation_as_cpe_validation
+  - sequential_speciation_flash_as_simultaneous_cpe
+  readiness_status: planned
+derived_subworkflows:
+- label: Bubble point
+  workflow_kind: derived_boundary
+  planned_after_family: PE-Neutral TP Flash
+  fixed_variables:
+  - temperature_or_pressure
+  - liquid_or_feed_composition
+  free_variables:
+  - incipient_vapor_composition
+  - phase_volumes
+  - boundary_pressure_or_temperature
+  diagram_targets:
+  - P-x
+  - T-x
+  strict_convergence_gate: Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded
+    seed attempt.
+  vlle_test_required: false
+  acceptance_checks:
+  - dof_swap_contract
+  - boundary_trace_contract
+  - boundary_pressure_or_temperature
+  - strict_ipopt_convergence
+  - no_implicit_route_sweep
+  - diagram_trace
+  is_family: false
+- label: Dew point
+  workflow_kind: derived_boundary
+  planned_after_family: PE-Neutral TP Flash
+  fixed_variables:
+  - temperature_or_pressure
+  - vapor_composition
+  free_variables:
+  - incipient_liquid_composition
+  - phase_volumes
+  - boundary_pressure_or_temperature
+  diagram_targets:
+  - P-x
+  - T-x
+  strict_convergence_gate: Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded
+    seed attempt.
+  vlle_test_required: false
+  acceptance_checks:
+  - dof_swap_contract
+  - boundary_trace_contract
+  - boundary_pressure_or_temperature
+  - strict_ipopt_convergence
+  - no_implicit_route_sweep
+  - diagram_trace
+  is_family: false
+- label: Cloud point
+  workflow_kind: derived_boundary
+  planned_after_family: PE-Neutral TP Flash
+  fixed_variables:
+  - temperature_or_pressure
+  - parent_liquid_composition
+  free_variables:
+  - incipient_second_liquid_composition
+  - phase_volumes
+  - boundary_pressure_or_temperature
+  diagram_targets:
+  - P-x
+  - T-x
+  strict_convergence_gate: Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded
+    seed attempt.
+  vlle_test_required: false
+  acceptance_checks:
+  - dof_swap_contract
+  - cloud_shadow_pair_consistency
+  - strict_ipopt_convergence
+  - no_implicit_route_sweep
+  - diagram_trace
+  is_family: false
+- label: Shadow point
+  workflow_kind: derived_boundary
+  planned_after_family: PE-Neutral TP Flash
+  fixed_variables:
+  - cloud_point_state
+  free_variables:
+  - shadow_phase_composition
+  - shadow_phase_volume
+  diagram_targets:
+  - P-x
+  - T-x
+  strict_convergence_gate: Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded
+    seed attempt.
+  vlle_test_required: false
+  acceptance_checks:
+  - dof_swap_contract
+  - cloud_shadow_pair_consistency
+  - strict_ipopt_convergence
+  - no_implicit_route_sweep
+  - diagram_trace
+  is_family: false

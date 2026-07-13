@@ -18,7 +18,8 @@
 - Rejected parent plan for direct execution: `docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md`
 - Parent plan validator receipt: fails Task # Use Cases gate with 3 missing use-case blocks.
 - GFPE doctrine: `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
-- M4 registry: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- M4 algorithm/admission registry: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+- M6 evidence registry: `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Source fixture: `data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl`
 - Analysis parameter bundle: `analyses/paper_validation/2026_khudaida/parameters`
 - User scope decision: `Gate First` for #191 child planning.
@@ -89,7 +90,7 @@ Numerical and structural pass metrics:
 - Modify: `packages/epcsaft-equilibrium/tests/native/blocks/test_eos_phase_block.py`
 - Modify: `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 - Modify: `tests/native/contracts/test_generalized_equilibrium_registry.py`
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 - Modify: `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`
 
@@ -395,7 +396,7 @@ Numerical and structural pass metrics:
 **Files:**
 - Modify: `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 - Modify: `tests/native/contracts/test_generalized_equilibrium_registry.py`
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 - Modify: `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`
 
@@ -435,7 +436,7 @@ Numerical and structural pass metrics:
   Run:
 
   ```powershell
-  git add packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_generalized_equilibrium_registry.py docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml docs/superpowers/milestones/M4-equilibrium/README.md docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
+  git add packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_generalized_equilibrium_registry.py docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml docs/superpowers/milestones/M4-equilibrium/README.md docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
   git commit -m "Record electrolyte GFPE source gate evidence"
   ```
 

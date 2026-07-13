@@ -247,7 +247,8 @@ DATA_REFERENCE_FORBIDDEN_PATH_PATTERN = re.compile(
 )
 SUPERPOWERS_REGISTRY_FILES = {
     "milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md",
-    "milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml",
+    "milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml",
+    "milestones/M6-validation/registries/equilibrium-evidence-registry.yaml",
 }
 ISSUE_TYPE_FORMS = {
     "bug.yml": "bug",

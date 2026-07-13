@@ -14,8 +14,10 @@ source_spec: null
 source_plan: null
 afk_hitl: HITL
 branch: null
-last_synced: "2026-06-18"
+last_synced: "2026-07-12"
 ---
+
+**Source-faithful historical classification (2026-07-12):** Preserve the exact association, local-equilibrium, or source-fixture evidence as internal component evidence only. It does not establish Pereira HELD parity, globally complete neutral or associating phase discovery, or public LLE admission. Literature and model reproduction belong to M6; runtime exposure remains governed by the native activation descriptor.
 
 # Associating neutral LLE after HELD/TPD and associating VLE proofs
 

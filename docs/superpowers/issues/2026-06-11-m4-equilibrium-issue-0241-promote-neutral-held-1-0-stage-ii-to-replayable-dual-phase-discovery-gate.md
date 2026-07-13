@@ -14,8 +14,10 @@ source_spec: null
 source_plan: null
 afk_hitl: AFK
 branch: null
-last_synced: "2026-06-11"
+last_synced: "2026-07-12"
 ---
+
+**Source-faithful historical classification (2026-07-12):** Preserve this closed issue as component history only. Stage 1 doctrine supersedes any classification of sampled-candidate replay as a completed Pereira Stage II upper/lower loop or of current-route/local residual refinement as canonical Stage III. The retained work does not establish Pereira HELD parity, global phase-set completeness, or public route admission.
 
 # M4: promote neutral HELD 1.0 Stage II to replayable dual phase-discovery gate
 

@@ -37,7 +37,7 @@
 ## Implementation Boundaries
 
 **Files To Create:** `packages/epcsaft-equilibrium/tests/api/test_electrolyte_lle_reduced_residual_certification.py`
-**Files To Modify:** `scripts/validation/check_electrolyte_public_admission.py`, `scripts/validation/check_electrolyte_held2_public_route_scenarios.py`, `tests/native/contracts/test_electrolyte_public_admission.py`, `packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_public_route.py`, `packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_public_route_scenarios.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `docs/superpowers/milestones/M4-equilibrium/README.md`, `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0371-integrate-reduced-electroneutral-electrolyte-residual-blocks.md`
+**Files To Modify:** `scripts/validation/check_electrolyte_public_admission.py`, `scripts/validation/check_electrolyte_held2_public_route_scenarios.py`, `tests/native/contracts/test_electrolyte_public_admission.py`, `packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_public_route.py`, `packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_public_route_scenarios.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`, `docs/superpowers/milestones/M4-equilibrium/README.md`, `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0371-integrate-reduced-electroneutral-electrolyte-residual-blocks.md`
 **Files To Avoid:** M5 regression package files, EOS parameter bundle files, native solver fall-through toggles, release docs, downstream application repos.
 **Source Of Truth:** #371 issue mirror, the unified PE certification spec, retained electrolyte public admission checker chain, and `Equilibrium(..., route="electrolyte_lle").solve()` diagnostics.
 **Read Path:** Public checker payloads read retained source fixture, Stage III/postsolve diagnostics, capability activation, and retained derivative receipts.
@@ -134,7 +134,7 @@
 - The final issue state replaces the old tracker-only evidence path with source-backed shared-contract acceptance proof.
 
 **Files:**
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 - Modify: `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0371-integrate-reduced-electroneutral-electrolyte-residual-blocks.md`
 

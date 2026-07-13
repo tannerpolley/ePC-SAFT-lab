@@ -87,7 +87,7 @@ This plan is test-complete only when all of the following are true:
 - Modify: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/equilibrium_activation.py`
 - Modify: `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`
 - Modify: `tests/native/contracts/test_generalized_equilibrium_registry.py`
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 - Modify: `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md`
@@ -390,7 +390,7 @@ This plan is test-complete only when all of the following are true:
 - #189 needs progress notes that name the remaining umbrella gates without closing the umbrella early.
 
 **Files:**
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`

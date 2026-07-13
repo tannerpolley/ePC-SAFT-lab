@@ -39,7 +39,7 @@
 ## Implementation Boundaries
 
 **Files To Create:** `scripts/validation/check_electrolyte_held2_readiness.py`, `tests/native/contracts/test_electrolyte_held2_readiness_checker.py`, and `docs/superpowers/issues/2026-06-24-m4-equilibrium-issue-0300-add-electrolyte-held2-readiness-and-born-exactness-gate.md`.
-**Files To Modify:** `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/capabilities.py`, `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`, `tests/native/contracts/test_generalized_equilibrium_registry.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `docs/superpowers/milestones/M4-equilibrium/README.md`, and `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`.
+**Files To Modify:** `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/capabilities.py`, `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`, `tests/native/contracts/test_generalized_equilibrium_registry.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`, `docs/superpowers/milestones/M4-equilibrium/README.md`, and `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`.
 **Files To Avoid:** Native C++ route admission files, public workflow route maps, regression package files, downstream repositories, and provider EOS implementation files unless an existing public derivative receipt cannot be consumed.
 **Source Of Truth:** `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`, #191 source spec, #269 checker, and provider Born derivative tests.
 **Read Path:** Read Khudaida data through `check_electrolyte_gfpe_gate.evaluate_case_dir`, provider derivative receipts through `ePCSAFTState` public methods, and route exposure state through `epcsaft_equilibrium.capabilities()`.
@@ -135,7 +135,7 @@
 - Modify: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/capabilities.py`
 - Modify: `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 - Modify: `tests/native/contracts/test_generalized_equilibrium_registry.py`
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 - Modify: `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`
 

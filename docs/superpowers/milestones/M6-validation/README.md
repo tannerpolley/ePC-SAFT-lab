@@ -3,6 +3,19 @@
 Executable literature benchmarks, registry evidence, capability evidence,
 docs/test proof, and reproducible validation gates.
 
+## Equilibrium Evidence Ownership
+
+| Owner | Scope |
+| --- | --- |
+| [M6 equilibrium evidence registry](registries/equilibrium-evidence-registry.yaml) | Literature cases, executable fixtures, retained commands, tolerances, blockers, and evidence maturity. |
+| [M4 algorithm/admission registry](../M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml) | Algorithm families, mathematical contracts, local-proof readiness, and admission gates. |
+| [Native activation descriptor](../../../../packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h) | Sole authority for runtime route exposure. |
+
+The M6 registry preserves neutral, associating, multiphase, electrolyte, CE,
+and derived-workflow evidence without activating a route or completing an M4
+algorithm gate by implication. The former M4 evidence ledger remains available
+in the [dated M4 dashboard archive](../M4-equilibrium/archive/2026-07-12-pre-source-faithful-dashboard.md).
+
 ## Project Field Defaults
 
 - Package: `benchmark` unless the validation issue is package-specific

@@ -33,12 +33,17 @@ Use this order when two documents disagree:
    for source-faithful algorithm identity and supersession.
 3. `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md` for GFPE doctrine,
    mathematical form, family order, and admission policy.
-4. `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml` for executable family
-   rows, derived subworkflows, reference cases, and production flags.
-5. This file for implementation sequencing and stage exit evidence.
-6. `docs/superpowers/PROJECT_CONTEXT.md` for package-wide boundaries and completion
+4. `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+   for algorithm families, mathematical contracts, local-proof readiness, and
+   admission gates.
+5. `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
+   for reference cases, commands, tolerances, fixtures, and evidence maturity.
+6. `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h`
+   as the sole runtime-exposure authority.
+7. This file for implementation sequencing and stage exit evidence.
+8. `docs/superpowers/PROJECT_CONTEXT.md` for package-wide boundaries and completion
    standards.
-7. Generated views such as `docs/equations.md`, `docs/equations_registry.yaml`,
+9. Generated views such as `docs/equations.md`, `docs/equations_registry.yaml`,
    `docs/algorithms.md`, and `docs/algorithms_registry.yaml` for navigation
    and consistency checks only.
 
@@ -52,7 +57,9 @@ benchmark fixture records.
 GFPE doctrine and registry:
 
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+- `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h`
 - `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
 
@@ -231,7 +238,8 @@ Primary output:
 References:
 
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+- `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - `docs/superpowers/PROJECT_CONTEXT.md`
 - `docs/latex/algorithms.tex`
 - `docs/algorithms.md`
@@ -244,9 +252,12 @@ Substeps:
 1. State that GFPE, not the package-wide context plan, controls this stage order.
 2. Keep `PROJECT_CONTEXT.md` as a boundary for package identity, derivative
    policy, benchmark expectations, and downstream consequences.
-3. Keep `equilibrium_benchmark_registry.yaml` on schema version 2.
-4. Keep registry top-level sections as `family_rows`,
-   `derived_subworkflows`, and PE-focused `benchmark_cases`.
+3. Keep the M4 algorithm/admission registry on schema version 3 and the M6
+   evidence registry on schema version 1.
+4. Keep algorithm families and derived mathematical contracts in M4; keep
+   reference cases, commands, tolerances, fixtures, and evidence maturity in M6.
+   Neither registry may duplicate runtime exposure from the native activation
+   descriptor.
 5. Keep the six visible family labels descriptive:
    `PE-Neutral TP Flash`, `PE-Associating TP Flash`,
    `PE-Electrolyte LLE/TP Flash`, `PE-Generalized Multiphase`,
@@ -922,7 +933,8 @@ Primary output:
 References:
 
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+- `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp`
 - `packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py`
@@ -1001,8 +1013,8 @@ Acceptance checks:
   source-backed ePC-SAFT reparameterization closes the model-family gap.
 - Neutral TP flash diagnostics include material, pressure, potential,
   stability, derivative, and domain margins.
-- Registry tests keep generalized neutral TP flash not production-exposed
-  until HELD completion.
+- M4 readiness remains incomplete until source-faithful HELD gates pass; only
+  a separate native activation change can expose a runtime route.
 
 Stop conditions:
 
@@ -1025,7 +1037,8 @@ Primary output:
 References:
 
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+- `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
 - `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`
@@ -1102,7 +1115,8 @@ Primary output:
 References:
 
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+- `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_layout.h`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - future generalized phase-set route owner created after Stage 9
@@ -1153,7 +1167,8 @@ References:
 - `docs/adr/0004-associating-equilibrium-architecture.md`
 - `docs/latex/equations.tex`
 - `docs/algorithms.md`
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+- `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 
 Substeps:
 
@@ -1210,7 +1225,8 @@ References:
 
 - `docs/latex/equations.tex`
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+- `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - `analyses/paper_validation/2026_khudaida/`
 - `scripts/dev/run_ipopt_exact_hessian_proofs.py`
 
@@ -1252,19 +1268,22 @@ Stop conditions:
 - Charge neutrality is enforced by hidden clipping instead of declared
   constraints or reduced variables.
 
-## Stage 15 - Electrolyte GFPE And HELD2.0 Validation
+## Stage 15 - Electrolyte GFPE Formulation-Specific Validation
 
-Purpose: prove strong-electrolyte LLE/TP flash through electrolyte-specific
-phase discovery and certification.
+Purpose: validate strong-electrolyte LLE/TP flash through explicitly selected
+electrolyte algorithm families without treating Perdomo modified-mole HELD2 and
+Ascani counterion-pair equilibrium as equivalent.
 
 Primary output:
 
-- Source-backed electrolyte GFPE validation using Khudaida first, with HELD2.0
-  and Born SSM+DS exact-Hessian evidence.
+- Source-backed electrolyte GFPE validation using Khudaida first, with separate
+  Perdomo modified-mole and Ascani counterion-pair contracts plus Born SSM+DS
+  exact-Hessian evidence.
 
 References:
 
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+- `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - `analyses/paper_validation/2026_khudaida/`
 - `docs/papers/` source material when a fixture is promoted
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
@@ -1273,7 +1292,9 @@ References:
 Substeps:
 
 1. Add electrolyte TPD in the reduced electroneutral variable basis.
-2. Add HELD2.0 phase discovery before electrolyte production readiness.
+2. Design Perdomo HELD2 in modified-mole coordinates with direct total
+   free-energy Stage III; retain Ascani counterion-pair and mean-ionic work as
+   a separate algorithm family until equivalence is derived.
 3. Use Khudaida 2026 electrolyte LLE as the first electrolyte validation
    target.
 4. Treat Held 2014 Figure 6 as a follow-on after data, units, and conventions
@@ -1369,7 +1390,8 @@ Primary output:
 
 References:
 
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+- `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - `packages/epcsaft/src/epcsaft/runtime/capability_evidence.py`
 - `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`

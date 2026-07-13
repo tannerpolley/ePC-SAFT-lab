@@ -14,22 +14,33 @@ REGISTRY_PATH = (
     / "milestones"
     / "M4-equilibrium"
     / "registries"
-    / "equilibrium-benchmark-registry.yaml"
+    / "equilibrium-algorithm-admission-registry.yaml"
 )
-GFPE_PATH = (
+M6_EVIDENCE_REGISTRY_PATH = (
     REPO_ROOT
     / "docs"
     / "superpowers"
     / "milestones"
-    / "M4-equilibrium"
-    / "generalized-fluid-phase-equilibrium.md"
+    / "M6-validation"
+    / "registries"
+    / "equilibrium-evidence-registry.yaml"
+)
+ACTIVATION_SOURCE_PATH = (
+    REPO_ROOT
+    / "packages"
+    / "epcsaft-equilibrium"
+    / "src"
+    / "epcsaft_equilibrium"
+    / "native"
+    / "equilibrium"
+    / "core"
+    / "activation_matrix.h"
+)
+GFPE_PATH = (
+    REPO_ROOT / "docs" / "superpowers" / "milestones" / "M4-equilibrium" / "generalized-fluid-phase-equilibrium.md"
 )
 STAGE_PLAN_PATH = (
-    REPO_ROOT
-    / "docs"
-    / "superpowers"
-    / "specs"
-    / "2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md"
+    REPO_ROOT / "docs" / "superpowers" / "specs" / "2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md"
 )
 
 EXPECTED_FAMILY_LABELS = {
@@ -42,6 +53,42 @@ EXPECTED_FAMILY_LABELS = {
 }
 DERIVED_LABELS = {"Bubble point", "Dew point", "Cloud point", "Shadow point"}
 FORBIDDEN_NUMERIC_ROW_RE = re.compile(r"\b(?:PE|CE|CPE)-\d{2}\b")
+FORBIDDEN_RUNTIME_FIELDS = {
+    "activation_family_row",
+    "activation_status",
+    "activation_status_vocabulary",
+    "current_public_route_policy",
+    "current_runtime_routes",
+    "excluded_current_runtime_route_keys",
+    "existing_public_utility_routes",
+    "exposure_status",
+    "production_exposed",
+    "proof_routes",
+    "public_routes",
+}
+FORBIDDEN_EVIDENCE_KEY_FRAGMENTS = (
+    "benchmark",
+    "command",
+    "evidence",
+    "fixture",
+    "reference_case",
+    "result_requirement",
+    "tolerance",
+)
+FORBIDDEN_RUNTIME_KEY_FRAGMENTS = (
+    "activation_status",
+    "activated_route",
+    "current_public_route",
+    "current_runtime_route",
+    "existing_public",
+    "exposure_status",
+    "production_exposure",
+    "production_exposed",
+    "proof_route",
+    "public_route",
+    "route_exposure",
+    "runtime_route",
+)
 
 
 def _registry() -> dict[str, Any]:
@@ -56,11 +103,141 @@ def _family_by_label() -> dict[str, dict[str, Any]]:
     return {row["family_label"]: row for row in _family_rows()}
 
 
-def test_registry_uses_collapsed_schema_v2_family_labels() -> None:
+def _evidence_registry() -> dict[str, Any]:
+    return yaml.safe_load(M6_EVIDENCE_REGISTRY_PATH.read_text(encoding="utf-8"))
+
+
+def _family_evidence_by_label() -> dict[str, dict[str, Any]]:
+    return {row["family_label"]: row for row in _evidence_registry()["family_evidence"]}
+
+
+def _mapping_keys(value: object) -> set[str]:
+    if isinstance(value, dict):
+        return set(value) | {key for child in value.values() for key in _mapping_keys(child)}
+    if isinstance(value, list):
+        return {key for child in value for key in _mapping_keys(child)}
+    return set()
+
+
+def _fragment_offenders(
+    value: object,
+    fragments: tuple[str, ...],
+    *,
+    allowed: set[str] | None = None,
+) -> list[str]:
+    allowed = allowed or set()
+    return sorted(
+        key
+        for key in _mapping_keys(value) - allowed
+        if any(fragment in key for fragment in fragments)
+    )
+
+
+def test_m4_registry_owns_algorithm_and_admission_metadata_only() -> None:
+    registry = _registry()
+
+    assert registry["schema_version"] == 3
+    assert registry["registry_role"] == "m4_equilibrium_algorithm_admission"
+    assert registry["milestone_owner"] == "M4 - Equilibrium"
+    assert set(registry) == {
+        "activation_authority",
+        "admission_readiness_vocabulary",
+        "derived_subworkflows",
+        "family_rows",
+        "generalized_admission_gates",
+        "m6_evidence_registry",
+        "milestone_owner",
+        "policy",
+        "registry_role",
+        "schema_version",
+        "source_document",
+    }
+    assert registry["m6_evidence_registry"] == (
+        "docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml"
+    )
+    offenders = {
+        "benchmark_cases",
+        "diagnostic_evidence",
+        "evidence_tier",
+        "evidence_tiers",
+        "neutral_tp_flash_fixture_gate",
+        "reference_cases",
+    } & _mapping_keys(registry)
+    assert not offenders, sorted(offenders)
+    offenders = _fragment_offenders(
+        {
+            "policy": registry["policy"],
+            "family_rows": registry["family_rows"],
+            "derived_subworkflows": registry["derived_subworkflows"],
+        },
+        FORBIDDEN_EVIDENCE_KEY_FRAGMENTS,
+        allowed={"disallowed_evidence"},
+    )
+    assert not offenders, offenders
+    offenders = {
+        "acceptance_tolerances",
+        "command",
+        "result_requirement",
+    } & _mapping_keys(registry)
+    assert not offenders, sorted(offenders)
+
+
+def test_runtime_exposure_is_declared_only_by_native_activation() -> None:
+    registry = _registry()
+
+    assert registry["activation_authority"] == (
+        "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h"
+    )
+    assert ACTIVATION_SOURCE_PATH.is_file()
+    offenders = FORBIDDEN_RUNTIME_FIELDS & _mapping_keys(registry)
+    assert not offenders, sorted(offenders)
+    offenders = _fragment_offenders(registry, FORBIDDEN_RUNTIME_KEY_FRAGMENTS)
+    assert not offenders, offenders
+    assert all("readiness_status" in row for row in registry["family_rows"])
+
+
+def test_m6_registry_owns_equilibrium_evidence_without_runtime_exposure() -> None:
+    assert M6_EVIDENCE_REGISTRY_PATH.is_file()
+    evidence = yaml.safe_load(M6_EVIDENCE_REGISTRY_PATH.read_text(encoding="utf-8"))
+
+    assert evidence["schema_version"] == 1
+    assert evidence["registry_role"] == "m6_equilibrium_evidence"
+    assert evidence["milestone_owner"] == "M6 - Validation"
+    assert evidence["m4_algorithm_registry"] == (
+        "docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml"
+    )
+    assert set(evidence) == {
+        "activation_authority",
+        "benchmark_cases",
+        "claim_boundary",
+        "derived_workflow_evidence",
+        "evidence_status_vocabulary",
+        "evidence_tiers",
+        "family_evidence",
+        "m4_algorithm_registry",
+        "milestone_owner",
+        "neutral_tp_flash_fixture_gate",
+        "registry_role",
+        "schema_version",
+    }
+    assert {row["family_label"] for row in evidence["family_evidence"]} == set(_family_by_label())
+    assert evidence["evidence_tiers"]
+    assert evidence["benchmark_cases"]
+    assert all(row["reference_cases"] for row in evidence["family_evidence"])
+    evidence_keys = _mapping_keys(evidence)
+    assert "command" in evidence_keys
+    assert "acceptance_tolerances" in evidence_keys
+    offenders = FORBIDDEN_RUNTIME_FIELDS & evidence_keys
+    assert not offenders, sorted(offenders)
+    offenders = _fragment_offenders(evidence, FORBIDDEN_RUNTIME_KEY_FRAGMENTS)
+    assert not offenders, offenders
+
+
+def test_registry_uses_collapsed_schema_v3_family_labels() -> None:
     registry = _registry()
     rows = _family_by_label()
 
-    assert registry["schema_version"] == 2
+    assert registry["schema_version"] == 3
     assert "activation_rows" not in registry
     assert set(rows) == EXPECTED_FAMILY_LABELS
     assert registry["policy"]["label_policy"].endswith("not runtime keys or public route strings.")
@@ -89,9 +266,7 @@ def test_gfpe_plan_is_pretreatment_centered() -> None:
     assert "GFPE is the organizing spine for this file." in stage_text
     assert "`PROJECT_CONTEXT.md` is a boundary" in stage_text
     assert "document: it explains package identity" in stage_text
-    assert (
-        "Package-wide milestones are intentionally not used as stage names." in stage_text
-    )
+    assert "Package-wide milestones are intentionally not used as stage names." in stage_text
     assert "Pereira 2012 System III remains HELD/SAFT-VR literature context" in stage_text
     assert "first neutral validation target must be a source-backed ePC-SAFT-compatible" in stage_text
     assert "## GFPE Pretreatment Pipeline" in stage_text
@@ -116,16 +291,14 @@ def test_stage9_phase_discovery_checker_requires_complete_exit_status() -> None:
     stage_text = STAGE_PLAN_PATH.read_text(encoding="utf-8")
 
     required_command = (
-        "uv run python scripts/validation/check_phase_discovery.py "
-        "--json --include-route-refinement --require-complete"
+        "uv run python scripts/validation/check_phase_discovery.py --json --include-route-refinement --require-complete"
     )
 
     assert required_command in stage_text
 
 
-def test_public_admission_rows_are_explicitly_scoped() -> None:
-    admitted: dict[str, tuple[str, list[str]]] = {}
-    active_validation = {
+def test_algorithm_admission_rows_are_explicitly_scoped() -> None:
+    component_evidence = {
         "PE-Neutral TP Flash",
         "PE-Associating TP Flash",
         "PE-Electrolyte LLE/TP Flash",
@@ -134,27 +307,15 @@ def test_public_admission_rows_are_explicitly_scoped() -> None:
     }
     for row in _family_rows():
         assert "required_gates" in row, row["family_label"]
-        if row["family_label"] in admitted:
-            expected_status, expected_routes = admitted[row["family_label"]]
-            assert row["activation_status"] == expected_status
-            assert row["production_exposed"] is True
-            assert row["existing_public_utility_routes"] == expected_routes
-        elif row["family_label"] in active_validation:
-            assert row["activation_status"] == "active_validation_not_public"
-            assert row["production_exposed"] is False
-            assert row["existing_public_utility_routes"] == []
-            assert row["diagnostic_evidence"]
+        if row["family_label"] in component_evidence:
+            assert row["readiness_status"] == "component_evidence_only"
         else:
-            assert row["activation_status"] == "planned_not_public", row["family_label"]
-            assert row["production_exposed"] is False, row["family_label"]
+            assert row["readiness_status"] == "planned", row["family_label"]
 
     neutral = _family_by_label()["PE-Neutral TP Flash"]
     assert "continuous_tpd_minimization" in neutral["required_gates"]
     assert "held_stage_ii_dual_phase_discovery" in neutral["required_gates"]
-    assert (
-        neutral["phase_discovery_status"]
-        == "sampled_candidate_stage_ii_component_diagnostic_not_global_held"
-    )
+    assert neutral["phase_discovery_status"] == "sampled_candidate_stage_ii_component_diagnostic_not_global_held"
     assert neutral["phase_discovery_gate_status"]["deterministic_screening"].endswith("not_full_held")
     assert (
         neutral["phase_discovery_gate_status"]["continuous_tpd_minimization"]
@@ -176,17 +337,12 @@ def test_public_admission_rows_are_explicitly_scoped() -> None:
     )
 
 
-def test_production_registry_rows_have_certification_evidence_commands() -> None:
+def test_algorithm_registry_rows_do_not_embed_evidence_commands() -> None:
     for row in _family_rows():
-        if row["production_exposed"] is not True:
-            continue
-        assert row["existing_public_utility_routes"], row["family_label"]
-        evidence_rows = row.get("admission_evidence", [])
-        assert evidence_rows, row["family_label"]
-        for evidence in evidence_rows:
-            assert evidence["command"], evidence["evidence_label"]
-            assert evidence["scope"], evidence["evidence_label"]
-            assert evidence["result_requirement"], evidence["evidence_label"]
+        keys = _mapping_keys(row)
+        assert "command" not in keys, row["family_label"]
+        assert "evidence_tier" not in keys, row["family_label"]
+        assert "result_requirement" not in keys, row["family_label"]
 
 
 def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> None:
@@ -198,42 +354,18 @@ def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> N
     assert not (DERIVED_LABELS & family_labels)
 
     for label, row in subworkflows.items():
-        assert row["activation_family_row"] is False, label
+        assert row["is_family"] is False, label
         assert row["planned_after_family"] == "PE-Neutral TP Flash", label
         assert set(row["diagram_targets"]) == {"P-x", "T-x"}, label
         assert row["vlle_test_required"] is False, label
-        assert "ePC-SAFT-compatible neutral TP flash mixture" in row["shared_mixture_policy"], label
-        assert "Pereira 2012 System III remains HELD/SAFT-VR context" in row["shared_mixture_policy"], label
-        assert "contract-only" in row["diagnostic_policy"], label
-        assert "explicit sweep opt-in" in row["diagnostic_policy"], label
         assert "Ipopt success" in row["strict_convergence_gate"], label
         assert "no max_iterations_exceeded seed attempt" in row["strict_convergence_gate"], label
         assert "strict_ipopt_convergence" in row["acceptance_checks"], label
         assert "no_implicit_route_sweep" in row["acceptance_checks"], label
 
-    assert subworkflows["Bubble point"]["current_convergence_status"] == (
-        "current_fixture_strict_route_points_verified"
-    )
-    assert subworkflows["Dew point"]["current_convergence_status"] == (
-        "current_fixture_strict_route_points_verified"
-    )
-    assert subworkflows["Bubble point"]["current_runtime_routes"] == ["bubble_pressure"]
-    assert subworkflows["Dew point"]["current_runtime_routes"] == ["dew_pressure"]
-    assert subworkflows["Cloud point"]["current_convergence_status"] == (
-        "checker_gated_native_route_evidence_verified_public_routes_closed"
-    )
-    assert subworkflows["Shadow point"]["current_convergence_status"] == (
-        "checker_gated_native_route_evidence_verified_public_routes_closed"
-    )
     for label in ("Cloud point", "Shadow point"):
         row = subworkflows[label]
-        assert row["current_runtime_routes"] == [], label
-        assert "source_backed_cloud_binodal_rows" in row["acceptance_checks"], label
-        assert "source_backed_cloud_shadow_pair" in row["acceptance_checks"], label
-        assert "model_refined_source_branch_reference" in row["acceptance_checks"], label
-        assert "checker_gated_native_cloud_temperature_route" in row["acceptance_checks"], label
-        assert "public_route_admission_closed" in row["acceptance_checks"], label
-        assert "native_route_admission_blockers_declared" not in row["acceptance_checks"], label
+        assert "cloud_shadow_pair_consistency" in row["acceptance_checks"], label
 
 
 def test_derived_workflow_docs_distinguish_public_pressure_routes_from_closed_variants() -> None:
@@ -258,7 +390,7 @@ def test_deterministic_screening_is_not_called_full_held() -> None:
         status = str(row.get("phase_discovery_status", ""))
         if "deterministic_screening" in status:
             assert "full_held_planned" in status, row["family_label"]
-            assert row["production_exposed"] is False, row["family_label"]
+            assert row["readiness_status"] != "admission_ready", row["family_label"]
 
 
 def test_gfpe_ipopt_layer_requires_shared_scaling_and_profile_gates() -> None:
@@ -288,13 +420,36 @@ def test_charged_and_associating_families_declare_required_gates() -> None:
     assert "explicit_approx_final_production" in associating["forbidden_shortcuts"]
 
     assert "charge_balance" in electrolyte["hard_constraints"]
-    assert "electrochemical_potential_equality" in electrolyte["hard_constraints"]
+    assert "formulation_specific_independent_ionic_condition" in electrolyte["hard_constraints"]
     assert "born_ssm_ds_exact_hessian" in electrolyte["required_gates"]
-    expected_derivative_contract = (
-        "born_ssm_ds_exact_hessian_"
-        + "required_before_electrolyte_validation"
-    )
+    expected_derivative_contract = "born_ssm_ds_exact_hessian_" + "required_before_electrolyte_validation"
     assert electrolyte["derivative_contract"] == expected_derivative_contract
+
+
+def test_electrolyte_registry_separates_perdomo_and_ascani_formulations() -> None:
+    electrolyte = _family_by_label()["PE-Electrolyte LLE/TP Flash"]
+    contracts = electrolyte["algorithm_contracts"]
+
+    assert "electrochemical_potential_equality" not in electrolyte["hard_constraints"]
+    assert contracts["perdomo_modified_mole_held2"] == {
+        "coordinate_system": "modified_mole",
+        "stage_iii_primary_problem": "direct_total_free_energy_minimization",
+        "independent_ionic_condition": "modified_potential_equality",
+        "readiness_status": "planned",
+    }
+    assert contracts["ascani_counterion_pair"] == {
+        "coordinate_system": "counterion_pair",
+        "phase_addition_controller": "successive_phase_addition",
+        "independent_ionic_condition": "mean_ionic_potential_equality",
+        "readiness_status": "component_evidence_only",
+    }
+    assert "held2_counterion_pair_phase_discovery" not in electrolyte["required_gates"]
+    assert {
+        "perdomo_modified_mole_controller",
+        "perdomo_direct_free_energy_stage_iii",
+        "ascani_counterion_pair_component_evidence",
+        "formulation_specific_ionic_transfer_certification",
+    } <= set(electrolyte["required_gates"])
 
 
 def test_ce_family_is_homogeneous_speciation_with_explicit_gates() -> None:
@@ -302,9 +457,7 @@ def test_ce_family_is_homogeneous_speciation_with_explicit_gates() -> None:
     required_gates = set(ce["required_gates"])
 
     assert ce["family_kind"] == "chemical_equilibrium"
-    assert ce["activation_status"] == "active_validation_not_public"
-    assert ce["production_exposed"] is False
-    assert ce["existing_public_utility_routes"] == []
+    assert ce["readiness_status"] == "component_evidence_only"
     assert ce["phase_discovery_status"] == "not_applicable_homogeneous_single_phase"
     assert {
         "homogeneous_single_phase_only",
@@ -338,13 +491,14 @@ def test_cpe_family_requires_simultaneous_phase_and_chemical_proof_chains() -> N
 
 def test_electrolyte_family_retains_internal_repair_evidence() -> None:
     electrolyte = _family_by_label()["PE-Electrolyte LLE/TP Flash"]
-    evidence = {row["evidence_label"]: row for row in electrolyte["diagnostic_evidence"]}
+    evidence = {
+        row["evidence_label"]: row
+        for row in _family_evidence_by_label()["PE-Electrolyte LLE/TP Flash"]["diagnostic_evidence"]
+    }
 
     gate = evidence["Khudaida electrolyte GFPE closed-admission gate"]
 
-    assert electrolyte["production_exposed"] is False
-    assert electrolyte["existing_public_utility_routes"] == []
-    assert electrolyte["activation_status"] == "active_validation_not_public"
+    assert electrolyte["readiness_status"] == "component_evidence_only"
     assert "electrolyte_gfpe_closed_admission_source_gate" in electrolyte["required_gates"]
     assert "electrolyte_postsolve_phase_set_certification" in electrolyte["required_gates"]
     assert "electrolyte_public_route_admission" not in electrolyte["required_gates"]
@@ -371,6 +525,8 @@ def test_electrolyte_family_retains_internal_repair_evidence() -> None:
     assert "HELD2 status marked readiness-only" in readiness["result_requirement"]
 
     discovery = evidence["Electrolyte HELD2 counterion-pair phase-discovery gate"]
+    assert discovery["historical_label"] == "HELD2 counterion-pair phase-discovery"
+    assert discovery["algorithm_identity"] == "ascani_counterion_pair_component"
     assert discovery["evidence_tier"] == "T1"
     assert discovery["command"] == (
         "uv run --no-sync python scripts/validation/check_electrolyte_held2_phase_discovery.py "
@@ -381,6 +537,10 @@ def test_electrolyte_family_retains_internal_repair_evidence() -> None:
     assert "pair-based mean-ionic bookkeeping" in discovery["scope"]
 
     stage_iii = evidence["Electrolyte HELD2 Stage III reduced-variable refinement gate"]
+    assert stage_iii["historical_label"] == "HELD2 Stage III reduced-variable refinement"
+    assert stage_iii["algorithm_identity"] == (
+        "ascani_family_local_residual_correction_not_perdomo_stage_iii"
+    )
     assert stage_iii["evidence_tier"] == "T1"
     assert stage_iii["command"] == (
         "uv run --no-sync python scripts/validation/check_electrolyte_stage_iii_refinement.py "
@@ -411,15 +571,12 @@ def test_generalized_multiphase_retains_internal_diagnostic_evidence() -> None:
     generalized = _family_by_label()["PE-Generalized Multiphase"]
     evidence = {
         row["evidence_label"]: row
-        for row in generalized["diagnostic_evidence"]
+        for row in _family_evidence_by_label()["PE-Generalized Multiphase"]["diagnostic_evidence"]
     }
 
-    assert generalized["production_exposed"] is False
-    assert generalized["existing_public_utility_routes"] == []
+    assert generalized["readiness_status"] == "component_evidence_only"
     audit = evidence["Neutral generalized sampled-candidate audit"]
-    assert "sampled_candidate_audit_complete_global_completeness_unproven" in audit[
-        "result_requirement"
-    ]
+    assert "sampled_candidate_audit_complete_global_completeness_unproven" in audit["result_requirement"]
     assert "global_phase_set_certified=false" in audit["result_requirement"]
     assert "public route remains closed" in audit["result_requirement"]
     strict = evidence["Strict neutral multiphase fugacity-residual refinement"]
@@ -438,7 +595,7 @@ def test_generalized_multiphase_retains_internal_diagnostic_evidence() -> None:
     assert "sampled_candidate_set_replay_consumed" in generalized["required_gates"]
     assert "public_multiphase_route" not in generalized["required_gates"]
 
-    serialized = str(generalized).lower()
+    serialized = str({"algorithm": generalized, "evidence": evidence}).lower()
     assert re.search(r"(?<!global_)phase_set_certified", serialized) is None
     assert "dual_loop_verified" not in serialized
     assert "--require-public-admission" not in serialized
@@ -446,15 +603,16 @@ def test_generalized_multiphase_retains_internal_diagnostic_evidence() -> None:
 
 def test_benchmark_cases_reference_descriptive_family_labels() -> None:
     family_labels = set(_family_by_label())
+    evidence_registry = _evidence_registry()
 
-    for row in _family_rows():
+    for row in evidence_registry["family_evidence"]:
         assert row["reference_cases"], row["family_label"]
         assert FORBIDDEN_NUMERIC_ROW_RE.search(row["family_label"]) is None
         for case in row["reference_cases"]:
             assert case["case_label"], row["family_label"]
-            assert case["evidence_tier"] in _registry()["evidence_tiers"], case["case_label"]
+            assert case["evidence_tier"] in evidence_registry["evidence_tiers"], case["case_label"]
             assert case["fixture_status"], case["case_label"]
             assert case["acceptance_checks"], case["case_label"]
 
-    for case in _registry()["benchmark_cases"]:
+    for case in evidence_registry["benchmark_cases"]:
         assert set(case["family_labels"]) <= family_labels, case["case_label"]

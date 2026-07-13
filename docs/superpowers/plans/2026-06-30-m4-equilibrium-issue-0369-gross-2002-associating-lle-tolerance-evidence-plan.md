@@ -39,12 +39,12 @@
 ## Implementation Boundaries
 
 **Files To Create:** This plan and `packages/epcsaft-equilibrium/tests/api/test_associating_lle_gross_2002_certification.py`.
-**Files To Modify:** `scripts/validation/check_gross_2002_association_acceptance.py`, `tests/native/contracts/test_gross_2002_association_acceptance_checker.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `tests/native/contracts/test_equilibrium_benchmark_registry.py`, and `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0369-integrate-gross-2002-associating-lle-tolerance-evidence.md`.
+**Files To Modify:** `scripts/validation/check_gross_2002_association_acceptance.py`, `tests/native/contracts/test_gross_2002_association_acceptance_checker.py`, `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`, `tests/native/contracts/test_equilibrium_benchmark_registry.py`, and `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0369-integrate-gross-2002-associating-lle-tolerance-evidence.md`.
 **Files To Avoid:** EOS equation files, native solver code, Gross source artifacts, retained parameter rows, M5 regression assets, electrolyte LLE, reactive routes, and release metadata.
 **Source Of Truth:** Gross 2002 retained campaign artifacts under `analyses/paper_validation/2002_gross`, the methanol/cyclohexane fixture under `data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane`, and shared PE certification capabilities.
 **Read Path:** Read retained fit-stat CSV rows, association Hessian diagnostics, package `phase_equilibrium_certification`, and validator blockers from `validate_phase_equilibrium_certification_contracts`.
 **Write Path:** Add checker fields, package tests, native checker tests, registry acceptance checks, issue mirror plan/evidence, and GitHub issue body sync.
-**Integration Points:** `evaluate_payload`, `evaluate_campaign`, package selector tests, native checker contract tests, and `equilibrium-benchmark-registry.yaml`.
+**Integration Points:** `evaluate_payload`, `evaluate_campaign`, package selector tests, native checker contract tests, and `equilibrium-evidence-registry.yaml`.
 **Migration Or Cutover:** Additive checker payload fields only. Existing keys remain present.
 **Replaced Path Handling:** Replace implicit Gross campaign completion with explicit `shared_certification`, `source_tolerance_margins`, and non-acceptance `literature_overlay` diagnostics.
 **Acceptance Proof Gate:** Do not push or open a PR until the focused #369 selector, checker tests, registry test, docs validation, and cleanup hook pass.
@@ -127,7 +127,7 @@ Test complete for #369 means:
 - Acceptance evidence must show overlay gaps are not hidden inside M4 acceptance.
 
 **Files:**
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `tests/native/contracts/test_equilibrium_benchmark_registry.py`
 - Modify: `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0369-integrate-gross-2002-associating-lle-tolerance-evidence.md`
 

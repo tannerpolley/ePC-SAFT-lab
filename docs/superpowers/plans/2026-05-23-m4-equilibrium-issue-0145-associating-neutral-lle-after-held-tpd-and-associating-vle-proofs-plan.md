@@ -69,14 +69,14 @@ Required numerical gates:
 - Create: `data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane/thresholds.json`
 - Create: `scripts/validation/check_associating_lle_gross_2002.py`
 - Create: `tests/native/contracts/test_associating_lle_gross_2002_checker.py`
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 
 - [ ] **Step 1: Write the failing checker contract.** Add tests that call `scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-route-closed` and assert missing fixture files produce explicit blocker keys: `source_data_missing`, `parameter_bundle_missing`, `thresholds_missing`, or `public_route_open_too_early`.
 - [ ] **Step 2: Run the checker contract and verify the expected failure.** Run `uv run python run_pytest.py tests/native/contracts/test_associating_lle_gross_2002_checker.py -q`; expected result before fixture creation is failure on `source_data_missing`.
 - [ ] **Step 3: Create the fixture from existing source artifacts.** Populate the new `data/reference/.../methanol_cyclohexane/` files from `analyses/paper_validation/2002_gross/parameters/`, Table 1, Table 2, and digitized Figure 8 points. Record units, pressure basis `1.013 bar`, source-line references, and digitization uncertainty in `source_notes.md`.
 - [ ] **Step 4: Implement the checker.** The checker must parse the fixture, verify `methanol`, `cyclohexane`, `assoc_scheme=2B` for methanol, no association sites for cyclohexane, `k_ij=0.051`, finite thresholds, and at least six retained liquid-liquid source rows.
-- [ ] **Step 5: Register the benchmark.** Add an `associating_lle` entry to `equilibrium-benchmark-registry.yaml` naming the fixture path, source key `gross_2002`, phase family `neutral_associating_lle`, and status `internal_proof_for_issue_145`.
+- [ ] **Step 5: Register the benchmark.** Add an `associating_lle` entry to `equilibrium-evidence-registry.yaml` naming the fixture path, source key `gross_2002`, phase family `neutral_associating_lle`, and status `internal_proof_for_issue_145`.
 - [ ] **Step 6: Run the checker contract again.** Run `uv run python run_pytest.py tests/native/contracts/test_associating_lle_gross_2002_checker.py -q`; expected result is pass with the public route still closed.
 - [ ] **Step 7: Commit.** Commit the fixture, checker, tests, and registry update with message `test: add Gross 2002 associating LLE source fixture`.
 

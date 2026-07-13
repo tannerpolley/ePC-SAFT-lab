@@ -14,8 +14,10 @@ source_spec: null
 source_plan: null
 afk_hitl: AFK
 branch: null
-last_synced: "2026-07-02"
+last_synced: "2026-07-12"
 ---
+
+**Source-faithful historical classification (2026-07-12):** Preserve the Perdomo/Figiel Table 4 result as internal validation evidence only. It does not prove the complete Perdomo controller or current public `electrolyte_lle` admission; the route remains closed pending #459, and model-reproduction maturity is M6-owned.
 
 # M4: validate Perdomo HELD2 electrolyte flash with Figiel ePC-SAFT parameters
 

@@ -36,7 +36,7 @@ electrolyte LLE, phase discovery, and HELD coupling depend on that CE proof.
 - Verified repo doctrine: `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
   keeps `CE Standalone Reactive Speciation` separate from `CPE Simultaneous
   Phase-Chemistry Contract`.
-- Verified registry contract: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Verified registry contract: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
   defines CE as homogeneous chemical/speciation equilibrium and requires
   reaction-constant, standard-state, and reaction-affinity gates before exposure.
 - Verified stage plan: `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`

@@ -102,7 +102,7 @@ and issue mirrors under `docs/superpowers/issues/`.
 `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp`,
 `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h`,
 `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`,
-`docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`,
+`docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`,
 `docs/pages/development_workflows.rst`, and M4 issue/README files.
 **Files To Avoid:** `packages/epcsaft-regression/**`,
 downstream project repositories, release metadata, provider EOS internals
@@ -242,7 +242,7 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - Modify:
   `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - Modify:
-  `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+  `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
 - Modify: `tests/native/contracts/test_equilibrium_benchmark_registry.py`
 - Modify: `tests/native/contracts/test_generalized_equilibrium_registry.py`
 
@@ -508,7 +508,7 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - Modify:
   `analyses/paper_validation/2023_ascani/analysis.yaml`
 - Modify:
-  `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+  `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 
 - [x] **Step 1: Write failing validation-checker tests.**
   Cover missing analytic, charged, Ascani, MEA, Cantera, Pope, derivative, and
@@ -545,7 +545,7 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - Modify:
   `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 - Modify:
-  `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+  `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
 - Modify: `docs/pages/development_workflows.rst`
 
 - [x] **Step 1: Write failing activation tests.**
@@ -576,7 +576,7 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - Modify:
   `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - Modify:
-  `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+  `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
 - Create:
   `docs/superpowers/specs/2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md`
 - Create: local issue mirror for the CPE interface child issue

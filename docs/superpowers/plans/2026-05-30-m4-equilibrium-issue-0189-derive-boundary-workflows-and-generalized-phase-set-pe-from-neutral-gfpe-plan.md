@@ -139,7 +139,7 @@ Superpowers Project mirrors under `docs/superpowers`.
 
 - `scripts/validation/check_generalized_phase_set.py`
 - `tests/native/contracts/test_generalized_phase_set_checker.py`
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/milestones/M4-equilibrium/README.md`
 

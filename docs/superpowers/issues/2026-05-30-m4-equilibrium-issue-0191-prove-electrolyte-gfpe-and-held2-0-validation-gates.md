@@ -14,8 +14,10 @@ source_spec: null
 source_plan: null
 afk_hitl: HITL
 branch: null
-last_synced: "2026-06-30"
+last_synced: "2026-07-12"
 ---
+
+**Source-faithful historical classification (2026-07-12):** Preserve this closed issue as component history only. Perdomo HELD2 requires modified-mole coordinates and direct total-free-energy Stage III; Ascani counterion-pair and mean-ionic work is a separate algorithm family. Existing receipts do not establish source-faithful Perdomo HELD2 parity or public `electrolyte_lle` admission, which remains closed pending #459.
 
 # Prove electrolyte GFPE and HELD2.0 validation gates
 

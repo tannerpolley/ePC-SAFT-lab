@@ -187,7 +187,7 @@ push, PR creation, merge, and issue close.
 
 - `docs/superpowers/milestones/M4-equilibrium/README.md`
 - `docs/superpowers/issues/**`
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 
 - [ ] Update registry evidence for postsolve certified/route closed state.
 - [ ] Update #191 and #313 mirrors after merge.

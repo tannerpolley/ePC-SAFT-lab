@@ -2,20 +2,24 @@
 issue: 190
 title: "M4: admit associating GFPE through exact derivative proof gates"
 url: https://github.com/ePC-SAFT/ePC-SAFT/issues/190
-state: open
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: equilibrium
 capability: lle
 backend: Ipopt
-readiness: ready
+readiness: closed
 release_target: equilibrium-0.x
-source_spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md
-source_plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates-plan.md
+source_spec: null
+source_plan: null
 afk_hitl: HITL
-branch: codex/issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates
-last_synced: "2026-06-18"
+branch: null
+last_synced: "2026-07-12"
 ---
+
+**Source-faithful historical classification (2026-07-12):** Preserve the exact association, local-equilibrium, or source-fixture evidence as internal component evidence only. It does not establish Pereira HELD parity, globally complete neutral or associating phase discovery, or public LLE admission. Literature and model reproduction belong to M6; runtime exposure remains governed by the native activation descriptor.
+
+**Mirror Retention:** Keep
 
 # Admit associating GFPE through exact derivative proof gates
 

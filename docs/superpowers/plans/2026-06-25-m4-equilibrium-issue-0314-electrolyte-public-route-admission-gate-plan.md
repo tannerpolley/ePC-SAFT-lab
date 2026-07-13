@@ -168,7 +168,7 @@ push, PR creation, merge, #314 close, and #191 close.
 
 - `packages/epcsaft-equilibrium/**`
 - `docs/pages/**`
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 
 - [ ] Update selector/admission behavior for the certified scope.
 - [ ] Update capabilities and registry evidence.

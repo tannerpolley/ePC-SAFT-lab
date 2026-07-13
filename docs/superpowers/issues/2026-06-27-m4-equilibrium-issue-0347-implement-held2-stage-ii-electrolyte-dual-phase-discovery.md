@@ -2,20 +2,24 @@
 issue: 347
 title: "M4: implement HELD2 Stage II electrolyte dual phase discovery"
 url: https://github.com/ePC-SAFT/ePC-SAFT/issues/347
-state: open
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: equilibrium
 capability: electrolyte
 backend: Ipopt
-readiness: ready
+readiness: closed
 release_target: equilibrium-0.x
-source_spec: docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md
-source_plan: docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md
+source_spec: null
+source_plan: null
 afk_hitl: AFK
-branch: codex/issue-0347-held2-stage-ii-electrolyte-dual-phase-discovery
-last_synced: "2026-06-28"
+branch: null
+last_synced: "2026-07-12"
 ---
+
+**Source-faithful historical classification (2026-07-12):** Preserve this closed issue as component history only. Perdomo HELD2 requires modified-mole coordinates and direct total-free-energy Stage III; Ascani counterion-pair and mean-ionic work is a separate algorithm family. Existing receipts do not establish source-faithful Perdomo HELD2 parity or public `electrolyte_lle` admission, which remains closed pending #459.
+
+**Mirror Retention:** Keep
 
 # M4: implement HELD2 Stage II electrolyte dual phase discovery
 

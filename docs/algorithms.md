@@ -106,7 +106,7 @@ regression routes. It is separate from Ipopt and does not call Ipopt routes.
 - Description: Solves production neutral bubble/dew pressure route specs through the native selector core.
 - Change note: Bubble/dew temperature contracts remain closed because retained inverse-workbook points are not live literature-backed production proof.
 - LaTeX: `docs/latex/algorithms.tex:72`
-- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp:907` (SelectorContract evaluate_selector_contract(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp:980` (epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp:3024` (m.def("_native_equilibrium_selector_contract", [](), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp:3070` (m.def("_native_equilibrium_selector_route_result", [](), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:3969` (NeutralTwoPhaseEosRouteResult solve_pressure_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:4123` (NeutralTwoPhaseEosRouteResult solve_temperature_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py:985` (def _solve_selector_route()
+- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp:907` (SelectorContract evaluate_selector_contract(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp:980` (epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp:3024` (m.def("_native_equilibrium_selector_contract", [](), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp:3070` (m.def("_native_equilibrium_selector_route_result", [](), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:3969` (NeutralTwoPhaseEosRouteResult solve_pressure_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:4123` (NeutralTwoPhaseEosRouteResult solve_temperature_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py:984` (def _solve_selector_route()
 
 This entry exposes the trusted neutral bubble/dew pressure proof set through route specs
 configured by `Equilibrium(mixture, route=..., ...)` and executed by
@@ -418,37 +418,39 @@ That internal status label does not expose a public selector route.
 
 
 ### `generalized_equilibrium_activation_registry`
-- Family: Equilibrium activation policy
+- Family: Equilibrium registry ownership
 - Status: Documentation-only
-- Public API: No public route exposure; registry controls future generalized admission
-- Backend: Markdown and YAML registry
+- Public API: Runtime exposure is owned only by the native activation descriptor
+- Backend: Native activation descriptor plus separate M4 and M6 YAML registries
 - Dependency: None
-- Derivative backend: Exact derivatives required before production row exposure
-- Solver role: Records descriptive generalized family labels, derived subworkflows, reference cases, evidence tiers, and benchmark status
-- Implementation owner: docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md; docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml
+- Derivative backend: Exact derivatives are M4 admission gates, not M6 evidence activation
+- Solver role: M4 records algorithm and local-proof gates; M6 records evidence; neither duplicates runtime exposure
+- Implementation owner: docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md; docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml; docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h
 - Validation: tests/native/contracts/test_generalized_equilibrium_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py
 - Capability key: docs:generalized_equilibrium_activation_registry
-- Description: Defines collapsed generalized phase-only, chemical-only, and combined phase-chemical family registry.
-- Change note: Bubble/dew/cloud/shadow routes are derived subworkflows outside the main family rows; generalized rows stay planned until HELD and derivative gates pass.
+- Description: Separates algorithm admission, validation evidence, and runtime activation ownership.
+- Change note: M4 and M6 registries are non-activating; the native activation descriptor is the sole runtime route authority.
 - LaTeX: `docs/latex/algorithms.tex:266`
 - Code owners: Documentation-only or planned entry; no current owner expected.
 
-The generalized equilibrium activation registry records descriptive family
-labels for phase-only, chemical-only, and combined phase-chemical work, plus
-derived boundary subworkflows and PE-focused benchmark cases. Bubble, dew,
-cloud, and shadow workflows remain outside the main family rows. Current
-deterministic screening is not full HELD, so generalized families stay
-planned until HELD and derivative gates pass.
+The M4 equilibrium algorithm registry records descriptive family contracts,
+local-proof readiness, and admission gates. The separate M6 evidence registry
+records literature cases, commands, tolerances, fixtures, and evidence
+maturity. Neither registry declares runtime exposure; the native activation
+descriptor is the sole route authority. Current deterministic screening is not
+full HELD, so generalized families remain incomplete until their source-faithful
+algorithm and derivative gates pass.
 
 **LaTeX source**
 
 ```tex
-The generalized equilibrium activation registry records descriptive family
-labels for phase-only, chemical-only, and combined phase-chemical work, plus
-derived boundary subworkflows and PE-focused benchmark cases. Bubble, dew,
-cloud, and shadow workflows remain outside the main family rows. Current
-deterministic screening is not full HELD, so generalized families stay
-planned until HELD and derivative gates pass.
+The M4 equilibrium algorithm registry records descriptive family contracts,
+local-proof readiness, and admission gates. The separate M6 evidence registry
+records literature cases, commands, tolerances, fixtures, and evidence
+maturity. Neither registry declares runtime exposure; the native activation
+descriptor is the sole route authority. Current deterministic screening is not
+full HELD, so generalized families remain incomplete until their source-faithful
+algorithm and derivative gates pass.
 ```
 
 
@@ -465,7 +467,7 @@ planned until HELD and derivative gates pass.
 - Capability key: planned:explicit_association_closure_diagnostics
 - Description: Records explicit association closures as approximate Helmholtz diagnostics, not production exact association.
 - Change note: Keeps explicit association closures out of production acceptance unless a route is deliberately exposed as approximate.
-- LaTeX: `docs/latex/algorithms.tex:287`
+- LaTeX: `docs/latex/algorithms.tex:288`
 - Code owners: Documentation-only or planned entry; no current owner expected.
 
 This planned diagnostic family may use explicit algebraic association closures
@@ -502,8 +504,8 @@ same tolerance as the exact solve.
 - Capability key: regression:pure_neutral
 - Description: Fits currently supported pure-neutral parameter targets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-neutral regression.
-- LaTeX: `docs/latex/algorithms.tex:310`
-- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2402` (def fit_pure_neutral(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2737` (def fit_pure_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:524` (class PureNeutralCeresCostFunction final : public ceres::CostFunction {)
+- LaTeX: `docs/latex/algorithms.tex:311`
+- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2437` (def fit_pure_neutral(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2771` (def fit_pure_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:524` (class PureNeutralCeresCostFunction final : public ceres::CostFunction {)
 
 This entry covers the implemented nonassociating pure-neutral native Ceres route
 for `m`, `\sigma`, and `\epsilon/k_B`. It is not a production Ceres
@@ -547,8 +549,8 @@ $$
 - Capability key: regression:pure_ion
 - Description: Fits currently supported pure-ion and Born-related target sets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits.
-- LaTeX: `docs/latex/algorithms.tex:329`
-- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2785` (def fit_pure_ion(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2988` (def fit_liquid_electrolyte_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:1464` (class PureIonCeresCostFunction final : public ceres::CostFunction {)
+- LaTeX: `docs/latex/algorithms.tex:330`
+- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2819` (def fit_pure_ion(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:3022` (def fit_liquid_electrolyte_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:1464` (class PureIonCeresCostFunction final : public ceres::CostFunction {)
 
 This entry is limited to the currently implemented pure-ion target surface. It
 does not claim support for association-affecting target kinds merely because the
@@ -576,8 +578,8 @@ native target-kind registry knows their labels.
 - Capability key: regression:binary_pair
 - Description: Fits the currently implemented constant-k_ij binary parameter route through native Ceres.
 - Change note: Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists.
-- LaTeX: `docs/latex/algorithms.tex:347`
-- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2814` (def fit_binary_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:1601` (class BinaryKijCeresCostFunction final : public ceres::CostFunction {)
+- LaTeX: `docs/latex/algorithms.tex:348`
+- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2848` (def fit_binary_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:1601` (class BinaryKijCeresCostFunction final : public ceres::CostFunction {)
 
 This entry intentionally does not claim native optimizer support for every
 binary parameter family. It is not a production Ceres optimizer for `l_{ij}`

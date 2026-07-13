@@ -330,7 +330,9 @@ above.
 **Files:**
 
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Replace: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+  with `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+- Modify: `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `docs/superpowers/milestones/M6-validation/README.md`
 - Modify: `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - Modify: local issue mirrors only after an exact tracker change is approved
@@ -341,18 +343,18 @@ above.
   equivalent existing M6 owner.
 - Consumes native activation data without duplicating public route truth.
 
-- [ ] Write RED registry tests that reject benchmark commands/tolerances in
+- [x] Write RED registry tests that reject benchmark commands/tolerances in
   the M4 algorithm registry and reject runtime exposure declared outside the
   activation source.
-- [ ] Run registry and docs contract tests; record the expected current
+- [x] Run registry and docs contract tests; record the expected current
   failures.
-- [ ] Move evidence-owned records to M6, shorten the M4 current dashboard, and
+- [x] Move evidence-owned records to M6, shorten the M4 current dashboard, and
   archive historical queue prose without deleting evidence.
-- [ ] Produce a dry-run table for any proposed GitHub issue/title/body change;
+- [x] Produce a dry-run table for any proposed GitHub issue/title/body change;
   obtain user approval before an external write.
-- [ ] Run registry contracts, issue-mirror validators, dependency readiness dry
+- [x] Run registry contracts, issue-mirror validators, dependency readiness dry
   run, docs validation, and `git diff --check`.
-- [ ] Commit `docs(project): separate equilibrium algorithms and evidence`.
+- [x] Commit `docs(project): separate equilibrium algorithms and evidence`.
 
 ### Task 3: Characterize And Preserve Valuable Equilibrium Owners
 

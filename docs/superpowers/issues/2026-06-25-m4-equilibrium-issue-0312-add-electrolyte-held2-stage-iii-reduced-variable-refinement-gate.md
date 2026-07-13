@@ -2,20 +2,24 @@
 issue: 312
 title: "M4: add electrolyte HELD2 Stage III reduced-variable refinement gate"
 url: https://github.com/ePC-SAFT/ePC-SAFT/issues/312
-state: open
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: equilibrium
 capability: electrolyte
 backend: Ipopt
-readiness: ready
+readiness: closed
 release_target: equilibrium-0.x
-source_spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
-source_plan: docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md
+source_spec: null
+source_plan: null
 afk_hitl: AFK
-branch: codex/issue-0312-electrolyte-stage-iii-refinement
-last_synced: "2026-06-25"
+branch: null
+last_synced: "2026-07-12"
 ---
+
+**Source-faithful historical classification (2026-07-12):** Preserve this closed issue as component history only. Perdomo HELD2 requires modified-mole coordinates and direct total-free-energy Stage III; Ascani counterion-pair and mean-ionic work is a separate algorithm family. Existing receipts do not establish source-faithful Perdomo HELD2 parity or public `electrolyte_lle` admission, which remains closed pending #459.
+
+**Mirror Retention:** Keep
 
 # M4: add electrolyte HELD2 Stage III reduced-variable refinement gate
 

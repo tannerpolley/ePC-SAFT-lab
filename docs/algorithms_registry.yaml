@@ -132,8 +132,8 @@
       comment_line: 4122
       context: "NeutralTwoPhaseEosRouteResult solve_temperature_route("
     - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py"
-      line: 985
-      comment_line: 984
+      line: 984
+      comment_line: 983
       context: "def _solve_selector_route("
 - algid: "neutral_tp_flash_ipopt"
   section: "Equilibrium Algorithms"
@@ -383,27 +383,28 @@
   section: "Equilibrium Algorithms"
   subsection: ""
   subsubsection: ""
-  family: "Equilibrium activation policy"
+  family: "Equilibrium registry ownership"
   status: "Documentation-only"
-  public_api: "No public route exposure; registry controls future generalized admission"
-  backend: "Markdown and YAML registry"
+  public_api: "Runtime exposure is owned only by the native activation descriptor"
+  backend: "Native activation descriptor plus separate M4 and M6 YAML registries"
   dependency: "None"
-  derivative_backend: "Exact derivatives required before production row exposure"
-  solver_role: "Records descriptive generalized family labels, derived subworkflows, reference cases, evidence tiers, and benchmark status"
-  implementation_owner: "docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md; docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml"
+  derivative_backend: "Exact derivatives are M4 admission gates, not M6 evidence activation"
+  solver_role: "M4 records algorithm and local-proof gates; M6 records evidence; neither duplicates runtime exposure"
+  implementation_owner: "docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md; docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml; docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h"
   validation: "tests/native/contracts/test_generalized_equilibrium_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py"
   capability_key: "docs:generalized_equilibrium_activation_registry"
-  description: "Defines collapsed generalized phase-only, chemical-only, and combined phase-chemical family registry."
-  change_note: "Bubble/dew/cloud/shadow routes are derived subworkflows outside the main family rows; generalized rows stay planned until HELD and derivative gates pass."
+  description: "Separates algorithm admission, validation evidence, and runtime activation ownership."
+  change_note: "M4 and M6 registries are non-activating; the native activation descriptor is the sole runtime route authority."
   tex_file: "docs/latex/algorithms.tex"
   tex_line: 266
   body: |
-    The generalized equilibrium activation registry records descriptive family
-    labels for phase-only, chemical-only, and combined phase-chemical work, plus
-    derived boundary subworkflows and PE-focused benchmark cases. Bubble, dew,
-    cloud, and shadow workflows remain outside the main family rows. Current
-    deterministic screening is not full HELD, so generalized families stay
-    planned until HELD and derivative gates pass.
+    The M4 equilibrium algorithm registry records descriptive family contracts,
+    local-proof readiness, and admission gates. The separate M6 evidence registry
+    records literature cases, commands, tolerances, fixtures, and evidence
+    maturity. Neither registry declares runtime exposure; the native activation
+    descriptor is the sole route authority. Current deterministic screening is not
+    full HELD, so generalized families remain incomplete until their source-faithful
+    algorithm and derivative gates pass.
   owner_refs: []
 - algid: "explicit_association_closure_diagnostics"
   section: "Equilibrium Algorithms"
@@ -422,7 +423,7 @@
   description: "Records explicit association closures as approximate Helmholtz diagnostics, not production exact association."
   change_note: "Keeps explicit association closures out of production acceptance unless a route is deliberately exposed as approximate."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 287
+  tex_line: 288
   body: |
     This planned diagnostic family may use explicit algebraic association closures
     for seed generation, continuation, and comparison against
@@ -448,7 +449,7 @@
   description: "Fits currently supported pure-neutral parameter targets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-neutral regression."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 310
+  tex_line: 311
   body: |
     This entry covers the implemented nonassociating pure-neutral native Ceres route
     for \(m\), \(\sigma\), and \(\epsilon/k_B\). It is not a production Ceres
@@ -456,12 +457,12 @@
     \verb|vol_a| targets until the association parameter-sensitivity work lands.
   owner_refs:
     - file: "packages/epcsaft-regression/src/epcsaft_regression/core.py"
-      line: 2402
-      comment_line: 2401
+      line: 2437
+      comment_line: 2436
       context: "def fit_pure_neutral("
     - file: "packages/epcsaft-regression/src/epcsaft_regression/core.py"
-      line: 2737
-      comment_line: 2736
+      line: 2771
+      comment_line: 2770
       context: "def fit_pure_parameters("
     - file: "packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp"
       line: 524
@@ -484,19 +485,19 @@
   description: "Fits currently supported pure-ion and Born-related target sets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 329
+  tex_line: 330
   body: |
     This entry is limited to the currently implemented pure-ion target surface. It
     does not claim support for association-affecting target kinds merely because the
     native target-kind registry knows their labels.
   owner_refs:
     - file: "packages/epcsaft-regression/src/epcsaft_regression/core.py"
-      line: 2785
-      comment_line: 2784
+      line: 2819
+      comment_line: 2818
       context: "def fit_pure_ion("
     - file: "packages/epcsaft-regression/src/epcsaft_regression/core.py"
-      line: 2988
-      comment_line: 2987
+      line: 3022
+      comment_line: 3021
       context: "def fit_liquid_electrolyte_parameters("
     - file: "packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp"
       line: 1464
@@ -519,7 +520,7 @@
   description: "Fits the currently implemented constant-k_ij binary parameter route through native Ceres."
   change_note: "Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 347
+  tex_line: 348
   body: |
     This entry intentionally does not claim native optimizer support for every
     binary parameter family. It is not a production Ceres optimizer for \(l_{ij}\)
@@ -527,8 +528,8 @@
     derivative and optimizer evidence both exist.
   owner_refs:
     - file: "packages/epcsaft-regression/src/epcsaft_regression/core.py"
-      line: 2814
-      comment_line: 2813
+      line: 2848
+      comment_line: 2847
       context: "def fit_binary_parameters("
     - file: "packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp"
       line: 1601

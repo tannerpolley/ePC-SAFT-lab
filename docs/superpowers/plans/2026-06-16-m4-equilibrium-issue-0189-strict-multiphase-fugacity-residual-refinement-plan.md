@@ -469,7 +469,7 @@ This plan is complete only when all of the following are true:
 - Modify: `docs/superpowers/issues/2026-06-15-m4-equilibrium-issue-0261-complete-generalized-phase-set-certification-gate.md`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 
 - [ ] **Step 1: Update GFPE doctrine**
 
@@ -519,7 +519,7 @@ This plan is complete only when all of the following are true:
 - Test: `packages/epcsaft-equilibrium/tests/native/diagnostics/test_internal_multiphase_activation_contracts.py`
 - Test: `tests/native/contracts/test_generalized_phase_set_completion_checker.py`
 - Test: `tests/native/contracts/test_generalized_phase_set_checker.py`
-- Test: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Test: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 
 - [ ] **Step 1: Run the full proof oracle**
 

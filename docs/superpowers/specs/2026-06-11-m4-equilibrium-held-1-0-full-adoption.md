@@ -56,9 +56,11 @@ HELD2.0-style work, not the source of the HELD 1.0 algorithm name.
   stability, Stage II dual cutting-plane phase discovery, Stage III Ipopt
   refinement, and HELD2.0 for strong electrolytes.
 - Verified:
-  `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
-  keeps GFPE family rows unexposed until full HELD-stage phase discovery, exact
+  `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml`
+  keeps GFPE algorithm readiness incomplete until full HELD-stage phase discovery, exact
   derivatives, and postsolve certification pass.
+- Runtime exposure remains owned only by
+  `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h`.
 - Verified:
   `docs/papers/md/Equilibrium/Pereira et al. - 2012 - The HELD algorithm for multicomponent, multiphase equilibrium calculations with generic equations of.md`
   describes HELD as a PT flash algorithm in Helmholtz volume-composition space,

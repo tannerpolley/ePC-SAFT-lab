@@ -40,7 +40,7 @@
 ## Implementation Boundaries
 
 **Files To Create:** `packages/epcsaft-equilibrium/tests/equilibrium_support/route_assertions.py`.
-**Files To Modify:** `packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py`, `packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `tests/native/contracts/test_generalized_equilibrium_registry.py`, `docs/superpowers/issues/2026-06-29-m4-equilibrium-issue-0365-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md`.
+**Files To Modify:** `packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py`, `packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`, `tests/native/contracts/test_generalized_equilibrium_registry.py`, `docs/superpowers/issues/2026-06-29-m4-equilibrium-issue-0365-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md`.
 **Files To Avoid:** ePC-SAFT EOS equation files, regression package files, M5 parameter snapshots, electrolyte LLE routes, associating LLE routes, downstream analyses, and public release metadata.
 **Source Of Truth:** #365 issue mirror, the shared phase-equilibrium certification spec, existing neutral LLE tests, and native route implementation in `two_phase_eos_route.cpp`.
 **Read Path:** Read the Stage II discovery payload from `evaluate_neutral_tpd_phase_discovery`, the Stage III route result from `solve_activated_neutral_lle_eos_route`, and pybind dictionaries from `register_bindings.cpp`.
@@ -164,7 +164,7 @@ Test complete for #365 means:
 - A future maintainer must be able to rerun the proof oracle from the issue mirror as acceptance evidence.
 
 **Files:**
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - Modify: `docs/superpowers/issues/2026-06-29-m4-equilibrium-issue-0365-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md`
 - Modify: GitHub issue `https://github.com/ePC-SAFT/ePC-SAFT/issues/365`

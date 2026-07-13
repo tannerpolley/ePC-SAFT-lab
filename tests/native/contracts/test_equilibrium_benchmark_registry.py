@@ -14,16 +14,21 @@ REGISTRY_PATH = (
     / "docs"
     / "superpowers"
     / "milestones"
-    / "M4-equilibrium"
+    / "M6-validation"
     / "registries"
-    / "equilibrium-benchmark-registry.yaml"
+    / "equilibrium-evidence-registry.yaml"
 )
-CPE_INTERFACE_SPEC_PATH = (
+ALGORITHM_REGISTRY_PATH = (
     REPO_ROOT
     / "docs"
     / "superpowers"
-    / "specs"
-    / "2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md"
+    / "milestones"
+    / "M4-equilibrium"
+    / "registries"
+    / "equilibrium-algorithm-admission-registry.yaml"
+)
+CPE_INTERFACE_SPEC_PATH = (
+    REPO_ROOT / "docs" / "superpowers" / "specs" / "2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md"
 )
 PEREIRA_SOURCE_AUDIT_PATH = (
     REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "ethane_carbon_dioxide"
@@ -34,8 +39,16 @@ def _registry() -> dict[str, Any]:
     return yaml.safe_load(REGISTRY_PATH.read_text(encoding="utf-8"))
 
 
+def _algorithm_registry() -> dict[str, Any]:
+    return yaml.safe_load(ALGORITHM_REGISTRY_PATH.read_text(encoding="utf-8"))
+
+
 def _family_labels() -> set[str]:
-    return {row["family_label"] for row in _registry()["family_rows"]}
+    return {row["family_label"] for row in _algorithm_registry()["family_rows"]}
+
+
+def _family_evidence() -> list[dict[str, Any]]:
+    return _registry()["family_evidence"]
 
 
 def _benchmark_by_label() -> dict[str, dict[str, Any]]:
@@ -46,13 +59,17 @@ def _neutral_flash_gate() -> dict[str, Any]:
     return _registry()["neutral_tp_flash_fixture_gate"]
 
 
-def test_benchmark_registry_schema_v2_defines_nonproduction_evidence_tiers() -> None:
+def test_evidence_registry_schema_v1_defines_nonactivating_evidence_tiers() -> None:
     registry = _registry()
     tiers = registry["evidence_tiers"]
 
-    assert registry["schema_version"] == 2
+    assert registry["schema_version"] == 1
+    assert registry["registry_role"] == "m6_equilibrium_evidence"
     assert set(tiers) >= {"T0", "T1", "T2", "T3"}
-    assert all(tier["production_eligible"] is False for tier in tiers.values())
+    assert all(tier["admission_authority"] is False for tier in tiers.values())
+    assert registry["evidence_status_vocabulary"]["source_data_needed"].startswith(
+        "The named literature target"
+    )
 
 
 def test_benchmark_cases_are_pe_focused_and_reference_known_families() -> None:
@@ -89,9 +106,7 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
         "data/reference/equilibrium_benchmarks/neutral_tp_flash/ethane_carbon_dioxide"
     )
     assert "ePC-SAFT-compatible neutral TP flash fixture" in benchmarks["Pereira 2012 System III"]["todo"]
-    assert benchmarks["Gross/Sadowski 2002 methanol/cyclohexane"]["family_labels"] == [
-        "PE-Associating TP Flash"
-    ]
+    assert benchmarks["Gross/Sadowski 2002 methanol/cyclohexane"]["family_labels"] == ["PE-Associating TP Flash"]
     assert benchmarks["Khudaida 2026 electrolyte LLE"]["priority_rank"] == 1
     assert benchmarks["Khudaida 2026 electrolyte LLE"]["status"] == (
         "internal_diagnostic_selector_integration_required"
@@ -104,7 +119,7 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
 def test_neutral_lle_showcase_declares_shared_certification_and_tolerance_margins() -> None:
     matsuda = next(
         case
-        for row in _registry()["family_rows"]
+        for row in _family_evidence()
         for case in row.get("reference_cases", [])
         if case["case_label"] == "Matsuda 2011 perfluorohexane + hexane neutral LLE"
     )
@@ -124,7 +139,7 @@ def test_neutral_lle_showcase_declares_shared_certification_and_tolerance_margin
 def test_associating_lle_gross_2002_declares_shared_certification_and_tolerance_margins() -> None:
     gross = next(
         case
-        for row in _registry()["family_rows"]
+        for row in _family_evidence()
         for case in row.get("reference_cases", [])
         if case["case_label"] == "Gross/Sadowski 2002 methanol/cyclohexane"
     )
@@ -144,19 +159,38 @@ def test_associating_lle_gross_2002_declares_shared_certification_and_tolerance_
     } <= set(gross["acceptance_checks"])
 
 
-def test_current_public_route_policy_excludes_neutral_lle_and_tp_flash() -> None:
-    policy = _registry()["policy"]["current_public_route_policy"]
+def test_evidence_registry_defers_runtime_exposure_to_native_activation() -> None:
+    registry = _registry()
 
-    assert "bubble/dew pressure" in policy
-    assert "single-component VLE" in policy
-    assert "neutral TP flash and neutral LLE are internal" in policy
+    assert registry["activation_authority"].endswith("native/equilibrium/core/activation_matrix.h")
+    assert "never declares runtime route exposure" in registry["claim_boundary"]
+
+
+def test_derived_workflow_results_are_retained_as_m6_evidence() -> None:
+    evidence = {row["label"]: row for row in _registry()["derived_workflow_evidence"]}
+
+    assert set(evidence) == {"Bubble point", "Dew point", "Cloud point", "Shadow point"}
+    for label, row in evidence.items():
+        assert "ePC-SAFT-compatible neutral TP flash mixture" in row["shared_mixture_policy"], label
+        assert "Pereira 2012 System III remains HELD/SAFT-VR context" in row["shared_mixture_policy"], label
+        assert "contract-only" in row["diagnostic_policy"], label
+        assert "explicit sweep opt-in" in row["diagnostic_policy"], label
+        assert row["acceptance_checks"], label
+
+    assert evidence["Bubble point"]["current_convergence_status"] == ("current_fixture_strict_route_points_verified")
+    assert evidence["Dew point"]["current_convergence_status"] == ("current_fixture_strict_route_points_verified")
+    for label in ("Cloud point", "Shadow point"):
+        assert evidence[label]["current_convergence_status"] == (
+            "checker_gated_native_route_evidence_verified_public_routes_closed"
+        )
+        assert "source_backed_cloud_shadow_pair" in evidence[label]["acceptance_checks"]
+        assert "public_route_admission_closed" in evidence[label]["acceptance_checks"]
 
 
 def test_neutral_lle_fixture_metadata_declares_internal_closed_scope() -> None:
     metadata = json.loads(
         (
-            REPO_ROOT
-            / "data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/metadata.json"
+            REPO_ROOT / "data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/metadata.json"
         ).read_text(encoding="utf-8")
     )
 
@@ -170,8 +204,7 @@ def test_neutral_lle_fixture_metadata_declares_internal_closed_scope() -> None:
 def test_associating_lle_fixture_metadata_declares_internal_closed_scope() -> None:
     metadata = json.loads(
         (
-            REPO_ROOT
-            / "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane/metadata.json"
+            REPO_ROOT / "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane/metadata.json"
         ).read_text(encoding="utf-8")
     )
 
@@ -274,12 +307,8 @@ def test_pereira_source_audit_fixture_is_nonexecutable_and_complete() -> None:
 
 def test_pereira_material_balance_check_does_not_promote_fixture() -> None:
     metadata = json.loads((PEREIRA_SOURCE_AUDIT_PATH / "metadata.json").read_text(encoding="utf-8"))
-    check_text = (PEREIRA_SOURCE_AUDIT_PATH / "material_balance_check.csv").read_text(
-        encoding="utf-8"
-    )
-    correction_text = (PEREIRA_SOURCE_AUDIT_PATH / "feed_correction_candidates.csv").read_text(
-        encoding="utf-8"
-    )
+    check_text = (PEREIRA_SOURCE_AUDIT_PATH / "material_balance_check.csv").read_text(encoding="utf-8")
+    correction_text = (PEREIRA_SOURCE_AUDIT_PATH / "feed_correction_candidates.csv").read_text(encoding="utf-8")
     check_rows = {row["case_key"]: row for row in csv.DictReader(check_text.splitlines())}
     correction_rows = {row["case_key"]: row for row in csv.DictReader(correction_text.splitlines())}
 
@@ -324,9 +353,7 @@ def test_hydrocarbon_workbook_fixture_is_declared_as_available() -> None:
     assert {row["phase"] for row in phase_rows} == {"feed", "liquid", "vapor"}
     feed = next(row for row in phase_rows if row["phase"] == "feed")
     assert float(feed["composition_sum"]) == pytest.approx(1.0)
-    assert [float(feed[f"x{index}"]) for index in range(1, 4)] == pytest.approx(
-        benchmark["feed_composition"]
-    )
+    assert [float(feed[f"x{index}"]) for index in range(1, 4)] == pytest.approx(benchmark["feed_composition"])
     assert {row["species"] for row in parameter_rows} == {"Methane", "Ethane", "Propane"}
     assert len(interaction_rows) == 3
 
@@ -370,8 +397,8 @@ def test_stale_deleted_plan_sources_are_not_referenced() -> None:
 
 
 def test_domain_safety_policy_requires_all_three_layers() -> None:
-    policy = _registry()["policy"]
-    gates = set(_registry()["generalized_production_gates"])
+    policy = _algorithm_registry()["policy"]
+    gates = set(_algorithm_registry()["generalized_admission_gates"])
 
     assert "route-owned bounds" in policy["domain_safety_policy"]
     assert "smooth VariableTransform wrapper" in policy["domain_safety_policy"]
@@ -381,26 +408,12 @@ def test_domain_safety_policy_requires_all_three_layers() -> None:
     assert {"route_domain_bounds", "variable_transform_chain_rule", "ipopt_barrier_bounds_constraints"} <= gates
 
 
-def test_current_runtime_route_keys_are_excluded_from_generalized_families() -> None:
-    registry = _registry()
-    excluded = set(registry["excluded_current_runtime_route_keys"])
-    family_labels = _family_labels()
-
-    assert {"bubble_pressure", "bubble_temperature", "dew_pressure", "dew_temperature"} <= excluded
-    assert not (excluded & family_labels)
-
-    for row in registry["family_rows"]:
-        assert row["family_label"] not in excluded
-
-
 def test_ce_and_cpe_registry_rows_have_explicit_gates() -> None:
-    rows = {row["family_label"]: row for row in _registry()["family_rows"]}
+    rows = {row["family_label"]: row for row in _algorithm_registry()["family_rows"]}
     ce = rows["CE Standalone Reactive Speciation"]
     cpe = rows["CPE Simultaneous Phase-Chemistry Contract"]
 
-    assert ce["activation_status"] == "active_validation_not_public"
-    assert ce["production_exposed"] is False
-    assert ce["existing_public_utility_routes"] == []
+    assert ce["readiness_status"] == "component_evidence_only"
     assert ce["phase_discovery_status"] == "not_applicable_homogeneous_single_phase"
     assert {
         "homogeneous_single_phase_only",
@@ -424,7 +437,7 @@ def test_ce_and_cpe_registry_rows_have_explicit_gates() -> None:
 
 
 def test_cpe_interface_contract_names_variables_constraints_and_blockers() -> None:
-    cpe = {row["family_label"]: row for row in _registry()["family_rows"]}[
+    cpe = {row["family_label"]: row for row in _algorithm_registry()["family_rows"]}[
         "CPE Simultaneous Phase-Chemistry Contract"
     ]
     contract = cpe["interface_contract"]
@@ -434,7 +447,6 @@ def test_cpe_interface_contract_names_variables_constraints_and_blockers() -> No
     )
     assert CPE_INTERFACE_SPEC_PATH.exists()
     assert contract["status"] == "blocked_future_interface"
-    assert contract["public_routes"] == []
     assert contract["must_solve_simultaneously"] is True
     assert set(contract["variables"]) == {
         "phase_species_amounts",

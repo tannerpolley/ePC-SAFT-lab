@@ -39,12 +39,12 @@
 ## Implementation Boundaries
 
 **Files To Create:** This plan only.
-**Files To Modify:** `scripts/validation/check_neutral_lle_showcase.py`, `packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py`, `tests/native/contracts/test_neutral_lle_showcase_checker.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `tests/native/contracts/test_equilibrium_benchmark_registry.py`, and `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0366-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md`.
+**Files To Modify:** `scripts/validation/check_neutral_lle_showcase.py`, `packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py`, `tests/native/contracts/test_neutral_lle_showcase_checker.py`, `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`, `tests/native/contracts/test_equilibrium_benchmark_registry.py`, and `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0366-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md`.
 **Files To Avoid:** EOS equation files, native solver code, source fixture parameter rows, M5 regression assets, associating LLE, electrolyte LLE, reactive routes, and release metadata.
 **Source Of Truth:** Matsuda/NIST fixture under `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane`, shared PE certification contract, and current public `Equilibrium(..., route="lle")` behavior.
 **Read Path:** Read fixture metadata/thresholds, route postsolve diagnostics, `epcsaft_equilibrium.capabilities()["phase_equilibrium_certification"]`, and validator blockers from `validate_phase_equilibrium_certification_contracts`.
 **Write Path:** Add checker fields, tests, registry acceptance checks, issue mirror plan/evidence, and GitHub issue body sync.
-**Integration Points:** `evaluate_case_dir`, `_route_certification_blockers`, package API showcase test, native checker contract test, and `equilibrium-benchmark-registry.yaml`.
+**Integration Points:** `evaluate_case_dir`, `_route_certification_blockers`, package API showcase test, native checker contract test, and `equilibrium-evidence-registry.yaml`.
 **Migration Or Cutover:** Additive checker payload fields only. Existing keys remain present.
 **Replaced Path Handling:** Replace implicit source-backed completion with explicit `shared_certification` and `tolerance_margins` payloads.
 **Acceptance Proof Gate:** Do not push or open a PR until the focused #366 selector, checker tests, registry test, docs validation, and cleanup hook pass.
@@ -127,7 +127,7 @@ Test complete for #366 means:
 - Acceptance evidence must show the cutover from isolated showcase proof to shared PE contract proof.
 
 **Files:**
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `tests/native/contracts/test_equilibrium_benchmark_registry.py`
 - Modify: `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0366-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md`
 

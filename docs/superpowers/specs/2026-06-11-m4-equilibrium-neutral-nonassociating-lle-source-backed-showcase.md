@@ -57,7 +57,7 @@ payload.
   treats `PE-Neutral TP Flash` as the neutral TP flash plus neutral VLE/LLE
   validation ladder.
 - Verified:
-  `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+  `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
   has a source-backed neutral TP-flash fixture and electrolyte LLE fixtures,
   but no `neutral_lle` fixture directory or neutral nonassociating LLE benchmark
   case.

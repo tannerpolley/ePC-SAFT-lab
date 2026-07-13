@@ -15,7 +15,7 @@
 - Source spec: `docs/superpowers/specs/2026-06-11-m4-equilibrium-neutral-nonassociating-lle-source-backed-showcase.md`
 - HELD adoption context: `docs/superpowers/specs/2026-06-11-m4-equilibrium-held-1-0-full-adoption.md`
 - Current M4 index: `docs/superpowers/milestones/M4-equilibrium/README.md`
-- Current benchmark registry: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Current evidence registry: `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Verified: current `main` exposes and tests a neutral nonassociating `lle` utility route with synthetic LLE proof and HELD Stage II/III diagnostics.
 - Verified: current M4 registry has source-backed neutral TP flash and electrolyte LLE entries, but no source-backed neutral nonassociating LLE fixture entry.
 - Verified: #247 retained synthetic neutral LLE reliability evidence; that evidence is algorithm reliability, not source-backed public LLE benchmark evidence.
@@ -73,7 +73,7 @@ The issue is complete only when all of these are true:
 - Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/neutral_lle_tolerance_margins/results/neutral_lle_tolerance_margins.svg`
 - Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/neutral_lle_tolerance_margins/results/neutral_lle_tolerance_margins.pdf`
 - Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/neutral_lle_held_stage_status/results/neutral_lle_held_stage_status.png`
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 - Modify: `docs/superpowers/specs/2026-06-11-m4-equilibrium-held-1-0-full-adoption.md`
 
@@ -196,7 +196,7 @@ The issue is complete only when all of these are true:
 - Future issue routing must see the new issue as ready and the blocked generalized/associating/electrolyte issues as still blocked by their distinct gates.
 
 **Files:**
-- Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- Modify: `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 - Modify: `docs/superpowers/specs/2026-06-11-m4-equilibrium-held-1-0-full-adoption.md`
 - Test: `scripts/dev/validate_project.py`

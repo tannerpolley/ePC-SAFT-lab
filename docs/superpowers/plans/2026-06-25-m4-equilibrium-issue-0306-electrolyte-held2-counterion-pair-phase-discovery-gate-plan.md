@@ -78,7 +78,7 @@ admission separate.
 ## Implementation Boundaries
 
 **Files To Create:** `scripts/validation/check_electrolyte_held2_phase_discovery.py`, `tests/native/contracts/test_electrolyte_held2_phase_discovery.py`, and source-backed preprocessor fixture files only if existing local data cannot express the multi-ion counterion matrix case.
-**Files To Modify:** `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.h`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/_native_core.pyi`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/capabilities.py`, `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`, `tests/native/contracts/test_generalized_equilibrium_registry.py`, `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`, `docs/superpowers/issues/2026-06-25-m4-equilibrium-issue-0306-add-electrolyte-held2-counterion-pair-phase-discovery-gate.md`, `docs/superpowers/milestones/M4-equilibrium/README.md`, and `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`.
+**Files To Modify:** `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.h`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/_native_core.pyi`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/capabilities.py`, `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`, `tests/native/contracts/test_generalized_equilibrium_registry.py`, `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`, `docs/superpowers/issues/2026-06-25-m4-equilibrium-issue-0306-add-electrolyte-held2-counterion-pair-phase-discovery-gate.md`, `docs/superpowers/milestones/M4-equilibrium/README.md`, and `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`.
 **Files To Avoid:** Public route maps beyond closed-state assertions,
 regression package files, downstream repositories, generated build trees, and
 provider EOS implementation internals.
@@ -311,7 +311,7 @@ strict derivative evidence, and postsolve certification.
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/capabilities.py`
 - `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 - `tests/native/contracts/test_generalized_equilibrium_registry.py`
-- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml` and `docs/superpowers/milestones/M6-validation/registries/equilibrium-evidence-registry.yaml`
 
 - [ ] Consume #269, #300, and #302 checker payloads.
 - [ ] Record finite native HELD2 discovery metrics and residual bookkeeping.

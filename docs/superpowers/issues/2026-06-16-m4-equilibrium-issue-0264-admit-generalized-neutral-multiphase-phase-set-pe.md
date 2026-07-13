@@ -14,8 +14,10 @@ source_spec: null
 source_plan: null
 afk_hitl: AFK
 branch: null
-last_synced: "2026-06-17"
+last_synced: "2026-07-12"
 ---
+
+**Source-faithful historical classification (2026-07-12):** Preserve sampled-candidate, boundary-trace, exact local-refinement, and postsolve evidence as internal component evidence only. The former generalized phase-set and public multiphase admission claim is superseded because no global phase-set proof exists. Public multiphase remains closed pending #460.
 
 # M4: admit generalized neutral multiphase phase-set PE
 

@@ -2,20 +2,24 @@
 issue: 314
 title: "M4: admit source-backed public electrolyte GFPE route"
 url: https://github.com/ePC-SAFT/ePC-SAFT/issues/314
-state: open
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: equilibrium
 capability: electrolyte
 backend: Ipopt
-readiness: in_progress
+readiness: closed
 release_target: equilibrium-0.x
-source_spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
-source_plan: docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0314-electrolyte-public-route-admission-gate-plan.md
+source_spec: null
+source_plan: null
 afk_hitl: AFK
-branch: codex/issue-0314-electrolyte-public-admission
-last_synced: "2026-06-25"
+branch: null
+last_synced: "2026-07-12"
 ---
+
+**Source-faithful historical classification (2026-07-12):** The former public electrolyte GFPE admission is superseded. Preserve route-orchestration, local-solve, and postsolve receipts as internal evidence only; they do not establish source-faithful Perdomo HELD2 or current public exposure. `electrolyte_lle` remains closed pending #459; literature/model reproduction belongs to M6.
+
+**Mirror Retention:** Keep
 
 # M4: admit source-backed public electrolyte GFPE route
 
