@@ -24,6 +24,325 @@ scientific_invariants:
     - misleading_held_and_held2_diagnostic_surface
 checkpoint:
   date: "2026-07-12"
+  stage_4_provider_input_binding_dispositions:
+    - binding: _native_equilibrium_activation_plan_contract
+      disposition: migrate_public_handle
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - activation_selector_core
+      - local_nlp_ipopt_adapter
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_internal_multiphase_activation_contracts.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_equilibrium_selector_contract
+      disposition: migrate_public_handle
+      solve_varying_independent_variables_by_route:
+        bubble_pressure:
+        - mole_fraction
+        - molar_density
+        - pressure_Pa
+        dew_pressure:
+        - mole_fraction
+        - molar_density
+        - pressure_Pa
+        bubble_temperature:
+        - temperature_K
+        - mole_fraction
+        - molar_density
+        dew_temperature:
+        - temperature_K
+        - mole_fraction
+        - molar_density
+        neutral_tp_flash:
+        - mole_fraction
+        - molar_density
+        neutral_lle:
+        - mole_fraction
+        - molar_density
+        single_component_vle:
+        - molar_density
+        - pressure_Pa
+      preservation_item_ids:
+      - activation_selector_core
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_equilibrium_selector_route_result
+      disposition: migrate_public_handle
+      solve_varying_independent_variables_by_route:
+        bubble_pressure:
+        - mole_fraction
+        - molar_density
+        - pressure_Pa
+        dew_pressure:
+        - mole_fraction
+        - molar_density
+        - pressure_Pa
+        bubble_temperature:
+        - temperature_K
+        - mole_fraction
+        - molar_density
+        dew_temperature:
+        - temperature_K
+        - mole_fraction
+        - molar_density
+        neutral_tp_flash:
+        - mole_fraction
+        - molar_density
+        neutral_lle:
+        - mole_fraction
+        - molar_density
+        single_component_vle:
+        - molar_density
+        - pressure_Pa
+      preservation_item_ids:
+      - activation_selector_core
+      - public_pressure_boundary_routes
+      - public_single_component_saturation
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/api/test_equilibrium.py
+      - packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_activated_neutral_tp_flash_nlp_contract
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - local_nlp_ipopt_adapter
+      - exact_phase_derivative_assembly
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_equilibrium_cloud_shadow_route_result
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - temperature_K
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - local_nlp_ipopt_adapter
+      - neutral_phase_discovery
+      focused_proof_paths:
+      - tests/native/contracts/test_cloud_shadow_route_admission_checker.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_eos_phase_system
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - exact_phase_derivative_assembly
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/blocks/test_eos_phase_block.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_phase_equilibrium_residual_block_contract
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - exact_phase_derivative_assembly
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_phase_equilibrium_residual_block_contract.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_neutral_two_phase_eos_nlp_contract
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - local_nlp_ipopt_adapter
+      - exact_phase_derivative_assembly
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/contracts/test_provider_resolved_input_integration.py
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_phase_equilibrium_residual_block_contract.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_neutral_multiphase_eos_nlp_contract
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - local_nlp_ipopt_adapter
+      - exact_phase_derivative_assembly
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_internal_multiphase_activation_contracts.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_neutral_two_phase_eos_postsolve
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - native_postsolve_certification
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/results/test_result_builder.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_neutral_multiphase_eos_postsolve
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - native_postsolve_certification
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/contracts/test_provider_resolved_input_integration.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_neutral_multiphase_fugacity_residual_route_result
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - neutral_phase_discovery
+      - local_nlp_ipopt_adapter
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_internal_multiphase_activation_contracts.py
+      - scripts/validation/check_generalized_phase_set.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_neutral_tpd_phase_discovery
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - neutral_phase_discovery
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py
+      - scripts/validation/check_generalized_phase_set.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_associating_single_component_vle_validation_result
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - molar_density
+      - pressure_Pa
+      preservation_item_ids:
+      - association_components
+      - local_nlp_ipopt_adapter
+      focused_proof_paths:
+      - tests/native/contracts/test_gross_2002_figure01_internal_saturation.py
+      trial_phase_composition_invariant_required: false
+    - binding: _native_eos_phase_block
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - exact_phase_derivative_assembly
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/blocks/test_eos_phase_block.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_saturation_block
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - molar_density
+      - pressure_Pa
+      preservation_item_ids:
+      - public_single_component_saturation
+      - exact_phase_derivative_assembly
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py
+      trial_phase_composition_invariant_required: false
+    - binding: _native_electrolyte_contribution_block
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables: []
+      preservation_item_ids:
+      - electrolyte_counterion_pair_components
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/blocks/test_eos_phase_block.py
+      trial_phase_composition_invariant_required: false
+    - binding: _native_chemical_equilibrium_nlp_activation:eos_activity
+      disposition: optional_eos_activity_handle_or_reject
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - standalone_chemical_equilibrium_components
+      - failed_nonideal_mea_ce_output
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_eos_activity.py
+      - tests/native/contracts/test_standalone_ce_gate.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_electrolyte_bubble_t_reduced_nlp_probe
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - temperature_K
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - electrolyte_counterion_pair_components
+      - exact_phase_derivative_assembly
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_flash_validation.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_electrolyte_bubble_t_route_result
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - temperature_K
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - electrolyte_counterion_pair_components
+      - local_nlp_ipopt_adapter
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_flash_validation.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_electrolyte_tpd_phase_discovery
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - electrolyte_counterion_pair_components
+      focused_proof_paths:
+      - tests/native/contracts/test_electrolyte_tpd_gate.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_electrolyte_held2_continuous_tpd_minimizer
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - electrolyte_counterion_pair_components
+      focused_proof_paths:
+      - packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_continuous_tpd.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_electrolyte_held2_phase_discovery
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - electrolyte_counterion_pair_components
+      focused_proof_paths:
+      - tests/native/contracts/test_electrolyte_held2_phase_discovery.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_electrolyte_stage_iii_refinement
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - electrolyte_counterion_pair_components
+      - local_nlp_ipopt_adapter
+      focused_proof_paths:
+      - tests/native/contracts/test_electrolyte_stage_iii_refinement.py
+      trial_phase_composition_invariant_required: true
+    - binding: _native_electrolyte_postsolve_certification
+      disposition: migrate_const_handle_preserve_concept
+      solve_varying_independent_variables:
+      - mole_fraction
+      - molar_density
+      preservation_item_ids:
+      - native_postsolve_certification
+      - electrolyte_counterion_pair_components
+      focused_proof_paths:
+      - tests/native/contracts/test_electrolyte_postsolve_certification.py
+      trial_phase_composition_invariant_required: true
   source_commit_before_characterization: 8c6a5df207b96f35fcbae8adb394ac82322b015c
   m0_machine_schema_state: documented_contract_only_not_activated
   m0_documented_contract_deviation:
@@ -187,11 +506,12 @@ checkpoint:
     source_paths:
       - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/module.cpp
       - packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp
-    total_binding_count: 40
-    nonproduction_binding_count: 39
+    total_binding_count: 41
+    nonproduction_binding_count: 40
     public_execution_binding: _native_equilibrium_selector_route_result
     all_bindings:
       - _native_equilibrium_build_identity
+      - _native_provider_resolved_input_handle_probe
       - _native_equilibrium_activation_matrix
       - _native_equilibrium_selector_route_contracts
       - _native_equilibrium_activation_plan_contract

@@ -1,0 +1,1757 @@
+{
+  "activation_matrix": {
+    "declared_not_exposed_families": [
+      "neutral_tp_flash",
+      "neutral_lle",
+      "neutral_multiphase_nonassoc",
+      "electrolyte_lle",
+      "reactive_speciation",
+      "reactive_lle",
+      "reactive_electrolyte_lle"
+    ],
+    "evidence_complete_families": [
+      "bubble_dew_derived_routes",
+      "single_component_vle"
+    ],
+    "ipopt_available": true,
+    "production_families": [
+      "single_component_vle",
+      "bubble_dew_derived_routes"
+    ],
+    "public_route_family_map": {
+      "bubble_pressure": "bubble_dew_derived_routes",
+      "dew_pressure": "bubble_dew_derived_routes",
+      "single_component_vle": "single_component_vle"
+    },
+    "public_routes": [
+      "bubble_pressure",
+      "dew_pressure",
+      "single_component_vle"
+    ],
+    "public_routes_by_family": {
+      "bubble_dew_derived_routes": [
+        "bubble_pressure",
+        "dew_pressure"
+      ],
+      "single_component_vle": [
+        "single_component_vle"
+      ]
+    },
+    "rows": [
+      {
+        "conservation_basis": "species",
+        "constraint_families": [
+          "material_balance",
+          "phase_pressure_consistency",
+          "phase_equilibrium",
+          "phase_volume_gap"
+        ],
+        "continuation_strategy": "",
+        "density_backend": "explicit_phase_volume_pressure_constraint",
+        "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+        "direct_transfer": "on",
+        "display_name": "Neutral TP flash",
+        "exposure_status": "declared_not_exposed",
+        "final_proof_policy": "",
+        "initialization_strategy": "",
+        "key": "neutral_tp_flash",
+        "phase_charge": "off",
+        "postsolve_certification": "tpd_postsolve",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "reaction_equilibrium": "off",
+        "residual_families": [
+          "material_balance",
+          "phase_pressure_consistency",
+          "phase_equilibrium",
+          "phase_distance"
+        ],
+        "solver_strategy": "",
+        "split_variables": "on",
+        "stability_prelayer": "deterministic_tpd_candidate_screening",
+        "variable_model": "phase_species_amounts_plus_phase_volume"
+      },
+      {
+        "conservation_basis": "species",
+        "constraint_families": [
+          "material_balance",
+          "phase_pressure_consistency",
+          "phase_distance"
+        ],
+        "continuation_strategy": "",
+        "density_backend": "explicit_phase_volume_pressure_constraint",
+        "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+        "direct_transfer": "on",
+        "display_name": "Neutral LLE",
+        "exposure_status": "declared_not_exposed",
+        "final_proof_policy": "",
+        "initialization_strategy": "",
+        "key": "neutral_lle",
+        "phase_charge": "off",
+        "postsolve_certification": "tpd_postsolve",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "reaction_equilibrium": "off",
+        "residual_families": [
+          "material_balance",
+          "phase_pressure_consistency",
+          "phase_equilibrium",
+          "phase_distance"
+        ],
+        "solver_strategy": "",
+        "split_variables": "on",
+        "stability_prelayer": "deterministic_tpd_candidate_screening",
+        "variable_model": "phase_species_amounts_plus_phase_volume"
+      },
+      {
+        "conservation_basis": "species",
+        "constraint_families": [
+          "fixed_composition",
+          "phase_amount_total",
+          "phase_pressure_consistency",
+          "phase_equilibrium",
+          "phase_volume_gap"
+        ],
+        "continuation_strategy": "",
+        "density_backend": "explicit_phase_volume_pressure_constraint",
+        "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+        "direct_transfer": "on",
+        "display_name": "Single-component VLE",
+        "exposure_status": "production_exposed",
+        "final_proof_policy": "",
+        "initialization_strategy": "",
+        "key": "single_component_vle",
+        "phase_charge": "off",
+        "postsolve_certification": "on",
+        "production_exposed": true,
+        "proof_routes": [
+          "single_component_vle_hydrocarbon_nist_saturation_exact_hessian"
+        ],
+        "public_routes": [
+          "single_component_vle"
+        ],
+        "reaction_equilibrium": "off",
+        "residual_families": [
+          "fixed_composition",
+          "phase_amount_total",
+          "phase_pressure_consistency",
+          "phase_equilibrium",
+          "phase_distance"
+        ],
+        "solver_strategy": "",
+        "split_variables": "on",
+        "stability_prelayer": "postsolve_local_only",
+        "variable_model": "phase_species_amounts_plus_phase_volume_plus_route_scalar"
+      },
+      {
+        "conservation_basis": "species",
+        "constraint_families": [
+          "material_balance",
+          "phase_pressure_consistency"
+        ],
+        "continuation_strategy": "",
+        "density_backend": "explicit_phase_volume_pressure_constraint",
+        "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+        "direct_transfer": "on",
+        "display_name": "Neutral multiphase nonassociating",
+        "exposure_status": "declared_not_exposed",
+        "final_proof_policy": "",
+        "initialization_strategy": "",
+        "key": "neutral_multiphase_nonassoc",
+        "phase_charge": "off",
+        "postsolve_certification": "tpd_postsolve",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "reaction_equilibrium": "off",
+        "residual_families": [
+          "material_balance",
+          "phase_pressure_consistency",
+          "phase_equilibrium",
+          "phase_distance"
+        ],
+        "solver_strategy": "",
+        "split_variables": "on",
+        "stability_prelayer": "deterministic_tpd_candidate_screening",
+        "variable_model": "phase_species_amounts_plus_phase_volume"
+      },
+      {
+        "conservation_basis": "species_or_salt_solvent_lift_with_exact_back_lift",
+        "constraint_families": [
+          "phase_equilibrium",
+          "phase_pressure_consistency",
+          "phase_distance",
+          "formula_feasibility",
+          "phase_charge"
+        ],
+        "continuation_strategy": "",
+        "density_backend": "native_electrolyte_postsolve_certification",
+        "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+        "direct_transfer": "on_for_transferable_species",
+        "display_name": "Electrolyte LLE",
+        "exposure_status": "declared_not_exposed",
+        "final_proof_policy": "",
+        "initialization_strategy": "",
+        "key": "electrolyte_lle",
+        "phase_charge": "on",
+        "postsolve_certification": "on",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "reaction_equilibrium": "off_unless_chemistry_is_modeled",
+        "residual_families": [
+          "phase_equilibrium",
+          "material_balance",
+          "phase_charge"
+        ],
+        "solver_strategy": "",
+        "split_variables": "on",
+        "stability_prelayer": "on",
+        "variable_model": "counterion_pair_reduced_phase_amounts_plus_phase_volume"
+      },
+      {
+        "conservation_basis": "element_or_moiety",
+        "constraint_families": [
+          "conserved_balance"
+        ],
+        "continuation_strategy": "adaptive_k_scaling_homotopy",
+        "density_backend": "homogeneous_standard_state_activity",
+        "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+        "direct_transfer": "off",
+        "display_name": "Reactive speciation",
+        "exposure_status": "declared_not_exposed",
+        "final_proof_policy": "true_gibbs_lambda_1_only",
+        "initialization_strategy": "max_min_feasible_interior",
+        "key": "reactive_speciation",
+        "phase_charge": "on_when_ionic",
+        "postsolve_certification": "on",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "reaction_equilibrium": "on",
+        "residual_families": [
+          "conserved_balance",
+          "reaction_stationarity"
+        ],
+        "solver_strategy": "ipopt_nlp_with_internal_continuation",
+        "split_variables": "off",
+        "stability_prelayer": "optional",
+        "variable_model": "single_phase_species_amounts"
+      },
+      {
+        "conservation_basis": "element_or_moiety",
+        "constraint_families": [
+          "conserved_balance",
+          "reaction_stationarity",
+          "phase_pressure_consistency",
+          "phase_distance"
+        ],
+        "continuation_strategy": "",
+        "density_backend": "",
+        "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+        "direct_transfer": "on_for_shared_species",
+        "display_name": "Reactive LLE",
+        "exposure_status": "declared_not_exposed",
+        "final_proof_policy": "",
+        "initialization_strategy": "",
+        "key": "reactive_lle",
+        "phase_charge": "optional",
+        "postsolve_certification": "on",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "reaction_equilibrium": "on",
+        "residual_families": [
+          "conserved_balance",
+          "reaction_stationarity",
+          "phase_equilibrium"
+        ],
+        "solver_strategy": "",
+        "split_variables": "on",
+        "stability_prelayer": "on",
+        "variable_model": ""
+      },
+      {
+        "conservation_basis": "element_or_moiety",
+        "constraint_families": [
+          "conserved_balance",
+          "reaction_stationarity",
+          "phase_pressure_consistency",
+          "phase_distance",
+          "phase_charge"
+        ],
+        "continuation_strategy": "",
+        "density_backend": "",
+        "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+        "direct_transfer": "on_for_shared_species",
+        "display_name": "Reactive electrolyte LLE",
+        "exposure_status": "declared_not_exposed",
+        "final_proof_policy": "",
+        "initialization_strategy": "",
+        "key": "reactive_electrolyte_lle",
+        "phase_charge": "on",
+        "postsolve_certification": "on",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "reaction_equilibrium": "on_including_cross_phase_reactions",
+        "residual_families": [
+          "conserved_balance",
+          "reaction_stationarity",
+          "phase_equilibrium",
+          "phase_charge"
+        ],
+        "solver_strategy": "",
+        "split_variables": "on",
+        "stability_prelayer": "on",
+        "variable_model": ""
+      },
+      {
+        "conservation_basis": "species_or_element_moiety",
+        "constraint_families": [
+          "fixed_composition",
+          "phase_amount_total",
+          "phase_pressure_consistency",
+          "phase_equilibrium",
+          "phase_volume_gap"
+        ],
+        "continuation_strategy": "",
+        "density_backend": "explicit_phase_volume_pressure_constraint",
+        "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+        "direct_transfer": "on",
+        "display_name": "Bubble/dew derived routes",
+        "exposure_status": "production_exposed",
+        "final_proof_policy": "",
+        "initialization_strategy": "",
+        "key": "bubble_dew_derived_routes",
+        "phase_charge": "optional",
+        "postsolve_certification": "on",
+        "production_exposed": true,
+        "proof_routes": [
+          "associating_neutral_vle_gross_2002_bubble_pressure_figures_2_9_public_exact_hessian",
+          "associating_neutral_vle_gross_2002_dew_pressure_figures_2_9_public_exact_hessian"
+        ],
+        "public_routes": [
+          "bubble_pressure",
+          "dew_pressure"
+        ],
+        "reaction_equilibrium": "off_unless_reactive_route_is_explicitly_modeled",
+        "residual_families": [
+          "fixed_composition",
+          "phase_amount_total",
+          "phase_pressure_consistency",
+          "phase_equilibrium",
+          "phase_distance"
+        ],
+        "solver_strategy": "",
+        "split_variables": "one_phase_amount_removed_by_spec",
+        "stability_prelayer": "on",
+        "variable_model": "phase_species_amounts_plus_phase_volume_plus_route_scalar"
+      }
+    ],
+    "selector_route_contracts": [
+      {
+        "production_exposed": true,
+        "proof_routes": [
+          "associating_neutral_vle_gross_2002_bubble_pressure_figures_2_9_public_exact_hessian"
+        ],
+        "public_route": "bubble_pressure",
+        "selector_family": "bubble_dew_derived_routes",
+        "selector_route": "bubble_pressure"
+      },
+      {
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_route": "bubble_temperature",
+        "selector_family": "bubble_dew_derived_routes",
+        "selector_route": "bubble_temperature"
+      },
+      {
+        "production_exposed": true,
+        "proof_routes": [
+          "associating_neutral_vle_gross_2002_dew_pressure_figures_2_9_public_exact_hessian"
+        ],
+        "public_route": "dew_pressure",
+        "selector_family": "bubble_dew_derived_routes",
+        "selector_route": "dew_pressure"
+      },
+      {
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_route": "dew_temperature",
+        "selector_family": "bubble_dew_derived_routes",
+        "selector_route": "dew_temperature"
+      },
+      {
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_route": "flash",
+        "selector_family": "neutral_tp_flash",
+        "selector_route": "neutral_tp_flash"
+      },
+      {
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_route": "lle",
+        "selector_family": "neutral_lle",
+        "selector_route": "neutral_lle"
+      },
+      {
+        "production_exposed": true,
+        "proof_routes": [
+          "single_component_vle_hydrocarbon_nist_saturation_exact_hessian"
+        ],
+        "public_route": "single_component_vle",
+        "selector_family": "single_component_vle",
+        "selector_route": "single_component_vle"
+      }
+    ],
+    "source": "native_cpp"
+  },
+  "bubble_dew_derived_routes": {
+    "available": true,
+    "entrypoint": "Equilibrium(mixture, route='bubble_pressure'/'dew_pressure', T=..., x=.../y=...).solve()",
+    "evidence": {
+      "acceptance_metrics": {
+        "associating_neutral_vle_gross_2002_bubble_pressure_figures_2_9_public_exact_hessian": {
+          "branch_coverage_score_min": 1.0,
+          "derivative_status": "verified_exact",
+          "normalized_plot_score_min": 8.0,
+          "postsolve_accepted": true,
+          "route_status": "accepted"
+        },
+        "associating_neutral_vle_gross_2002_dew_pressure_figures_2_9_public_exact_hessian": {
+          "branch_coverage_score_min": 1.0,
+          "derivative_status": "verified_exact",
+          "normalized_plot_score_min": 8.0,
+          "postsolve_accepted": true,
+          "route_status": "accepted"
+        }
+      },
+      "artifact_paths": [
+        "analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.json",
+        "analyses/paper_validation/2002_gross/figures/figure_02/results/model_curve.csv",
+        "analyses/paper_validation/2002_gross/figures/figure_02/results/plotted_data.csv",
+        "analyses/paper_validation/2002_gross/figures/figure_02/results/figure_02.png"
+      ],
+      "data_sources": [
+        "Gross/Sadowski 2002 Figures 2-9 retained source bundle",
+        "analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json"
+      ],
+      "family": "bubble_dew_derived_routes",
+      "input_scope": "neutral non-reactive non-electrolyte pressure-boundary VLE; associating inputs are restricted to source-backed Gross/Sadowski 2002 Figures 2-9 fixtures; temperature-boundary routes are closed",
+      "native_owner": "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp",
+      "owner": "epcsaft-equilibrium / M4",
+      "proof_ids": [
+        "associating_neutral_vle_gross_2002_bubble_pressure_figures_2_9_public_exact_hessian",
+        "associating_neutral_vle_gross_2002_dew_pressure_figures_2_9_public_exact_hessian"
+      ],
+      "proof_nodes": [
+        "tests/native/contracts/test_gross_2002_full_replication_checker.py::test_cli_require_complete_accepts_committed_manifest",
+        "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_vle_admits_source_backed_gross_2002_associating_binary[_gross_2002_figure2_associating_vle_parameter_set-bubble_pressure-kwargs0-neutral_bubble_p]",
+        "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_vle_admits_source_backed_gross_2002_associating_binary[_gross_2002_figure2_associating_vle_parameter_set-dew_pressure-kwargs1-neutral_dew_p]"
+      ],
+      "public_entrypoint": "Equilibrium(mixture, route='bubble_pressure'/'dew_pressure', T=..., x=.../y=...).solve()",
+      "public_routes": [
+        "bubble_pressure",
+        "dew_pressure"
+      ],
+      "strict_checkers": [
+        "uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native"
+      ]
+    },
+    "input_scope": "neutral non-reactive non-electrolyte pressure-boundary VLE; associating inputs are restricted to source-backed Gross/Sadowski 2002 Figures 2-9 fixtures; temperature-boundary routes are closed",
+    "production": true,
+    "public_routes": [
+      "bubble_pressure",
+      "dew_pressure"
+    ],
+    "requires": [
+      "cppad",
+      "ipopt"
+    ],
+    "selector_core": true
+  },
+  "capability_evidence": {
+    "complete_families": [
+      "bubble_dew_derived_routes",
+      "single_component_vle"
+    ],
+    "development_component_evidence": [
+      {
+        "blocking_reason": "The retained hydrocarbon workbook is explicitly not a literature benchmark.",
+        "evidence_id": "neutral_tp_flash_hydrocarbon_workbook_component_check",
+        "family": "neutral_tp_flash",
+        "production_admissible": false,
+        "source_paths": [
+          "data/reference/equilibrium_benchmarks/neutral_tp_flash/methane_ethane_propane",
+          "analyses/package_validation/issue_0188_neutral_tp_flash"
+        ]
+      },
+      {
+        "blocking_reason": "The retained Matsuda and Gross checks validate local formulations against a sampled candidate audit; they do not implement a global HELD dual loop.",
+        "evidence_id": "neutral_lle_sampled_candidate_validation",
+        "family": "neutral_lle",
+        "production_admissible": false,
+        "source_paths": [
+          "data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane",
+          "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane",
+          "packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py"
+        ]
+      },
+      {
+        "blocking_reason": "Only an inverse hydrocarbon-workbook point exists; no retained literature join supports the temperature-boundary route.",
+        "evidence_id": "bubble_temperature_hydrocarbon_inverse_component_check",
+        "family": "bubble_dew_derived_routes",
+        "production_admissible": false,
+        "source_paths": [
+          "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py"
+        ]
+      },
+      {
+        "blocking_reason": "Only an inverse hydrocarbon-workbook point exists; no retained literature join supports the temperature-boundary route.",
+        "evidence_id": "dew_temperature_hydrocarbon_inverse_component_check",
+        "family": "bubble_dew_derived_routes",
+        "production_admissible": false,
+        "source_paths": [
+          "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py"
+        ]
+      },
+      {
+        "blocking_reason": "The retained 2B scope artifact records NIST source rows and route eligibility, but it contains no model predictions joined to those rows.",
+        "evidence_id": "single_component_vle_pure_2b_source_scope",
+        "family": "single_component_vle",
+        "production_admissible": false,
+        "source_paths": [
+          "analyses/package_validation/equilibrium_single_component_vle/figures/associating_saturation_scope"
+        ]
+      }
+    ],
+    "production_records": {
+      "bubble_dew_derived_routes": {
+        "acceptance_metrics": {
+          "associating_neutral_vle_gross_2002_bubble_pressure_figures_2_9_public_exact_hessian": {
+            "branch_coverage_score_min": 1.0,
+            "derivative_status": "verified_exact",
+            "normalized_plot_score_min": 8.0,
+            "postsolve_accepted": true,
+            "route_status": "accepted"
+          },
+          "associating_neutral_vle_gross_2002_dew_pressure_figures_2_9_public_exact_hessian": {
+            "branch_coverage_score_min": 1.0,
+            "derivative_status": "verified_exact",
+            "normalized_plot_score_min": 8.0,
+            "postsolve_accepted": true,
+            "route_status": "accepted"
+          }
+        },
+        "artifact_paths": [
+          "analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.json",
+          "analyses/paper_validation/2002_gross/figures/figure_02/results/model_curve.csv",
+          "analyses/paper_validation/2002_gross/figures/figure_02/results/plotted_data.csv",
+          "analyses/paper_validation/2002_gross/figures/figure_02/results/figure_02.png"
+        ],
+        "data_sources": [
+          "Gross/Sadowski 2002 Figures 2-9 retained source bundle",
+          "analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json"
+        ],
+        "family": "bubble_dew_derived_routes",
+        "input_scope": "neutral non-reactive non-electrolyte pressure-boundary VLE; associating inputs are restricted to source-backed Gross/Sadowski 2002 Figures 2-9 fixtures; temperature-boundary routes are closed",
+        "native_owner": "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp",
+        "owner": "epcsaft-equilibrium / M4",
+        "proof_ids": [
+          "associating_neutral_vle_gross_2002_bubble_pressure_figures_2_9_public_exact_hessian",
+          "associating_neutral_vle_gross_2002_dew_pressure_figures_2_9_public_exact_hessian"
+        ],
+        "proof_nodes": [
+          "tests/native/contracts/test_gross_2002_full_replication_checker.py::test_cli_require_complete_accepts_committed_manifest",
+          "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_vle_admits_source_backed_gross_2002_associating_binary[_gross_2002_figure2_associating_vle_parameter_set-bubble_pressure-kwargs0-neutral_bubble_p]",
+          "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_vle_admits_source_backed_gross_2002_associating_binary[_gross_2002_figure2_associating_vle_parameter_set-dew_pressure-kwargs1-neutral_dew_p]"
+        ],
+        "public_entrypoint": "Equilibrium(mixture, route='bubble_pressure'/'dew_pressure', T=..., x=.../y=...).solve()",
+        "public_routes": [
+          "bubble_pressure",
+          "dew_pressure"
+        ],
+        "strict_checkers": [
+          "uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native"
+        ]
+      },
+      "single_component_vle": {
+        "acceptance_metrics": {
+          "single_component_vle_hydrocarbon_nist_saturation_exact_hessian": {
+            "joined_source_row_count": 32,
+            "max_chemical_potential_consistency_norm": 1e-06,
+            "max_liquid_density_absolute_relative_error_percent": 2.0,
+            "max_pressure_absolute_relative_error_percent": 4.0,
+            "max_pressure_consistency_norm": 0.01,
+            "min_phase_distance": 0.01,
+            "route_status": "accepted",
+            "solver_status": "success"
+          }
+        },
+        "artifact_paths": [
+          "analyses/package_validation/equilibrium_single_component_vle/figures/hydrocarbon_saturation_pressure/results/hydrocarbon_saturation_pressure.csv",
+          "analyses/package_validation/equilibrium_single_component_vle/figures/hydrocarbon_saturation_pressure/results/hydrocarbon_saturation_pressure_summary.csv",
+          "analyses/package_validation/equilibrium_single_component_vle/figures/hydrocarbon_saturation_pressure/results/hydrocarbon_saturation_pressure_plotted_data.csv",
+          "analyses/package_validation/equilibrium_single_component_vle/figures/hydrocarbon_saturation_pressure/results/hydrocarbon_saturation_pressure.png"
+        ],
+        "data_sources": [
+          "NIST Chemistry WebBook saturation-pressure and saturated-liquid-density tables",
+          "data/reference/pure_component/saturation_properties/methane/saturation_properties.csv",
+          "data/reference/pure_component/saturation_properties/ethane/saturation_properties.csv",
+          "data/reference/pure_component/saturation_properties/propane/saturation_properties.csv"
+        ],
+        "family": "single_component_vle",
+        "input_scope": "nonassociating methane, ethane, and propane within the retained NIST saturation-property ranges",
+        "native_owner": "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp",
+        "owner": "epcsaft-equilibrium / M4",
+        "proof_ids": [
+          "single_component_vle_hydrocarbon_nist_saturation_exact_hessian"
+        ],
+        "proof_nodes": [
+          "packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py::test_single_component_vle_route_returns_saturation_payload",
+          "tests/native/contracts/test_single_component_vle_nist_saturation_checker.py::test_evaluate_live_rows_accepts_exact_32_point_nist_campaign",
+          "tests/native/contracts/test_single_component_vle_nist_saturation_checker.py::test_run_live_validation_executes_solver_row_provider_and_records_loaded_native"
+        ],
+        "public_entrypoint": "Equilibrium(mixture, route='single_component_vle', T=...).solve()",
+        "public_routes": [
+          "single_component_vle"
+        ],
+        "strict_checkers": [
+          "uv run --no-sync python scripts/validation/check_single_component_vle_nist_saturation.py --json --require-complete --require-fresh-native"
+        ]
+      }
+    },
+    "source": "epcsaft_equilibrium.capability_evidence"
+  },
+  "declared_not_exposed_families": [
+    "neutral_tp_flash",
+    "neutral_lle",
+    "neutral_multiphase_nonassoc",
+    "electrolyte_lle",
+    "reactive_speciation",
+    "reactive_lle",
+    "reactive_electrolyte_lle"
+  ],
+  "derivative_policy": {
+    "accepted_derivative_backends": [
+      "cppad",
+      "cppad_implicit",
+      "cppad_explicit_density"
+    ],
+    "auto_policy": "public_frontend_forces_cppad_else_raise"
+  },
+  "forbidden_default_dependencies": [
+    "ceres"
+  ],
+  "native_dependencies": {
+    "cppad": {
+      "available": true,
+      "backend": "cppad",
+      "compiled": true,
+      "required": true,
+      "status": "enabled_available"
+    },
+    "ipopt": {
+      "adapter_available": true,
+      "adapter_kind": "native_tnlp_adapter",
+      "adapter_source_available": true,
+      "available": true,
+      "backend": "ipopt",
+      "compiled": true,
+      "required": true,
+      "requires_exact_gradient": true,
+      "requires_exact_jacobian": true,
+      "status": "enabled_available"
+    }
+  },
+  "optimizer": {
+    "ipopt": {
+      "adapter_available": true,
+      "adapter_kind": "native_tnlp_adapter",
+      "adapter_source_available": true,
+      "available": true,
+      "backend": "ipopt",
+      "compiled": true,
+      "formulations": [
+        "thermodynamic_constrained_nlp"
+      ],
+      "production": true,
+      "public_routes": [
+        "bubble_pressure",
+        "dew_pressure",
+        "single_component_vle"
+      ],
+      "required": true,
+      "requires_exact_gradient": true,
+      "requires_exact_jacobian": true,
+      "scope": "native Ipopt dependency for production equilibrium NLP routes",
+      "solver_backend": "ipopt",
+      "status": "enabled_available"
+    }
+  },
+  "owner": "equilibrium_extension",
+  "package": "epcsaft-equilibrium",
+  "phase_equilibrium_certification": {
+    "declared_not_exposed_families": [
+      "neutral_tp_flash",
+      "neutral_lle",
+      "neutral_multiphase_nonassoc",
+      "electrolyte_lle",
+      "reactive_speciation",
+      "reactive_lle",
+      "reactive_electrolyte_lle"
+    ],
+    "evidence_rows": [
+      {
+        "backend": "cppad_phase_blocks",
+        "classification": "production_supported",
+        "derivative": "lagrangian_hessian",
+        "quantity": "bubble_dew_derived_routes",
+        "reason": "production selector exposes neutral bubble/dew pressure routes through exact Ipopt callbacks and retained source-backed evidence",
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
+        ]
+      },
+      {
+        "backend": "cppad_phase_blocks",
+        "classification": "component_evidence",
+        "derivative": "lagrangian_hessian",
+        "quantity": "neutral_tp_flash",
+        "reason": "neutral two-phase TP flash retains component-level solver evidence, but its workbook explicitly does not establish a literature benchmark or public admission",
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
+        ]
+      },
+      {
+        "backend": "cppad_phase_blocks",
+        "classification": "internal_validation_evidence",
+        "derivative": "lagrangian_hessian",
+        "quantity": "neutral_lle",
+        "reason": "neutral nonassociating LLE retains an internal exact-derivative formulation and sampled-candidate validation, but it has no global phase-set proof or public selector admission",
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+          "packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py"
+        ]
+      },
+      {
+        "assoc_scheme": "2B",
+        "backend": "cppad_implicit_association",
+        "classification": "internal_validation_evidence",
+        "component_pair": [
+          "methanol",
+          "cyclohexane"
+        ],
+        "derivative": "association_lagrangian_hessian",
+        "k_ij": 0.051,
+        "phase_count": 2,
+        "quantity": "associating_neutral_lle_gross_2002_internal_exact_hessian",
+        "reason": "the source-backed Gross/Sadowski 2002 methanol/cyclohexane case retains internal exact implicit-association Hessian evidence, but the sampled-candidate audit does not prove global phase-set completeness",
+        "row_family": "equilibrium",
+        "selector_family": "neutral_lle",
+        "source_configuration": "Gross2002 Figure8 methanol-cyclohexane",
+        "source_fixture": "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "scripts/validation/check_associating_gfpe_gate.py",
+          "scripts/validation/check_associating_lle_gross_2002.py",
+          "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
+          "packages/epcsaft-equilibrium/tests/native/results/test_associating_lle_reference_values.py",
+          "tests/native/contracts/test_associating_gfpe_gate_checker.py",
+          "tests/native/contracts/test_associating_lle_gross_2002_checker.py"
+        ]
+      },
+      {
+        "assoc_scheme": "2B",
+        "backend": "cppad_implicit_association",
+        "classification": "internal_validation_evidence",
+        "component_pair": [
+          "water",
+          "1-pentanol"
+        ],
+        "derivative": "association_lagrangian_hessian",
+        "k_ij": 0.016,
+        "phase_count": 2,
+        "quantity": "associating_neutral_lle_gross_2002_figure_10_internal_exact_hessian",
+        "reason": "Figure 10 retains source-backed internal exact implicit-association Hessian evidence for the lower LLE boundary; it is not a global phase-set proof or public-route admission.",
+        "row_family": "equilibrium",
+        "selector_family": "neutral_lle",
+        "source_configuration": "Gross2002 Figure10 water-1-pentanol",
+        "source_fixture": "analyses/paper_validation/2002_gross/figures/figure_10",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py"
+        ]
+      },
+      {
+        "assoc_scheme": "2B",
+        "backend": "cppad_implicit_association",
+        "classification": "component_evidence",
+        "component_pair": [
+          "water",
+          "1-pentanol"
+        ],
+        "derivative": "association_lagrangian_hessian",
+        "k_ij": 0.016,
+        "phase_count": 2,
+        "quantity": "associating_neutral_vle_gross_2002_figure_10_public_exact_hessian",
+        "reason": "Figure 10 retains source-backed upper VLLE/VLE component evidence, but it is not an activation proof for the public pressure routes.",
+        "row_family": "equilibrium",
+        "selector_family": "bubble_dew_derived_routes",
+        "source_configuration": "Gross2002 Figure10 water-1-pentanol",
+        "source_fixture": "analyses/paper_validation/2002_gross/figures/figure_10",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py"
+        ]
+      },
+      {
+        "backend": "cppad_explicit_density",
+        "classification": "internal_diagnostic_evidence",
+        "derivative": "lagrangian_hessian",
+        "quantity": "neutral_multiphase_nonassoc",
+        "reason": "retained internal reduced-fugacity diagnostics do not establish native-selector ownership or public admission",
+        "row_family": "equilibrium",
+        "selector_family": "neutral_multiphase_nonassoc",
+        "subsystem": "internal_multiphase_diagnostic",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_internal_multiphase_activation_contracts.py"
+        ]
+      },
+      {
+        "backend": "cppad_phase_blocks",
+        "classification": "production_supported",
+        "derivative": "lagrangian_hessian",
+        "quantity": "single_component_vle",
+        "reason": "production selector exposes nonassociating methane, ethane, and propane saturation through a fixed-temperature pressure route with exact Ipopt callbacks and retained NIST joins",
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py",
+          "packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py",
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
+        ]
+      },
+      {
+        "backend": "analytic_ce_objective_with_cppad_eos_activity_extensions",
+        "classification": "internal_validation_evidence",
+        "derivative": "standalone_ce_lagrangian_hessian_and_final_proof_diagnostics",
+        "quantity": "reactive_speciation_standalone_ce_validation",
+        "reason": "standalone homogeneous CE remains an internal validation target; the live MEA continuation fails final balance and stationarity proof and therefore authorizes no public route",
+        "row_family": "equilibrium",
+        "selector_family": "reactive_speciation",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_eos_activity.py",
+          "tests/native/contracts/test_standalone_ce_gate.py",
+          "tests/native/contracts/test_ce_robustness_followup_gate.py",
+          "scripts/validation/check_standalone_ce_gate.py",
+          "scripts/validation/check_ce_robustness_followup.py"
+        ]
+      },
+      {
+        "backend": "cppad_born_ssm_ds",
+        "classification": "prerequisite_evidence",
+        "component_set": [
+          "water",
+          "ethanol",
+          "isobutanol",
+          "NaCl"
+        ],
+        "derivative": "born_ssm_ds_composition_fugacity_activity_and_parameter_receipts",
+        "phase_count": 2,
+        "quantity": "electrolyte_held2_readiness_born_ssm_ds_exactness",
+        "reason": "issue #300 records the electrolyte HELD2 prerequisite gate: source-backed Khudaida inputs, exact charge-neutral NaCl amount lifting, CppAD Born SSM/DS derivative receipts retained for selector-integration repair.",
+        "reduced_basis": "charge_neutral_NaCl_amount_lift",
+        "row_family": "equilibrium",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 electrolyte LLE readiness",
+        "source_fixture": "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl",
+        "subsystem": "electrolyte_gfpe_readiness",
+        "supported": true,
+        "tests": [
+          "scripts/validation/check_electrolyte_held2_readiness.py",
+          "tests/native/contracts/test_electrolyte_held2_readiness_checker.py",
+          "packages/epcsaft/tests/native/state/test_born_parameter_derivatives.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+          "tests/native/contracts/test_generalized_equilibrium_registry.py"
+        ]
+      },
+      {
+        "backend": "native_counterion_pair_phase_discovery",
+        "classification": "phase_discovery_evidence",
+        "component_set": [
+          "water",
+          "ethanol",
+          "isobutanol",
+          "NaCl"
+        ],
+        "derivative": "counterion_pair_reduced_tpd_bookkeeping",
+        "preprocessor_fixtures": [
+          "analyses/paper_validation/2022_ascani/tables/table_005/table_005.md",
+          "docs/papers/md/Equilibrium/Ascani, Sadowski, Held - 2022 - Calculation of Multiphase Equilibria Containing Mixed Solvents and M.md"
+        ],
+        "quantity": "electrolyte_held2_counterion_pair_phase_discovery",
+        "reason": "issue #306 records the electrolyte HELD2 phase-discovery gate: native counterion-pair matrix construction, charge-neutral candidate diagnostics, pair-based mean-ionic bookkeeping, source-backed multi-ion preprocessor fixtures, and downstream Stage III/postsolve prerequisites.",
+        "reduced_basis": "independent_counterion_pair_matrix",
+        "row_family": "equilibrium",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 NaCl plus Ascani 2022 mixed-electrolyte counterion fixtures",
+        "source_fixture": "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl",
+        "stage_status": "phase_discovery_complete_stage_iii_pending",
+        "subsystem": "electrolyte_phase_discovery",
+        "supported": true,
+        "tests": [
+          "scripts/validation/check_electrolyte_held2_phase_discovery.py",
+          "tests/native/contracts/test_electrolyte_held2_phase_discovery.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+          "tests/native/contracts/test_generalized_equilibrium_registry.py"
+        ]
+      },
+      {
+        "backend": "native_electrolyte_stage_iii_refinement",
+        "classification": "stage_iii_refinement_evidence",
+        "component_set": [
+          "water",
+          "ethanol",
+          "isobutanol",
+          "NaCl"
+        ],
+        "derivative": "counterion_pair_reduced_residual_jacobian_hessian_receipts",
+        "quantity": "electrolyte_held2_stage_iii_reduced_variable_refinement",
+        "reason": "issue #312 records the electrolyte HELD2 Stage III refinement gate: the checker consumes #269/#300/#302/#306, calls native `_native_electrolyte_stage_iii_refinement`, retains exact reduced counterion-pair residual Jacobian/Hessian receipts, records strict Ipopt solver diagnostics and feeds internal postsolve validation.",
+        "reduced_basis": "independent_counterion_pair_matrix",
+        "route_hessian_mode": "limited_memory_charged_born_route",
+        "row_family": "equilibrium",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 NaCl local Stage III refinement",
+        "source_fixture": "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl",
+        "stage_status": "stage_iii_refinement_complete_postsolve_pending",
+        "subsystem": "electrolyte_stage_iii_refinement",
+        "supported": true,
+        "tests": [
+          "scripts/validation/check_electrolyte_stage_iii_refinement.py",
+          "tests/native/contracts/test_electrolyte_stage_iii_refinement.py",
+          "tests/native/contracts/test_electrolyte_held2_phase_discovery.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+          "tests/native/contracts/test_generalized_equilibrium_registry.py"
+        ]
+      },
+      {
+        "backend": "native_electrolyte_postsolve_certification",
+        "classification": "postsolve_certification_evidence",
+        "component_set": [
+          "water",
+          "ethanol",
+          "isobutanol",
+          "NaCl"
+        ],
+        "derivative": "postsolve_physical_residual_certification",
+        "quantity": "electrolyte_held2_postsolve_phase_set_certification",
+        "reason": "issue #313 records the electrolyte postsolve certification gate: the checker consumes #312, calls native `_native_electrolyte_postsolve_certification`, retains explicit-ion reconstruction, per-phase and total charge residuals, neutral and mean-ionic transfer residuals, pressure consistency, phase amount, composition normalization, and domain-margin diagnostics retained for repair.",
+        "reduced_basis": "independent_counterion_pair_matrix",
+        "route_hessian_mode": "limited_memory_charged_born_route",
+        "row_family": "equilibrium",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 NaCl local postsolve certification",
+        "source_fixture": "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl",
+        "stage_status": "postsolve_component_diagnostic_complete_selector_integration_pending",
+        "subsystem": "electrolyte_postsolve_certification",
+        "supported": true,
+        "tests": [
+          "scripts/validation/check_electrolyte_postsolve_certification.py",
+          "tests/native/contracts/test_electrolyte_postsolve_certification.py",
+          "tests/native/contracts/test_electrolyte_stage_iii_refinement.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+          "tests/native/contracts/test_generalized_equilibrium_registry.py"
+        ]
+      },
+      {
+        "backend": "native_electrolyte_postsolve_certification",
+        "classification": "internal_validation_evidence",
+        "component_set": [
+          "water",
+          "ethanol",
+          "isobutanol",
+          "NaCl"
+        ],
+        "derivative": "exact_reduced_counterion_pair_jacobian_hessian_receipts",
+        "native_component_set": [
+          "H2O",
+          "Ethanol",
+          "Butanol",
+          "Na+",
+          "Cl-"
+        ],
+        "parameter_bundle": "analyses/paper_validation/2026_khudaida/parameters",
+        "phase_discovery_status": "held2_component_diagnostics_retained_selector_integration_required",
+        "quantity": "electrolyte_lle_khudaida_repair_evidence",
+        "reason": "source-backed Khudaida component diagnostics are retained for repair, but direct postsolve dispatch does not establish native-selector ownership or public electrolyte-LLE admission",
+        "reduced_basis": "independent_counterion_pair_matrix",
+        "route_hessian_mode": "limited_memory_charged_born_route_with_exact_reduced_derivative_receipts",
+        "row_family": "equilibrium",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 NaCl mixed-solvent electrolyte LLE",
+        "source_fixture": "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl",
+        "stage_status": "retained_diagnostic_evidence",
+        "subsystem": "electrolyte_validation_repair",
+        "supported": true,
+        "tests": [
+          "scripts/validation/check_electrolyte_public_admission.py",
+          "tests/native/contracts/test_electrolyte_postsolve_certification.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+          "tests/native/contracts/test_generalized_equilibrium_registry.py"
+        ]
+      }
+    ],
+    "planned_route_families": [
+      {
+        "display_name": "Neutral TP flash",
+        "exposure_status": "declared_not_exposed",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "selector_family": "neutral_tp_flash"
+      },
+      {
+        "display_name": "Neutral LLE",
+        "exposure_status": "declared_not_exposed",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "selector_family": "neutral_lle"
+      },
+      {
+        "display_name": "Neutral multiphase nonassociating",
+        "exposure_status": "declared_not_exposed",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "selector_family": "neutral_multiphase_nonassoc"
+      },
+      {
+        "display_name": "Electrolyte LLE",
+        "exposure_status": "declared_not_exposed",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "selector_family": "electrolyte_lle"
+      },
+      {
+        "display_name": "Reactive speciation",
+        "exposure_status": "declared_not_exposed",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "selector_family": "reactive_speciation"
+      },
+      {
+        "display_name": "Reactive LLE",
+        "exposure_status": "declared_not_exposed",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "selector_family": "reactive_lle"
+      },
+      {
+        "display_name": "Reactive electrolyte LLE",
+        "exposure_status": "declared_not_exposed",
+        "production_exposed": false,
+        "proof_routes": [],
+        "public_routes": [],
+        "selector_family": "reactive_electrolyte_lle"
+      }
+    ],
+    "production_families": [
+      "single_component_vle",
+      "bubble_dew_derived_routes"
+    ],
+    "production_route_contracts": [
+      {
+        "acceptance_diagnostics_required": [
+          "capability_evidence",
+          "fixed_composition",
+          "phase_amount_total",
+          "phase_distance",
+          "phase_equilibrium",
+          "phase_pressure_consistency",
+          "phase_volume_gap",
+          "postsolve_certification",
+          "public_route_mapping"
+        ],
+        "activation": {
+          "conservation_basis": "species",
+          "constraint_families": [
+            "fixed_composition",
+            "phase_amount_total",
+            "phase_pressure_consistency",
+            "phase_equilibrium",
+            "phase_volume_gap"
+          ],
+          "continuation_strategy": "",
+          "density_backend": "explicit_phase_volume_pressure_constraint",
+          "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+          "direct_transfer": "on",
+          "display_name": "Single-component VLE",
+          "exposure_status": "production_exposed",
+          "final_proof_policy": "",
+          "initialization_strategy": "",
+          "key": "single_component_vle",
+          "phase_charge": "off",
+          "postsolve_certification": "on",
+          "production_exposed": true,
+          "proof_routes": [
+            "single_component_vle_hydrocarbon_nist_saturation_exact_hessian"
+          ],
+          "public_routes": [
+            "single_component_vle"
+          ],
+          "reaction_equilibrium": "off",
+          "residual_families": [
+            "fixed_composition",
+            "phase_amount_total",
+            "phase_pressure_consistency",
+            "phase_equilibrium",
+            "phase_distance"
+          ],
+          "solver_strategy": "",
+          "split_variables": "on",
+          "stability_prelayer": "postsolve_local_only",
+          "variable_model": "phase_species_amounts_plus_phase_volume_plus_route_scalar"
+        },
+        "certification_required": true,
+        "constraint_families": [
+          "fixed_composition",
+          "phase_amount_total",
+          "phase_pressure_consistency",
+          "phase_equilibrium",
+          "phase_volume_gap"
+        ],
+        "density_backend": "explicit_phase_volume_pressure_constraint",
+        "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+        "display_name": "Single-component VLE",
+        "evidence_rows": [
+          {
+            "backend": "cppad_phase_blocks",
+            "classification": "production_supported",
+            "derivative": "lagrangian_hessian",
+            "quantity": "single_component_vle",
+            "reason": "production selector exposes nonassociating methane, ethane, and propane saturation through a fixed-temperature pressure route with exact Ipopt callbacks and retained NIST joins",
+            "row_family": "equilibrium",
+            "subsystem": "native_ipopt",
+            "supported": true,
+            "tests": [
+              "packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py",
+              "packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py",
+              "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
+            ]
+          }
+        ],
+        "exposure_status": "production_exposed",
+        "family_residual_block": "vle",
+        "postsolve_certification": "on",
+        "production_evidence_quantities": [
+          "single_component_vle"
+        ],
+        "production_exposed": true,
+        "proof_routes": [
+          "single_component_vle_hydrocarbon_nist_saturation_exact_hessian"
+        ],
+        "public_routes": [
+          "single_component_vle"
+        ],
+        "residual_families": [
+          "fixed_composition",
+          "phase_amount_total",
+          "phase_pressure_consistency",
+          "phase_equilibrium",
+          "phase_distance"
+        ],
+        "selector_family": "single_component_vle",
+        "stability_prelayer": "postsolve_local_only",
+        "variable_model": "phase_species_amounts_plus_phase_volume_plus_route_scalar"
+      },
+      {
+        "acceptance_diagnostics_required": [
+          "capability_evidence",
+          "fixed_composition",
+          "phase_amount_total",
+          "phase_distance",
+          "phase_equilibrium",
+          "phase_pressure_consistency",
+          "phase_volume_gap",
+          "postsolve_certification",
+          "public_route_mapping"
+        ],
+        "activation": {
+          "conservation_basis": "species_or_element_moiety",
+          "constraint_families": [
+            "fixed_composition",
+            "phase_amount_total",
+            "phase_pressure_consistency",
+            "phase_equilibrium",
+            "phase_volume_gap"
+          ],
+          "continuation_strategy": "",
+          "density_backend": "explicit_phase_volume_pressure_constraint",
+          "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+          "direct_transfer": "on",
+          "display_name": "Bubble/dew derived routes",
+          "exposure_status": "production_exposed",
+          "final_proof_policy": "",
+          "initialization_strategy": "",
+          "key": "bubble_dew_derived_routes",
+          "phase_charge": "optional",
+          "postsolve_certification": "on",
+          "production_exposed": true,
+          "proof_routes": [
+            "associating_neutral_vle_gross_2002_bubble_pressure_figures_2_9_public_exact_hessian",
+            "associating_neutral_vle_gross_2002_dew_pressure_figures_2_9_public_exact_hessian"
+          ],
+          "public_routes": [
+            "bubble_pressure",
+            "dew_pressure"
+          ],
+          "reaction_equilibrium": "off_unless_reactive_route_is_explicitly_modeled",
+          "residual_families": [
+            "fixed_composition",
+            "phase_amount_total",
+            "phase_pressure_consistency",
+            "phase_equilibrium",
+            "phase_distance"
+          ],
+          "solver_strategy": "",
+          "split_variables": "one_phase_amount_removed_by_spec",
+          "stability_prelayer": "on",
+          "variable_model": "phase_species_amounts_plus_phase_volume_plus_route_scalar"
+        },
+        "certification_required": true,
+        "constraint_families": [
+          "fixed_composition",
+          "phase_amount_total",
+          "phase_pressure_consistency",
+          "phase_equilibrium",
+          "phase_volume_gap"
+        ],
+        "density_backend": "explicit_phase_volume_pressure_constraint",
+        "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+        "display_name": "Bubble/dew derived routes",
+        "evidence_rows": [
+          {
+            "backend": "cppad_phase_blocks",
+            "classification": "production_supported",
+            "derivative": "lagrangian_hessian",
+            "quantity": "bubble_dew_derived_routes",
+            "reason": "production selector exposes neutral bubble/dew pressure routes through exact Ipopt callbacks and retained source-backed evidence",
+            "row_family": "equilibrium",
+            "subsystem": "native_ipopt",
+            "supported": true,
+            "tests": [
+              "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+              "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
+            ]
+          },
+          {
+            "assoc_scheme": "2B",
+            "backend": "cppad_implicit_association",
+            "classification": "component_evidence",
+            "component_pair": [
+              "water",
+              "1-pentanol"
+            ],
+            "derivative": "association_lagrangian_hessian",
+            "k_ij": 0.016,
+            "phase_count": 2,
+            "quantity": "associating_neutral_vle_gross_2002_figure_10_public_exact_hessian",
+            "reason": "Figure 10 retains source-backed upper VLLE/VLE component evidence, but it is not an activation proof for the public pressure routes.",
+            "row_family": "equilibrium",
+            "selector_family": "bubble_dew_derived_routes",
+            "source_configuration": "Gross2002 Figure10 water-1-pentanol",
+            "source_fixture": "analyses/paper_validation/2002_gross/figures/figure_10",
+            "subsystem": "native_ipopt",
+            "supported": true,
+            "tests": [
+              "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
+              "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py"
+            ]
+          }
+        ],
+        "exposure_status": "production_exposed",
+        "family_residual_block": "boundary_vle",
+        "postsolve_certification": "on",
+        "production_evidence_quantities": [
+          "bubble_dew_derived_routes"
+        ],
+        "production_exposed": true,
+        "proof_routes": [
+          "associating_neutral_vle_gross_2002_bubble_pressure_figures_2_9_public_exact_hessian",
+          "associating_neutral_vle_gross_2002_dew_pressure_figures_2_9_public_exact_hessian"
+        ],
+        "public_routes": [
+          "bubble_pressure",
+          "dew_pressure"
+        ],
+        "residual_families": [
+          "fixed_composition",
+          "phase_amount_total",
+          "phase_pressure_consistency",
+          "phase_equilibrium",
+          "phase_distance"
+        ],
+        "selector_family": "bubble_dew_derived_routes",
+        "stability_prelayer": "on",
+        "variable_model": "phase_species_amounts_plus_phase_volume_plus_route_scalar"
+      }
+    ],
+    "public_route_family_map": {
+      "bubble_pressure": "bubble_dew_derived_routes",
+      "dew_pressure": "bubble_dew_derived_routes",
+      "single_component_vle": "single_component_vle"
+    },
+    "public_routes": [
+      "bubble_pressure",
+      "dew_pressure",
+      "single_component_vle"
+    ],
+    "schema_version": 1,
+    "source": "epcsaft_equilibrium.capabilities"
+  },
+  "problem_objects": {
+    "available": true,
+    "backend": "constructor_configured_frontend",
+    "classes": [
+      "EquilibriumProblem",
+      "EquilibriumStructure"
+    ],
+    "entrypoint": "Equilibrium(mixture, route=..., ...)"
+  },
+  "production_families": [
+    "single_component_vle",
+    "bubble_dew_derived_routes"
+  ],
+  "provider_contract": {
+    "provider_api_contract_id": "provider_api_v1",
+    "provider_native_sdk_contract_id": "provider_native_sdk_v1",
+    "provider_only_core": true,
+    "provider_package": "epcsaft"
+  },
+  "public_routes": [
+    "bubble_pressure",
+    "dew_pressure",
+    "single_component_vle"
+  ],
+  "requires": [
+    "epcsaft",
+    "cppad",
+    "ipopt"
+  ],
+  "route_derivative_evidence": {
+    "implemented_capability_claims_only": false,
+    "production_rows_are_capability_safe": true,
+    "rows": [
+      {
+        "backend": "cppad_phase_blocks",
+        "classification": "production_supported",
+        "derivative": "lagrangian_hessian",
+        "quantity": "bubble_dew_derived_routes",
+        "reason": "production selector exposes neutral bubble/dew pressure routes through exact Ipopt callbacks and retained source-backed evidence",
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
+        ]
+      },
+      {
+        "backend": "cppad_phase_blocks",
+        "classification": "component_evidence",
+        "derivative": "lagrangian_hessian",
+        "quantity": "neutral_tp_flash",
+        "reason": "neutral two-phase TP flash retains component-level solver evidence, but its workbook explicitly does not establish a literature benchmark or public admission",
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
+        ]
+      },
+      {
+        "backend": "cppad_phase_blocks",
+        "classification": "internal_validation_evidence",
+        "derivative": "lagrangian_hessian",
+        "quantity": "neutral_lle",
+        "reason": "neutral nonassociating LLE retains an internal exact-derivative formulation and sampled-candidate validation, but it has no global phase-set proof or public selector admission",
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+          "packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py"
+        ]
+      },
+      {
+        "assoc_scheme": "2B",
+        "backend": "cppad_implicit_association",
+        "classification": "internal_validation_evidence",
+        "component_pair": [
+          "methanol",
+          "cyclohexane"
+        ],
+        "derivative": "association_lagrangian_hessian",
+        "k_ij": 0.051,
+        "phase_count": 2,
+        "quantity": "associating_neutral_lle_gross_2002_internal_exact_hessian",
+        "reason": "the source-backed Gross/Sadowski 2002 methanol/cyclohexane case retains internal exact implicit-association Hessian evidence, but the sampled-candidate audit does not prove global phase-set completeness",
+        "row_family": "equilibrium",
+        "selector_family": "neutral_lle",
+        "source_configuration": "Gross2002 Figure8 methanol-cyclohexane",
+        "source_fixture": "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "scripts/validation/check_associating_gfpe_gate.py",
+          "scripts/validation/check_associating_lle_gross_2002.py",
+          "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
+          "packages/epcsaft-equilibrium/tests/native/results/test_associating_lle_reference_values.py",
+          "tests/native/contracts/test_associating_gfpe_gate_checker.py",
+          "tests/native/contracts/test_associating_lle_gross_2002_checker.py"
+        ]
+      },
+      {
+        "assoc_scheme": "2B",
+        "backend": "cppad_implicit_association",
+        "classification": "internal_validation_evidence",
+        "component_pair": [
+          "water",
+          "1-pentanol"
+        ],
+        "derivative": "association_lagrangian_hessian",
+        "k_ij": 0.016,
+        "phase_count": 2,
+        "quantity": "associating_neutral_lle_gross_2002_figure_10_internal_exact_hessian",
+        "reason": "Figure 10 retains source-backed internal exact implicit-association Hessian evidence for the lower LLE boundary; it is not a global phase-set proof or public-route admission.",
+        "row_family": "equilibrium",
+        "selector_family": "neutral_lle",
+        "source_configuration": "Gross2002 Figure10 water-1-pentanol",
+        "source_fixture": "analyses/paper_validation/2002_gross/figures/figure_10",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py"
+        ]
+      },
+      {
+        "assoc_scheme": "2B",
+        "backend": "cppad_implicit_association",
+        "classification": "component_evidence",
+        "component_pair": [
+          "water",
+          "1-pentanol"
+        ],
+        "derivative": "association_lagrangian_hessian",
+        "k_ij": 0.016,
+        "phase_count": 2,
+        "quantity": "associating_neutral_vle_gross_2002_figure_10_public_exact_hessian",
+        "reason": "Figure 10 retains source-backed upper VLLE/VLE component evidence, but it is not an activation proof for the public pressure routes.",
+        "row_family": "equilibrium",
+        "selector_family": "bubble_dew_derived_routes",
+        "source_configuration": "Gross2002 Figure10 water-1-pentanol",
+        "source_fixture": "analyses/paper_validation/2002_gross/figures/figure_10",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py"
+        ]
+      },
+      {
+        "backend": "cppad_explicit_density",
+        "classification": "internal_diagnostic_evidence",
+        "derivative": "lagrangian_hessian",
+        "quantity": "neutral_multiphase_nonassoc",
+        "reason": "retained internal reduced-fugacity diagnostics do not establish native-selector ownership or public admission",
+        "row_family": "equilibrium",
+        "selector_family": "neutral_multiphase_nonassoc",
+        "subsystem": "internal_multiphase_diagnostic",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_internal_multiphase_activation_contracts.py"
+        ]
+      },
+      {
+        "backend": "cppad_phase_blocks",
+        "classification": "production_supported",
+        "derivative": "lagrangian_hessian",
+        "quantity": "single_component_vle",
+        "reason": "production selector exposes nonassociating methane, ethane, and propane saturation through a fixed-temperature pressure route with exact Ipopt callbacks and retained NIST joins",
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py",
+          "packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py",
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
+        ]
+      },
+      {
+        "backend": "analytic_ce_objective_with_cppad_eos_activity_extensions",
+        "classification": "internal_validation_evidence",
+        "derivative": "standalone_ce_lagrangian_hessian_and_final_proof_diagnostics",
+        "quantity": "reactive_speciation_standalone_ce_validation",
+        "reason": "standalone homogeneous CE remains an internal validation target; the live MEA continuation fails final balance and stationarity proof and therefore authorizes no public route",
+        "row_family": "equilibrium",
+        "selector_family": "reactive_speciation",
+        "subsystem": "native_ipopt",
+        "supported": true,
+        "tests": [
+          "packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_eos_activity.py",
+          "tests/native/contracts/test_standalone_ce_gate.py",
+          "tests/native/contracts/test_ce_robustness_followup_gate.py",
+          "scripts/validation/check_standalone_ce_gate.py",
+          "scripts/validation/check_ce_robustness_followup.py"
+        ]
+      },
+      {
+        "backend": "cppad_born_ssm_ds",
+        "classification": "prerequisite_evidence",
+        "component_set": [
+          "water",
+          "ethanol",
+          "isobutanol",
+          "NaCl"
+        ],
+        "derivative": "born_ssm_ds_composition_fugacity_activity_and_parameter_receipts",
+        "phase_count": 2,
+        "quantity": "electrolyte_held2_readiness_born_ssm_ds_exactness",
+        "reason": "issue #300 records the electrolyte HELD2 prerequisite gate: source-backed Khudaida inputs, exact charge-neutral NaCl amount lifting, CppAD Born SSM/DS derivative receipts retained for selector-integration repair.",
+        "reduced_basis": "charge_neutral_NaCl_amount_lift",
+        "row_family": "equilibrium",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 electrolyte LLE readiness",
+        "source_fixture": "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl",
+        "subsystem": "electrolyte_gfpe_readiness",
+        "supported": true,
+        "tests": [
+          "scripts/validation/check_electrolyte_held2_readiness.py",
+          "tests/native/contracts/test_electrolyte_held2_readiness_checker.py",
+          "packages/epcsaft/tests/native/state/test_born_parameter_derivatives.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+          "tests/native/contracts/test_generalized_equilibrium_registry.py"
+        ]
+      },
+      {
+        "backend": "native_counterion_pair_phase_discovery",
+        "classification": "phase_discovery_evidence",
+        "component_set": [
+          "water",
+          "ethanol",
+          "isobutanol",
+          "NaCl"
+        ],
+        "derivative": "counterion_pair_reduced_tpd_bookkeeping",
+        "preprocessor_fixtures": [
+          "analyses/paper_validation/2022_ascani/tables/table_005/table_005.md",
+          "docs/papers/md/Equilibrium/Ascani, Sadowski, Held - 2022 - Calculation of Multiphase Equilibria Containing Mixed Solvents and M.md"
+        ],
+        "quantity": "electrolyte_held2_counterion_pair_phase_discovery",
+        "reason": "issue #306 records the electrolyte HELD2 phase-discovery gate: native counterion-pair matrix construction, charge-neutral candidate diagnostics, pair-based mean-ionic bookkeeping, source-backed multi-ion preprocessor fixtures, and downstream Stage III/postsolve prerequisites.",
+        "reduced_basis": "independent_counterion_pair_matrix",
+        "row_family": "equilibrium",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 NaCl plus Ascani 2022 mixed-electrolyte counterion fixtures",
+        "source_fixture": "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl",
+        "stage_status": "phase_discovery_complete_stage_iii_pending",
+        "subsystem": "electrolyte_phase_discovery",
+        "supported": true,
+        "tests": [
+          "scripts/validation/check_electrolyte_held2_phase_discovery.py",
+          "tests/native/contracts/test_electrolyte_held2_phase_discovery.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+          "tests/native/contracts/test_generalized_equilibrium_registry.py"
+        ]
+      },
+      {
+        "backend": "native_electrolyte_stage_iii_refinement",
+        "classification": "stage_iii_refinement_evidence",
+        "component_set": [
+          "water",
+          "ethanol",
+          "isobutanol",
+          "NaCl"
+        ],
+        "derivative": "counterion_pair_reduced_residual_jacobian_hessian_receipts",
+        "quantity": "electrolyte_held2_stage_iii_reduced_variable_refinement",
+        "reason": "issue #312 records the electrolyte HELD2 Stage III refinement gate: the checker consumes #269/#300/#302/#306, calls native `_native_electrolyte_stage_iii_refinement`, retains exact reduced counterion-pair residual Jacobian/Hessian receipts, records strict Ipopt solver diagnostics and feeds internal postsolve validation.",
+        "reduced_basis": "independent_counterion_pair_matrix",
+        "route_hessian_mode": "limited_memory_charged_born_route",
+        "row_family": "equilibrium",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 NaCl local Stage III refinement",
+        "source_fixture": "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl",
+        "stage_status": "stage_iii_refinement_complete_postsolve_pending",
+        "subsystem": "electrolyte_stage_iii_refinement",
+        "supported": true,
+        "tests": [
+          "scripts/validation/check_electrolyte_stage_iii_refinement.py",
+          "tests/native/contracts/test_electrolyte_stage_iii_refinement.py",
+          "tests/native/contracts/test_electrolyte_held2_phase_discovery.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+          "tests/native/contracts/test_generalized_equilibrium_registry.py"
+        ]
+      },
+      {
+        "backend": "native_electrolyte_postsolve_certification",
+        "classification": "postsolve_certification_evidence",
+        "component_set": [
+          "water",
+          "ethanol",
+          "isobutanol",
+          "NaCl"
+        ],
+        "derivative": "postsolve_physical_residual_certification",
+        "quantity": "electrolyte_held2_postsolve_phase_set_certification",
+        "reason": "issue #313 records the electrolyte postsolve certification gate: the checker consumes #312, calls native `_native_electrolyte_postsolve_certification`, retains explicit-ion reconstruction, per-phase and total charge residuals, neutral and mean-ionic transfer residuals, pressure consistency, phase amount, composition normalization, and domain-margin diagnostics retained for repair.",
+        "reduced_basis": "independent_counterion_pair_matrix",
+        "route_hessian_mode": "limited_memory_charged_born_route",
+        "row_family": "equilibrium",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 NaCl local postsolve certification",
+        "source_fixture": "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl",
+        "stage_status": "postsolve_component_diagnostic_complete_selector_integration_pending",
+        "subsystem": "electrolyte_postsolve_certification",
+        "supported": true,
+        "tests": [
+          "scripts/validation/check_electrolyte_postsolve_certification.py",
+          "tests/native/contracts/test_electrolyte_postsolve_certification.py",
+          "tests/native/contracts/test_electrolyte_stage_iii_refinement.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+          "tests/native/contracts/test_generalized_equilibrium_registry.py"
+        ]
+      },
+      {
+        "backend": "native_electrolyte_postsolve_certification",
+        "classification": "internal_validation_evidence",
+        "component_set": [
+          "water",
+          "ethanol",
+          "isobutanol",
+          "NaCl"
+        ],
+        "derivative": "exact_reduced_counterion_pair_jacobian_hessian_receipts",
+        "native_component_set": [
+          "H2O",
+          "Ethanol",
+          "Butanol",
+          "Na+",
+          "Cl-"
+        ],
+        "parameter_bundle": "analyses/paper_validation/2026_khudaida/parameters",
+        "phase_discovery_status": "held2_component_diagnostics_retained_selector_integration_required",
+        "quantity": "electrolyte_lle_khudaida_repair_evidence",
+        "reason": "source-backed Khudaida component diagnostics are retained for repair, but direct postsolve dispatch does not establish native-selector ownership or public electrolyte-LLE admission",
+        "reduced_basis": "independent_counterion_pair_matrix",
+        "route_hessian_mode": "limited_memory_charged_born_route_with_exact_reduced_derivative_receipts",
+        "row_family": "equilibrium",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 NaCl mixed-solvent electrolyte LLE",
+        "source_fixture": "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl",
+        "stage_status": "retained_diagnostic_evidence",
+        "subsystem": "electrolyte_validation_repair",
+        "supported": true,
+        "tests": [
+          "scripts/validation/check_electrolyte_public_admission.py",
+          "tests/native/contracts/test_electrolyte_postsolve_certification.py",
+          "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+          "tests/native/contracts/test_generalized_equilibrium_registry.py"
+        ]
+      }
+    ],
+    "source": "epcsaft_equilibrium"
+  },
+  "single_component_vle": {
+    "available": true,
+    "entrypoint": "Equilibrium(mixture, route='single_component_vle', T=...).solve()",
+    "evidence": {
+      "acceptance_metrics": {
+        "single_component_vle_hydrocarbon_nist_saturation_exact_hessian": {
+          "joined_source_row_count": 32,
+          "max_chemical_potential_consistency_norm": 1e-06,
+          "max_liquid_density_absolute_relative_error_percent": 2.0,
+          "max_pressure_absolute_relative_error_percent": 4.0,
+          "max_pressure_consistency_norm": 0.01,
+          "min_phase_distance": 0.01,
+          "route_status": "accepted",
+          "solver_status": "success"
+        }
+      },
+      "artifact_paths": [
+        "analyses/package_validation/equilibrium_single_component_vle/figures/hydrocarbon_saturation_pressure/results/hydrocarbon_saturation_pressure.csv",
+        "analyses/package_validation/equilibrium_single_component_vle/figures/hydrocarbon_saturation_pressure/results/hydrocarbon_saturation_pressure_summary.csv",
+        "analyses/package_validation/equilibrium_single_component_vle/figures/hydrocarbon_saturation_pressure/results/hydrocarbon_saturation_pressure_plotted_data.csv",
+        "analyses/package_validation/equilibrium_single_component_vle/figures/hydrocarbon_saturation_pressure/results/hydrocarbon_saturation_pressure.png"
+      ],
+      "data_sources": [
+        "NIST Chemistry WebBook saturation-pressure and saturated-liquid-density tables",
+        "data/reference/pure_component/saturation_properties/methane/saturation_properties.csv",
+        "data/reference/pure_component/saturation_properties/ethane/saturation_properties.csv",
+        "data/reference/pure_component/saturation_properties/propane/saturation_properties.csv"
+      ],
+      "family": "single_component_vle",
+      "input_scope": "nonassociating methane, ethane, and propane within the retained NIST saturation-property ranges",
+      "native_owner": "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp",
+      "owner": "epcsaft-equilibrium / M4",
+      "proof_ids": [
+        "single_component_vle_hydrocarbon_nist_saturation_exact_hessian"
+      ],
+      "proof_nodes": [
+        "packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py::test_single_component_vle_route_returns_saturation_payload",
+        "tests/native/contracts/test_single_component_vle_nist_saturation_checker.py::test_evaluate_live_rows_accepts_exact_32_point_nist_campaign",
+        "tests/native/contracts/test_single_component_vle_nist_saturation_checker.py::test_run_live_validation_executes_solver_row_provider_and_records_loaded_native"
+      ],
+      "public_entrypoint": "Equilibrium(mixture, route='single_component_vle', T=...).solve()",
+      "public_routes": [
+        "single_component_vle"
+      ],
+      "strict_checkers": [
+        "uv run --no-sync python scripts/validation/check_single_component_vle_nist_saturation.py --json --require-complete --require-fresh-native"
+      ]
+    },
+    "input_scope": "nonassociating methane, ethane, and propane within the retained NIST saturation-property ranges",
+    "production": true,
+    "public_routes": [
+      "single_component_vle"
+    ],
+    "requires": [
+      "cppad",
+      "ipopt"
+    ],
+    "selector_core": true
+  }
+}
