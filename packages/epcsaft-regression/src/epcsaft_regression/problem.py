@@ -30,6 +30,7 @@ class CompiledRegressionProblem:
     contract_id: str
     schema_version: int
     dataset_id: str
+    rows: tuple[TargetRow, ...]
     row_ids: tuple[str, ...]
     source_ids: tuple[str, ...]
     state_keys: tuple[str, ...]
@@ -123,6 +124,7 @@ def compile_regression_problem(
         contract_id=_CONTRACT_ID,
         schema_version=_SCHEMA_VERSION,
         dataset_id=dataset.dataset_id,
+        rows=dataset.rows,
         row_ids=dataset.row_ids,
         source_ids=tuple(row.source.source_id for row in dataset.rows),
         state_keys=tuple(state_keys),
@@ -249,6 +251,7 @@ def _canonical_problem_json(problem: CompiledRegressionProblem) -> bytes:
         "contract_id": problem.contract_id,
         "schema_version": problem.schema_version,
         "dataset_id": problem.dataset_id,
+        "rows": [row.to_dict() for row in problem.rows],
         "row_ids": list(problem.row_ids),
         "source_ids": list(problem.source_ids),
         "state_keys": list(problem.state_keys),

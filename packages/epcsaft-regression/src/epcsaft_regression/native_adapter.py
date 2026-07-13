@@ -1,30 +1,30 @@
-"""Internal adapters for native regression routes."""
+"""Typed boundary between compiled regression problems and native records."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from importlib import import_module
 from typing import Any
 
-import numpy as np
-from epcsaft import provider_native_sdk
-from epcsaft._types import InputError, vector_to_array
-from epcsaft.state.native_adapter import check_association, create_struct
+from epcsaft import InputError, provider_native_sdk
+
+from .parameters import parse_parameter_key
+from .problem import CompiledRegressionProblem
+from .targets import TargetFamily
 
 __all__ = [
-    "_evaluate_generic_native_debug",
-    "_fit_generic_native_ceres",
-    "_fit_pure_neutral_native_debug",
-    "check_association",
-    "create_struct",
+    "_evaluate_regression",
+    "_native_problem_from_compiled",
+    "_solve_regression",
     "native_ceres_backend_info",
 ]
 
 _REQUIRED_REGRESSION_SYMBOLS = (
-    "_evaluate_generic_native_debug",
-    "_fit_generic_native_ceres",
-    "_fit_pure_neutral_native_ceres",
-    "_fit_pure_neutral_native_debug",
+    "NativeFittedParameter",
+    "NativeRegressionControls",
+    "NativeRegressionProblem",
+    "NativeRegressionRow",
+    "_evaluate_regression",
+    "_solve_regression",
 )
 
 
@@ -38,9 +38,7 @@ def _regression_native_core() -> Any:
     missing = [name for name in _REQUIRED_REGRESSION_SYMBOLS if not hasattr(core, name)]
     if missing:
         raise RuntimeError(
-            "epcsaft-regression requires package-owned native symbols: "
-            + ", ".join(_REQUIRED_REGRESSION_SYMBOLS)
-            + ". Missing from epcsaft_regression._native_core: "
+            "epcsaft-regression native typed problem contract is incomplete: "
             + ", ".join(missing)
         )
     return core
@@ -70,125 +68,95 @@ def native_ceres_backend_info() -> dict[str, object]:
     }
 
 
-def _fit_pure_neutral_native_debug(
-    fixed_payload: Mapping[str, Any],
-    density_T: Sequence[float],
-    density_P: Sequence[float],
-    density_rho_exp: Sequence[float],
-    density_phase: Sequence[int],
-    density_scale: float,
-    vle_T: Sequence[float],
-    vle_P: Sequence[float],
-    pure_vle_scale: float,
-    x: Sequence[float],
-) -> dict[str, Any]:
-    params = check_association(dict(fixed_payload))
-    cppargs = create_struct(params)
+def _native_problem_from_compiled(problem: CompiledRegressionProblem) -> Any:
+    """Build one native value record while retaining the exact provider handles."""
+
+    if not isinstance(problem, CompiledRegressionProblem):
+        raise InputError("native regression dispatch requires CompiledRegressionProblem.")
     core = _regression_native_core()
-    result = core._fit_pure_neutral_native_debug(
-        cppargs,
-        np.asarray(density_T, dtype=float),
-        np.asarray(density_P, dtype=float),
-        np.asarray(density_rho_exp, dtype=float),
-        np.asarray(density_phase, dtype=int),
-        float(density_scale),
-        np.asarray(vle_T, dtype=float),
-        np.asarray(vle_P, dtype=float),
-        float(pure_vle_scale),
-        np.asarray(x, dtype=float),
+    handles = problem.native_handles
+    if not handles:
+        raise InputError("compiled regression problem has no evaluated provider handles.")
+    components = tuple(handles[0].component_order)
+
+    native_parameters = []
+    for parameter in problem.parameters:
+        parsed = parse_parameter_key(parameter.key)
+        try:
+            first_index = components.index(parsed.owners[0])
+            second_index = (
+                components.index(parsed.owners[1]) if parsed.is_interaction else -1
+            )
+        except ValueError as exc:
+            raise InputError(
+                f"fitted parameter {parameter.key!r} does not match the provider component order."
+            ) from exc
+        native_parameters.append(
+            core.NativeFittedParameter(
+                parameter.key,
+                parsed.provider_field,
+                first_index,
+                second_index,
+                parameter.start,
+                parameter.lower,
+                parameter.upper,
+            )
+        )
+
+    native_rows = []
+    handle_cursor = 0
+    for row in problem.rows:
+        handle_count = 2 if row.target_family is TargetFamily.BINARY_VLE else 1
+        handle_indices = tuple(range(handle_cursor, handle_cursor + handle_count))
+        handle_cursor += handle_count
+        native_rows.append(
+            core.NativeRegressionRow(
+                row.row_id,
+                row.source.source_id,
+                row.source.source_kind.value,
+                row.target_family.value,
+                handle_indices,
+                row.conditions["pressure"],
+                row.weight,
+                row.residual_scale,
+                float(row.observations.get("target", 0.0)),
+                0.0,
+                (),
+                "pending_resolved_input_overlay",
+            )
+        )
+    if handle_cursor != len(handles):
+        raise InputError("compiled row-to-provider-handle ownership is inconsistent.")
+
+    controls = core.NativeRegressionControls(
+        problem.controls.loss.value,
+        problem.controls.max_num_iterations,
+        problem.controls.function_tolerance,
+        problem.controls.gradient_tolerance,
+        problem.controls.parameter_tolerance,
     )
-    return {
-        "objective": float(result["objective"]),
-        "gradient": vector_to_array(result["gradient"]),
-        "residuals": vector_to_array(result["residuals"]),
-        "jacobian_row_major": vector_to_array(result["jacobian_row_major"]),
-        "jacobian_shape": (result["jacobian_shape"]),
-        "jacobian_available": bool(result.get("jacobian_available", True)),
-        "jacobian_backend": str(result.get("jacobian_backend", "unspecified")),
-        "density_raw_residuals": vector_to_array(result["density_raw_residuals"]),
-        "pure_vle_raw_residuals": vector_to_array(result["pure_vle_raw_residuals"]),
-        "residual_evaluations": int(result["residual_evaluations"]),
-        "density_solves": int(result["density_solves"]),
-        "fused_state_evaluations": int(result["fused_state_evaluations"]),
-        "callback_wall_time_s": float(result["callback_wall_time_s"]),
-    }
+    return core.NativeRegressionProblem(
+        problem.dataset_id,
+        problem.provider_definition_fingerprint,
+        handles,
+        problem.fixed_parameter_fingerprints,
+        tuple(native_rows),
+        tuple(native_parameters),
+        controls,
+    )
 
 
-def _native_args_sequence(payloads: Sequence[Mapping[str, Any]]):
-    return [create_struct(check_association(dict(payload))) for payload in payloads]
+def _solve_regression(problem: CompiledRegressionProblem) -> dict[str, Any]:
+    return _regression_native_core()._solve_regression(
+        _native_problem_from_compiled(problem)
+    )
 
 
-def _fit_generic_native_ceres(
-    fixed_payloads: Sequence[Mapping[str, Any]],
-    records: Sequence[Mapping[str, Any]],
-    target_kinds: Sequence[int],
-    target_indices: Sequence[int],
-    target_indices_2: Sequence[int],
-    x0: Sequence[float],
-    lower: Sequence[float],
-    upper: Sequence[float],
-    max_nfev: int = 200,
+def _evaluate_regression(
+    problem: CompiledRegressionProblem,
+    parameter_values: tuple[float, ...],
 ) -> dict[str, Any]:
-    max_nfev = int(max_nfev)
-    if max_nfev < 1:
-        raise InputError("Native Ceres generic regression requires max_nfev >= 1.")
-    core = _regression_native_core()
-    result = core._fit_generic_native_ceres(
-        _native_args_sequence(fixed_payloads),
-        list(records),
-        np.asarray(target_kinds, dtype=int),
-        np.asarray(target_indices, dtype=int),
-        np.asarray(target_indices_2, dtype=int),
-        np.asarray(x0, dtype=float),
-        np.asarray(lower, dtype=float),
-        np.asarray(upper, dtype=float),
-        max_nfev,
+    return _regression_native_core()._evaluate_regression(
+        _native_problem_from_compiled(problem),
+        parameter_values,
     )
-    return {
-        "x": vector_to_array(result["x"]),
-        "cost": float(result["cost"]),
-        "residual_norm": float(result["residual_norm"]),
-        "initial_cost": float(result["initial_cost"]),
-        "initial_residual_norm": float(result["initial_residual_norm"]),
-        "metrics_by_term": {str(k): float(v) for k, v in dict(result["metrics_by_term"]).items()},
-        "success": bool(result["success"]),
-        "status": int(result["status"]),
-        "nfev": int(result["nfev"]),
-        "iterations": int(result["iterations"]),
-        "starts_tried": int(result["starts_tried"]),
-        "message": str(result["message"]),
-        "backend": str(result["backend"]),
-        "optimizer_backend": str(result["optimizer_backend"]),
-        "derivative_backend": str(result["derivative_backend"]),
-        "jacobian_available": bool(result.get("jacobian_available", True)),
-        "jacobian_backend": str(result.get("jacobian_backend", "unspecified")),
-    }
-
-
-def _evaluate_generic_native_debug(
-    fixed_payloads: Sequence[Mapping[str, Any]],
-    records: Sequence[Mapping[str, Any]],
-    target_kinds: Sequence[int],
-    target_indices: Sequence[int],
-    target_indices_2: Sequence[int],
-    x: Sequence[float],
-) -> dict[str, Any]:
-    core = _regression_native_core()
-    result = core._evaluate_generic_native_debug(
-        _native_args_sequence(fixed_payloads),
-        list(records),
-        np.asarray(target_kinds, dtype=int),
-        np.asarray(target_indices, dtype=int),
-        np.asarray(target_indices_2, dtype=int),
-        np.asarray(x, dtype=float),
-    )
-    return {
-        "cost": float(result["cost"]),
-        "residual_norm": float(result["residual_norm"]),
-        "residuals": vector_to_array(result["residuals"]),
-        "metrics_by_term": {str(k): float(v) for k, v in dict(result["metrics_by_term"]).items()},
-        "jacobian_row_major": vector_to_array(result.get("jacobian_row_major", [])),
-        "jacobian_shape": tuple(result.get("jacobian_shape", (len(result["residuals"]), 0))),
-        "jacobian_available": bool(result.get("jacobian_available", True)),
-        "jacobian_backend": str(result.get("jacobian_backend", "unspecified")),
-    }

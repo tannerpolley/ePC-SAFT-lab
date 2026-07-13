@@ -221,7 +221,7 @@ epcsaft_provider_sdk_add_provider_native(epcsaft_provider_native)
 
 set(EPCSAFT_REGRESSION_NATIVE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft_regression/native/regression")
 add_library(epcsaft_regression_native OBJECT
-    "${EPCSAFT_REGRESSION_NATIVE_ROOT}/ceres_regression.cpp"
+    "${EPCSAFT_REGRESSION_NATIVE_ROOT}/regression_problem.cpp"
 )
 target_include_directories(epcsaft_regression_native
     PUBLIC
@@ -238,7 +238,7 @@ target_compile_definitions(epcsaft_regression_native PUBLIC EPCSAFT_HAS_CERES=1 
 pybind11_add_module(
     epcsaft_regression_native_core
     NO_EXTRAS
-    "${EPCSAFT_REGRESSION_NATIVE_ROOT}/module.cpp"
+    "${EPCSAFT_REGRESSION_NATIVE_ROOT}/regression_problem_module.cpp"
 )
 set_target_properties(
     epcsaft_regression_native_core
