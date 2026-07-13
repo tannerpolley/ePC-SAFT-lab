@@ -29,7 +29,7 @@ template <typename Scalar>
 // EqID: zeta_n
 // EqID: zeta_n_xk
 // EqID: zeta3_eta
-static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const add_args &cppargs) {
+static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {
     HardChainStateScalar<Scalar> state;
     int ncomp = static_cast<int>(x.size());
     state.zeta.assign(4, scalar_constant<Scalar>(0.0));
@@ -64,7 +64,7 @@ double hs_contact_value_cpp(double pair_diameter, double zeta2, double zeta3) {
     return hard_chain_detail::hs_contact_value_scalar_cpp(pair_diameter, zeta2, zeta3);
 }
 
-HardChainState hard_chain_state_cpp(const MixtureState &thermo, const vector<double> &x, const add_args &cppargs) {
+HardChainState hard_chain_state_cpp(const MixtureState &thermo, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     auto scalar_state = hard_chain_detail::hard_chain_state_scalar_cpp(thermo.den, thermo.d, x, cppargs);
     HardChainState state;
     state.zeta = std::move(scalar_state.zeta);
@@ -74,7 +74,7 @@ HardChainState hard_chain_state_cpp(const MixtureState &thermo, const vector<dou
 }
 
 #ifdef EPCSAFT_HAS_CPPAD
-CppADHardChainState hard_chain_state_cppad_cpp(double den, const vector<double> &d, const vector<CppADScalar> &x, const add_args &cppargs) {
+CppADHardChainState hard_chain_state_cppad_cpp(double den, const vector<double> &d, const vector<CppADScalar> &x, const ProviderParameterAccessV1<double> &cppargs) {
     auto scalar_state = hard_chain_detail::hard_chain_state_scalar_cpp(den, d, x, cppargs);
     CppADHardChainState state;
     state.zeta = std::move(scalar_state.zeta);
@@ -108,7 +108,7 @@ static double dadt_hs_cpp(const HardChainState &hc_state, const vector<double> &
 }
 
 // EqID: hs_ares_dxk
-static vector<double> dadx_hs_cpp(const MixtureState &thermo, const HardChainState &hc_state, const add_args &cppargs) {
+static vector<double> dadx_hs_cpp(const MixtureState &thermo, const HardChainState &hc_state, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(thermo.d.size());
     vector<double> result(ncomp, 0.0);
     const auto &zeta = hc_state.zeta;
@@ -142,7 +142,7 @@ static vector<double> dadx_hs_cpp(const MixtureState &thermo, const HardChainSta
     return result;
 }
 
-static vector<double> hc_contact_composition_terms_cpp(const MixtureState &thermo, const HardChainState &hc_state, const add_args &cppargs) {
+static vector<double> hc_contact_composition_terms_cpp(const MixtureState &thermo, const HardChainState &hc_state, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(thermo.d.size());
     vector<double> terms(ncomp * ncomp, 0.0);
     vector<double> dzeta_dx(4, 0.0);
@@ -210,7 +210,7 @@ double hs_contact_composition_derivative_cpp(
 }
 
 // EqID: zeta_n_dT
-vector<double> dzeta_dt_cpp(const MixtureState &thermo, const vector<double> &x, const add_args &cppargs) {
+vector<double> dzeta_dt_cpp(const MixtureState &thermo, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     vector<double> dzeta_dt(4, 0.0);
     for (int k = 1; k < 4; ++k) {
         double summ = 0.0;
@@ -248,7 +248,7 @@ vector<double> hc_contact_time_terms_cpp(const MixtureState &thermo, const HardC
 }
 
 // EqID: hc_ares_dadrho
-double dadrho_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &x, const add_args &cppargs) {
+double dadrho_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     double summ = 0.0;
     for (int i = 0; i < ncomp; ++i) {
@@ -260,7 +260,7 @@ double dadrho_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state,
 }
 
 // EqID: hc_ares_dT
-double dadt_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &dzeta_dt, const vector<double> &x, const add_args &cppargs) {
+double dadt_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &dzeta_dt, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     vector<double> contact_time_terms = hc_contact_time_terms_cpp(thermo, hc_state, dzeta_dt);
     double summ = 0.0;
@@ -271,7 +271,7 @@ double dadt_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, c
 }
 
 // EqID: hc_ares_dxk
-ContributionDadxResult dadx_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {
+ContributionDadxResult dadx_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     ContributionDadxResult result;
     result.dadx.assign(ncomp, 0.0);

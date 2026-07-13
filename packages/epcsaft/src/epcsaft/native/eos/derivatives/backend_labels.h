@@ -14,7 +14,7 @@ inline std::string contribution_backend_name(int mode) {
     return "unknown";
 }
 
-inline bool has_association_sites(const add_args &cppargs) {
+inline bool has_association_sites(const ProviderParameterAccessV1<double> &cppargs) {
     for (int sites : cppargs.assoc_num) {
         if (sites > 0) {
             return true;
@@ -23,7 +23,7 @@ inline bool has_association_sites(const add_args &cppargs) {
     return false;
 }
 
-inline std::string association_backend_name(const add_args &cppargs) {
+inline std::string association_backend_name(const ProviderParameterAccessV1<double> &cppargs) {
     if (!has_association_sites(cppargs)) {
         return contribution_backend_name(cppargs.assoc_dadx_diff_mode);
     }
@@ -33,14 +33,14 @@ inline std::string association_backend_name(const add_args &cppargs) {
     return "unsupported";
 }
 
-inline std::string born_backend_name(const add_args &cppargs) {
+inline std::string born_backend_name(const ProviderParameterAccessV1<double> &cppargs) {
     if (cppargs.born_model == 2 && cppargs.born_diff_mode == 5) {
         return "cppad";
     }
     return contribution_backend_name(cppargs.born_diff_mode);
 }
 
-inline std::map<std::string, std::string> composition_derivative_backend_map(const add_args &cppargs) {
+inline std::map<std::string, std::string> composition_derivative_backend_map(const ProviderParameterAccessV1<double> &cppargs) {
     std::map<std::string, std::string> backends;
     backends["hc"] = contribution_backend_name(cppargs.hc_dadx_diff_mode);
     backends["disp"] = contribution_backend_name(cppargs.disp_dadx_diff_mode);

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <string>
 #include <memory>
@@ -580,5 +582,4 @@ vector<double> association_site_fraction_dt_cpp(vector<double> delta_ij, double 
     vector<double> XA, vector<double> ddelta_dt, vector<double> x);
 vector<double> association_site_fraction_dx_cpp(vector<int> assoc_num, vector<double> delta_ij,
     double den, vector<double> XA, vector<double> ddelta_dx, vector<double> x);
-
 

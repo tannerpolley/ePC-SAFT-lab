@@ -4,6 +4,7 @@
   "source_root": "native",
   "sources": [
     "native/model/parameter_setup.cpp",
+    "native/model/resolved_input.cpp",
     "native/eos/properties/activity.cpp",
     "native/eos/properties/chemical_potential.cpp",
     "native/eos/properties/compressibility.cpp",
@@ -37,4 +38,3 @@
     "native/model"
   ]
 }
-

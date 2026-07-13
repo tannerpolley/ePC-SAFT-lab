@@ -170,6 +170,8 @@ pybind11_add_module(
     NO_EXTRAS
     "${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/module.cpp"
     "${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/payload_converters.cpp"
+    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/resolved_input_bindings.cpp"
+    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/resolved_input_record_bindings.cpp"
 )
 target_link_libraries(_core PRIVATE epcsaft_provider_native)
 target_include_directories(_core

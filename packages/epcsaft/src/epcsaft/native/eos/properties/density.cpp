@@ -42,7 +42,7 @@ static vector<double> density_scan_grid_cpp() {
     return grid;
 }
 
-static DensityScanPoint density_scan_point_cpp(double nu, double t, int ncomp, const vector<double> &x, double p, const add_args &cppargs) {
+static DensityScanPoint density_scan_point_cpp(double nu, double t, int ncomp, const vector<double> &x, double p, const ProviderParameterAccessV1<double> &cppargs) {
     DensityScanPoint point;
     point.nu = nu;
     point.rho = ::reduced_density_to_molar(nu, t, ncomp, x, cppargs);
@@ -98,7 +98,7 @@ static void refine_density_brackets_cpp(
     int ncomp,
     const vector<double> &x,
     double p,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     vector<DensityBracket> &refined_brackets
 ) {
     const int refine_segments = 256;
@@ -134,7 +134,7 @@ static bool density_root_valid_cpp(
     double t,
     double p,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     double rho,
     DensityRootCandidate *candidate
 ) {
@@ -187,7 +187,7 @@ bool density_root_from_seed_cpp(
     double t,
     double p,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     double rho_seed,
     DensityRootCandidate *candidate,
     double *rho_root_out
@@ -313,7 +313,7 @@ static DensityRootCandidate density_near_root_candidate_cpp(
     double t,
     double p,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     double rho
 ) {
     DensityRootCandidate candidate;
@@ -355,7 +355,7 @@ static DensityCandidateDiagnostics density_candidate_diagnostics_cpp(const Densi
     return out;
 }
 
-DensitySolveResult density_solve_report_cpp(double t, double p, vector<double> x, int phase, const add_args &cppargs) {
+DensitySolveResult density_solve_report_cpp(double t, double p, vector<double> x, int phase, const ProviderParameterAccessV1<double> &cppargs) {
     DensitySolveResult out;
     DensitySolveDiagnostics diagnostics;
     diagnostics.phase_kind = (phase == 1) ? "vap" : "liq";
@@ -508,7 +508,7 @@ DensitySolveResult density_solve_report_cpp(double t, double p, vector<double> x
     return out;
 }
 
-double den_cpp(double t, double p, vector<double> x, int phase, const add_args &cppargs) {
+double den_cpp(double t, double p, vector<double> x, int phase, const ProviderParameterAccessV1<double> &cppargs) {
     /**
     Solve for the molar density when temperature and pressure are given.
 
@@ -641,7 +641,7 @@ double den_cpp(double t, double p, vector<double> x, int phase, const add_args &
 
 // EqID: rho_from_eta
 // EqID: rho_reduced
-double reduced_density_to_molar(double nu, double t, int ncomp, vector<double> x, const add_args &cppargs) {
+double reduced_density_to_molar(double nu, double t, int ncomp, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     vector<double> d(ncomp);
     double summ = 0.;
     for (int i = 0; i < ncomp; i++) {
@@ -668,7 +668,7 @@ at least one solution in the interval [a,b].
 @param tol_abs Tolerance (absolute)
 @param maxiter Maximum number of steps allowed.  Will throw a SolutionError if the solution cannot be found
 */
-double density_brent_cpp(double t, double p, vector<double> x, const add_args &cppargs, double a, double b,
+double density_brent_cpp(double t, double p, vector<double> x, const ProviderParameterAccessV1<double> &cppargs, double a, double b,
     double macheps, double tol_abs, int maxiter)
 {
     int iter;
@@ -793,7 +793,7 @@ double density_brent_cpp(double t, double p, vector<double> x, const add_args &c
 }
 
 // EqID: density_solve_residual
-double density_root_residual_cpp(double rhomolar, double t, double p, vector<double> x, const add_args &cppargs){
+double density_root_residual_cpp(double rhomolar, double t, double p, vector<double> x, const ProviderParameterAccessV1<double> &cppargs){
     double peos = p_cpp(t, rhomolar, x, cppargs);
     double pressure_scale = std::max(std::abs(p), 1e-3);
     double cost = (peos-p)/pressure_scale;

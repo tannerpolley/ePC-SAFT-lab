@@ -41,7 +41,7 @@ struct PureNeutralStateScalar {
     Scalar lnfug = scalar_constant<Scalar>(0.0);
 };
 
-void validate_pure_neutral_parameter_args(const add_args &base_args) {
+void validate_pure_neutral_parameter_args(const ProviderParameterAccessV1<double> &base_args) {
     if (base_args.m.size() != 1 || base_args.s.size() != 1 || base_args.e.size() != 1) {
         throw ValueError("unsupported: pure-neutral m/sigma/epsilon derivatives require exactly one component.");
     }
@@ -166,7 +166,7 @@ using pure_neutral_parameter_detail::validate_pure_neutral_parameter_args;
 epcsaft::native::cppad_support::CppADDerivativeResult cppad_pure_neutral_parameter_derivatives_cpp(
     double t,
     double rho,
-    const add_args &base_args
+    const ProviderParameterAccessV1<double> &base_args
 ) {
 #ifdef EPCSAFT_HAS_CPPAD
     validate_pure_neutral_parameter_args(base_args);

@@ -12,7 +12,7 @@ EosPhasePressureDerivativeResult eos_phase_pressure_derivatives_cpp(
     double t,
     const vector<double> &amounts,
     double volume,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     EosPhasePressureDerivativeResult out;
     using CppADScalar = CppAD::AD<double>;
@@ -57,14 +57,7 @@ EosPhasePressureDerivativeResult eos_phase_pressure_derivatives_cpp(
         ax[static_cast<size_t>(i)] = avars[static_cast<size_t>(1 + i)];
     }
     const bool active_association = derivative_backend_detail::has_association_sites(cppargs);
-    add_args recording_args = cppargs;
-    if (active_association) {
-        recording_args.assoc_num.clear();
-        recording_args.assoc_matrix.clear();
-        recording_args.e_assoc.clear();
-        recording_args.vol_a.clear();
-        recording_args.k_hb.clear();
-    }
+    const AssociationDisabledParameterAccessV1 recording_args(cppargs);
     auto contributions = ares_detail::ares_contributions_scalar_cpp(t, avars[0], ax, recording_args);
     std::vector<CppADScalar> ay(1);
     ay[0] = contributions.hc + contributions.disp + contributions.assoc + contributions.ion + contributions.born;

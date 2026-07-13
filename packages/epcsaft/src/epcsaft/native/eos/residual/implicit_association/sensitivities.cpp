@@ -6,7 +6,7 @@ ares_detail::AssociationDensityResponse association_density_response_cppad_cpp(
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     using CppADScalar = CppAD::AD<double>;
     const int ncomp = static_cast<int>(x.size());
@@ -106,7 +106,7 @@ ares_detail::AssociationPhaseStateResponse association_phase_state_response_cppa
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     using CppADScalar = CppAD::AD<double>;
     const int ncomp = static_cast<int>(x.size());
@@ -252,7 +252,7 @@ ares_detail::AssociationPhaseStateResponse association_phase_state_temperature_r
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     using CppADScalar = CppAD::AD<double>;
     const int ncomp = static_cast<int>(x.size());

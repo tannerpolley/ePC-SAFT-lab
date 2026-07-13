@@ -11,7 +11,7 @@ using thermo_detail::parameter_setup_detail::ion_born_radius_cpp_dt;
 // EqID: dterm_born
 // EqID: dterm_ssm
 // EqID: dterm_ds
-BornGeometryData born_geometry_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {
+BornGeometryData born_geometry_data_cpp(vector<double> x, const ProviderParameterAccessV1<double> &cppargs, double t, double eps_r, double eps_r_ion) {
     int ncomp = static_cast<int>(x.size());
     const bool use_ssm = (cppargs.born_solvation_shell_model != 0);
     const bool use_ds = (cppargs.born_dielectric_saturation != 0);
@@ -89,7 +89,7 @@ BornGeometryData born_geometry_data_cpp(vector<double> x, const add_args &cpparg
     return data;
 }
 
-double reference_solvent_dielectric_constant_cpp(const vector<double> &x, const add_args &cppargs) {
+double reference_solvent_dielectric_constant_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     if (cppargs.z.size() != static_cast<size_t>(ncomp)) {
         return dielectric_constant_rule_cpp(cppargs.dielc_rule, x, cppargs);
@@ -108,7 +108,7 @@ double reference_solvent_dielectric_constant_cpp(const vector<double> &x, const 
     return eps_sol_num / x_sol;
 }
 
-vector<double> reference_solvent_dielectric_derivative_cpp(const vector<double> &x, const add_args &cppargs) {
+vector<double> reference_solvent_dielectric_derivative_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     vector<double> deps(ncomp, 0.0);
     if (cppargs.z.size() != static_cast<size_t>(ncomp)) {
@@ -135,7 +135,7 @@ vector<double> reference_solvent_dielectric_derivative_cpp(const vector<double> 
 }
 
 #ifdef EPCSAFT_HAS_CPPAD
-CppADScalar reference_solvent_dielectric_constant_cppad_cpp(const vector<CppADScalar> &x, const add_args &cppargs) {
+CppADScalar reference_solvent_dielectric_constant_cppad_cpp(const vector<CppADScalar> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     if (cppargs.z.size() != static_cast<size_t>(ncomp)) {
         vector<double> xd(ncomp, 0.0);
@@ -168,7 +168,7 @@ CppADScalar reference_solvent_dielectric_constant_cppad_cpp(const vector<CppADSc
 BornIntermediateState born_intermediate_state_cpp(
     double t,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     bool include_dt
 ) {
     BornIntermediateState state;
@@ -231,7 +231,7 @@ double dadt_born_cpp(double t, const BornIntermediateState &born_state) {
 
 // EqID: born_ares_dxi
 // EqID: born_ares_ssmds_dxi
-ContributionDadxResult dadx_born_cpp(const BornIntermediateState &born_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {
+ContributionDadxResult dadx_born_cpp(const BornIntermediateState &born_state, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     ContributionDadxResult result;
     result.dadx.assign(ncomp, 0.0);

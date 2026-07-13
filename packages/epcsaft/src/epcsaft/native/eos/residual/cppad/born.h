@@ -7,7 +7,7 @@ template <typename Scalar, typename TemperatureScalar>
 static Scalar ares_born_scalar_cpp(
     const TemperatureScalar &t,
     const vector<Scalar> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     int component_target_kind = -1,
     int component_target_index = -1,
     const Scalar *component_target_value = nullptr

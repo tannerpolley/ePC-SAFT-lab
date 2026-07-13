@@ -12,7 +12,7 @@ EosPhaseAssociationDerivativeCorrectionResult eos_phase_association_derivative_c
     double t,
     const vector<double> &amounts,
     double volume,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     EosPhaseAssociationDerivativeCorrectionResult out;
     out.backend = "cppad_implicit_association";

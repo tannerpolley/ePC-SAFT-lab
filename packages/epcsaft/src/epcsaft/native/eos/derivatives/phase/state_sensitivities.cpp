@@ -15,7 +15,7 @@ PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_density_sensitivi
     double p,
     double rho,
     vector<double> x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     bool apply_pressure_root_chain
 ) {
     PhaseStateCompositionSensitivityResult out;
@@ -47,14 +47,7 @@ PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_density_sensitivi
         ax[static_cast<size_t>(i)] = avars[static_cast<size_t>(1 + i)];
     }
     const bool active_association = derivative_backend_detail::has_association_sites(cppargs);
-    add_args recording_args = cppargs;
-    if (active_association) {
-        recording_args.assoc_num.clear();
-        recording_args.assoc_matrix.clear();
-        recording_args.e_assoc.clear();
-        recording_args.vol_a.clear();
-        recording_args.k_hb.clear();
-    }
+    const AssociationDisabledParameterAccessV1 recording_args(cppargs);
     auto contributions = ares_detail::ares_contributions_scalar_cpp(t, avars[0], ax, recording_args);
     std::vector<CppADScalar> ay(1);
     ay[0] = contributions.hc + contributions.disp + contributions.assoc + contributions.ion + contributions.born;
@@ -337,7 +330,7 @@ PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_explicit_density_
     double t,
     double rho,
     vector<double> x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     return phase_derivative_detail::phase_state_ln_fugacity_density_sensitivity_cpp(
         t,
@@ -354,7 +347,7 @@ PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_composition_sensi
     double p,
     vector<double> x,
     int phase,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     PhaseStateCompositionSensitivityResult out;
     out.temperature = t;

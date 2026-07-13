@@ -16,7 +16,7 @@ double ares_contribution_value_cpp(const AresContributions &terms, AresContribut
 }
 
 // EqID: ares_total
-AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs) {
+AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     AresContributions out;
     MixtureState thermo = mixture_state_cpp(t, rho, x, cppargs, false);
     HardChainState hc_state = hard_chain_state_cpp(thermo, x, cppargs);
@@ -33,7 +33,7 @@ AresContributions ares_contributions_cpp(double t, double rho, const vector<doub
     return out;
 }
 
-ScalarContributionTerms residual_helmholtz_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
+ScalarContributionTerms residual_helmholtz_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     AresContributions contributions = ares_contributions_cpp(t, rho, x, cppargs);
     double ares = contributions.hc + contributions.disp + contributions.assoc + contributions.ion + contributions.born;
     return make_scalar_terms(
@@ -46,7 +46,7 @@ ScalarContributionTerms residual_helmholtz_result_cpp(double t, double rho, vect
     );
 }
 
-double ares_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
+double ares_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     AresContributions contributions = ares_contributions_cpp(t, rho, x, cppargs);
     return contributions.hc + contributions.disp + contributions.assoc + contributions.ion + contributions.born;
 }
@@ -55,7 +55,7 @@ epcsaft::native::cppad_support::CppADDerivativeResult cppad_eos_contribution_der
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     using CppADScalar = CppAD::AD<double>;
     if (!cppargs.assoc_num.empty()) {

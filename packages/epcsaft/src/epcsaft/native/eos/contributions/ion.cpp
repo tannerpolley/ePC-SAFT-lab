@@ -24,7 +24,7 @@ IonIntermediateState ion_intermediate_state_cpp(
     const MixtureState &thermo,
     double t,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     bool include_dx
 ) {
     IonIntermediateState state;
@@ -84,7 +84,7 @@ double dadrho_ion_cpp(double t, const IonIntermediateState &ion_state) {
 }
 
 // EqID: dh_ares_dT
-double dadt_ion_cpp(const IonIntermediateState &ion_state, double t, const vector<double> &x, const add_args &cppargs) {
+double dadt_ion_cpp(const IonIntermediateState &ion_state, double t, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     if (!ion_state.active) {
         return 0.0;
     }
@@ -101,7 +101,7 @@ double dadt_ion_cpp(const IonIntermediateState &ion_state, double t, const vecto
 }
 
 // EqID: dh_ares_dxi
-ContributionDadxResult dadx_ion_cpp(const IonIntermediateState &ion_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {
+ContributionDadxResult dadx_ion_cpp(const IonIntermediateState &ion_state, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     ContributionDadxResult result;
     result.dadx.assign(ncomp, 0.0);

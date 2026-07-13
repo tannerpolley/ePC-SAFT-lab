@@ -8,7 +8,7 @@ static Scalar ares_ion_scalar_cpp(
     const TemperatureScalar &t,
     const MixtureStateScalar<Scalar> &thermo,
     const vector<Scalar> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     int component_target_kind = -1,
     int component_target_index = -1,
     const Scalar *component_target_value = nullptr

@@ -9,6 +9,7 @@
 
 #include "autodiff/cppad_smoke_checks.h"
 #include "bindings/payload_converters.h"
+#include "bindings/resolved_input_bindings.h"
 #include "eos/core_internal.h"
 #include "eos/contributions/contribution_internal.h"
 
@@ -109,6 +110,8 @@ PYBIND11_MODULE(_core, m) {
 
     py::register_exception<ValueError>(m, "NativeValueError");
     py::register_exception<SolutionError>(m, "NativeSolutionError");
+
+    register_resolved_input_bindings(m);
 
     m.def("_native_cppad_smoke", []() {
         return cppad_smoke_to_dict(epcsaft::native::cppad_support::cppad_square_smoke_derivative(3.0));

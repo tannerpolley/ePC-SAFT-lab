@@ -133,7 +133,7 @@ static BornDerivativeResult build_born_parameter_derivative_result_cpp(
     double rho,
     int phase,
     const vector<double>& x,
-    const add_args& cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     const int ncomp = static_cast<int>(x.size());
     BornDerivativeResult result;
@@ -303,7 +303,7 @@ double ePCSAFTMixtureNative::solve_density_with_guess(
         throw ValueError("rho_guess must be finite and positive.");
     }
 
-    const add_args& cppargs = args_;
+    const LegacyAddArgsParameterAccessV1 cppargs(args_);
     DensityRootCandidate candidate;
     double rho_root = 0.0;
     if (density_root_from_seed_cpp(t, p, x, cppargs, rho_guess, &candidate, &rho_root)) {
@@ -330,7 +330,7 @@ double ePCSAFTMixtureNative::solve_density_with_guess(
 
 double ePCSAFTMixtureNative::solve_density_scoped(double t, double p, const vector<double>& x, int phase, const std::string& scope)
 {
-    const add_args& cppargs = args_;
+    const LegacyAddArgsParameterAccessV1 cppargs(args_);
     double* seed = nullptr;
     bool* seed_valid = nullptr;
     if (phase == 0) {
@@ -568,7 +568,8 @@ double ePCSAFTStateNative::compressibility_factor()
 CompressibilityFactorResult ePCSAFTStateNative::compressibility_factor_result()
 {
     const add_args& args = mixture_->args();
-    return compressibility_factor_result_cpp(t_, density(), x_, args);
+    const LegacyAddArgsParameterAccessV1 access(args);
+    return compressibility_factor_result_cpp(t_, density(), x_, access);
 }
 
 double ePCSAFTStateNative::residual_helmholtz()
@@ -580,7 +581,8 @@ double ePCSAFTStateNative::residual_helmholtz()
 ScalarContributionTerms ePCSAFTStateNative::residual_helmholtz_result()
 {
     const add_args& args = mixture_->args();
-    return residual_helmholtz_result_cpp(t_, density(), x_, args);
+    const LegacyAddArgsParameterAccessV1 access(args);
+    return residual_helmholtz_result_cpp(t_, density(), x_, access);
 }
 
 double ePCSAFTStateNative::temperature_derivative_residual_helmholtz()
@@ -592,7 +594,8 @@ double ePCSAFTStateNative::temperature_derivative_residual_helmholtz()
 ScalarContributionTerms ePCSAFTStateNative::temperature_derivative_residual_helmholtz_result()
 {
     const add_args& args = mixture_->args();
-    return temperature_derivative_residual_helmholtz_result_cpp(t_, density(), x_, args);
+    const LegacyAddArgsParameterAccessV1 access(args);
+    return temperature_derivative_residual_helmholtz_result_cpp(t_, density(), x_, access);
 }
 
 double ePCSAFTStateNative::residual_enthalpy()
@@ -622,13 +625,15 @@ vector<double> ePCSAFTStateNative::residual_chemical_potential()
 ResidualChemicalPotentialResult ePCSAFTStateNative::residual_chemical_potential_result()
 {
     const add_args& args = mixture_->args();
-    return residual_chemical_potential_result_cpp(t_, density(), x_, args);
+    const LegacyAddArgsParameterAccessV1 access(args);
+    return residual_chemical_potential_result_cpp(t_, density(), x_, access);
 }
 
 CompositionContributionResult ePCSAFTStateNative::composition_derivative_residual_helmholtz_result()
 {
     const add_args& args = mixture_->args();
-    return composition_derivative_residual_helmholtz_result_cpp(t_, density(), x_, args);
+    const LegacyAddArgsParameterAccessV1 access(args);
+    return composition_derivative_residual_helmholtz_result_cpp(t_, density(), x_, access);
 }
 
 vector<double> ePCSAFTStateNative::ln_fugacity_coefficient()
@@ -646,13 +651,15 @@ vector<double> ePCSAFTStateNative::fugacity_coefficient()
 FugacityContributionResult ePCSAFTStateNative::fugacity_coefficient_result()
 {
     const add_args& args = mixture_->args();
-    return fugacity_coefficient_result_cpp(t_, density(), x_, args);
+    const LegacyAddArgsParameterAccessV1 access(args);
+    return fugacity_coefficient_result_cpp(t_, density(), x_, access);
 }
 
 BornDerivativeResult ePCSAFTStateNative::born_parameter_derivatives()
 {
     const add_args& args = mixture_->args();
-    return state_detail::build_born_parameter_derivative_result_cpp(t_, density(), phase_, x_, args);
+    const LegacyAddArgsParameterAccessV1 access(args);
+    return state_detail::build_born_parameter_derivative_result_cpp(t_, density(), phase_, x_, access);
 }
 
 vector<double> ePCSAFTStateNative::relative_permittivity()
@@ -665,11 +672,11 @@ vector<double> ePCSAFTStateNative::relative_permittivity()
     return out;
 }
 
-double dielectric_eps_cpp(vector<double> x, const add_args &cppargs) {
+double dielectric_eps_cpp(vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     return dielectric_state_cpp(x, cppargs).eps;
 }
 
-vector<double> dielectric_diff_cpp(vector<double> x, const add_args &cppargs) {
+vector<double> dielectric_diff_cpp(vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     return dielectric_state_cpp(x, cppargs).deps_dx;
 }
 

@@ -85,7 +85,7 @@ static vector<double> lnfug_total_cpp(
 
 // EqID: lnphi_total
 // EqID: lnphi_total_sum
-FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
+FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     ResidualChemicalPotentialResult mu_result = residual_chemical_potential_result_cpp(t, rho, std::move(x), cppargs);
     double z_correction_scale = fugcoef_detail::lnfug_correction_scale_cpp(mu_result.composition.z_raw);
 
@@ -103,10 +103,10 @@ FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho,
     return result;
 }
 
-vector<double> lnfug_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
+vector<double> lnfug_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     return fugacity_coefficient_result_cpp(t, rho, std::move(x), cppargs).lnfugcoef.total;
 }
 
-vector<double> fugcoef_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
+vector<double> fugcoef_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     return fugcoef_detail::exp_vector(lnfug_cpp(t, rho, std::move(x), cppargs));
 }

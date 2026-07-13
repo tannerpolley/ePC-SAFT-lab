@@ -13,7 +13,7 @@ namespace parameter_setup_detail {
 template <typename Scalar>
 // EqID: epsr_mix_rule
 // EqID: epsr_mix_suppressed
-Scalar mixed_dielectric_constant_scalar_cpp(const vector<Scalar> &x, const add_args &cppargs) {
+Scalar mixed_dielectric_constant_scalar_cpp(const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     if (cppargs.z.size() != static_cast<size_t>(ncomp)) {
         throw ValueError("dielc_rule=8 requires params['z'] as an array with length equal to ncomp.");
@@ -101,7 +101,7 @@ template <typename Scalar>
 // EqID: epsr_salt_free
 // EqID: epsr_sf
 // EqID: x_ion_total
-Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {
+Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {
     const double alpha = 7.01;
     const Scalar one = scalar_constant<Scalar>(1.0);
     int ncomp = static_cast<int>(x.size());
@@ -240,7 +240,7 @@ Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, co
     throw ValueError("Unknown dielc_rule. Supported rules are 0, 1, 2, 3, 4, 5, 6, 7, 8, 9.");
 }
 
-void dielectric_inputs_valid_cpp(const vector<double> &x, const add_args &cppargs) {
+void dielectric_inputs_valid_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     if (cppargs.dielc.size() != static_cast<size_t>(ncomp)) {
         throw ValueError("params['dielc'] must be an array with length equal to ncomp.");
@@ -359,7 +359,7 @@ struct CppADDispersionState {
     CppADScalar C1 = make_cppad_scalar(0.0);
 };
 
-CppADMixtureState mixture_state_cppad_cpp(double t, double rho, const vector<CppADScalar> &x, const add_args &cppargs) {
+CppADMixtureState mixture_state_cppad_cpp(double t, double rho, const vector<CppADScalar> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     CppADMixtureState state;
     state.d.assign(ncomp, 0.0);
@@ -416,7 +416,7 @@ double pair_diameter_cpp(double d_i, double d_j) {
 }
 
 // EqID: kappa_assoc_mixing
-double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const add_args &cppargs) {
+double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const ProviderParameterAccessV1<double> &cppargs) {
     int idxi = comp_i * ncomp + comp_i;
     int idxj = comp_j * ncomp + comp_j;
     double volume = std::sqrt(cppargs.vol_a[comp_i] * cppargs.vol_a[comp_j]) * std::pow(
@@ -429,7 +429,7 @@ double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<do
     return volume;
 }
 
-double ion_diameter_cpp(int i, double t, const add_args &cppargs) {
+double ion_diameter_cpp(int i, double t, const ProviderParameterAccessV1<double> &cppargs) {
     if (!is_ion_species(cppargs, i)) {
         return cppargs.s[i];
     }
@@ -450,7 +450,7 @@ double ion_diameter_cpp(int i, double t, const add_args &cppargs) {
     throw ValueError("Unknown d_ion_mode. Supported values are 0, 1, 2.");
 }
 
-double ion_diameter_cpp_dt(int i, double t, const add_args &cppargs) {
+double ion_diameter_cpp_dt(int i, double t, const ProviderParameterAccessV1<double> &cppargs) {
     if (!is_ion_species(cppargs, i)) {
         return 0.0;
     }
@@ -463,7 +463,7 @@ double ion_diameter_cpp_dt(int i, double t, const add_args &cppargs) {
 }
 
 // EqID: d_born_rule
-double ion_born_radius_cpp(int i, double t, const add_args &cppargs) {
+double ion_born_radius_cpp(int i, double t, const ProviderParameterAccessV1<double> &cppargs) {
     if (!is_ion_species(cppargs, i)) {
         return cppargs.s[i];
     }
@@ -490,7 +490,7 @@ double ion_born_radius_cpp(int i, double t, const add_args &cppargs) {
     throw ValueError("Unknown d_Born_mode. Supported values are 0, 1, 2, 3.");
 }
 
-double ion_born_radius_cpp_dt(int i, double t, const add_args &cppargs) {
+double ion_born_radius_cpp_dt(int i, double t, const ProviderParameterAccessV1<double> &cppargs) {
     if (!is_ion_species(cppargs, i)) {
         return 0.0;
     }
@@ -558,7 +558,7 @@ VectorContributionTerms make_vector_terms(
 // EqID: epsilon_ij_ionic_zero
 // EqID: m2epssigma3_bar
 // EqID: m2eps2sigma3_bar
-MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {
+MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {
     MixtureState state;
     int ncomp = static_cast<int>(x.size());
     state.d.assign(ncomp, 0.0);
@@ -601,12 +601,12 @@ MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, co
 }
 
 #ifdef EPCSAFT_HAS_CPPAD
-CppADScalar dielectric_constant_rule_cppad_cpp(int rule, const vector<CppADScalar> &x, const add_args &cppargs) {
+CppADScalar dielectric_constant_rule_cppad_cpp(int rule, const vector<CppADScalar> &x, const ProviderParameterAccessV1<double> &cppargs) {
     return dielectric_constant_rule_scalar_cpp(rule, x, cppargs);
 }
 #endif
 
-double dielectric_constant_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {
+double dielectric_constant_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     return dielectric_constant_rule_scalar_cpp(rule, x, cppargs);
 }
 
@@ -616,7 +616,7 @@ double dielectric_constant_rule_cpp(int rule, const vector<double> &x, const add
 // EqID: depsr_sf_dxi
 // EqID: depsr_mix_dxi
 // EqID: depsr_mix_dxi_piecewise
-vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {
+vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     const double alpha = 7.01;
     int ncomp = static_cast<int>(x.size());
     vector<double> deps_dx(ncomp, 0.0);
@@ -774,7 +774,7 @@ vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x,
     throw ValueError("Unknown dielc_rule. Supported rules are 0, 1, 2, 3, 4, 5, 6, 7, 8, 9.");
 }
 
-vector<double> dielectric_derivative_rule_cppad_cpp(int rule, const vector<double> &x, const add_args &cppargs) {
+vector<double> dielectric_derivative_rule_cppad_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     vector<double> deps_dx(ncomp, 0.0);
     vector<CppADScalar> ax(ncomp);
@@ -794,7 +794,7 @@ vector<double> dielectric_derivative_rule_cppad_cpp(int rule, const vector<doubl
     return deps_dx;
 }
 
-DielectricState dielectric_state_cpp(const vector<double> &x, const add_args &cppargs) {
+DielectricState dielectric_state_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     dielectric_inputs_valid_cpp(x, cppargs);
     DielectricState state;
     state.eps = dielectric_constant_rule_cpp(cppargs.dielc_rule, x, cppargs);
@@ -808,7 +808,7 @@ DielectricState dielectric_state_cpp(const vector<double> &x, const add_args &cp
     return state;
 }
 
-vector<double> contribution_dadx_cppad_cpp(AresContributionKind kind, double t, double rho, const vector<double> &x, const add_args &cppargs) {
+vector<double> contribution_dadx_cppad_cpp(AresContributionKind kind, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     if (kind == AresContributionKind::ASSOC) {
         throw ValueError("CppAD differential_mode requires an association contribution tape route.");

@@ -13,7 +13,7 @@ Scalar local_phase_helmholtz_expression(
     const vector<Scalar> &variables,
     int ncomp,
     bool include_temperature,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     Scalar total_amount = scalar_constant<Scalar>(0.0);
     for (int index = 0; index < ncomp; ++index) {
@@ -48,7 +48,7 @@ EosLocalPhaseDerivativeBundle eos_local_phase_helmholtz_derivatives_cpp(
     double t,
     const vector<double> &amounts,
     double volume,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     bool include_temperature
 ) {
 #ifdef EPCSAFT_HAS_CPPAD

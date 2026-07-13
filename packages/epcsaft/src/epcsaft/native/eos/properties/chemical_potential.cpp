@@ -55,7 +55,7 @@ static vector<double> mu_total_cpp(
 
 // EqID: mu_res
 // EqID: mu_res_sum
-ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
+ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     CompositionContributionResult composition = composition_derivative_residual_helmholtz_result_cpp(t, rho, std::move(x), cppargs);
 
     vector<double> mu_hc = mu_detail::mu_hc_cpp(composition);
@@ -71,6 +71,6 @@ ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t,
     return result;
 }
 
-vector<double> mures_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
+vector<double> mures_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     return residual_chemical_potential_result_cpp(t, rho, std::move(x), cppargs).mu.total;
 }

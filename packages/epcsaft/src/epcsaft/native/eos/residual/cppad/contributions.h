@@ -10,7 +10,7 @@ static AresContributionsScalar<Scalar> ares_contributions_scalar_cpp(
     const TemperatureScalar &t,
     const Scalar &rho,
     const vector<Scalar> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     int k_override_index = -1,
     const Scalar *k_override_value = nullptr,
     int l_override_index = -1,

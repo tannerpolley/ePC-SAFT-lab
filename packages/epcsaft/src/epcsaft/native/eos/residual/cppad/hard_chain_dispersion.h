@@ -11,7 +11,7 @@ static Scalar hs_contact_value_scalar_cpp(const Scalar &pair_diameter, const Sca
 }
 
 template <typename Scalar>
-static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(const MixtureStateScalar<Scalar> &thermo, const vector<Scalar> &x, const add_args &cppargs) {
+static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(const MixtureStateScalar<Scalar> &thermo, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {
     HardChainStateScalar<Scalar> state;
     int ncomp = static_cast<int>(x.size());
     state.zeta.assign(4, scalar_constant<Scalar>(0.0));
@@ -74,7 +74,7 @@ static Scalar ares_hs_scalar_cpp(const HardChainStateScalar<Scalar> &hc_state) {
 
 // EqID: ares_hc
 template <typename Scalar>
-static Scalar ares_hc_scalar_cpp(const MixtureStateScalar<Scalar> &thermo, const HardChainStateScalar<Scalar> &hc_state, const vector<Scalar> &x, const add_args &cppargs) {
+static Scalar ares_hc_scalar_cpp(const MixtureStateScalar<Scalar> &thermo, const HardChainStateScalar<Scalar> &hc_state, const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     Scalar summ = scalar_constant<Scalar>(0.0);
     for (int i = 0; i < ncomp; ++i) {
@@ -90,7 +90,7 @@ static Scalar ares_disp_scalar_cpp(const MixtureStateScalar<Scalar> &thermo, con
         - PI * thermo.den * thermo.m_avg * dispersion.C1 * dispersion.I2 * thermo.m2e2s3;
 }
 
-inline double ares_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &x, const add_args &cppargs) {
+inline double ares_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     MixtureStateScalar<double> scalar_thermo;
     scalar_thermo.d = thermo.d;
     scalar_thermo.e_ij = thermo.e_ij;

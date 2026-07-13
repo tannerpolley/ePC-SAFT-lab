@@ -88,9 +88,15 @@ using thermo_detail::BornIntermediateState;
 using thermo_detail::ContributionDadxResult;
 using thermo_detail::IonIntermediateState;
 
-HardChainState hard_chain_state_cpp(const MixtureState &thermo, const vector<double> &x, const add_args &cppargs);
+HardChainState hard_chain_state_cpp(const MixtureState &thermo, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs);
+inline HardChainState hard_chain_state_cpp(
+    const MixtureState &thermo, const vector<double> &x, const add_args &cppargs
+) {
+    const LegacyAddArgsParameterAccessV1 access(cppargs);
+    return hard_chain_state_cpp(thermo, x, access);
+}
 #ifdef EPCSAFT_HAS_CPPAD
-CppADHardChainState hard_chain_state_cppad_cpp(double den, const vector<double> &d, const vector<CppADScalar> &x, const add_args &cppargs);
+CppADHardChainState hard_chain_state_cppad_cpp(double den, const vector<double> &d, const vector<CppADScalar> &x, const ProviderParameterAccessV1<double> &cppargs);
 #endif
 double hs_contact_value_cpp(double pair_diameter, double zeta2, double zeta3);
 
@@ -99,11 +105,26 @@ AssociationIntermediateState association_intermediate_state_cpp(
     const HardChainState &hc_state,
     double t,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     bool include_dt,
     bool include_dx,
     const vector<double> *dghs_dt = nullptr
 );
+inline AssociationIntermediateState association_intermediate_state_cpp(
+    const MixtureState &thermo,
+    const HardChainState &hc_state,
+    double t,
+    const vector<double> &x,
+    const add_args &cppargs,
+    bool include_dt,
+    bool include_dx,
+    const vector<double> *dghs_dt = nullptr
+) {
+    const LegacyAddArgsParameterAccessV1 access(cppargs);
+    return association_intermediate_state_cpp(
+        thermo, hc_state, t, x, access, include_dt, include_dx, dghs_dt
+    );
+}
 AssociationSolveResult association_site_fraction_solve_result_cpp(
     const vector<double> &delta_ij,
     double den,
@@ -117,18 +138,18 @@ IonIntermediateState ion_intermediate_state_cpp(
     const MixtureState &thermo,
     double t,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     bool include_dx
 );
 
 BornIntermediateState born_intermediate_state_cpp(
     double t,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     bool include_dt
 );
 
-vector<double> dzeta_dt_cpp(const MixtureState &thermo, const vector<double> &x, const add_args &cppargs);
+vector<double> dzeta_dt_cpp(const MixtureState &thermo, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs);
 double hs_contact_density_derivative_cpp(double pair_diameter, double zeta2, double zeta3);
 double hs_contact_time_derivative_cpp(
     double pair_diameter,
@@ -146,13 +167,13 @@ double hs_contact_composition_derivative_cpp(
     double dzeta3_dx
 );
 vector<double> hc_contact_time_terms_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &dzeta_dt);
-double dadrho_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &x, const add_args &cppargs);
+double dadrho_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs);
 double dadt_hc_cpp(
     const MixtureState &thermo,
     const HardChainState &hc_state,
     const vector<double> &dzeta_dt,
     const vector<double> &x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 );
 ContributionDadxResult dadx_hc_cpp(
     const MixtureState &thermo,
@@ -160,7 +181,7 @@ ContributionDadxResult dadx_hc_cpp(
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 );
 
 double dadrho_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion);
@@ -172,7 +193,7 @@ ContributionDadxResult dadx_disp_cpp(
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 );
 
 double dadrho_assoc_cpp(
@@ -180,7 +201,7 @@ double dadrho_assoc_cpp(
     const HardChainState &hc_state,
     const AssociationIntermediateState &assoc_state,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     double t
 );
 double dadt_assoc_cpp(const AssociationIntermediateState &assoc_state, const vector<double> &x);
@@ -191,17 +212,17 @@ ContributionDadxResult dadx_assoc_cpp(
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 );
 
 double dadrho_ion_cpp(double t, const IonIntermediateState &ion_state);
-double dadt_ion_cpp(const IonIntermediateState &ion_state, double t, const vector<double> &x, const add_args &cppargs);
+double dadt_ion_cpp(const IonIntermediateState &ion_state, double t, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs);
 ContributionDadxResult dadx_ion_cpp(
     const IonIntermediateState &ion_state,
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 );
 
 double dadrho_born_cpp();
@@ -211,7 +232,7 @@ ContributionDadxResult dadx_born_cpp(
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 );
 
 vector<double> contribution_dadx_cppad_cpp(
@@ -219,5 +240,5 @@ vector<double> contribution_dadx_cppad_cpp(
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 );

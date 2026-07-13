@@ -12,7 +12,7 @@ NeutralBinaryKijPhaseDerivatives association_parameter_phase_derivatives_cpp(
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     int parameter_index,
     const std::string &parameter_name,
     int component_target_kind,
@@ -94,12 +94,7 @@ NeutralBinaryKijPhaseDerivatives association_parameter_phase_derivatives_cpp(
     for (int i = 0; i < ncomp; ++i) {
         base_x[static_cast<size_t>(i)] = base_vars[static_cast<size_t>(x_start + i)];
     }
-    add_args recording_args = cppargs;
-    recording_args.assoc_num.clear();
-    recording_args.assoc_matrix.clear();
-    recording_args.e_assoc.clear();
-    recording_args.vol_a.clear();
-    recording_args.k_hb.clear();
+    const AssociationDisabledParameterAccessV1 recording_args(cppargs);
     const CppADScalar *no_pair_override = nullptr;
     auto base_contributions = ares_detail::ares_contributions_scalar_cpp(
         t,
@@ -327,7 +322,7 @@ NeutralBinaryKijPhaseDerivatives neutral_binary_kij_phase_derivatives_cpp(
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     int k_index
 ) {
     return neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, cppargs, k_index, "k_ij");
@@ -337,7 +332,7 @@ NeutralBinaryKijPhaseDerivatives neutral_binary_pair_parameter_phase_derivatives
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     int parameter_index,
     const std::string &parameter_name
 ) {
@@ -399,14 +394,7 @@ NeutralBinaryKijPhaseDerivatives neutral_binary_pair_parameter_phase_derivatives
     avars[kX1Index] = x[1];
     CppAD::Independent(avars);
 
-    add_args recording_args = cppargs;
-    if (active_association && is_kij) {
-        recording_args.assoc_num.clear();
-        recording_args.assoc_matrix.clear();
-        recording_args.e_assoc.clear();
-        recording_args.vol_a.clear();
-        recording_args.k_hb.clear();
-    }
+    const AssociationDisabledParameterAccessV1 recording_args(cppargs);
 
     std::vector<CppADScalar> ax = {avars[kX0Index], avars[kX1Index]};
     auto contributions = ares_detail::ares_contributions_scalar_cpp(
@@ -534,7 +522,7 @@ NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_c
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     int target_kind,
     int target_index
 ) {
@@ -634,14 +622,7 @@ NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_c
         ax[static_cast<size_t>(i)] = avars[static_cast<size_t>(x_start + i)];
     }
     const bool active_association = derivative_backend_detail::has_association_sites(cppargs);
-    add_args recording_args = cppargs;
-    if (active_association) {
-        recording_args.assoc_num.clear();
-        recording_args.assoc_matrix.clear();
-        recording_args.e_assoc.clear();
-        recording_args.vol_a.clear();
-        recording_args.k_hb.clear();
-    }
+    const AssociationDisabledParameterAccessV1 recording_args(cppargs);
     const CppADScalar *no_pair_override = nullptr;
     auto contributions = ares_detail::ares_contributions_scalar_cpp(
         t,

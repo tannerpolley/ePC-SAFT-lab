@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-DadrhoResult dadrho_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
+DadrhoResult dadrho_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     MixtureState thermo = mixture_state_cpp(t, rho, x, cppargs, false);
     HardChainState hc_state = hard_chain_state_cpp(thermo, x, cppargs);
     DispersionPolynomialState dispersion = dispersion_polynomials_cpp(thermo.m_avg, hc_state.eta);
@@ -39,7 +39,7 @@ ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp(
     double t,
     double rho,
     vector<double> x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     MixtureState thermo = mixture_state_cpp(t, rho, x, cppargs, true);
     HardChainState hc_state = hard_chain_state_cpp(thermo, x, cppargs);
@@ -68,7 +68,7 @@ ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp(
     return make_scalar_terms(hc, disp, assoc, ion, born, total);
 }
 
-double dadt_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
+double dadt_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     return temperature_derivative_residual_helmholtz_result_cpp(t, rho, std::move(x), cppargs).total;
 }
 
@@ -76,7 +76,7 @@ CompositionContributionResult composition_derivative_residual_helmholtz_result_c
     double t,
     double rho,
     vector<double> x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     int ncomp = static_cast<int>(x.size());
     MixtureState thermo = mixture_state_cpp(t, rho, x, cppargs, false);

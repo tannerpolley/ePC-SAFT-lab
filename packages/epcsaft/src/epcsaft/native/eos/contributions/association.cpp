@@ -293,7 +293,7 @@ AssociationSolveResult association_site_fraction_solve_result_cpp(
 
 // EqID: rho_j_assoc
 // EqID: delta_assoc
-AssociationSetup association_setup_cpp(const vector<double> &x, const add_args &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {
+AssociationSetup association_setup_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {
     int ncomp = static_cast<int>(x.size());
     AssociationSetup setup;
     setup.site_component_index.reserve(ncomp);
@@ -412,7 +412,7 @@ AssociationIntermediateState association_intermediate_state_cpp(
     const HardChainState &hc_state,
     double t,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     bool include_dt,
     bool include_dx,
     const vector<double> *dghs_dt
@@ -505,7 +505,7 @@ double dadrho_assoc_cpp(
     const HardChainState &hc_state,
     const AssociationIntermediateState &assoc_state,
     const vector<double> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     double t
 ) {
     if (!assoc_state.active) {
@@ -562,7 +562,7 @@ double dadt_assoc_cpp(const AssociationIntermediateState &assoc_state, const vec
 }
 
 // EqID: assoc_ares_dxk
-ContributionDadxResult dadx_assoc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const AssociationIntermediateState &assoc_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {
+ContributionDadxResult dadx_assoc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const AssociationIntermediateState &assoc_state, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {
     int ncomp = static_cast<int>(x.size());
     ContributionDadxResult result;
     result.dadx.assign(ncomp, 0.0);

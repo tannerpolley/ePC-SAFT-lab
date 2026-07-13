@@ -4,7 +4,7 @@
 namespace ares_detail {
 // EqID: ares_assoc
 template <typename Scalar>
-static Scalar ares_assoc_scalar_cpp(const vector<Scalar> &x, const add_args &cppargs) {
+static Scalar ares_assoc_scalar_cpp(const vector<Scalar> &x, const ProviderParameterAccessV1<double> &cppargs) {
     (void)x;
     if (!cppargs.assoc_num.empty()) {
         for (int sites : cppargs.assoc_num) {
@@ -66,7 +66,7 @@ static Scalar association_volume_scalar_cpp(
     int comp_j,
     int ncomp,
     const vector<Scalar> &s_ij,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     int component_target_kind = -1,
     int component_target_index = -1,
     const Scalar *component_target_value = nullptr,
@@ -225,7 +225,7 @@ static AssociationImplicitTermsScalar<Scalar> association_implicit_terms_scalar_
     const HardChainStateScalar<Scalar> &hc_state,
     const TemperatureScalar &t,
     const vector<Scalar> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     const vector<Scalar> &XA,
     int component_target_kind = -1,
     int component_target_index = -1,

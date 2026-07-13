@@ -441,6 +441,8 @@ endif()
 set(EPCSAFT_PYBIND_SOURCES
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/module.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/payload_converters.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/resolved_input_bindings.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/resolved_input_record_bindings.cpp
 )
 pybind11_add_module(_core NO_EXTRAS ${EPCSAFT_PYBIND_SOURCES})
 target_link_libraries(

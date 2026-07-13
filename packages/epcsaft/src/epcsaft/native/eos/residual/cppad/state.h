@@ -146,7 +146,7 @@ template <typename Scalar, typename TemperatureScalar>
 static Scalar ion_diameter_scalar_cpp(
     int i,
     const TemperatureScalar &t,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     const Scalar &sigma_i,
     const Scalar &epsilon_i
 ) {
@@ -170,7 +170,7 @@ template <typename Scalar, typename TemperatureScalar>
 static Scalar ion_born_radius_scalar_cpp(
     int i,
     const TemperatureScalar &t,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     const Scalar &sigma_i,
     const Scalar &epsilon_i,
     int target_kind,
@@ -210,7 +210,7 @@ static MixtureStateScalar<Scalar> mixture_state_scalar_cpp(
     const TemperatureScalar &t,
     const Scalar &rho,
     const vector<Scalar> &x,
-    const add_args &cppargs,
+    const ProviderParameterAccessV1<double> &cppargs,
     int k_override_index = -1,
     const Scalar *k_override_value = nullptr,
     int l_override_index = -1,

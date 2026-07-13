@@ -63,7 +63,7 @@ ScalarContributionTerms compressibility_terms_from_dadrho_cpp(const DadrhoResult
 
 // EqID: z_from_rho
 // EqID: z_total
-CompressibilityFactorResult compressibility_factor_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
+CompressibilityFactorResult compressibility_factor_result_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     DadrhoResult dadrho_result = dadrho_result_cpp(t, rho, std::move(x), cppargs);
     CompressibilityFactorResult result;
     result.raw = dadrho_result.raw;
@@ -71,12 +71,12 @@ CompressibilityFactorResult compressibility_factor_result_cpp(double t, double r
     return result;
 }
 
-double Z_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
+double Z_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     return compressibility_factor_result_cpp(t, rho, std::move(x), cppargs).terms.total;
 }
 
 // EqID: pressure_from_z
-double p_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {
+double p_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {
     double den = rho * N_AV / 1.0e30;
     double Z = Z_cpp(t, rho, std::move(x), cppargs);
     return Z * kb * t * den * 1.0e30;
@@ -86,7 +86,7 @@ epcsaft::native::cppad_support::CppADDerivativeResult cppad_pressure_density_der
     double t,
     double rho,
     const vector<double> &x,
-    const add_args &cppargs
+    const ProviderParameterAccessV1<double> &cppargs
 ) {
     epcsaft::native::cppad_support::CppADDerivativeResult result;
     result.outputs = {"pressure"};
