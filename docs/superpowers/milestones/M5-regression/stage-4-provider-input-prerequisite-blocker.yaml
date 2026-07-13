@@ -4,7 +4,7 @@ recorded_on: 2026-07-13
 source:
   branch: codex/stage4-resolved-input-stack
   base_commit: 44d883ab
-  cutover_checkpoint_pending: true
+  cutover_commit: 6dbf55f3
 package: epcsaft-regression
 prerequisite_contracts:
   classification: ready_for_stage4_overlay_gate
@@ -14,6 +14,7 @@ prerequisite_contracts:
     strict_target_datasets: 8506e831
     compiled_resolved_problem: 466159cb
     native_problem_and_receipt: f55b59b0
+    configured_public_workflow: 6dbf55f3
 configured_compiler_probe:
   dataset_id: methane-contract-targets
   evaluated_input_type: EvaluatedModelInput
