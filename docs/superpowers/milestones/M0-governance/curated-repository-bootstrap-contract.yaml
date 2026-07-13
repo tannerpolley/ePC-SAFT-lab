@@ -16,7 +16,7 @@ remote_creation_authorized: false
 push_authorized: false
 source_of_truth_change_authorized: false
 optional_validation_repository: deferred
-exact_gitattributes: "* text=auto eol=lf\n"
+exact_gitattributes: "* text=auto eol=lf\nLICENSE -text\n"
 exact_gitignore:
   - .venv/
   - __pycache__/

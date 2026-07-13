@@ -87,6 +87,7 @@ All `.gitattributes` files contain:
 
 ```gitattributes
 * text=auto eol=lf
+LICENSE -text
 ```
 
 All `.gitignore` files contain:

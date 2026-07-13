@@ -275,7 +275,8 @@ GitHub resources during this checkpoint.
 - Copy the transition repository's GPL-3.0-only license byte-for-byte.
 - Create one local bootstrap commit per repository.
 - Add no Git remote.
-- Preserve LF-normalized text through `.gitattributes`.
+- Preserve LF-normalized text through `.gitattributes`, with `LICENSE -text`
+  so the copied GPL bytes remain identical to the transition source.
 - Ignore environments, caches, build outputs, distributions, compiled native
   modules, and editor metadata.
 - Do not copy source history, `.git` metadata, branches, stashes, artifacts,
