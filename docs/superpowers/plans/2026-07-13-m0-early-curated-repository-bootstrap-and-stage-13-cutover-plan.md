@@ -20,7 +20,7 @@ structural checks, strict Sphinx documentation validation.
 - Design authority:
   `docs/superpowers/specs/2026-07-13-m0-early-curated-repository-bootstrap-and-stage-13-cutover-design.md`.
 - Local parent:
-  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated`.
+  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project`.
 - Create exactly `ePC-SAFT`, `ePC-SAFT-equilibrium`,
   `ePC-SAFT-regression`, and `ePC-SAFT-organization` beneath that parent.
 - Defer the optional validation repository.
@@ -297,7 +297,7 @@ Expected: the Chapman paper remains staged and excluded.
 Run:
 
 ```bash
-test ! -e /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated
+test ! -e /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project
 sha256sum \
   /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-regression/.git \
   /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-CE/.git
@@ -361,7 +361,7 @@ git commit --only -m "docs(governance): define curated repository skeleton contr
 **Files:**
 
 - Create the package skeleton matrix under:
-  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT`
+  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT`
 
 **Interfaces:**
 
@@ -396,9 +396,9 @@ forbidden_dependencies:
 - [ ] **Step 3: Initialize and commit.**
 
 ```bash
-git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT init --initial-branch=main
-git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT add .
-git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT commit -m "chore: bootstrap provider repository home"
+git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT init --initial-branch=main
+git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT add .
+git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT commit -m "chore: bootstrap provider repository home"
 ```
 
 - [ ] **Step 4: Verify exact emptiness and isolation.**
@@ -417,7 +417,7 @@ Assert the tracked file list equals the package Content Matrix, `git status
 **Files:**
 
 - Create the package skeleton matrix under:
-  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-equilibrium`
+  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-equilibrium`
 
 **Interfaces:**
 
@@ -452,9 +452,9 @@ forbidden_dependencies:
 - [ ] **Step 3: Initialize and commit.**
 
 ```bash
-git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-equilibrium init --initial-branch=main
-git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-equilibrium add .
-git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-equilibrium commit -m "chore: bootstrap equilibrium repository home"
+git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-equilibrium init --initial-branch=main
+git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-equilibrium add .
+git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-equilibrium commit -m "chore: bootstrap equilibrium repository home"
 ```
 
 - [ ] **Step 4: Verify exact emptiness and isolation.**
@@ -472,7 +472,7 @@ checks as Task 3.
 **Files:**
 
 - Create the package skeleton matrix under:
-  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-regression`
+  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-regression`
 
 **Interfaces:**
 
@@ -508,9 +508,9 @@ forbidden_dependencies:
 - [ ] **Step 3: Initialize and commit.**
 
 ```bash
-git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-regression init --initial-branch=main
-git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-regression add .
-git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-regression commit -m "chore: bootstrap regression repository home"
+git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-regression init --initial-branch=main
+git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-regression add .
+git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-regression commit -m "chore: bootstrap regression repository home"
 ```
 
 - [ ] **Step 4: Verify exact emptiness and isolation.**
@@ -528,7 +528,7 @@ checks as Task 3.
 **Files:**
 
 - Create the organization skeleton matrix under:
-  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-organization`
+  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-organization`
 
 **Interfaces:**
 
@@ -559,9 +559,9 @@ project_items_transferred: []
 - [ ] **Step 3: Initialize and commit.**
 
 ```bash
-git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-organization init --initial-branch=main
-git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-organization add .
-git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-organization commit -m "chore: bootstrap organization policy home"
+git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-organization init --initial-branch=main
+git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-organization add .
+git -C /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-organization commit -m "chore: bootstrap organization policy home"
 ```
 
 - [ ] **Step 4: Verify exact emptiness and isolation.**
@@ -596,10 +596,10 @@ Run for each skeleton:
 
 ```bash
 for repo in \
-  /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT \
-  /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-equilibrium \
-  /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-regression \
-  /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-organization
+  /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT \
+  /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-equilibrium \
+  /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-regression \
+  /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-organization
 do
   git -C "$repo" rev-parse HEAD
   git -C "$repo" branch --show-current
@@ -665,7 +665,7 @@ workflows, issue/milestone moves, or optional validation-repository work.
 **Expected Outcome:** Stage 11 owns only local governance bootstrap, Stage 13 owns proven-owner transfer and installed-artifact cutover, Stage 12 consumes Stage 13, and exactly four clean remote-free local repository homes exist.
 **Target Output:** ADR 0006, amended parent spec/plan, one machine-readable bootstrap contract, provider/equilibrium/regression/organization-policy skeleton repositories, four destination receipts, and one source Stage 11 receipt.
 **Owner:** M0 owns sequencing, repository homes, organization policy, and receipts; M1 owns later package bootstrap; M3 owns provider runtime; M4 owns equilibrium runtime; M5 owns regression runtime; the user owns remote, publication, and source-of-truth gates.
-**Interface:** Local Git repositories under `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated`, YAML bootstrap contracts/receipts, intended GitHub-home mappings, and the revised Stage 11/13 DAG.
+**Interface:** Local Git repositories under `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project`, YAML bootstrap contracts/receipts, intended GitHub-home mappings, and the revised Stage 11/13 DAG.
 **Cutover:** This checkpoint performs no runtime or source-of-truth cutover; Stage 13 later consumes accepted core Stage 4-6 receipts and requires separate user approval for development-source cutover, while Stage 12 alone may authorize retirement/archive mutation.
 **Replaced Path:** The former combined Stage 11 is replaced by governance-only Stage 11 plus transfer-and-cutover Stage 13; ADR 0005's final-monorepo target is superseded by ADR 0006 while its historical text is preserved.
 **Evidence:** Exact tracked-file lists, clean independent Git histories, empty remotes, matching GPL hashes, empty transfer/capability arrays, protected remnant hashes, plan validators, strict docs, diff checks, cleanup, and independent review.

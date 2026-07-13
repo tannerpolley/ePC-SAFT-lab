@@ -463,7 +463,7 @@ Deliverables:
 - ADR 0006 supersedes ADR 0005's final-monorepo target while preserving the
   transition monorepo as executable source and reference evidence;
 - clean local governance-only homes under
-  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated` for `ePC-SAFT`,
+  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project` for `ePC-SAFT`,
   `ePC-SAFT-equilibrium`, `ePC-SAFT-regression`, and
   `ePC-SAFT-organization`;
 - exact tracked-file and machine-readable content contracts, one clean `main`

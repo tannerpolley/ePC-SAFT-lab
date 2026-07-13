@@ -170,7 +170,7 @@ owner.
 
 The collision-free parent is:
 
-`/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated`
+`/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project`
 
 It contains:
 

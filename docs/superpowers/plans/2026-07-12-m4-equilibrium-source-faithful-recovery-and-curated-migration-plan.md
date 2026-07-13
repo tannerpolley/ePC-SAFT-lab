@@ -670,7 +670,7 @@ and scientific re-reviews found no remaining Stage 3 blocker.
   `docs/superpowers/plans/2026-07-13-m0-early-curated-repository-bootstrap-and-stage-13-cutover-plan.md`
 - Create: ADR 0006, machine-readable bootstrap contract, four exact local
   governance skeletons under
-  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated`, four destination
+  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project`, four destination
   receipts, and one transition-repository Stage 11 receipt
 - Modify only ADR 0005 status, the ADR index, and controlling program records
 
