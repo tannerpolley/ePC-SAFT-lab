@@ -26,23 +26,32 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
         handle.write("\n")
 
 
-def _canonical_pure_record(component: str) -> dict[str, Any]:
-    return {
-        "component": component,
-        "molar_mass": None,
-        "molar_mass_units": "kg/mol",
-        "m": None,
-        "sigma": None,
-        "epsilon_k": None,
-        "charge": None,
-        "epsilon_k_ab": None,
-        "kappa_ab": None,
-        "association_scheme": None,
-        "association_sites": [],
-        "relative_permittivity": None,
-        "born_diameter": None,
-        "solvation_factor": None,
+def _unresolved_scientific_records(component: str) -> list[dict[str, Any]]:
+    fields = {
+        "molar_mass_kg_per_mol": "kg/mol",
+        "segment_count": "dimensionless",
+        "sigma_angstrom": "angstrom",
+        "epsilon_k_K": "K",
+        "charge_number": "dimensionless",
+        "association_energy_K": "K",
+        "association_volume": "dimensionless",
     }
+    return [
+        {
+            "record_id": f"{component}-{field_name}",
+            "component": component,
+            "field": field_name,
+            "units": units,
+            "source": None,
+            "dependency_signature": {
+                "variables": [],
+                "composition_components": [],
+            },
+            "temperature_domain": None,
+            "definition": None,
+        }
+        for field_name, units in fields.items()
+    ]
 
 
 def create_input_template(
@@ -69,25 +78,32 @@ def create_input_template(
         root / "parameter_set.json",
         {
             "schema": "epcsaft.parameter-set",
-            "schema_version": 2,
+            "schema_version": 3,
             "components": component_list,
-            "pure_records": [_canonical_pure_record(component) for component in component_list],
+            "pure_records": [
+                record
+                for component in component_list
+                for record in _unresolved_scientific_records(component)
+            ],
+            "formulation_records": [],
             "interactions": [],
             "interaction_policies": [],
-            "metadata": {"source": None, "source_backed": False},
+            "metadata": {"source": None},
         },
     )
     _write_json(
-        root / "model_options.json",
+        root / "model_configuration.json",
         {
-            "differential_mode": "autodiff",
-            "relative_permittivity_rule": "component_linear",
-            "born_model": {
-                "enabled": True,
-                "born_diameter_rule": "sigma",
-                "solvation_shell_model": True,
-                "dielectric_saturation": True,
-                "bulk_mode": "mix",
+            "schema": "epcsaft.model-configuration",
+            "schema_version": 1,
+            "selection_origin": "explicit_configuration",
+            "formulation": {
+                "electrostatics": {"enabled": None},
+                "relative_permittivity": {"enabled": None},
+                "debye_huckel": {"enabled": None},
+                "born": {"enabled": None},
+                "solvated_ion_diameter": {"enabled": None},
+                "ion_dispersion": {"enabled": None},
             },
         },
     )

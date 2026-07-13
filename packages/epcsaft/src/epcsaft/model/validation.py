@@ -32,7 +32,7 @@ def validate_dataset_bundle(
     }
     try:
         parameter_set = _load_parameter_set(dataset, labels, x=x, T=T, user_options=user_options)
-        params = parameter_set.to_runtime_dict()
+        params = parameter_set._to_stage4_legacy_runtime_dict()
     except (InputError, FileNotFoundError, KeyError, TypeError, ValueError) as exc:
         errors.append(str(exc))
         return _validation_report(labels, errors, warnings, provenance)

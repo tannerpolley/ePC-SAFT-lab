@@ -1896,4 +1896,10 @@ def get_prop_dict(
 ) -> dict:
     """Build a runtime payload through the canonical typed ParameterSet owner."""
 
-    return load_parameter_set(dataset_name, species, x, T, user_options=user_options).to_runtime_dict()
+    return load_parameter_set(
+        dataset_name,
+        species,
+        x,
+        T,
+        user_options=user_options,
+    )._to_stage4_legacy_runtime_dict()

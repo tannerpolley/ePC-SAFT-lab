@@ -81,7 +81,7 @@ def _canonical_runtime_parameter_payload(params, species=None):
         source = ParameterSource(params, species=species)
         if species is None:
             species = list(params.components)
-        params = source.to_runtime_dict()
+        params = source.to_parameter_set()._to_stage4_legacy_runtime_dict()
     return params, species
 
 

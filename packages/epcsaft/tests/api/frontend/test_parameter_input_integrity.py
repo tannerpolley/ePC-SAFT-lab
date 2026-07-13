@@ -11,7 +11,7 @@ import pytest
 from epcsaft import ParameterSet
 from epcsaft._types import InputError
 from epcsaft.model import datasets
-from epcsaft.model.parameters import PureRecord
+from epcsaft.model.parameters import ParameterSource, PureRecord
 from epcsaft.model.sources import load_canonical_user_options
 from epcsaft.model.validation import validate_dataset_bundle
 
@@ -430,7 +430,7 @@ def test_parameter_set_from_dataset_builds_canonical_records(tmp_path: Path) -> 
     assert parameters.metadata["dataset"] == str(dataset_root)
     assert parameters.metadata["source"] == "Test literature table"
     assert parameters.metadata["source_backed"] is True
-    runtime = parameters.to_runtime_dict()
+    runtime = ParameterSource(parameters).to_runtime_dict()
     assert runtime["_parameter_source_label"] == "Test literature table"
     assert runtime["_parameter_provenance_status"] == "source_backed_parameter_metadata"
 

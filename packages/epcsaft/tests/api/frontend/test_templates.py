@@ -18,7 +18,7 @@ def test_create_input_template_writes_versioned_parameter_set_and_workflow_optio
 
     expected_files = {
         "parameter_set.json",
-        "model_options.json",
+        "model_configuration.json",
         "state_options.json",
         "equilibrium_options.json",
         "regression_options.json",
@@ -26,40 +26,40 @@ def test_create_input_template_writes_versioned_parameter_set_and_workflow_optio
     assert {path.name for path in root.iterdir()} == expected_files
     parameter_set = json.loads((root / "parameter_set.json").read_text(encoding="utf-8"))
     assert parameter_set["schema"] == "epcsaft.parameter-set"
-    assert parameter_set["schema_version"] == 2
+    assert parameter_set["schema_version"] == 3
     assert parameter_set["components"] == ["Methane", "Ethane"]
+    assert parameter_set["formulation_records"] == []
     assert parameter_set["interactions"] == []
     assert parameter_set["interaction_policies"] == []
-    assert parameter_set["metadata"] == {"source": None, "source_backed": False}
-    unresolved_fields = {
-        "molar_mass",
-        "m",
-        "sigma",
-        "epsilon_k",
-        "charge",
-        "epsilon_k_ab",
-        "kappa_ab",
-        "association_scheme",
-        "relative_permittivity",
-        "born_diameter",
-        "solvation_factor",
+    assert parameter_set["metadata"] == {"source": None}
+    expected_fields = {
+        "molar_mass_kg_per_mol",
+        "segment_count",
+        "sigma_angstrom",
+        "epsilon_k_K",
+        "charge_number",
+        "association_energy_K",
+        "association_volume",
     }
-    for record, component in zip(parameter_set["pure_records"], ("Methane", "Ethane")):
-        assert record["component"] == component
-        assert record["molar_mass_units"] == "kg/mol"
-        assert record["association_sites"] == []
-        assert {field for field in unresolved_fields if record[field] is None} == unresolved_fields
-    model_options = json.loads((root / "model_options.json").read_text(encoding="utf-8"))
-    assert model_options["differential_mode"] == "autodiff"
-    assert model_options["relative_permittivity_rule"] == "component_linear"
-    assert model_options["born_model"]["enabled"] is True
+    for component in ("Methane", "Ethane"):
+        records = [record for record in parameter_set["pure_records"] if record["component"] == component]
+        assert {record["field"] for record in records} == expected_fields
+        assert all(record["source"] is None for record in records)
+        assert all(record["temperature_domain"] is None for record in records)
+        assert all(record["definition"] is None for record in records)
+    configuration = json.loads((root / "model_configuration.json").read_text(encoding="utf-8"))
+    assert configuration["schema"] == "epcsaft.model-configuration"
+    assert configuration["schema_version"] == 1
+    assert all(record == {"enabled": None} for record in configuration["formulation"].values())
+    assert not (root / "model_options.json").exists()
+    assert not (root / "user_options.json").exists()
 
 
 def test_created_input_template_fails_loudly_until_scientific_values_are_filled(tmp_path) -> None:
     root = epcsaft.create_input_template(tmp_path / "case", components=("Methane",), workflows=("state",))
 
-    with pytest.raises(InputError, match=r"Methane\.molar_mass"):
-        epcsaft.ParameterSet.from_folder(root, components=("Methane",))
+    with pytest.raises(InputError, match="scientific source"):
+        epcsaft.model.load_source_bundle_selection(root, components=("Methane",))
 
 
 def test_source_dataset_loader_preserves_source_metadata_column(tmp_path) -> None:

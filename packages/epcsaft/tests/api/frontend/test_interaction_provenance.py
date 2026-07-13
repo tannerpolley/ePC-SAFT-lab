@@ -9,6 +9,7 @@ from epcsaft._types import InputError
 from epcsaft.frontend import mixture as mixture_module
 from epcsaft.model import datasets
 from epcsaft.model import parameters as parameter_model
+from epcsaft.model.parameters import ParameterSource
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
 
@@ -175,7 +176,7 @@ def test_named_structural_zero_policies_complete_the_interaction_graph() -> None
     payload["interaction_policies"] = [_structural_zero("l_ij"), _structural_zero("k_hb_ij")]
 
     parameters = ParameterSet.from_dict(payload)
-    runtime = parameters.to_runtime_dict()
+    runtime = ParameterSource(parameters).to_runtime_dict()
 
     assert runtime["k_ij"].tolist() == [[0.0, 0.125], [0.125, 0.0]]
     assert runtime["l_ij"].tolist() == [[0.0, 0.0], [0.0, 0.0]]
@@ -237,7 +238,7 @@ def test_linear_temperature_interaction_is_typed_and_cannot_freeze_at_constructi
 
     assert serialized["interactions"][0]["kind"] == "linear_temperature"
     with pytest.raises(InputError, match=r"state temperature.*linear_temperature.*k_ij"):
-        parameters.to_runtime_dict()
+        ParameterSource(parameters).to_runtime_dict()
 
 
 @pytest.mark.parametrize(
@@ -702,7 +703,7 @@ def test_dataset_loading_and_runtime_serialization_share_the_typed_interaction_o
         T=298.15,
     )
     direct_runtime = datasets.get_prop_dict(root, ("Component A", "Component B"), (0.4, 0.6), 298.15)
-    typed_runtime = parameters.to_runtime_dict()
+    typed_runtime = ParameterSource(parameters).to_runtime_dict()
 
     assert len(parameters.interactions) == 3
     assert direct_runtime["k_ij"].tolist() == typed_runtime["k_ij"].tolist()
@@ -733,7 +734,7 @@ def test_single_component_dataset_needs_no_off_diagonal_interaction_files(tmp_pa
     root = _write_pure_source(tmp_path / "parameters", ("Component A",))
 
     parameters = ParameterSet.from_dataset(root, ("Component A",), x=(1.0,), T=298.15)
-    runtime = parameters.to_runtime_dict()
+    runtime = ParameterSource(parameters).to_runtime_dict()
 
     assert parameters.interactions == ()
     assert runtime["k_ij"].tolist() == [[0.0]]

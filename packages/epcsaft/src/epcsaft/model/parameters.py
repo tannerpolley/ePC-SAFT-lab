@@ -11,6 +11,17 @@ from typing import Any
 import numpy as np
 
 from .._types import InputError
+from .correlations import (
+    ScientificInteractionRecord,
+    ScientificRecord,
+    ScientificStructuralZero,
+    scientific_interaction_from_json,
+    scientific_interaction_to_json,
+    scientific_record_from_json,
+    scientific_record_to_json,
+    scientific_structural_zero_from_json,
+    scientific_structural_zero_to_json,
+)
 from .sources import (
     copy_parameter_mapping as _copy_payload_mapping,
 )
@@ -85,7 +96,18 @@ _NATIVE_RUNTIME_PASSTHROUGH_KEYS = {
 }
 
 PARAMETER_SET_SCHEMA = "epcsaft.parameter-set"
-PARAMETER_SET_SCHEMA_VERSION = 2
+PARAMETER_SET_SCHEMA_VERSION = 3
+_LEGACY_PARAMETER_SET_SCHEMA_VERSION = 2
+_SCHEMA3_TOP_LEVEL_KEYS = {
+    "schema",
+    "schema_version",
+    "components",
+    "pure_records",
+    "formulation_records",
+    "interactions",
+    "interaction_policies",
+    "metadata",
+}
 _CANONICAL_TOP_LEVEL_KEYS = {
     "schema",
     "schema_version",
@@ -384,24 +406,35 @@ class PermittivityRecord:
 
 @dataclass(frozen=True, slots=True)
 class ParameterSet:
-    """Canonical parameter set with one native-payload serializer."""
+    """Versioned scientific definitions or the temporary legacy parity set."""
 
     components: tuple[str, ...]
-    pure_records: tuple[PureRecord, ...]
-    interactions: tuple[InteractionRecord, ...] = ()
-    interaction_policies: tuple[StructuralZeroPolicy, ...] = ()
+    pure_records: tuple[PureRecord | ScientificRecord, ...]
+    formulation_records: tuple[ScientificRecord, ...] = ()
+    interactions: tuple[InteractionRecord | ScientificInteractionRecord, ...] = ()
+    interaction_policies: tuple[StructuralZeroPolicy | ScientificStructuralZero, ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
     runtime_options: Mapping[str, Any] = field(default_factory=dict)
+    _schema_origin: str = field(default="legacy_v2_gate", repr=False)
 
     def __post_init__(self) -> None:
         components = tuple(str(component) for component in self.components)
         object.__setattr__(self, "components", components)
         object.__setattr__(self, "pure_records", tuple(self.pure_records))
+        object.__setattr__(self, "formulation_records", tuple(self.formulation_records))
         object.__setattr__(self, "interactions", tuple(self.interactions))
         object.__setattr__(self, "interaction_policies", tuple(self.interaction_policies))
         object.__setattr__(self, "metadata", dict(self.metadata))
         object.__setattr__(self, "runtime_options", _copy_payload_mapping(self.runtime_options))
+        if self._schema_origin not in {"legacy_v2_gate", "scientific_v3"}:
+            raise InputError("ParameterSet schema origin is not admitted.")
         self.validate()
+
+    @property
+    def schema_origin(self) -> str:
+        """Return the temporary additive-gate schema ownership tag."""
+
+        return self._schema_origin
 
     @classmethod
     def from_records(
@@ -424,6 +457,67 @@ class ParameterSet:
         )
 
     @classmethod
+    def from_schema3_records(
+        cls,
+        *,
+        components: Sequence[str],
+        pure_records: Sequence[ScientificRecord],
+        formulation_records: Sequence[ScientificRecord] = (),
+        interactions: Sequence[ScientificInteractionRecord] = (),
+        interaction_policies: Sequence[ScientificStructuralZero] = (),
+        metadata: Mapping[str, Any] | None = None,
+    ) -> ParameterSet:
+        """Create a definitions-only schema-3 parameter set without evaluation."""
+
+        return cls(
+            components=tuple(components),
+            pure_records=tuple(pure_records),
+            formulation_records=tuple(formulation_records),
+            interactions=tuple(interactions),
+            interaction_policies=tuple(interaction_policies),
+            metadata=dict(metadata or {}),
+            runtime_options={},
+            _schema_origin="scientific_v3",
+        )
+
+    @classmethod
+    def from_schema3(cls, payload: Mapping[str, Any]) -> ParameterSet:
+        """Parse one strict definitions-only schema-3 mapping."""
+
+        if not isinstance(payload, Mapping):
+            raise InputError("ParameterSet.from_schema3 requires a mapping.")
+        if any(type(key) is not str for key in payload):
+            raise InputError("schema-3 parameter-set keys must be strings.")
+        unknown = sorted(set(payload) - _SCHEMA3_TOP_LEVEL_KEYS)
+        if unknown:
+            raise InputError(f"schema-3 parameter set contains unsupported key(s): {', '.join(unknown)}.")
+        missing = sorted(_SCHEMA3_TOP_LEVEL_KEYS - set(payload))
+        if missing:
+            raise InputError(f"schema-3 parameter set requires explicit key(s): {', '.join(missing)}.")
+        if payload["schema"] != PARAMETER_SET_SCHEMA:
+            raise InputError(f"schema-3 parameter set schema must be {PARAMETER_SET_SCHEMA!r}.")
+        if type(payload["schema_version"]) is not int or payload["schema_version"] != PARAMETER_SET_SCHEMA_VERSION:
+            raise InputError("ParameterSet.from_schema3 accepts only schema_version 3.")
+        components = _schema3_array(payload["components"], "components")
+        pure_records = _schema3_array(payload["pure_records"], "pure_records")
+        formulation_records = _schema3_array(payload["formulation_records"], "formulation_records")
+        interactions = _schema3_array(payload["interactions"], "interactions")
+        interaction_policies = _schema3_array(payload["interaction_policies"], "interaction_policies")
+        metadata = payload["metadata"]
+        if not isinstance(metadata, Mapping):
+            raise InputError("schema-3 parameter-set metadata must be a mapping.")
+        return cls.from_schema3_records(
+            components=tuple(_nonblank_identity(item, "schema-3 component") for item in components),
+            pure_records=tuple(scientific_record_from_json(item) for item in pure_records),
+            formulation_records=tuple(scientific_record_from_json(item) for item in formulation_records),
+            interactions=tuple(scientific_interaction_from_json(item) for item in interactions),
+            interaction_policies=tuple(
+                scientific_structural_zero_from_json(item) for item in interaction_policies
+            ),
+            metadata=_copy_payload_mapping(metadata),
+        )
+
+    @classmethod
     def from_dict(
         cls,
         payload: Mapping[str, Any],
@@ -438,7 +532,7 @@ class ParameterSet:
         if (
             canonical.get("schema") != PARAMETER_SET_SCHEMA
             or type(schema_version) is not int
-            or schema_version != PARAMETER_SET_SCHEMA_VERSION
+            or schema_version != _LEGACY_PARAMETER_SET_SCHEMA_VERSION
         ):
             raise InputError(
                 "ParameterSet.from_dict accepts only the versioned canonical schema "
@@ -564,6 +658,8 @@ class ParameterSet:
         return _parameter_set_with_runtime_options(params, user_options)
 
     def validate(self) -> dict[str, Any]:
+        if self._schema_origin == "scientific_v3":
+            return self._validate_scientific_v3()
         errors: list[str] = []
         if len(set(self.components)) != len(self.components):
             errors.append("ParameterSet components must be unique.")
@@ -639,7 +735,133 @@ class ParameterSet:
             "runtime_option_count": len(self.runtime_options),
         }
 
-    def to_runtime_dict(self, user_options: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    def _validate_scientific_v3(self) -> dict[str, Any]:
+        errors: list[str] = []
+        if not self.components:
+            errors.append("schema-3 ParameterSet requires at least one component.")
+        if len(set(self.components)) != len(self.components):
+            errors.append("schema-3 ParameterSet components must be unique.")
+        if self.runtime_options:
+            errors.append("scientific_v3 ParameterSet cannot contain runtime options.")
+        if any(not isinstance(record, ScientificRecord) for record in self.pure_records):
+            errors.append("schema-3 pure_records must contain only ScientificRecord values.")
+        if any(not isinstance(record, ScientificRecord) for record in self.formulation_records):
+            errors.append("schema-3 formulation_records must contain only ScientificRecord values.")
+        if any(not isinstance(record, ScientificInteractionRecord) for record in self.interactions):
+            errors.append("schema-3 interactions must contain only ScientificInteractionRecord values.")
+        if any(not isinstance(record, ScientificStructuralZero) for record in self.interaction_policies):
+            errors.append("schema-3 interaction_policies must contain only ScientificStructuralZero values.")
+        all_records = (
+            *self.pure_records,
+            *self.formulation_records,
+            *self.interactions,
+            *self.interaction_policies,
+        )
+        record_ids = [record.record_id for record in all_records if hasattr(record, "record_id")]
+        duplicates = sorted({record_id for record_id in record_ids if record_ids.count(record_id) > 1})
+        if duplicates:
+            errors.append(f"duplicate record_id values: {', '.join(duplicates)}.")
+        known = set(self.components)
+        pure_fields = {
+            "molar_mass_kg_per_mol",
+            "segment_count",
+            "sigma_angstrom",
+            "epsilon_k_K",
+            "charge_number",
+            "association_energy_K",
+            "association_volume",
+            "association_scheme",
+            "association_sites",
+        }
+        formulation_fields = {
+            "relative_permittivity",
+            "born_diameter_angstrom",
+            "solvation_factor",
+        }
+        for owner, records, admitted_fields in (
+            ("pure_records", self.pure_records, pure_fields),
+            ("formulation_records", self.formulation_records, formulation_fields),
+        ):
+            field_index: dict[tuple[str, str], int] = {}
+            for record in records:
+                if not isinstance(record, ScientificRecord):
+                    continue
+                if record.component not in known:
+                    errors.append(
+                        f"scientific record {record.record_id} references unknown component {record.component}."
+                    )
+                if record.field not in admitted_fields:
+                    errors.append(f"{owner} scientific field {record.field!r} belongs to a different owner.")
+                key = (record.component, record.field)
+                field_index[key] = field_index.get(key, 0) + 1
+            duplicates = sorted(key for key, count in field_index.items() if count > 1)
+            for component, field_name in duplicates:
+                errors.append(f"duplicate {owner} scientific records for {component}.{field_name}.")
+        interaction_coverage: dict[tuple[str, frozenset[str]], str] = {}
+        for record in (*self.interactions, *self.interaction_policies):
+            if isinstance(record, (ScientificInteractionRecord, ScientificStructuralZero)):
+                unknown = sorted(set(record.components) - known)
+                if unknown:
+                    errors.append(
+                        f"scientific interaction {record.record_id} references unknown component(s): "
+                        f"{', '.join(unknown)}."
+                    )
+                key = (record.family, frozenset(record.components))
+                previous = interaction_coverage.get(key)
+                if previous is not None:
+                    errors.append(
+                        f"duplicate scientific interaction coverage for {record.family} "
+                        f"{record.components[0]}|{record.components[1]}: {previous} and {record.record_id}."
+                    )
+                else:
+                    interaction_coverage[key] = record.record_id
+        for left_index, left in enumerate(self.components):
+            for right in self.components[left_index + 1 :]:
+                for family in _INTERACTION_FAMILIES:
+                    if (family, frozenset((left, right))) not in interaction_coverage:
+                        errors.append(
+                            f"missing scientific interaction coverage for {family} pair {left}|{right}."
+                        )
+        required_fields = {
+            "molar_mass_kg_per_mol",
+            "segment_count",
+            "sigma_angstrom",
+            "epsilon_k_K",
+            "charge_number",
+            "association_energy_K",
+            "association_volume",
+        }
+        pure_index: dict[tuple[str, str], int] = {}
+        for record in self.pure_records:
+            if isinstance(record, ScientificRecord):
+                key = (record.component, record.field)
+                pure_index[key] = pure_index.get(key, 0) + 1
+        for component in self.components:
+            for field_name in required_fields:
+                count = pure_index.get((component, field_name), 0)
+                if count == 0:
+                    errors.append(f"missing scientific record for {component}.{field_name}.")
+                elif count > 1:
+                    errors.append(f"duplicate scientific records for {component}.{field_name}.")
+        if errors:
+            raise InputError("; ".join(errors))
+        return {
+            "valid": True,
+            "component_count": len(self.components),
+            "pure_record_count": len(self.pure_records),
+            "formulation_record_count": len(self.formulation_records),
+            "interaction_count": len(self.interactions),
+            "structural_zero_policy_count": len(self.interaction_policies),
+        }
+
+    def _to_stage4_legacy_runtime_dict(
+        self,
+        user_options: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        if self._schema_origin != "legacy_v2_gate":
+            raise InputError(
+                f"{self._schema_origin} ParameterSet cannot enter the Stage 4 legacy runtime serializer."
+            )
         records = {str(record.component): record for record in self.pure_records}
         ordered = [records[label] for label in self.components]
         charge_vector = np.asarray([record.charge for record in ordered], dtype=float)
@@ -670,9 +892,30 @@ class ParameterSet:
         return payload
 
     def to_json(self, path: str | Path | None = None) -> str:
+        if self._schema_origin == "scientific_v3":
+            payload = {
+                "schema": PARAMETER_SET_SCHEMA,
+                "schema_version": PARAMETER_SET_SCHEMA_VERSION,
+                "components": list(self.components),
+                "pure_records": [scientific_record_to_json(record) for record in self.pure_records],
+                "formulation_records": [
+                    scientific_record_to_json(record) for record in self.formulation_records
+                ],
+                "interactions": [
+                    scientific_interaction_to_json(record) for record in self.interactions
+                ],
+                "interaction_policies": [
+                    scientific_structural_zero_to_json(policy) for policy in self.interaction_policies
+                ],
+                "metadata": _json_ready(self.metadata),
+            }
+            text = json.dumps(payload, indent=2, sort_keys=True, allow_nan=False)
+            if path is not None:
+                Path(path).write_text(text + "\n", encoding="utf-8")
+            return text
         payload = {
             "schema": PARAMETER_SET_SCHEMA,
-            "schema_version": PARAMETER_SET_SCHEMA_VERSION,
+            "schema_version": _LEGACY_PARAMETER_SET_SCHEMA_VERSION,
             "components": list(self.components),
             "pure_records": [_pure_record_json(record) for record in self.pure_records],
             "interactions": [_interaction_record_json(record) for record in self.interactions],
@@ -743,7 +986,12 @@ class ParameterSource:
         user_options: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Resolve this source into the native runtime payload."""
-        return self.to_parameter_set(species=species, x=x, T=T, user_options=user_options).to_runtime_dict()
+        return self.to_parameter_set(
+            species=species,
+            x=x,
+            T=T,
+            user_options=user_options,
+        )._to_stage4_legacy_runtime_dict()
 
 
 def _pure_record_from_canonical(payload: Mapping[str, Any]) -> PureRecord:
@@ -1166,6 +1414,12 @@ def _canonical_array(payload: Mapping[str, Any], key: str) -> list[Any]:
     value = payload[key]
     if not isinstance(value, list):
         raise InputError(f"canonical parameter payload {key} must be a JSON array.")
+    return value
+
+
+def _schema3_array(value: Any, field_name: str) -> list[Any]:
+    if not isinstance(value, list):
+        raise InputError(f"schema-3 parameter-set {field_name} must be a JSON array.")
     return value
 
 
