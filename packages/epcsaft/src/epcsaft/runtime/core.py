@@ -232,6 +232,8 @@ def _derivative_coverage_capabilities(cppad: dict[str, object]) -> dict[str, obj
 def capabilities() -> dict[str, object]:
     """Return structured availability flags for high-level package workflows."""
 
+    from epcsaft.model.configuration_catalog import model_configuration_capabilities
+
     build_info = runtime_build_info()
     native_dependencies = build_info["native_dependencies"]  # type: ignore[index]
     cppad = dict(native_dependencies["cppad"])  # type: ignore[index]
@@ -252,6 +254,7 @@ def capabilities() -> dict[str, object]:
         },
         "reports_only_provider_capabilities_after_split": True,
         "native_extension": bool(build_info["native_extension_available"]),
+        "model_configuration": model_configuration_capabilities(),
         "capability_evidence": _capability_evidence_summary(derivative_coverage),
         "derivatives": {
             "cppad": cppad_capability,

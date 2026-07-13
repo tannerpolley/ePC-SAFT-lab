@@ -11,6 +11,12 @@ from typing import Any, Literal
 import numpy as np
 
 from .._types import InputError
+from .configuration_catalog import (
+    MODEL_CONFIGURATION_FILENAME,
+    MODEL_CONFIGURATION_PRESETS,
+    MODEL_CONFIGURATION_SCHEMA,
+    MODEL_CONFIGURATION_SCHEMA_VERSION,
+)
 from .parameters import ParameterSet
 
 
@@ -31,6 +37,7 @@ RelativePermittivityRule = Literal[
     "aqueous_organic",
 ]
 BornDiameterRule = Literal["sigma", "sigma_reduced", "temperature_dependent", "fitted"]
+IonDiameterRule = Literal["sigma", "sigma_reduced", "temperature_dependent"]
 
 _DIFFERENTIAL_MODE = "autodiff"
 _RELATIVE_PERMITTIVITY_RULES = {
@@ -74,8 +81,8 @@ _BORN_MODEL_KEYS = {
 
 
 @dataclass(frozen=True, slots=True)
-class BornModelOptions:
-    """Grouped public controls for the Born contribution."""
+class _LegacyBornModelOptions:
+    """Pre-Stage-4 Born controls retained only for the parity gate."""
 
     enabled: bool = True
     born_diameter_rule: BornDiameterRule = "sigma"
@@ -108,13 +115,16 @@ class BornModelOptions:
         object.__setattr__(self, "bulk_mode", bulk_mode)
 
     @classmethod
-    def from_user_options(cls, value: Mapping[str, Any] | BornModelOptions | None) -> BornModelOptions:
+    def from_user_options(
+        cls,
+        value: Mapping[str, Any] | _LegacyBornModelOptions | None,
+    ) -> _LegacyBornModelOptions:
         if value is None:
             return cls()
-        if isinstance(value, BornModelOptions):
+        if isinstance(value, _LegacyBornModelOptions):
             return value
         if not isinstance(value, Mapping):
-            raise InputError("born_model must be a mapping or BornModelOptions instance.")
+            raise InputError("born_model must be a mapping or legacy Born options instance.")
         _reject_legacy_public_keys(value, context="born_model")
         _require_mapping_keys(value, _BORN_MODEL_KEYS, "born_model")
         return cls(**dict(value))
@@ -124,8 +134,8 @@ class BornModelOptions:
 
 
 @dataclass(frozen=True, slots=True)
-class ModelOptions:
-    """Formulation choices owned by :class:`epcsaft.Mixture`.
+class LegacyRuntimeOptionsState:
+    """Exact pre-Stage-4 option state retained for the additive parity gate.
 
     The public API has one derivative mode: ``"autodiff"``. It maps to the
     package's CppAD runtime and applies to all residual-Helmholtz
@@ -134,7 +144,12 @@ class ModelOptions:
 
     differential_mode: DifferentialMode = _DIFFERENTIAL_MODE
     relative_permittivity_rule: RelativePermittivityRule = "component_linear"
-    born_model: BornModelOptions | Mapping[str, Any] = field(default_factory=BornModelOptions)
+    born_model: _LegacyBornModelOptions | Mapping[str, Any] = field(default_factory=_LegacyBornModelOptions)
+    _stage4_origin: Literal["legacy_runtime_options"] = field(
+        default="legacy_runtime_options",
+        init=False,
+        repr=False,
+    )
 
     def __post_init__(self) -> None:
         differential_mode = _normalize_token(self.differential_mode, "differential_mode")
@@ -146,13 +161,16 @@ class ModelOptions:
                 "ModelOptions.relative_permittivity_rule must be one of: "
                 + ", ".join(sorted(_RELATIVE_PERMITTIVITY_RULES))
             )
-        born = BornModelOptions.from_user_options(self.born_model)
+        born = _LegacyBornModelOptions.from_user_options(self.born_model)
         object.__setattr__(self, "differential_mode", differential_mode)
         object.__setattr__(self, "relative_permittivity_rule", rel_perm)
         object.__setattr__(self, "born_model", born)
 
     @classmethod
-    def from_user_options(cls, value: str | Path | Mapping[str, Any] | ModelOptions | None) -> ModelOptions:
+    def from_user_options(
+        cls,
+        value: str | Path | Mapping[str, Any] | LegacyRuntimeOptionsState | None,
+    ) -> LegacyRuntimeOptionsState:
         """Load the public option schema from a mapping, JSON file, or folder.
 
         A folder may contain either ``model_options.json`` or ``user_options.json``.
@@ -161,12 +179,12 @@ class ModelOptions:
 
         if value is None:
             return cls()
-        if isinstance(value, ModelOptions):
+        if isinstance(value, LegacyRuntimeOptionsState):
             return value
         if isinstance(value, (str, Path)):
             return cls.from_user_options(_read_model_options_payload(Path(value).expanduser()))
         if not isinstance(value, Mapping):
-            raise InputError("model_options must be a ModelOptions instance, mapping, JSON file, or folder.")
+            raise InputError("legacy model options must be a mapping, JSON file, folder, or tagged legacy state.")
 
         payload = dict(value)
         if "elec_model" in payload:
@@ -310,14 +328,374 @@ class ModelOptions:
         }
 
 
-def coerce_model_options(value: ModelOptions | Mapping[str, object] | str | Path | None) -> ModelOptions:
-    if value is None:
-        return ModelOptions()
+@dataclass(frozen=True, slots=True)
+class DisabledFormulation:
+    """Explicit inactive formulation record."""
+
+    enabled: Literal[False]
+
+    def __post_init__(self) -> None:
+        if self.enabled is not False:
+            raise InputError("disabled formulation enabled must be false.")
+
+
+@dataclass(frozen=True, slots=True)
+class ElectrostaticsOptions:
+    """Explicit electrostatics activation record."""
+
+    enabled: Literal[True]
+
+    def __post_init__(self) -> None:
+        if self.enabled is not True:
+            raise InputError("enabled electrostatics must set enabled to true.")
+
+
+@dataclass(frozen=True, slots=True)
+class RelativePermittivityOptions:
+    """Explicit relative-permittivity formulation."""
+
+    enabled: Literal[True]
+    rule: RelativePermittivityRule
+
+    def __post_init__(self) -> None:
+        if self.enabled is not True:
+            raise InputError("enabled relative_permittivity must set enabled to true.")
+        if self.rule not in _RELATIVE_PERMITTIVITY_RULES:
+            raise InputError("relative_permittivity.rule is unsupported.")
+
+
+@dataclass(frozen=True, slots=True)
+class DebyeHuckelOptions:
+    """Explicit Debye-Huckel formulation."""
+
+    enabled: Literal[True]
+    ion_diameter_rule: IonDiameterRule
+    bjerrum_pairing: bool
+
+    def __post_init__(self) -> None:
+        if self.enabled is not True:
+            raise InputError("enabled debye_huckel must set enabled to true.")
+        if self.ion_diameter_rule not in {"sigma", "sigma_reduced", "temperature_dependent"}:
+            raise InputError("debye_huckel.ion_diameter_rule is unsupported.")
+        _require_strict_bool(self.bjerrum_pairing, "debye_huckel.bjerrum_pairing")
+
+
+@dataclass(frozen=True, slots=True)
+class BornModelOptions:
+    """Complete explicit Born formulation without defaults."""
+
+    enabled: Literal[True]
+    born_diameter_rule: BornDiameterRule
+    solvation_shell_model: bool
+    dielectric_saturation: bool
+    bulk_mode: Literal["mix", "solvent"]
+
+    def __post_init__(self) -> None:
+        if self.enabled is not True:
+            raise InputError("enabled born formulation must set enabled to true.")
+        if self.born_diameter_rule not in _BORN_DIAMETER_MODES:
+            raise InputError("born.born_diameter_rule is unsupported.")
+        _require_strict_bool(self.solvation_shell_model, "born.solvation_shell_model")
+        _require_strict_bool(self.dielectric_saturation, "born.dielectric_saturation")
+        if self.bulk_mode not in _BORN_BULK_MODES:
+            raise InputError("born.bulk_mode must be 'mix' or 'solvent'.")
+
+
+@dataclass(frozen=True, slots=True)
+class SolvatedIonDiameterOptions:
+    """Explicit activation of solvated-ion-diameter mixing."""
+
+    enabled: Literal[True]
+
+    def __post_init__(self) -> None:
+        if self.enabled is not True:
+            raise InputError("enabled solvated_ion_diameter must set enabled to true.")
+
+
+@dataclass(frozen=True, slots=True)
+class IonDispersionOptions:
+    """Explicit activation of ion-dispersion mixing."""
+
+    enabled: Literal[True]
+
+    def __post_init__(self) -> None:
+        if self.enabled is not True:
+            raise InputError("enabled ion_dispersion must set enabled to true.")
+
+
+@dataclass(frozen=True, slots=True, init=False)
+class ModelOptions:
+    """Strict version-1 provider formulation configuration."""
+
+    schema: str
+    schema_version: int
+    selection_origin: Literal["explicit_configuration", "admitted_preset"]
+    preset_id: str | None
+    electrostatics: DisabledFormulation | ElectrostaticsOptions
+    relative_permittivity: DisabledFormulation | RelativePermittivityOptions
+    debye_huckel: DisabledFormulation | DebyeHuckelOptions
+    born: DisabledFormulation | BornModelOptions
+    solvated_ion_diameter: DisabledFormulation | SolvatedIonDiameterOptions
+    ion_dispersion: DisabledFormulation | IonDispersionOptions
+    _receipt_json: str
+
+    def __init__(self) -> None:
+        raise TypeError("ModelOptions must be created with ModelOptions.from_user_options().")
+
+    @classmethod
+    def from_user_options(
+        cls,
+        value: str | Path | Mapping[str, Any] | ModelOptions,
+    ) -> ModelOptions:
+        """Parse one strict version-1 configuration mapping, file, or folder."""
+
+        return _parse_model_configuration(value)
+
+    @classmethod
+    def _from_stage4_legacy_runtime_options(
+        cls,
+        value: object,
+    ) -> LegacyRuntimeOptionsState:
+        if isinstance(value, cls):
+            raise InputError("strict version-1 ModelOptions cannot enter the Stage 4 legacy runtime path.")
+        if value is not None and not isinstance(value, (LegacyRuntimeOptionsState, Mapping, str, Path)):
+            raise InputError("legacy model options must be a mapping, JSON file, folder, or tagged legacy state.")
+        return LegacyRuntimeOptionsState.from_user_options(value)
+
+    @classmethod
+    def _to_stage4_legacy_runtime_options(
+        cls,
+        value: object,
+        parameters: ParameterSet | None = None,
+    ) -> dict[str, object]:
+        if isinstance(value, cls):
+            raise InputError("strict version-1 ModelOptions cannot enter the Stage 4 legacy runtime path.")
+        if not isinstance(value, LegacyRuntimeOptionsState) or value._stage4_origin != "legacy_runtime_options":
+            raise InputError("Stage 4 legacy runtime options require the private tagged state.")
+        return value.to_runtime_options(parameters)
+
+    @property
+    def receipt(self) -> dict[str, Any]:
+        """Return a detached canonical configuration receipt."""
+
+        return json.loads(self._receipt_json)
+
+
+_FORMULATION_KEYS = {
+    "electrostatics",
+    "relative_permittivity",
+    "debye_huckel",
+    "born",
+    "solvated_ion_diameter",
+    "ion_dispersion",
+}
+
+
+def _parse_model_configuration(
+    value: str | Path | Mapping[str, Any] | ModelOptions,
+) -> ModelOptions:
     if isinstance(value, ModelOptions):
         return value
-    if isinstance(value, (Mapping, str, Path)):
-        return ModelOptions.from_user_options(value)
-    raise InputError("model_options must be a ModelOptions instance, mapping, JSON file, or folder.")
+    if isinstance(value, (str, Path)):
+        payload = _read_model_configuration_payload(Path(value).expanduser())
+    elif isinstance(value, Mapping):
+        payload = dict(value)
+    else:
+        raise InputError("model configuration must be a mapping, JSON file, folder, or ModelOptions instance.")
+
+    _require_exact_keys(
+        payload,
+        required={"schema", "schema_version", "selection_origin"},
+        allowed={"schema", "schema_version", "selection_origin", "formulation", "preset_id"},
+        context="model configuration",
+    )
+    schema = payload["schema"]
+    if type(schema) is not str or schema != MODEL_CONFIGURATION_SCHEMA:
+        raise InputError(f"model configuration schema must be {MODEL_CONFIGURATION_SCHEMA!r}.")
+    schema_version = payload["schema_version"]
+    if type(schema_version) is not int or schema_version != MODEL_CONFIGURATION_SCHEMA_VERSION:
+        raise InputError(f"model configuration schema_version must be {MODEL_CONFIGURATION_SCHEMA_VERSION}.")
+    selection_origin = payload["selection_origin"]
+    if type(selection_origin) is not str:
+        raise InputError("model configuration selection_origin must be a string.")
+    if selection_origin == "admitted_preset":
+        if "formulation" in payload:
+            raise InputError("admitted preset selection cannot include an explicit formulation.")
+        if "preset_id" not in payload:
+            raise InputError("model configuration is missing required key: preset_id.")
+        if not MODEL_CONFIGURATION_PRESETS:
+            raise InputError("the provider has no admitted presets.")
+        raise InputError(f"model configuration preset_id {payload['preset_id']!r} is not admitted.")
+    if selection_origin != "explicit_configuration":
+        raise InputError("selection_origin must be 'explicit_configuration' or 'admitted_preset'.")
+    if "preset_id" in payload:
+        raise InputError("explicit configuration cannot include preset_id.")
+    if "formulation" not in payload:
+        raise InputError("model configuration is missing required key: formulation.")
+
+    formulation = _require_mapping(payload["formulation"], "model configuration.formulation")
+    _require_exact_keys(
+        formulation,
+        required=_FORMULATION_KEYS,
+        allowed=_FORMULATION_KEYS,
+        context="model configuration.formulation",
+    )
+    parsed = {
+        "electrostatics": _parse_formulation_record("electrostatics", formulation["electrostatics"]),
+        "relative_permittivity": _parse_formulation_record(
+            "relative_permittivity", formulation["relative_permittivity"]
+        ),
+        "debye_huckel": _parse_formulation_record("debye_huckel", formulation["debye_huckel"]),
+        "born": _parse_formulation_record("born", formulation["born"]),
+        "solvated_ion_diameter": _parse_formulation_record(
+            "solvated_ion_diameter", formulation["solvated_ion_diameter"]
+        ),
+        "ion_dispersion": _parse_formulation_record("ion_dispersion", formulation["ion_dispersion"]),
+    }
+    if isinstance(parsed["electrostatics"], DisabledFormulation):
+        active = [name for name in _FORMULATION_KEYS - {"electrostatics"} if not isinstance(parsed[name], DisabledFormulation)]
+        if active:
+            raise InputError("dependent formulations cannot be enabled when electrostatics is disabled.")
+    if isinstance(parsed["relative_permittivity"], DisabledFormulation) and any(
+        not isinstance(parsed[name], DisabledFormulation) for name in ("debye_huckel", "born")
+    ):
+        raise InputError("Debye-Huckel and Born require enabled relative permittivity.")
+
+    receipt = {
+        "schema": MODEL_CONFIGURATION_SCHEMA,
+        "schema_version": MODEL_CONFIGURATION_SCHEMA_VERSION,
+        "selection_origin": "explicit_configuration",
+        "formulation": {name: asdict(parsed[name]) for name in _FORMULATION_KEYS},
+    }
+    receipt_json = json.dumps(receipt, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    instance = object.__new__(ModelOptions)
+    object.__setattr__(instance, "schema", MODEL_CONFIGURATION_SCHEMA)
+    object.__setattr__(instance, "schema_version", MODEL_CONFIGURATION_SCHEMA_VERSION)
+    object.__setattr__(instance, "selection_origin", "explicit_configuration")
+    object.__setattr__(instance, "preset_id", None)
+    for name in _FORMULATION_KEYS:
+        object.__setattr__(instance, name, parsed[name])
+    object.__setattr__(instance, "_receipt_json", receipt_json)
+    return instance
+
+
+def _parse_formulation_record(name: str, value: object) -> object:
+    record = _require_mapping(value, f"formulation.{name}")
+    required_by_name = {
+        "electrostatics": {"enabled"},
+        "relative_permittivity": {"enabled", "rule"},
+        "debye_huckel": {"enabled", "ion_diameter_rule", "bjerrum_pairing"},
+        "born": {
+            "enabled",
+            "born_diameter_rule",
+            "solvation_shell_model",
+            "dielectric_saturation",
+            "bulk_mode",
+        },
+        "solvated_ion_diameter": {"enabled"},
+        "ion_dispersion": {"enabled"},
+    }
+    if "enabled" not in record:
+        raise InputError(f"formulation.{name} is missing required key: enabled.")
+    unknown = sorted(set(record) - required_by_name[name])
+    if unknown:
+        raise InputError(f"formulation.{name} contains unknown key(s): {', '.join(unknown)}.")
+    enabled = _require_strict_bool(record["enabled"], f"formulation.{name}.enabled")
+    if not enabled:
+        if set(record) != {"enabled"}:
+            raise InputError(f"disabled formulation.{name} cannot contain active-only fields.")
+        return DisabledFormulation(enabled=False)
+
+    _require_exact_keys(record, required=required_by_name[name], allowed=required_by_name[name], context=f"formulation.{name}")
+    if name == "electrostatics":
+        return ElectrostaticsOptions(enabled=True)
+    if name == "relative_permittivity":
+        return RelativePermittivityOptions(enabled=True, rule=_require_string(record["rule"], f"formulation.{name}.rule"))
+    if name == "debye_huckel":
+        return DebyeHuckelOptions(
+            enabled=True,
+            ion_diameter_rule=_require_string(record["ion_diameter_rule"], f"formulation.{name}.ion_diameter_rule"),
+            bjerrum_pairing=_require_strict_bool(record["bjerrum_pairing"], f"formulation.{name}.bjerrum_pairing"),
+        )
+    if name == "born":
+        return BornModelOptions(
+            enabled=True,
+            born_diameter_rule=_require_string(record["born_diameter_rule"], f"formulation.{name}.born_diameter_rule"),
+            solvation_shell_model=_require_strict_bool(
+                record["solvation_shell_model"], f"formulation.{name}.solvation_shell_model"
+            ),
+            dielectric_saturation=_require_strict_bool(
+                record["dielectric_saturation"], f"formulation.{name}.dielectric_saturation"
+            ),
+            bulk_mode=_require_string(record["bulk_mode"], f"formulation.{name}.bulk_mode"),
+        )
+    if name == "solvated_ion_diameter":
+        return SolvatedIonDiameterOptions(enabled=True)
+    return IonDispersionOptions(enabled=True)
+
+
+def _read_model_configuration_payload(path: Path) -> Mapping[str, Any]:
+    retired_names = ("user_options.json", "model_options.json")
+    if path.is_dir():
+        retired = [name for name in retired_names if (path / name).exists()]
+        if retired:
+            raise InputError(f"model configuration folder contains retired filename(s): {', '.join(retired)}.")
+        path = path / MODEL_CONFIGURATION_FILENAME
+        if not path.is_file():
+            raise InputError(f"model configuration folder must contain {MODEL_CONFIGURATION_FILENAME}.")
+    elif path.name in retired_names:
+        raise InputError(f"{path.name} is a retired model configuration filename.")
+    if not path.is_file():
+        raise InputError(f"model configuration file '{path}' does not exist.")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_json_keys)
+    except json.JSONDecodeError as exc:
+        raise InputError(f"invalid model configuration JSON: {exc.msg}.") from exc
+    if not isinstance(payload, Mapping):
+        raise InputError(f"model configuration file '{path}' must contain a JSON object.")
+    return payload
+
+
+def _reject_duplicate_json_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise InputError(f"model configuration JSON contains duplicate key: {key}.")
+        result[key] = value
+    return result
+
+
+def _require_mapping(value: object, context: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise InputError(f"{context} must be a mapping.")
+    return value
+
+
+def _require_exact_keys(
+    value: Mapping[str, Any],
+    *,
+    required: set[str],
+    allowed: set[str],
+    context: str,
+) -> None:
+    missing = sorted(required - set(value))
+    if missing:
+        raise InputError(f"{context} is missing required key(s): {', '.join(missing)}.")
+    unknown = sorted(set(value) - allowed)
+    if unknown:
+        raise InputError(f"{context} contains unknown key(s): {', '.join(unknown)}.")
+
+
+def _require_strict_bool(value: object, field_name: str) -> bool:
+    if type(value) is not bool:
+        raise InputError(f"{field_name} must be a boolean.")
+    return value
+
+
+def _require_string(value: object, field_name: str) -> str:
+    if type(value) is not str or not value:
+        raise InputError(f"{field_name} must be a nonempty string.")
+    return value
 
 
 def _has_active_association(parameters: ParameterSet | None) -> bool:

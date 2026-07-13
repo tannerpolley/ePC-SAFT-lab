@@ -1282,7 +1282,8 @@ def _public_model_options_to_internal(user_options: dict) -> dict:
             for key in user_options
             if key in _PUBLIC_MODEL_OPTION_KEYS
         }
-    internal = ModelOptions.from_user_options(model_payload).to_runtime_options()
+    legacy_options = ModelOptions._from_stage4_legacy_runtime_options(model_payload)
+    internal = ModelOptions._to_stage4_legacy_runtime_options(legacy_options)
     internal["elec_model"]["assoc_model"]["dadx_differential_mode"] = "auto"
     if "solvated_ion_diameter_mixing_rule" in user_options:
         internal["solvated_ion_diameter_mixing_rule"] = _coerce_bool(user_options["solvated_ion_diameter_mixing_rule"])

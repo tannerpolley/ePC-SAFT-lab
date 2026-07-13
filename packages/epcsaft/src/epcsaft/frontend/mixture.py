@@ -9,7 +9,7 @@ from typing import Any
 import numpy as np
 
 from .._types import InputError
-from ..model.options import ModelOptions, coerce_model_options
+from ..model.options import ModelOptions
 from ..model.parameters import ParameterSet, _interaction_matrices, _runtime_parameter_provenance_payload
 
 
@@ -26,8 +26,7 @@ class Mixture:
         if not isinstance(parameters, ParameterSet):
             raise InputError("Mixture requires a ParameterSet.")
         self.parameters = parameters
-        self.model_options = coerce_model_options(model_options)
-        self.model_options.validate_parameters(parameters)
+        self.model_options = ModelOptions._from_stage4_legacy_runtime_options(model_options)
         self.components = tuple(str(component) for component in (components or parameters.components))
         if not self.components:
             raise InputError("Mixture requires at least one component.")
@@ -50,11 +49,11 @@ class Mixture:
         if not labels:
             raise InputError("Mixture.from_folder requires at least one component.")
         root = Path(path).expanduser()
-        options = coerce_model_options(root if model_options is None else model_options)
+        options = ModelOptions._from_stage4_legacy_runtime_options(root if model_options is None else model_options)
         params = ParameterSet.from_folder(
             root,
             components=labels,
-            user_options=options.to_json_dict(),
+            user_options=ModelOptions._to_stage4_legacy_runtime_options(options),
         )
         return cls(params, model_options=options, components=labels)
 
@@ -75,7 +74,7 @@ class Mixture:
         return self._runtime
 
 
-def _runtime_payload(parameters: ParameterSet, components: Sequence[str], model_options: ModelOptions) -> dict[str, Any]:
+def _runtime_payload(parameters: ParameterSet, components: Sequence[str], model_options: object) -> dict[str, Any]:
     records = {str(record.component): record for record in parameters.pure_records}
     ordered = [records[str(component)] for component in components]
     charges = np.asarray([record.charge for record in ordered], dtype=float)
@@ -90,7 +89,7 @@ def _runtime_payload(parameters: ParameterSet, components: Sequence[str], model_
         payload["dielc"] = np.asarray([record.relative_permittivity for record in ordered], dtype=float)
         payload["d_born"] = np.asarray([record.born_diameter for record in ordered], dtype=float)
         payload["f_solv"] = np.asarray([record.solvation_factor for record in ordered], dtype=float)
-        payload.update(model_options.to_runtime_options(parameters))
+        payload.update(ModelOptions._to_stage4_legacy_runtime_options(model_options, parameters))
     if any(float(record.epsilon_k_ab) != 0.0 for record in ordered):
         payload["e_assoc"] = np.asarray([record.epsilon_k_ab for record in ordered], dtype=float)
     if any(float(record.kappa_ab) != 0.0 for record in ordered):
