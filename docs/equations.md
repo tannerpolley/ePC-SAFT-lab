@@ -317,7 +317,7 @@ $$
 - Description: Provides a supporting relation used in association contribution.
 - Change note: Corrected to the source-consistent cross-association energy rule; the hydrogen-bond correction does not multiply the energy.
 - LaTeX: `docs/latex/equations.tex:196`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:319` (double eABij = 0.5 * (cppargs.e_assoc[comp_i] + cppargs.e_assoc[comp_j]);)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:317` (double eABij = 0.5 * (cppargs.e_assoc[comp_i] + cppargs.e_assoc[comp_j]);)
 
 **LaTeX source**
 
@@ -1912,7 +1912,7 @@ $$
 - Description: Provides a differential relation needed for association contribution calculations.
 - Change note: Differentiates the verified mass-action balance with respect to the angstrom-basis number density.
 - LaTeX: `docs/latex/equations.tex:1081`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:335` (static vector<double> association_site_fraction_density_terms_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:333` (static vector<double> association_site_fraction_density_terms_cpp()
 
 **LaTeX source**
 
@@ -1955,7 +1955,7 @@ $$
 - Description: Provides a differential relation needed for association contribution calculations.
 - Change note: Differentiates the verified mass-action balance at fixed temperature and angstrom-basis number density.
 - LaTeX: `docs/latex/equations.tex:1103`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:238` (static vector<double> association_site_fraction_dx_cpp(vector<int> assoc_num, vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dx, vector<double> x) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:236` (static vector<double> association_site_fraction_dx_cpp(vector<int> assoc_num, vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dx, vector<double> x) {)
 
 **LaTeX source**
 
@@ -2049,7 +2049,7 @@ $$
 - Description: Provides a supporting relation used in association contribution.
 - Change note: Chapman writes \(\rho_j=x_j\rho_{\mathrm{mixture}}\) on a molar basis; multiplying both densities by the same constant gives the active number-density relation.
 - LaTeX: `docs/latex/equations.tex:1153`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:296` (AssociationSetup association_setup_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:294` (AssociationSetup association_setup_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
 
 **LaTeX source**
 
@@ -2072,7 +2072,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for association contribution.
 - Change note: The active implementation extends Huang and Radosz's pure-component SAFT \(\sigma^{3}\kappa\) relation to pair quantities using PC-SAFT size and cross-association mixing rules; the pair-indexed form is not claimed as a verbatim Huang and Radosz equation. Chapman supplies the original-SAFT lineage with \(d_{ij}^{3}\kappa\), not the active prefactor.
 - LaTeX: `docs/latex/equations.tex:1167`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:296` (AssociationSetup association_setup_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:294` (AssociationSetup association_setup_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
 
 **LaTeX source**
 
@@ -2095,7 +2095,7 @@ $$
 - Description: Defines the density differential of the association strength term.
 - Change note: Uses the same active \(\sigma_{ij}^{3}\kappa\) prefactor as the baseline association strength.
 - LaTeX: `docs/latex/equations.tex:1179`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:335` (static vector<double> association_site_fraction_density_terms_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:333` (static vector<double> association_site_fraction_density_terms_cpp()
 
 **LaTeX source**
 
@@ -2116,7 +2116,7 @@ $$
 - Description: Defines the composition differential of the association strength term.
 - Change note: Uses the same active \(\sigma_{ij}^{3}\kappa\) prefactor as the baseline association strength at fixed temperature and number density.
 - LaTeX: `docs/latex/equations.tex:1190`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:368` (static vector<double> association_site_fraction_composition_terms_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:366` (static vector<double> association_site_fraction_composition_terms_cpp()
 
 **LaTeX source**
 
@@ -2145,7 +2145,7 @@ $$
 - Description: Defines the temperature differential of the active PC-SAFT association strength.
 - Change note: Differentiates both the hard-sphere contact value and the association Mayer factor while retaining the baseline \(\sigma_{ij}^{3}\kappa\) prefactor.
 - LaTeX: `docs/latex/equations.tex:1205`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:446` (vector<double> ddelta_dt(num_sites * num_sites, 0.0);)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:444` (vector<double> ddelta_dt(num_sites * num_sites, 0.0);)
 
 **LaTeX source**
 
@@ -3047,7 +3047,7 @@ $$
 - Description: Provides the density differential of the association Helmholtz contribution.
 - Change note: Uses the angstrom-basis number-density derivative defined by the association mass-action chain.
 - LaTeX: `docs/latex/equations.tex:1706`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:502` (double dadrho_assoc_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:500` (double dadrho_assoc_cpp()
 
 **LaTeX source**
 
@@ -3070,7 +3070,7 @@ $$
 - Description: Provides the composition differential of the association Helmholtz contribution.
 - Change note: Differentiates the verified association Helmholtz form at fixed temperature and angstrom-basis number density.
 - LaTeX: `docs/latex/equations.tex:1718`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:564` (ContributionDadxResult dadx_assoc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const AssociationIntermediateState &assoc_state, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:562` (ContributionDadxResult dadx_assoc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const AssociationIntermediateState &assoc_state, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
 
 **LaTeX source**
 
@@ -3103,7 +3103,7 @@ $$
 - Description: Provides the analytical temperature differential of the association Helmholtz contribution.
 - Change note: The site-fraction temperature chain consumes the \(\Delta_{,T}\) relation defined in Eq.~\eqref{eq:ddelta_assoc_dT}.
 - LaTeX: `docs/latex/equations.tex:1735`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:552` (double dadt_assoc_cpp(const AssociationIntermediateState &assoc_state, const vector<double> &x) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:550` (double dadt_assoc_cpp(const AssociationIntermediateState &assoc_state, const vector<double> &x) {)
 
 **LaTeX source**
 

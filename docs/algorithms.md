@@ -290,7 +290,7 @@ candidate lower/upper bound audit and remains incomplete when the finite
 sampled-candidate gap closes without a global outer/inner HELD proof. Current
 Ipopt phase-amount/phase-volume solves are reported as
 current-route Stage III refinement only when the Ipopt solve itself reports
-success and solve_succeeded; acceptable-level status, finite variables, and
+success and `solve_succeeded`; acceptable-level status, finite variables, and
 postsolve acceptance are diagnostics, not proof that Stage II or Stage III has
 converged.
 The internal neutral LLE refinement uses the `held_refinement` Ipopt profile so the
@@ -307,10 +307,10 @@ candidate lower/upper bound audit and remains incomplete when the finite
 sampled-candidate gap closes without a global outer/inner HELD proof. Current
 Ipopt phase-amount/phase-volume solves are reported as
 current-route Stage III refinement only when the Ipopt solve itself reports
-success and solve_succeeded; acceptable-level status, finite variables, and
+success and \texttt{solve\_succeeded}; acceptable-level status, finite variables, and
 postsolve acceptance are diagnostics, not proof that Stage II or Stage III has
 converged.
-The internal neutral LLE refinement uses the `held_refinement` Ipopt profile so the
+The internal neutral LLE refinement uses the \texttt{held\_refinement} Ipopt profile so the
 Stage III diagnostic records an actual converged route solve before postsolve
 certification is evaluated.
 ```
@@ -482,7 +482,7 @@ same tolerance as the exact solve.
 ```tex
 This planned diagnostic family may use explicit algebraic association closures
 for seed generation, continuation, and comparison against
-\texttt{implicit_exact}. CppAD derivatives are exact for the approximate
+\texttt{implicit\_exact}. CppAD derivatives are exact for the approximate
 closure only. They are not exact derivatives of the PC-SAFT mass-action
 association model unless the closure satisfies the mass-action equations at the
 same tolerance as the exact solve.

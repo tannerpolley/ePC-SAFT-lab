@@ -323,12 +323,16 @@ def render_yaml(entries: list[dict]) -> str:
 
 
 def render_latex_body_markdown(body: str) -> str:
+    def render_texttt(match: re.Match[str]) -> str:
+        text = match.group(1).replace("\\_", "_")
+        return f"`{text}`"
+
     rendered = DISPLAY_MATH_RE.sub(
         lambda match: "\n\n```tex\n" + match.group(1).strip() + "\n```\n\n",
         body,
     )
     rendered = INLINE_MATH_RE.sub(lambda match: f"`{match.group(1).strip()}`", rendered)
-    rendered = TEXTTT_RE.sub(lambda match: f"`{match.group(1)}`", rendered)
+    rendered = TEXTTT_RE.sub(render_texttt, rendered)
     return rendered
 
 

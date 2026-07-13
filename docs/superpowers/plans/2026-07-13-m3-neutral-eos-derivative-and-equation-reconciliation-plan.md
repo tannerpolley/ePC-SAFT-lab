@@ -33,7 +33,7 @@
 - Modify: `packages/epcsaft/tests/native/state/test_eos_contributions.py`
 - Modify: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp`
 - Verify: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp`
-- Verify: `packages/epcsaft/src/epcsaft/native/eos/canonical/residual/cppad/hard_chain_dispersion.h`
+- Verify: `packages/epcsaft/src/epcsaft/native/eos/residual/cppad/hard_chain_dispersion.h`
 
 ### Step 1: Add the failing backend-parity regression
 

@@ -252,8 +252,8 @@
     \varepsilon^{A_{i}B_{j}}=\frac{1}{2}(\varepsilon^{A_{i}B_{i}}+\varepsilon^{A_{j}B_{j}})
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 319
-      comment_line: 318
+      line: 317
+      comment_line: 316
       context: "double eABij = 0.5 * (cppargs.e_assoc[comp_i] + cppargs.e_assoc[comp_j]);"
 - eqid: "kappa_assoc_mixing"
   section: "Parameter Setup"
@@ -1465,8 +1465,8 @@
         \end{aligned}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 335
-      comment_line: 334
+      line: 333
+      comment_line: 332
       context: "static vector<double> association_site_fraction_density_terms_cpp("
 - eqid: "dx_assoc_dxk"
   section: "Contribution Intermediates"
@@ -1498,8 +1498,8 @@
         \end{aligned}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 238
-      comment_line: 237
+      line: 236
+      comment_line: 235
       context: "static vector<double> association_site_fraction_dx_cpp(vector<int> assoc_num, vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dx, vector<double> x) {"
 - eqid: "dx_assoc_dT"
   section: "Contribution Intermediates"
@@ -1544,8 +1544,8 @@
     \hat{\rho}_{j}=x_{j}\hat{\rho}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 296
-      comment_line: 294
+      line: 294
+      comment_line: 292
       context: "AssociationSetup association_setup_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {"
 - eqid: "delta_assoc"
   section: "Contribution Intermediates"
@@ -1563,8 +1563,8 @@
         \left[\exp\!\left(\frac{\epsilon^{A_iB_j}}{kT}\right)-1\right]
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 296
-      comment_line: 295
+      line: 294
+      comment_line: 293
       context: "AssociationSetup association_setup_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {"
 - eqid: "ddelta_assoc_drho"
   section: "Contribution Intermediates"
@@ -1581,8 +1581,8 @@
     \left(\frac{\partial\Delta^{A_{i}B_{j}}}{\partial\hat{\rho}}\right)_{T,x}=\sigma_{ij}^3\kappa^{A_{i}B_{j}}\left[\exp(\epsilon^{A_{i}B_{j}}/kT)-1\right]\left(\frac{\partial g_{ij}^{\mathrm{hs}}}{\partial\hat{\rho}}\right)_{T,x}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 335
-      comment_line: 333
+      line: 333
+      comment_line: 331
       context: "static vector<double> association_site_fraction_density_terms_cpp("
 - eqid: "ddelta_assoc_dxk"
   section: "Contribution Intermediates"
@@ -1603,8 +1603,8 @@
         \left(\frac{\partial g_{ij}^{\mathrm{hs}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 368
-      comment_line: 367
+      line: 366
+      comment_line: 365
       context: "static vector<double> association_site_fraction_composition_terms_cpp("
 - eqid: "ddelta_assoc_dT"
   section: "Contribution Intermediates"
@@ -1632,8 +1632,8 @@
         \end{aligned}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 446
-      comment_line: 445
+      line: 444
+      comment_line: 443
       context: "vector<double> ddelta_dt(num_sites * num_sites, 0.0);"
 - eqid: "kappa_dh"
   section: "Contribution Intermediates"
@@ -2254,8 +2254,8 @@
         =\hat{\rho}\sum_{i}x_{i}\sum_{A_{i}}\left(\frac{1}{X^{A_{i}}}-\frac{1}{2}\right)\left(\frac{\partial X^{A_{i}}}{\partial\hat{\rho}}\right)_{T,x}.
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 502
-      comment_line: 501
+      line: 500
+      comment_line: 499
       context: "double dadrho_assoc_cpp("
 - eqid: "assoc_ares_dxk"
   section: "Residual Helmholtz Energy"
@@ -2278,8 +2278,8 @@
         \left(\frac{\partial X^{A_{i}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{i\neq k}}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 564
-      comment_line: 563
+      line: 562
+      comment_line: 561
       context: "ContributionDadxResult dadx_assoc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const AssociationIntermediateState &assoc_state, double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {"
 - eqid: "assoc_ares_dT"
   section: "Residual Helmholtz Energy"
@@ -2300,8 +2300,8 @@
         \left(\frac{\partial X^{A_i}}{\partial T}\right)_{\hat{\rho},x_i}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp"
-      line: 552
-      comment_line: 551
+      line: 550
+      comment_line: 549
       context: "double dadt_assoc_cpp(const AssociationIntermediateState &assoc_state, const vector<double> &x) {"
 - eqid: "ares_dh"
   section: "Residual Helmholtz Energy"

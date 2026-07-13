@@ -169,4 +169,10 @@ def test_generated_markdown_names_public_api_backend_and_dependencies() -> None:
     assert "`l_{ij}`" in markdown
     assert "`k^{hb}_{ij}`" in markdown
     assert "`NlpProblem`" in markdown
+    assert "`solve_succeeded`" in markdown
+    assert "`held_refinement`" in markdown
+    assert "`implicit_exact`" in markdown
+    assert r"`solve\_succeeded`" not in markdown
+    assert r"`held\_refinement`" not in markdown
+    assert r"`implicit\_exact`" not in markdown
     assert r"\end{document}" not in markdown

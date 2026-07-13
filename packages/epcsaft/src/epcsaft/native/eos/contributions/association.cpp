@@ -216,14 +216,12 @@ static vector<double> association_site_fraction_dt_cpp(vector<double> delta_ij, 
 
     int ij = 0;
     for (int i = 0; i < num_sites; ++i) {
-        double summ = 0.0;
         for (int j = 0; j < num_sites; ++j) {
             B(i) -= x[j] * XA[j] * ddelta_dt[ij];
             A(i, j) = x[j] * delta_ij[ij];
-            summ += x[j] * XA[j] * delta_ij[ij];
             ij += 1;
         }
-        A(i, i) = std::pow(1.0 + den * summ, 2.0) / den;
+        A(i, i) += 1.0 / (den * XA[i] * XA[i]);
     }
 
     Eigen::MatrixXd solution = A.lu().solve(B);
@@ -353,7 +351,7 @@ static vector<double> association_site_fraction_density_terms_cpp(
             ++ij;
         }
         B(i) -= summ;
-        A(i, i) = std::pow(1.0 + den * summ, 2.0) / den;
+        A(i, i) += 1.0 / (den * XA[i] * XA[i]);
     }
 
     Eigen::MatrixXd solution = A.lu().solve(B);
