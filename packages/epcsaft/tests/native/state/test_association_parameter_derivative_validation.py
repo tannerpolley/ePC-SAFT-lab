@@ -6,7 +6,7 @@ from copy import deepcopy
 import epcsaft._core as _core
 import numpy as np
 import pytest
-from epcsaft.state.native_adapter import ePCSAFTMixture
+from epcsaft.state.native_adapter import create_struct, ePCSAFTMixture
 
 
 def _water_sigma(temperature: float) -> float:
@@ -32,6 +32,30 @@ def _pure_associating_case() -> tuple[dict[str, object], list[str], float, np.nd
         "assoc_scheme": ["2B"],
     }
     return params, ["water"], temperature, np.asarray([1.0]), 1000.0
+
+
+def _one_site_associating_case() -> tuple[dict[str, object], list[str], float, np.ndarray, float]:
+    """Return the Huang/Radosz Tables VII and IX methanoic-acid topology case."""
+
+    avogadro = 6.02214076e23
+    close_packing_fraction = 0.74048
+    segment_volume_m3_per_mol = 15.5e-6
+    segment_diameter_angstrom = (
+        6.0
+        * close_packing_fraction
+        * segment_volume_m3_per_mol
+        / (np.pi * avogadro)
+        * 1.0e30
+    ) ** (1.0 / 3.0)
+    params: dict[str, object] = {
+        "m": np.asarray([1.341]),
+        "s": np.asarray([segment_diameter_angstrom]),
+        "e": np.asarray([333.28]),
+        "e_assoc": np.asarray([7522.0]),
+        "vol_a": np.asarray([0.001625]),
+        "assoc_scheme": ["1"],
+    }
+    return params, ["methanoic acid"], 350.0, np.asarray([1.0]), 1.0
 
 
 def _binary_associating_case() -> tuple[dict[str, object], list[str], float, np.ndarray, float]:
@@ -160,6 +184,52 @@ def test_validation_only_pure_association_parameter_derivatives_match_central_di
         step,
     )
     assert fugacity_jacobian[:, column] == pytest.approx(fugacity_check, rel=1.0e-4, abs=1.0e-6)
+
+
+@pytest.mark.skipif(
+    not _core._native_cppad_smoke()["cppad_compiled"],
+    reason="validation-only association parameter derivative checks require CppAD",
+)
+@pytest.mark.parametrize(
+    ("parameter_name", "step"),
+    [
+        ("e_assoc", 1.0e-2),
+        ("vol_a", 1.0e-8),
+    ],
+)
+def test_validation_only_one_site_association_pressure_parameter_derivatives_match_central_diff(
+    parameter_name: str,
+    step: float,
+) -> None:
+    """Central-difference use here is validation-only, not a production derivative backend."""
+
+    params, species, temperature, composition, density = _one_site_associating_case()
+    mix = ePCSAFTMixture.from_params(params, species=species)
+    state = mix.state(T=temperature, x=composition, rho=density)
+    result = _core._native_cppad_association_component_parameters(
+        temperature,
+        density,
+        composition.tolist(),
+        create_struct(mix.parameters),
+        0,
+    )
+    pressure_check = _central_difference(
+        params,
+        species,
+        temperature,
+        composition,
+        density,
+        _perturb_vector(parameter_name, 0),
+        _pressure_output,
+        step,
+    )
+
+    assert result[f"{parameter_name}_pressure"] == pytest.approx(
+        state.pressure(), rel=1.0e-11, abs=1.0e-8
+    )
+    assert result[f"{parameter_name}_pressure_derivative"] == pytest.approx(
+        pressure_check[0], rel=1.0e-4, abs=1.0e-6
+    )
 
 
 @pytest.mark.skipif(

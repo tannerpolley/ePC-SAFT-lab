@@ -170,7 +170,7 @@ static vector<Scalar> association_site_fraction_density_terms_scalar_cpp(
             ++ij;
         }
         rhs[static_cast<size_t>(i)] -= summ;
-        matrix[static_cast<size_t>(i * num_sites + i)] = scalar_pow(1.0 + den * summ, 2.0) / den;
+        matrix[static_cast<size_t>(i * num_sites + i)] += 1.0 / (den * XA[static_cast<size_t>(i)] * XA[static_cast<size_t>(i)]);
     }
 
     return solve_linear_system_scalar_cpp(matrix, rhs, num_sites);

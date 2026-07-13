@@ -64,7 +64,7 @@ Primary local references:
 - `docs/papers/md/ePC-SAFT-Literature/Gross, Sadowski - 2002 - Application of the PC-SAFT equation of state to associating systems.md`
 - `docs/papers/md/ePC-SAFT-Literature/Huang and Radosz - 1990 - Equation of State for Small, Large, Polydisperse, and Associating Molecules.md`
 - `docs/papers/md/Chapman et al. - 1989 - SAFT Equation-of-state solution model for associating fluids.md`
-- `docs/papers/md/Chapman et al. - 1990 - Phase Equilibria in Polymer-Liquid 1-Liquid 2 Systems.md`
+- `docs/papers/md/ePC-SAFT-Literature/Chapman et al. - 1990 - New Reference Equation of State for Associating Liquids.md`
 
 Related validation design:
 

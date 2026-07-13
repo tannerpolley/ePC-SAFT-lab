@@ -153,7 +153,10 @@ def test_generated_markdown_names_public_api_backend_and_dependencies() -> None:
         "Public API: None; Equilibrium(mixture, route='flash', ...) is rejected "
         "before native dispatch"
     ) in markdown
-    assert "Regression(mixture, ...).fit_pure_neutral(...)" in markdown
+    assert (
+        "Public API: Internal native characterization only; configured workflow "
+        "overlay pending"
+    ) in markdown
     assert "Native C++ Ipopt equilibrium NLP" in markdown
     assert "Dependency: Ipopt" in markdown
     assert "Native C++ Ceres regression" in markdown
@@ -169,4 +172,10 @@ def test_generated_markdown_names_public_api_backend_and_dependencies() -> None:
     assert "`l_{ij}`" in markdown
     assert "`k^{hb}_{ij}`" in markdown
     assert "`NlpProblem`" in markdown
+    assert "`solve_succeeded`" in markdown
+    assert "`held_refinement`" in markdown
+    assert "`implicit_exact`" in markdown
+    assert r"`solve\_succeeded`" not in markdown
+    assert r"`held\_refinement`" not in markdown
+    assert r"`implicit\_exact`" not in markdown
     assert r"\end{document}" not in markdown

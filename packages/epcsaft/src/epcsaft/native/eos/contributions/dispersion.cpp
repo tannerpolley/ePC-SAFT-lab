@@ -44,6 +44,11 @@ double dadrho_disp_cpp(const MixtureState &thermo, const HardChainState &hc_stat
 }
 
 // EqID: disp_ares_dT
+// EqID: c1_dT
+// EqID: m2epssigma3_dT
+// EqID: m2eps2sigma3_dT
+// EqID: i1_dT
+// EqID: i2_dT
 double dadt_disp_cpp(const MixtureState &thermo, double deta_dt, double t, const DispersionPolynomialState &dispersion) {
     double dI1_dt = dispersion.dI1_deta * deta_dt;
     double dI2_dt = dispersion.dI2_deta * deta_dt;

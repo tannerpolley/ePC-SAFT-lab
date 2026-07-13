@@ -104,7 +104,7 @@ The neutral-segment diameter is the base hard-chain size parameter used in the p
 % Change note: Computed by differentiating Eq. (A.9) with respect to temperature.
 
 \begin{equation}
-    \left(\frac{\partial d_i}{\partial T}\right)_{\rho,x}
+    \left(\frac{\partial d_i}{\partial T}\right)_{\rho_m,x}
     \equiv d_{i,T}
     =\sigma_{i}\left(3\frac{\epsilon_{i}}{kT^2}\right)\left[-0.12\exp\left(-3\frac{\epsilon_{i}}{kT}\right)\right]
     \label{eq:d_segment_dT}
@@ -145,10 +145,10 @@ The ion-diameter rule selects the effective ionic hard-core size used by the Deb
 
 The ordering in this subsection is: pair-diameter and pair-size rules first, pair-energy mixing second, the active ePC-SAFT ionic dispersion override third, and the cross-association mixing rules last.
 % EqID: d_ij
-% Source: \cite{Gross2001}, Eq.~(A.14)
+% Source: \cite{Chapman1990}, arithmetic pair-diameter definition following Eq.~(24)
 % Status: Documentation-only
 % Description: Provides a supporting relation used in association contribution.
-% Change note: Mapped to the arithmetic combining rule form; this file writes it for effective diameters in association context.
+% Change note: This is the original-SAFT effective-diameter convention; the active PC-SAFT association strength below instead uses the temperature-independent pair size \(\sigma_{ij}\).
 
 \begin{equation}
     d_{i j}=\left(d_{i i}+d_{j j}\right) / 2 .
@@ -156,10 +156,10 @@ The ordering in this subsection is: pair-diameter and pair-size rules first, pai
 \end{equation}
 
 % EqID: sigma_ij
-% Source: \cite{Gross2001}, Eq.~(A.15)
+% Source: \cite{Gross2001}, Eq.~(A.14) for the arithmetic base; \cite{Held2014}, Eq.~(15) for the \((1-l_{ij})\) correction
 % Status: Adapted notation
 % Description: Provides a supporting relation used in dispersion contribution.
-% Change note: Moderate-to-high similarity; notation/arrangement appears adapted from the cited equation.
+% Change note: The binary size correction extends the arithmetic PC-SAFT combining rule used by Gross and Sadowski.
 
 \begin{equation}
     \sigma_{i j}=\frac{1}{2}\left(\sigma_{i}+\sigma_{j}\right) \cdot \left(1- l_{ij} \right)
@@ -421,19 +421,19 @@ These relations define the optional ion-suppressed empirical relative-permittivi
 \section{Density}
 \label{sec:initial_density_solve}
 
-This section collects the density-state relations used downstream. Here \(\rho\) is the molar density, \(\rho_{N}\) is the number density in \(\mathrm{m}^{-3}\), and \(\hat{\rho}\) is the same number density written in \(\mathrm{\AA}^{-3}\).
+This section collects the density-state relations used downstream. Here \(\rho_m\,[\mathrm{mol\,m^{-3}}]\) is the molar density, \(N_A\) is the Avogadro constant, \(\rho_N=N_A\rho_m\,[\mathrm{m^{-3}}]\) is the molecular number density, and \(\hat{\rho}=10^{-30}\rho_N\,[\text{\AA}^{-3}]\) is that number density on the angstrom basis used by the neutral PC-SAFT size and association parameters.
 
 \subsection{Packing-Fraction Moments}
 
 The hard-chain packing moments are constructed first from the current density state, and their composition and temperature differentials are kept with the same block.
 % EqID: zeta_n
-% Source: \cite{Gross2001}, Eq.~(A.8)
+% Source: \cite{Gross2001}, Eq.~(A.8); \cite{Chapman1990}, Eq.~(27)
 % Status: Close literature match
 % Description: Provides a supporting relation used in hard-chain reference contribution.
-% Change note: High textual similarity to a tagged equation in the cited local paper export.
+% Change note: The literature number-density symbol is written explicitly as \(\hat\rho\) so multiplication by diameters in angstroms is dimensionally visible.
 
 \begin{equation}
-    \zeta_{n}=\frac{\pi}{6} \rho \sum_{i} x_{i} m_{i} d_{i}^n \quad n \in\{0,1,2,3\}
+    \zeta_{n}=\frac{\pi}{6} \hat{\rho} \sum_{i} x_{i} m_{i} d_{i}^n \quad n \in\{0,1,2,3\}
     \label{eq:zeta_n}
 \end{equation}
 
@@ -444,7 +444,7 @@ The hard-chain packing moments are constructed first from the current density st
 % Change note: Ownership moved upstream so the composition derivatives are defined before the downstream property sections that use them.
 
 \begin{equation}
-    \zeta_{n,xk}=\left(\frac{\partial\zeta_{n}}{\partial x_{k}}\right)_{T,\boldsymbol{\rho},x_{j\neq k}}=\frac{\pi}{6}\rho m_{k}(d_{k})^{n}\quad n\in\{0,1,2,3\}
+    \zeta_{n,xk}=\left(\frac{\partial\zeta_{n}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}=\frac{\pi}{6}\hat{\rho} m_{k}(d_{k})^{n}\quad n\in\{0,1,2,3\}
     \label{eq:zeta_n_xk}
 \end{equation}
 
@@ -455,7 +455,7 @@ The hard-chain packing moments are constructed first from the current density st
 % Change note: Mapped manually to the temperature derivative of zeta moments.
 
 \begin{equation}
-    \zeta_{n,T}=\frac{\partial\zeta_{n}}{\partial T}=\frac{\pi}{6}\rho\sum_{i}x_{i}m_{i}nd_{i,T}\left(d_{i}\right)^{n-1}\quad n\in\{1,2,3\}
+    \zeta_{n,T}=\left(\frac{\partial\zeta_{n}}{\partial T}\right)_{\hat{\rho},x}=\frac{\pi}{6}\hat{\rho}\sum_{i}x_{i}m_{i}nd_{i,T}\left(d_{i}\right)^{n-1}\quad n\in\{1,2,3\}
     \label{eq:zeta_n_dT}
 \end{equation}
 
@@ -475,42 +475,57 @@ The third packing moment is the packing fraction used throughout the hard-chain 
 
 \subsection{Density Conversion}
 
-The packing fraction then provides the direct conversion from \(\eta\) to molar density and then to the number-density forms used in the native implementation.
+The packing fraction first provides the angstrom-basis number density used by the neutral EOS; the following conversion relates it to the SI number density and molar density used at the public state boundary.
 % EqID: rho_from_eta
 % Source: \cite{Gross2001}, Eq.~(A.20)
-% Status: Close literature match
+% Status: Convention translation
 % Description: Provides a supporting relation used in dispersion contribution.
-% Change note: High textual similarity to a tagged equation in the cited local paper export.
+% Change note: Gross and Sadowski denote this angstrom-basis number density by \(\rho\); this document writes it as \(\hat\rho\) to avoid collision with molar density.
 
 \begin{equation}
-    \rho=\frac{6}{\pi} \eta\left(\sum_{i} x_{i} m_{i} d_{i}^3\right)^{-1}
+    \hat{\rho}=\frac{6}{\pi} \eta\left(\sum_{i} x_{i} m_{i} d_{i}^3\right)^{-1}
     \label{eq:rho_from_eta}
 \end{equation}
 
 % EqID: rho_reduced
 % Source: \cite{Gross2001}, Eq.~(A.21)
-% Status: Close literature match
+% Status: Convention translation
 % Description: Provides a supporting relation used in dispersion contribution.
-% Change note: High textual similarity to a tagged equation in the cited local paper export.
+% Change note: Makes the native conversion from molar density to molecular number density and then to the angstrom basis explicit.
 
 \begin{equation}
-    \rho_{N}=N_{\mathrm{AV}}\rho,
+    \rho_{N}=N_A\rho_m,
     \qquad
-    \hat{\rho}=\rho_{N}\cdot 10^{-30}
+    \hat{\rho}=10^{-30}\rho_{N}
     \label{eq:rho_reduced}
 \end{equation}
+
+% EqID: density_derivative_invariant
+% Source: Derived from Eq.~\eqref{eq:rho_reduced}
+% Status: Documentation-only
+% Description: States the invariant logarithmic density derivative across molar, SI number-density, and angstrom number-density conventions.
+% Change note: The constant density conversions cancel in logarithmic derivatives, allowing neutral residual-property formulas to use the dimensionally appropriate basis without changing their thermodynamic value.
+
+\begin{equation}
+    \rho_m\frac{\partial}{\partial\rho_m}
+    =\rho_N\frac{\partial}{\partial\rho_N}
+    =\hat{\rho}\frac{\partial}{\partial\hat{\rho}}
+    \label{eq:density_derivative_invariant}
+\end{equation}
+
+The Debye--Huckel and Born subsections retain their own SI density conventions; those electrolyte conventions are audited separately and are not migrated in this neutral-EOS slice.
 
 \subsection{Pressure-Density Closure}
 
 This final block introduces the pressure-density closure and the residual used for the density root solve.
 % EqID: pressure_from_z
-% Source: \cite{Gross2001}, Eq.~(A.21)
+% Source: \cite{Gross2001}, Eq.~(A.23)
 % Status: Adapted implementation form
 % Description: Provides the pressure closure used in the initial density solve.
 % Change note: Moved upstream from the pressure section so the density-solver closure lives with the rest of the initial density-setup equations.
 
 \begin{equation}
-    P = ZRT\rho = Zk_{B}T\rho_{N}
+    P = ZRT\rho_m = Zk_{B}T\rho_{N}
     \label{eq:pressure_from_z}
 \end{equation}
 
@@ -525,11 +540,13 @@ This final block introduces the pressure-density closure and the residual used f
     =
     1+\eta\left(\frac{\partial\tilde{a}^\mathrm{res}}{\partial\eta}\right)_{T,x_{i}}
     =
-    1+\rho\left(\frac{\partial\tilde{a}^\mathrm{res}}{\partial\rho}\right)_{T,x_{i}}
+    1+\rho_m\left(\frac{\partial\tilde{a}^\mathrm{res}}{\partial\rho_m}\right)_{T,x_{i}}
+    =
+    1+\hat{\rho}\left(\frac{\partial\tilde{a}^\mathrm{res}}{\partial\hat{\rho}}\right)_{T,x_{i}}
     \label{eq:z_from_rho}
 \end{equation}
 
-In solver form, the density root is the \(\rho\) that drives the specified-pressure residual to zero.
+In solver form, the density root is the molar density \(\rho_m\) that drives the specified-pressure residual to zero.
 
 % EqID: density_solve_residual
 % Source: Derived from Eq.~\eqref{eq:pressure_from_z}
@@ -538,11 +555,11 @@ In solver form, the density root is the \(\rho\) that drives the specified-press
 % Change note: Added as a solver-facing closeout equation so the initial-density section ends with the actual root-finding constraint rather than only helper relations.
 
 \begin{equation}
-    R_{\rho}\!\left(T,\rho,\mathbf{x};P^{\mathrm{spec}}\right)
+    R_{\rho_m}\!\left(T,\rho_m,\mathbf{x};P^{\mathrm{spec}}\right)
     =
     P^{\mathrm{spec}}
     -
-    Z(T,\rho,\mathbf{x})RT\rho
+    Z(T,\rho_m,\mathbf{x})RT\rho_m
     =
     0
     \label{eq:density_solve_residual}
@@ -587,7 +604,7 @@ The hard-sphere Helmholtz term is the upstream excluded-volume reference used in
 
 \begin{equation}
     \begin{aligned}
-        \rho\left(\frac{\partial\tilde{a}^{hs}}{\partial\rho}\right)_{T,x}
+        \hat{\rho}\left(\frac{\partial\tilde{a}^{hs}}{\partial\hat{\rho}}\right)_{T,x}
         &=
         \frac{\zeta_{3}}{(1-\zeta_{3})}
         +\frac{3\zeta_{1}\zeta_{2}}{\zeta_{0}(1-\zeta_{3})^{2}}
@@ -604,7 +621,7 @@ The hard-sphere Helmholtz term is the upstream excluded-volume reference used in
 
 \begin{equation}
     \begin{aligned}
-        \left(\frac{\partial\tilde{a}^{\mathrm{hs}}}{\partial x_{k}}\right)_{T,\boldsymbol{\rho},x_{j\neq k}}
+        \left(\frac{\partial\tilde{a}^{\mathrm{hs}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
         &=- \frac{\zeta_{0,xk}}{\zeta_{0}}\tilde{a}^{\mathrm{hs}}+\frac{1}{\zeta_{0}}\biggl[
         \frac{3(\zeta_{1,xk}\zeta_{2}+\zeta_{1}\zeta_{2,xk})}{(1-\zeta_{3})}
         +\frac{3\zeta_{1}\zeta_{2}\zeta_{3,xk}}{\left(1-\zeta_{3}\right)^{2}}
@@ -631,7 +648,7 @@ The hard-sphere Helmholtz term is the upstream excluded-volume reference used in
 
 \begin{equation}
     \begin{aligned}
-        \left(\frac{\partial\tilde{a}^{hs}}{\partial T}\right)_{\rho,x_{i}}
+        \left(\frac{\partial\tilde{a}^{hs}}{\partial T}\right)_{\hat{\rho},x_{i}}
         &=\frac{1}{\zeta_{0}}\Bigg[
         \frac{3(\zeta_{1,T}\zeta_{2}+\zeta_{1}\zeta_{2,T})}{(1-\zeta_{3})}
         +\frac{3\zeta_{1}\zeta_{2}\zeta_{3,T}}{(1-\zeta_{3})^{2}}
@@ -652,13 +669,13 @@ The hard-sphere Helmholtz term is the upstream excluded-volume reference used in
 
 The hard-sphere contact value carries the pair-contact geometry used by both the hard-chain Helmholtz expression and the association strength.
 % EqID: g_hs_contact
-% Source: \cite{Gross2001}, Eq.~(A.7)
+% Source: \cite{Gross2001}, Eq.~(A.7); \cite{Chapman1990}, Eq.~(25)
 % Status: Close literature match
 % Description: Provides a supporting relation used in hard-chain reference contribution.
 % Change note: High textual similarity to a tagged equation in the cited local paper export.
 
 \begin{equation}
-    \mathrm{g}_{i j}^{\mathrm{hs}}=\frac{1}{\left(1-\zeta_{3}\right)}+\left(\frac{d_{i} d_{j}}{d_{i}+d_{j}}\right) \frac{3 \zeta_{2}}{\left(1-\zeta_{3}\right)^2} + \left(\frac{d_{i} d_{j}}{d_{i}+d_{j}}\right)^2 \frac{2 \xi_{2}{ }^2}{\left(1-\xi_{3}\right)^3}
+    \mathrm{g}_{i j}^{\mathrm{hs}}=\frac{1}{\left(1-\zeta_{3}\right)}+\left(\frac{d_{i} d_{j}}{d_{i}+d_{j}}\right) \frac{3 \zeta_{2}}{\left(1-\zeta_{3}\right)^2} + \left(\frac{d_{i} d_{j}}{d_{i}+d_{j}}\right)^2 \frac{2 \zeta_{2}{ }^2}{\left(1-\zeta_{3}\right)^3}
     \label{eq:g_hs_contact}
 \end{equation}
 
@@ -670,7 +687,7 @@ The hard-sphere contact value carries the pair-contact geometry used by both the
 
 \begin{equation}
     \begin{aligned}
-        \rho\left(\frac{\partial g_{ij}^{\mathrm{hs}}}{\partial\rho}\right)_{T,x}
+        \hat{\rho}\left(\frac{\partial g_{ij}^{\mathrm{hs}}}{\partial\hat{\rho}}\right)_{T,x}
         &=
         \frac{\zeta_{3}}{\left(1-\zeta_{3}\right)^{2}}
         +
@@ -700,33 +717,39 @@ The hard-sphere contact value carries the pair-contact geometry used by both the
 
 \begin{equation}
     \begin{aligned}
-        \left(\frac{\partial g_{ij}^{\mathrm{hs}}}{\partial x_{k}}\right)_{T,\boldsymbol{\rho},\boldsymbol{\rho}_{j\neq k}}
-        &=\frac{\zeta_{3,x,k}}{\left(1-\zeta_{3}\right)^{2}}
+        \left(\frac{\partial g_{ij}^{\mathrm{hs}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
+        &=\frac{\zeta_{3,xk}}{\left(1-\zeta_{3}\right)^{2}}
         +\left(\frac{d_{i}d_{j}}{d_{i}+d_{j}}\right)
-        \left(\frac{3\zeta_{2,x,k}}{(1-\zeta_{3})^{2}}+\frac{6\zeta_{2}\zeta_{3,x,k}}{(1-\zeta_{3})^{3}}\right)
+        \left(\frac{3\zeta_{2,xk}}{(1-\zeta_{3})^{2}}+\frac{6\zeta_{2}\zeta_{3,xk}}{(1-\zeta_{3})^{3}}\right)
         \\
         &\quad +\left(\frac{d_{i}d_{j}}{d_{i}+d_{j}}\right)^{2}
-        \left(\frac{4\zeta_{2}\zeta_{2,x,k}}{(1-\zeta_{3})^{3}}+\frac{6\zeta_{2}^{2}\zeta_{3,x,k}}{(1-\zeta_{3})^{4}}\right)
+        \left(\frac{4\zeta_{2}\zeta_{2,xk}}{(1-\zeta_{3})^{3}}+\frac{6\zeta_{2}^{2}\zeta_{3,xk}}{(1-\zeta_{3})^{4}}\right)
     \end{aligned}
     \label{eq:ghs_contact_dxk}
 \end{equation}
 
 % EqID: ghs_contact_dT
-% Source: \cite{Gross2001}, Eq.~(A.57)
-% Status: Manual literature match
+% Source: Derived from \cite{Gross2001}, Eq.~(A.7); diagonal specialization in Eq.~(A.57)
+% Status: Verified derived relation
 % Description: Provides the temperature differential of the hard-sphere contact value.
-% Change note: Renamed and re-homed so the contact-value temperature differential sits directly below the owning contact-value relation.
+% Change note: Written for a general pair so the same relation supports both diagonal hard-chain contacts and mixed association contacts; setting (i=j) recovers the diagonal Gross Appendix form.
 
 \begin{equation}
     \begin{aligned}
-        \left(\frac{\partial g_{ii}^{\mathrm{hs}}}{\partial T}\right)_{\rho,x}
+        q_{ij}&\equiv\frac{d_i d_j}{d_i+d_j},
+        \\
+        q_{ij,T}&=q_{ij}\left(
+        \frac{d_{i,T}}{d_i}+\frac{d_{j,T}}{d_j}
+        -\frac{d_{i,T}+d_{j,T}}{d_i+d_j}
+        \right),
+        \\
+        \left(\frac{\partial g_{ij}^{\mathrm{hs}}}{\partial T}\right)_{\hat{\rho},x}
         &=\frac{\zeta_{3,T}}{\left(1-\zeta_{3}\right)^{2}}
-        +\left(\frac{1}{2}d_{i,T}\right)\frac{3\zeta_{2}}{\left(1-\zeta_{3}\right)^{2}}
+        +\frac{3\left(q_{ij,T}\zeta_2+q_{ij}\zeta_{2,T}\right)}{\left(1-\zeta_3\right)^2}
         \\
-        &\quad +\left(\frac{1}{2}d_{i}\right)\left(\frac{3\zeta_{2,T}}{\left(1-\zeta_{3}\right)^{2}}+\frac{6\zeta_{2}\zeta_{3,T}}{\left(1-\zeta_{3}\right)^{3}}\right)
-        +\left(\frac{1}{2}d_{i}d_{i,T}\right)\frac{2\zeta_{2}^{2}}{\left(1-\zeta_{3}\right)^{3}}
-        \\
-        &\quad +\left(\frac{1}{2}d_{i}\right)^{2}\left(\frac{4\xi_{2}\xi_{2,T}}{\left(1-\xi_{3}\right)^{3}}+\frac{6\xi_{2}{}^{2}\xi_{3,T}}{\left(1-\xi_{3}\right)^{4}}\right)
+        &\quad
+        +\frac{4q_{ij}\zeta_2\left(\tfrac{3}{2}\zeta_{3,T}+q_{ij,T}\zeta_2+q_{ij}\zeta_{2,T}\right)}{\left(1-\zeta_3\right)^3}
+        +\frac{6\left(q_{ij}\zeta_2\right)^2\zeta_{3,T}}{\left(1-\zeta_3\right)^4}
     \end{aligned}
     \label{eq:ghs_contact_dT}
 \end{equation}
@@ -746,7 +769,7 @@ The \(C_1\) prefactor enters the second-order dispersion term and its density an
 % Change note: Moderate-to-high similarity; notation/arrangement appears adapted from the cited equation.
 
 \begin{equation}
-    C_{1} = \left(1+\bar{m} \frac{8 \eta-2 \eta^2}{(1-\eta)^4}+\right.\left.\quad(1-\bar{m}) \frac{20 \eta-27 \eta^2+12 \eta^3-2 \eta^4}{[(1-\eta)(2-\eta)]^2}\right)
+    C_{1} = \left(1+\bar{m} \frac{8 \eta-2 \eta^2}{(1-\eta)^4}+\right.\left.\quad(1-\bar{m}) \frac{20 \eta-27 \eta^2+12 \eta^3-2 \eta^4}{[(1-\eta)(2-\eta)]^2}\right)^{-1}
     \label{eq:c1_disp}
 \end{equation}
 
@@ -773,17 +796,31 @@ The \(C_1\) prefactor enters the second-order dispersion term and its density an
 % Change note: Mapped manually to the composition derivative of \(C_1\).
 
 \begin{equation}
-    \left(\frac{\partial C_{1}}{\partial x_{k}}\right)_{T,\rho,x_{j\neq k}}
+    \left(\frac{\partial C_{1}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
     \equiv C_{1,xk}
     =C_{2}\zeta_{3,xk}-C_{1}^{2}\left\{m_{k}\frac{8\eta-2\eta^{2}}{\left(1-\eta\right)^{4}}-m_{k}\frac{20\eta-27\eta^{2}+12\eta^{3}-2\eta^{4}}{\left[(1-\eta)(2-\eta)\right]^{2}}\right\}
     \label{eq:c1_xk}
+\end{equation}
+
+% EqID: c1_dT
+% Source: \cite{Gross2001}, Eq.~(A.61)
+% Status: Close literature match
+% Description: Defines the temperature differential of the first-order dispersion compressibility prefactor.
+% Change note: Uses \(\eta_T=\zeta_{3,T}\) at fixed composition and fixed number density.
+
+\begin{equation}
+    \left(\frac{\partial C_1}{\partial T}\right)_{\hat{\rho},x}
+    \equiv C_{1,T}
+    =C_2\eta_T,
+    \qquad \eta_T\equiv\zeta_{3,T}
+    \label{eq:c1_dT}
 \end{equation}
 
 \subsubsection{First Mixed Dispersion Moment}
 
 The first mixed dispersion moment carries the \(m^2\epsilon\sigma^3\) energy-size average.
 % EqID: m2epssigma3_bar
-% Source: \cite{Gross2001}, Eq.~(A.13)
+% Source: \cite{Gross2001}, Eq.~(A.12)
 % Status: Adapted implementation form
 % Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 % Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
@@ -800,10 +837,23 @@ The first mixed dispersion moment carries the \(m^2\epsilon\sigma^3\) energy-siz
 % Change note: Mapped by appendix sequence as the first dispersion composition derivative moment.
 
 \begin{equation}
-    \left(\frac{\partial\overline{m^{2}\epsilon\sigma^{3}}}{\partial x_{k}}\right)_{T,\rho,x_{j\neq k}}
-    \equiv \overline{(m^{2}\epsilon\sigma^{3})}_{xk}
+    \left(\frac{\partial\overline{m^{2}\epsilon\sigma^{3}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
+    \equiv \left(\overline{m^{2}\epsilon\sigma^{3}}\right)_{xk}
     =2m_{k}\sum_{j}x_{j}m_{j}\left(\frac{\epsilon_{kj}}{kT}\right)\sigma_{kj}^{3}
     \label{eq:m2epssigma3_xk}
+\end{equation}
+
+% EqID: m2epssigma3_dT
+% Source: Derived from \cite{Gross2001}, Eqs.~(A.12) and (A.58)
+% Status: Derived helper relation
+% Description: Defines the explicit temperature differential of the first mixed dispersion moment.
+% Change note: At fixed composition, the sole explicit temperature factor in the mixed moment is \((kT)^{-1}\).
+
+\begin{equation}
+    \left(\frac{\partial\overline{m^{2}\epsilon\sigma^{3}}}{\partial T}\right)_{\hat{\rho},x}
+    \equiv \left(\overline{m^{2}\epsilon\sigma^{3}}\right)_{,T}
+    =-\frac{1}{T}\overline{m^{2}\epsilon\sigma^{3}}
+    \label{eq:m2epssigma3_dT}
 \end{equation}
 
 \subsubsection{Second Mixed Dispersion Moment}
@@ -827,17 +877,30 @@ The second mixed dispersion moment carries the \(m^2\epsilon^2\sigma^3\) energy-
 % Change note: Mapped by appendix sequence as the second dispersion composition derivative moment.
 
 \begin{equation}
-    \left(\frac{\partial\overline{m^{2}\epsilon^{2}\sigma^{3}}}{\partial x_{k}}\right)_{T,\rho,x_{j\neq k}}
+    \left(\frac{\partial\overline{m^{2}\epsilon^{2}\sigma^{3}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
     \equiv (\overline{m^2\epsilon^2\sigma^3})_{xk}
     =2m_{k}\sum_{j}x_{j}m_{j}\left(\frac{\epsilon_{kj}}{kT}\right)^2\sigma_{kj}^3
     \label{eq:m2eps2sigma3_xk}
+\end{equation}
+
+% EqID: m2eps2sigma3_dT
+% Source: Derived from \cite{Gross2001}, Eqs.~(A.13) and (A.58)
+% Status: Derived helper relation
+% Description: Defines the explicit temperature differential of the second mixed dispersion moment.
+% Change note: At fixed composition, the sole explicit temperature factor in the second mixed moment is \((kT)^{-2}\).
+
+\begin{equation}
+    \left(\frac{\partial\overline{m^{2}\epsilon^{2}\sigma^{3}}}{\partial T}\right)_{\hat{\rho},x}
+    \equiv \left(\overline{m^{2}\epsilon^{2}\sigma^{3}}\right)_{,T}
+    =-\frac{2}{T}\overline{m^{2}\epsilon^{2}\sigma^{3}}
+    \label{eq:m2eps2sigma3_dT}
 \end{equation}
 
 \subsubsection{First Packing Polynomial}
 
 The first packing polynomial \(I_1\) is the \(\eta\)-series used in the leading dispersion term.
 % EqID: i1_disp
-% Source: \cite{Gross2001}, Eq.~(A.17)
+% Source: \cite{Gross2001}, Eq.~(A.16)
 % Status: Adapted implementation form
 % Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 % Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
@@ -848,7 +911,7 @@ The first packing polynomial \(I_1\) is the \(\eta\)-series used in the leading 
 \end{equation}
 
 % EqID: deta_i1_deta
-% Source: \cite{Gross2001}, Eq.~(A.30)
+% Source: \cite{Gross2001}, Eq.~(A.29)
 % Status: Adapted implementation form
 % Description: Provides a differential relation needed for dispersion contribution calculations.
 % Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
@@ -865,10 +928,23 @@ The first packing polynomial \(I_1\) is the \(\eta\)-series used in the leading 
 % Change note: High textual similarity to a tagged equation in the cited local paper export.
 
 \begin{equation}
-    \left(\frac{\partial I_{1}}{\partial x_{k}}\right)_{T,\rho,x_{j\neq k}}
+    \left(\frac{\partial I_{1}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
     \equiv I_{1,xk}
-    =\sum_{i=0}^{6}[a_{\mathrm{i}}(\bar{m})i\zeta_{3,xk}\eta^{i-1}+a_{\mathrm{i,x}k}\eta^{i}]
+    =\sum_{i=0}^{6}[a_i(\bar{m})i\zeta_{3,xk}\eta^{i-1}+a_{i,xk}\eta^{i}]
     \label{eq:i1_xk}
+\end{equation}
+
+% EqID: i1_dT
+% Source: \cite{Gross2001}, Eq.~(A.59)
+% Status: Close literature match
+% Description: Defines the temperature differential of the first packing polynomial.
+% Change note: The coefficient functions depend on \(\bar m\), which is constant with temperature at fixed composition, so the temperature chain enters through \(\eta_T\).
+
+\begin{equation}
+    \left(\frac{\partial I_1}{\partial T}\right)_{\hat{\rho},x}
+    \equiv I_{1,T}
+    =\sum_{i=0}^{6}a_i(\bar m)i\eta^{i-1}\eta_T
+    \label{eq:i1_dT}
 \end{equation}
 
 \subsubsection{Second Packing Polynomial}
@@ -892,7 +968,7 @@ The second packing polynomial \(I_2\) is the \(\eta\)-series used in the \(C_1 I
 % Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 
 \begin{equation}
-    \frac{\partial(\eta I_{2})}{\partial\eta}=\sum_{i=0}^6b_{j}(\bar{m})(j+1)\eta^i
+    \frac{\partial(\eta I_{2})}{\partial\eta}=\sum_{j=0}^6b_{j}(\bar{m})(j+1)\eta^j
     \label{eq:deta_i2_deta}
 \end{equation}
 
@@ -903,17 +979,30 @@ The second packing polynomial \(I_2\) is the \(\eta\)-series used in the \(C_1 I
 % Change note: High textual similarity to a tagged equation in the cited local paper export.
 
 \begin{equation}
-    \left(\frac{\partial I_{2}}{\partial x_{k}}\right)_{T,\rho,x_{j\neq k}}
+    \left(\frac{\partial I_{2}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
     \equiv I_{2,xk}
     =\sum_{i=0}^{6}[b_{\mathrm{i}}(\bar{m})i\zeta_{3,xk}\eta^{i-1}+b_{\mathrm{i,xk}}\eta^{i}]
     \label{eq:i2_xk}
+\end{equation}
+
+% EqID: i2_dT
+% Source: \cite{Gross2001}, Eq.~(A.60)
+% Status: Close literature match
+% Description: Defines the temperature differential of the second packing polynomial.
+% Change note: The coefficient functions depend on \(\bar m\), which is constant with temperature at fixed composition, so the temperature chain enters through \(\eta_T\).
+
+\begin{equation}
+    \left(\frac{\partial I_2}{\partial T}\right)_{\hat{\rho},x}
+    \equiv I_{2,T}
+    =\sum_{i=0}^{6}b_i(\bar m)i\eta^{i-1}\eta_T
+    \label{eq:i2_dT}
 \end{equation}
 
 \subsubsection{Dispersion Polynomial Coefficients \(a_i(\bar m)\)}
 
 These coefficients define the \(\bar m\)-dependent part of the \(I_1\) polynomial.
 % EqID: a_i_mbar
-% Source: \cite{Gross2001}, Eq.~(A.19)
+% Source: \cite{Gross2001}, Eq.~(A.18)
 % Status: Adapted implementation form
 % Description: Provides a supporting relation used in dispersion contribution.
 % Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
@@ -930,7 +1019,7 @@ These coefficients define the \(\bar m\)-dependent part of the \(I_1\) polynomia
 % Change note: High textual similarity to a tagged equation in the cited local paper export.
 
 \begin{equation}
-    \left(\frac{\partial a_{i}}{\partial x_{k}}\right)_{T,\rho,x_{j\neq k}}
+    \left(\frac{\partial a_{i}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
     \equiv a_{\mathrm{i},xk}
     =\frac{m_{k}}{\bar{m}^{2}}a_{1i}+\frac{m_{k}}{\bar{m}^{2}}\left(3-\frac{4}{\bar{m}}\right)a_{2i}
     \label{eq:a_i_xk}
@@ -957,7 +1046,7 @@ These coefficients define the \(\bar m\)-dependent part of the \(I_2\) polynomia
 % Change note: High textual similarity to a tagged equation in the cited local paper export.
 
 \begin{equation}
-    \left(\frac{\partial b_{i}}{\partial x_{k}}\right)_{T,\rho,x_{j\neq k}}
+    \left(\frac{\partial b_{i}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
     \equiv b_{\mathrm{i},xk}
     =\frac{m_{k}}{\bar{m}^{2}}b_{1i}+\frac{m_{k}}{\bar{m}^{2}}\left(3-\frac{4}{\bar{m}}\right)b_{2i}
     \label{eq:b_i_xk}
@@ -970,17 +1059,17 @@ This subsection collects the association site balances, the association-strength
 
 \subsubsection{Association Site Fraction}
 
-The site-fraction variable \(X^{A_i}\) is the fraction of molecules whose site \(A_i\) remains unbonded. It is implicit because the unknown site fractions appear on both sides of the mass-action balance, so the full site-fraction vector is solved iteratively at each trial \((T,\rho,\mathbf{x})\) state.
+The site-fraction variable \(X^{A_i}\) is the fraction of molecules whose site \(A_i\) remains unbonded. It is implicit because the unknown site fractions appear on both sides of the mass-action balance, so the full site-fraction vector is solved iteratively at each trial \((T,\hat{\rho},\mathbf{x})\) state.
 % EqID: x_assoc_site
-% Source: \cite{Chapman1990} (exact equation number not available in local PDFs)
-% Status: No direct numbered source in local corpus
+% Source: \cite{Chapman1990}, Eq.~(22) sequence (adapted from \(N_A\rho_j\) to angstrom-basis component number density)
+% Status: Adapted density convention
 % Description: Provides a residual Helmholtz-energy relation for association contribution.
-% Change note: Mass-action site-fraction relation from SAFT association theory; exact numbered equation unavailable in the local PDF set.
+% Change note: The retained Chapman record verifies the site mass-action relation; \(\hat\rho x_j\) is used here because \(\Delta\) is expressed in \(\mathrm{\AA^3}\).
 
 \begin{equation}
     \begin{aligned}
         X^{\mathrm{A}_{i}}
-        &=\left[1+ \sum_{j} \sum_{\mathrm{B}_{j}} \rho x_{j}X^{\mathrm{B}_{j}} \Delta^{\mathrm{A}_{i} \mathrm{~B}_{j}}\right]^{-1},
+        &=\left[1+ \sum_{j} \sum_{\mathrm{B}_{j}} \hat{\rho} x_{j}X^{\mathrm{B}_{j}} \Delta^{\mathrm{A}_{i} \mathrm{~B}_{j}}\right]^{-1},
         \\
         &\text{with }\sum_{\mathrm{B}_{j}}\text{ over all sites on molecule }j\ (\mathrm{A}_{j},\mathrm{B}_{j},\mathrm{C}_{j},\ldots),
         \\
@@ -990,21 +1079,21 @@ The site-fraction variable \(X^{A_i}\) is the fraction of molecules whose site \
 \end{equation}
 
 % EqID: dx_assoc_drho
-% Source: \cite{Chapman1990} (exact equation number not available in local PDFs)
-% Status: No direct numbered source in local corpus
+% Source: Derived from \cite{Chapman1990}, Eq.~(22) sequence
+% Status: Derived helper relation
 % Description: Provides a differential relation needed for association contribution calculations.
-% Change note: Site-fraction density derivative closure used in association compressibility calculations; exact numbered reference unavailable locally.
+% Change note: Differentiates the verified mass-action balance with respect to the angstrom-basis number density.
 
 \begin{equation}
     \begin{aligned}
-        \left(\frac{\partial X^{A_{i}}}{\partial\rho}\right)_{T,x}
+        \left(\frac{\partial X^{A_{i}}}{\partial\hat{\rho}}\right)_{T,x}
         &=-(X^{A_{i}})^{2}\sum_{j}\sum_{B_{j}}x_{j}
         \Bigg[
         X^{B_{j}}\Delta^{A_{i}B_{j}}
         \\
-        &\quad +\rho\Bigg(
-        \Delta^{A_{i}B_{j}}\left(\frac{\partial X^{B_{j}}}{\partial\rho}\right)_{T,x}
-        +X^{B_{j}}\left(\frac{\partial\Delta^{A_{i}B_{j}}}{\partial\rho}\right)_{T,x}
+        &\quad +\hat{\rho}\Bigg(
+        \Delta^{A_{i}B_{j}}\left(\frac{\partial X^{B_{j}}}{\partial\hat{\rho}}\right)_{T,x}
+        +X^{B_{j}}\left(\frac{\partial\Delta^{A_{i}B_{j}}}{\partial\hat{\rho}}\right)_{T,x}
         \Bigg)
         \Bigg]
     \end{aligned}
@@ -1012,83 +1101,127 @@ The site-fraction variable \(X^{A_i}\) is the fraction of molecules whose site \
 \end{equation}
 
 % EqID: dx_assoc_dxk
-% Source: \cite{Chapman1990} (exact equation number not available in local PDFs)
-% Status: No direct numbered source in local corpus
+% Source: Derived from \cite{Chapman1990}, Eq.~(22) sequence
+% Status: Derived helper relation
 % Description: Provides a differential relation needed for association contribution calculations.
-% Change note: Site-fraction composition derivative closure from SAFT association machinery; local progression PDFs do not provide this as a numbered equation.
+% Change note: Differentiates the verified mass-action balance at fixed temperature and angstrom-basis number density.
 
 \begin{equation}
     \begin{aligned}
-        \left(\frac{\partial X^{A_{i}}}{\partial x_{k}}\right)_{T,v,x_{j\neq k}}
+        \left(\frac{\partial X^{A_{i}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
         &=
-        -(X^{A_{i}})^{2}\,\rho
+        -(X^{A_{i}})^{2}\,\hat{\rho}
         \Bigg[
         \sum_{B_{k}}X^{B_{k}}\Delta^{A_{i}B_{k}}
         \\
         &\quad +
         \sum_{j}x_{j}\sum_{B_{j}}
         \left(
-        \Delta^{A_{i}B_{j}}\left(\frac{\partial X^{B_{j}}}{\partial x_{k}}\right)_{T,v,x_{j\neq k}}
+        \Delta^{A_{i}B_{j}}\left(\frac{\partial X^{B_{j}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
         +
-        X^{B_{j}}\left(\frac{\partial \Delta^{A_{i}B_{j}}}{\partial x_{k}}\right)_{T,v,x_{j\neq k}}
+        X^{B_{j}}\left(\frac{\partial \Delta^{A_{i}B_{j}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
         \right)
         \Bigg]
     \end{aligned}
     \label{eq:dx_assoc_dxk}
 \end{equation}
 
-\subsubsection{Component Site Density}
-
-The component density \(\rho_j\) is the per-component site-density factor used inside the association site balances.
-% EqID: rho_j_assoc
-% Source: \cite{Chapman1990} (exact equation number not available in local PDFs)
-% Status: No direct numbered source in local corpus
-% Description: Provides a supporting relation used in association contribution.
-% Change note: Component density relation used with association equations; no directly numbered counterpart found in local Chapman-accessible sources.
+% EqID: dx_assoc_dT
+% Source: Derived from \cite{Chapman1990}, Eq.~(22) sequence
+% Status: Derived helper relation
+% Description: Provides the implicit temperature differential of the association site fractions.
+% Change note: Differentiates the verified mass-action balance at fixed angstrom-basis number density and composition; the coupled site-fraction derivatives are solved simultaneously in the native implementation.
 
 \begin{equation}
-    \rho_{j}=x_{j}\rho_{\mathrm{mixture}}
+    \begin{aligned}
+        \left(\frac{\partial X^{A_i}}{\partial T}\right)_{\hat{\rho},x}
+        =-(X^{A_i})^2\hat{\rho}
+        \sum_j x_j\sum_{B_j}
+        \Bigg[
+        \Delta^{A_iB_j}
+        \left(\frac{\partial X^{B_j}}{\partial T}\right)_{\hat{\rho},x}
+        +X^{B_j}
+        \left(\frac{\partial\Delta^{A_iB_j}}{\partial T}\right)_{\hat{\rho},x}
+        \Bigg]
+    \end{aligned}
+    \label{eq:dx_assoc_dT}
+\end{equation}
+
+\subsubsection{Component Site Density}
+
+The component number density \(\hat\rho_j\) is the per-component site-density factor used inside the association site balances.
+% EqID: rho_j_assoc
+% Source: \cite{Chapman1990}, Eq.~(23) (converted from molar to angstrom-basis number density)
+% Status: Convention translation
+% Description: Provides a supporting relation used in association contribution.
+% Change note: Chapman writes \(\rho_j=x_j\rho_{\mathrm{mixture}}\) on a molar basis; multiplying both densities by the same constant gives the active number-density relation.
+
+\begin{equation}
+    \hat{\rho}_{j}=x_{j}\hat{\rho}
     \label{eq:rho_j_assoc}
 \end{equation}
 
 \subsubsection{Association Strength}
 
-The association strength \(\Delta^{A_iB_j}\) collects the pair-diameter, association-volume, Boltzmann, and hard-sphere contact terms into one site-pair interaction measure.
+The association strength \(\Delta^{A_iB_j}\) collects the temperature-independent pair size, association volume, Boltzmann, and hard-sphere contact terms into one site-pair interaction measure.
 % EqID: delta_assoc
-% Source: \cite{Chapman1990} (exact equation number not available in local PDFs)
-% Status: No direct numbered source in local corpus
+% Source: \cite{Huang1990}, Eq.~(19) for the pure-component SAFT \(\sigma^{3}\kappa\) lineage; pair-indexed mixture extension from \cite{Gross2001}, Eq.~(A.14), \cite{Gross2002}, Eqs.~(2)--(3), and \cite{Held2012}, Eq.~(14); compare \cite{Chapman1990}, Eq.~(24) for original-SAFT \(d_{ij}^{3}\kappa^{A_iB_j}\)
+% Status: Adapted mixture extension
 % Description: Provides a residual Helmholtz-energy relation for association contribution.
-% Change note: Association strength definition used in SAFT implementations; exact numbered Chapman equation not available in local PDFs.
+% Change note: The active implementation extends Huang and Radosz's pure-component SAFT \(\sigma^{3}\kappa\) relation to pair quantities using PC-SAFT size and cross-association mixing rules; the pair-indexed form is not claimed as a verbatim Huang and Radosz equation. Chapman supplies the original-SAFT lineage with \(d_{ij}^{3}\kappa\), not the active prefactor.
 
 \begin{equation}
-    \Delta^{\mathrm{A}, \mathrm{~B}_{j}}=d_{i j}{ }^3 \mathrm{g}_{i j}^{\mathrm{hs}}\left[\exp \left(\frac{\epsilon^{\mathrm{A}, \mathrm{~B}_{j}}}{k T}\right)-1\right]
+    \Delta^{A_iB_j}=\sigma_{ij}^{3}\kappa^{A_iB_j}g_{ij}^{\mathrm{hs}}
+    \left[\exp\!\left(\frac{\epsilon^{A_iB_j}}{kT}\right)-1\right]
     \label{eq:delta_assoc}
 \end{equation}
 
 % EqID: ddelta_assoc_drho
-% Source: \cite{Chapman1990} (exact equation number not available in local PDFs)
-% Status: No direct numbered source in local corpus
+% Source: Derived from Eq.~\eqref{eq:delta_assoc}; original-SAFT lineage in \cite{Chapman1990}, Eqs.~(24)--(27) and Appendix Eq.~(A.4)
+% Status: Derived helper relation
 % Description: Defines the density differential of the association strength term.
-% Change note: Re-homed under the association-strength definition so the \(\Delta^{A_iB_j}\) density derivative stays local to its owning baseline.
+% Change note: Uses the same active \(\sigma_{ij}^{3}\kappa\) prefactor as the baseline association strength.
 
 \begin{equation}
-    \left(\frac{\partial\Delta^{A_{i}B_{j}}}{\partial\rho}\right)_{T,x}=d_{ij}^3\kappa^{A_{i}B_{j}}\left[\exp(\epsilon^{A_{i}B_{j}}/kT)-1\right]\left(\frac{\partial g_{ij}^{hs}}{\partial\rho}\right)_{T,x}
+    \left(\frac{\partial\Delta^{A_{i}B_{j}}}{\partial\hat{\rho}}\right)_{T,x}=\sigma_{ij}^3\kappa^{A_{i}B_{j}}\left[\exp(\epsilon^{A_{i}B_{j}}/kT)-1\right]\left(\frac{\partial g_{ij}^{\mathrm{hs}}}{\partial\hat{\rho}}\right)_{T,x}
     \label{eq:ddelta_assoc_drho}
 \end{equation}
 
 % EqID: ddelta_assoc_dxk
-% Source: \cite{Chapman1990} (exact equation number not available in local PDFs)
-% Status: No direct numbered source in local corpus
+% Source: Derived from Eq.~\eqref{eq:delta_assoc}
+% Status: Derived helper relation
 % Description: Defines the composition differential of the association strength term.
-% Change note: Re-homed under the association-strength definition so the \(\Delta^{A_iB_j}\) composition derivative stays local to its owning baseline.
+% Change note: Uses the same active \(\sigma_{ij}^{3}\kappa\) prefactor as the baseline association strength at fixed temperature and number density.
 
 \begin{equation}
-    \left(\frac{\partial \Delta^{A_{i}B_{j}}}{\partial x_{k}}\right)_{T,v,x_{j\neq k}}
+    \left(\frac{\partial \Delta^{A_{i}B_{j}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
     =
-    d_{ij}^{3}\kappa^{A_{i}B_{j}}
+    \sigma_{ij}^{3}\kappa^{A_{i}B_{j}}
     \left[\exp\!\left(\frac{\epsilon^{A_{i}B_{j}}}{kT}\right)-1\right]
-    \left(\frac{\partial g_{ij}^{hs}}{\partial x_{k}}\right)_{T,\rho,x_{j\neq k}}
+    \left(\frac{\partial g_{ij}^{\mathrm{hs}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
     \label{eq:ddelta_assoc_dxk}
+\end{equation}
+
+% EqID: ddelta_assoc_dT
+% Source: Derived from Eq.~\eqref{eq:delta_assoc}
+% Status: Derived helper relation
+% Description: Defines the temperature differential of the active PC-SAFT association strength.
+% Change note: Differentiates both the hard-sphere contact value and the association Mayer factor while retaining the baseline \(\sigma_{ij}^{3}\kappa\) prefactor.
+
+\begin{equation}
+    \begin{aligned}
+        \left(\frac{\partial\Delta^{A_iB_j}}{\partial T}\right)_{\hat{\rho},x}
+        &=\sigma_{ij}^{3}\kappa^{A_iB_j}
+        \Bigg[
+        \left(\frac{\partial g_{ij}^{\mathrm{hs}}}{\partial T}\right)_{\hat{\rho},x}
+        \left(\exp\!\left(\frac{\epsilon^{A_iB_j}}{kT}\right)-1\right)
+        \\
+        &\qquad
+        -g_{ij}^{\mathrm{hs}}\frac{\epsilon^{A_iB_j}}{kT^2}
+        \exp\!\left(\frac{\epsilon^{A_iB_j}}{kT}\right)
+        \Bigg]
+    \end{aligned}
+    \label{eq:ddelta_assoc_dT}
 \end{equation}
 
 \subsection{Debye Huckel}
@@ -1406,10 +1539,16 @@ The total temperature derivative is assembled from the five contribution-level t
 % Change note: Moved here from the removed standalone temperature-differential section so one downstream total-\(d\tilde a^\mathrm{res}/dT\) summary relation remains available.
 
 \begin{equation}
-    \left(\frac{\partial\tilde{a}^\mathrm{res}}{\partial T}\right)_{\rho,x_{i}} =\left(\frac{\partial\tilde{a}^\mathrm{hc}}{\partial T}\right)_{\rho,x_{i}} +\left(\frac{\partial\tilde{a}^\mathrm{disp}}{\partial T}\right)_{\rho,x_{i}}
-    +\left(\frac{\partial\tilde{a}^\mathrm{assoc}}{\partial T}\right)_{\rho,x_{i}}
-    +\left(\frac{\partial\tilde{a}^\mathrm{DH}}{\partial T}\right)_{\rho,x_{i}}
-    +\left(\frac{\partial\tilde{a}^\mathrm{Born}}{\partial T}\right)_{\rho,x_{i}}
+    \begin{aligned}
+        \left(\frac{\partial\tilde{a}^\mathrm{res}}{\partial T}\right)_{\rho_m,x_{i}}
+        &=\left(\frac{\partial\tilde{a}^\mathrm{hc}}{\partial T}\right)_{\rho_m,x_{i}}
+        +\left(\frac{\partial\tilde{a}^\mathrm{disp}}{\partial T}\right)_{\rho_m,x_{i}}
+        +\left(\frac{\partial\tilde{a}^\mathrm{assoc}}{\partial T}\right)_{\rho_m,x_{i}}
+        \\
+        &\quad
+        +\left(\frac{\partial\tilde{a}^\mathrm{DH}}{\partial T}\right)_{\rho_m,x_{i}}
+        +\left(\frac{\partial\tilde{a}^\mathrm{Born}}{\partial T}\right)_{\rho_m,x_{i}}
+    \end{aligned}
     \label{eq:dares_dT}
 \end{equation}
 
@@ -1440,28 +1579,30 @@ The total temperature derivative is assembled from the five contribution-level t
 
 \begin{equation}
     \begin{aligned}
-        \mathmakebox[11.5em][l]{\rho\left(\frac{\partial\tilde{a}^{hc}}{\partial\rho}\right)_{T,x}}
+        \mathmakebox[11.5em][l]{\hat{\rho}\left(\frac{\partial\tilde{a}^{hc}}{\partial\hat{\rho}}\right)_{T,x}}
         &=
-        \bar{m}\rho\left(\frac{\partial\tilde{a}^{hs}}{\partial\rho}\right)_{T,x}
-        -\sum_{i}x_{\mathrm{i}}(m_{i}-1)(g_{ii}^\mathrm{hs})^{-1}\rho\frac{\partial g_{ii}^\mathrm{hs}}{\partial\rho}
+        \bar{m}\hat{\rho}\left(\frac{\partial\tilde{a}^{hs}}{\partial\hat{\rho}}\right)_{T,x}
+        -\sum_{i}x_{\mathrm{i}}(m_{i}-1)(g_{ii}^\mathrm{hs})^{-1}\hat{\rho}\frac{\partial g_{ii}^\mathrm{hs}}{\partial\hat{\rho}}
     \end{aligned}
     \label{eq:hc_ares_dadrho}
 \end{equation}
 
 % EqID: hc_ares_dxk
-% Source: \cite{Gross2001}, Eq.~(A.35) (appendix sequence inference)
-% Status: Manual literature match
+% Source: Derived from \cite{Gross2001}, Eq.~(A.4); direct term corroborated by \cite{Chapman1990}, Appendix Eq.~(A.6)
+% Status: Verified derived relation
 % Description: Provides the composition differential of the hard-chain Helmholtz contribution.
-% Change note: Moved back under the hard-chain Helmholtz contribution so Section 4 owns all equations carrying the hard-chain contribution label.
+% Change note: Direct differentiation requires the explicit \(-(m_k-1)\ln g_{kk}^{\mathrm{hs}}\) term; this is not claimed as a verbatim match to the locally retained print of Gross Appendix Eq.~(A.35), which omits that term.
 
 \begin{equation}
     \begin{aligned}
-        \mathmakebox[11.5em][l]{\left(\frac{\partial\tilde{a}^{\mathrm{hc}}}{\partial x_{k}}\right)_{T,\boldsymbol{\rho},x_{j\neq k}}}
+        \mathmakebox[11.5em][l]{\left(\frac{\partial\tilde{a}^{\mathrm{hc}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}}
         &=m_{k}\tilde{a}^{\mathrm{hs}}
-        +\bar{m}\left(\frac{\partial\tilde{a}^{\mathrm{hs}}}{\partial x_{k}}\right)_{T,\boldsymbol{\rho},x_{j\neq k}}
+        +\bar{m}\left(\frac{\partial\tilde{a}^{\mathrm{hs}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
+        \\
+        &\quad -(m_k-1)\ln g_{kk}^{\mathrm{hs}}
         \\
         &\quad -\sum_{i}x_{i}(m_{i}-1)(g_{ii}^{\mathrm{hs}})^{-1}
-        \left(\frac{\partial g_{ii}^{\mathrm{hs}}}{\partial x_{k}}\right)_{T,\boldsymbol{\rho},x_{j\neq k}}
+        \left(\frac{\partial g_{ii}^{\mathrm{hs}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{j\neq k}}
     \end{aligned}
     \label{eq:hc_ares_dxk}
 \end{equation}
@@ -1474,10 +1615,10 @@ The total temperature derivative is assembled from the five contribution-level t
 
 \begin{equation}
     \begin{aligned}
-        \mathmakebox[11.5em][l]{\left(\frac{\partial\tilde{a}^{\mathrm{hc}}}{\partial T}\right)_{\rho,x_{i}}}
+        \mathmakebox[11.5em][l]{\left(\frac{\partial\tilde{a}^{\mathrm{hc}}}{\partial T}\right)_{\hat{\rho},x_{i}}}
         &=
-        \bar{m}\left(\frac{\partial\tilde{a}^{\mathrm{hs}}}{\partial T}\right)_{\rho,x_{i}}
-        -\sum_{i}x_{\mathrm{i}}(m_{\mathrm{i}}-1)(g_{ii}^{\mathrm{hs}})^{-1}\left(\frac{\partial g_{ii}^{\mathrm{hs}}}{\partial T}\right)_{\rho,x_{i}}
+        \bar{m}\left(\frac{\partial\tilde{a}^{\mathrm{hs}}}{\partial T}\right)_{\hat{\rho},x_{i}}
+        -\sum_{i}x_{\mathrm{i}}(m_{\mathrm{i}}-1)(g_{ii}^{\mathrm{hs}})^{-1}\left(\frac{\partial g_{ii}^{\mathrm{hs}}}{\partial T}\right)_{\hat{\rho},x_{i}}
     \end{aligned}
     \label{eq:hc_ares_dT}
 \end{equation}
@@ -1492,7 +1633,7 @@ The total temperature derivative is assembled from the five contribution-level t
 % Change note: High textual similarity to a tagged equation in the cited local paper export.
 
 \begin{equation}
-    \tilde{a}^{\mathrm{disp}}=-2 \pi \rho I_{1}(\eta, \bar{m}) \overline{m^2 \epsilon \sigma^3}-\pi \rho \bar{m} C_{1} I_{2}(\eta, \bar{m}) \overline{m^2 \epsilon^2 \sigma^3}
+    \tilde{a}^{\mathrm{disp}}=-2 \pi \hat{\rho} I_{1}(\eta, \bar{m}) \overline{m^2 \epsilon \sigma^3}-\pi \hat{\rho} \bar{m} C_{1} I_{2}(\eta, \bar{m}) \overline{m^2 \epsilon^2 \sigma^3}
     \label{eq:ares_disp}
 \end{equation}
 
@@ -1505,10 +1646,10 @@ The total temperature derivative is assembled from the five contribution-level t
 
 \begin{equation}
     \begin{aligned}
-        \rho\left(\frac{\partial\tilde{a}^{disp}}{\partial\rho}\right)_{T,x}
-        &=-2\pi\rho\frac{\partial(\eta I_{1})}{\partial\eta}\overline{m^{2}\epsilon\sigma^{3}}
+        \hat{\rho}\left(\frac{\partial\tilde{a}^{disp}}{\partial\hat{\rho}}\right)_{T,x}
+        &=-2\pi\hat{\rho}\frac{\partial(\eta I_{1})}{\partial\eta}\overline{m^{2}\epsilon\sigma^{3}}
         \\
-        &\quad -\pi\rho\bar{m}\left[C_{1}\frac{\partial(\eta I_{2})}{\partial\eta}+C_{2}\eta I_{2}\right]\overline{m^{2}\epsilon^{2}\sigma^{3}}
+        &\quad -\pi\hat{\rho}\bar{m}\left[C_{1}\frac{\partial(\eta I_{2})}{\partial\eta}+C_{2}\eta I_{2}\right]\overline{m^{2}\epsilon^{2}\sigma^{3}}
     \end{aligned}
     \label{eq:disp_ares_dadrho}
 \end{equation}
@@ -1521,10 +1662,10 @@ The total temperature derivative is assembled from the five contribution-level t
 
 \begin{equation}
     \begin{aligned}
-        \left(\frac{\partial \tilde{a}^{\mathrm{disp}}}{\partial x_k}\right)_{T,\boldsymbol{\rho},x_{j \neq k}}
-        =& -2 \pi \rho\left[I_{1, x k} \overline{m^2 \epsilon \sigma^3}+I_1 \overline{\left(m^2 \epsilon \sigma^3\right)_{x k}}\right] \\
-        &- \pi \rho\left\{\left[m_k C_1 I_2+\bar{m} C_{1, x k} I_2+\bar{m} C_1 I_{2, x k}\right] \overline{m^2 \epsilon^2 \sigma^3}+\right.
-        \left.\bar{m} C_1 I_2\left(\bar{m}^2 \epsilon^2 \sigma^3\right)_{x k}\right\}
+        \left(\frac{\partial \tilde{a}^{\mathrm{disp}}}{\partial x_k}\right)_{T,\hat{\rho},x_{j \neq k}}
+        =& -2 \pi \hat{\rho}\left[I_{1, x k} \overline{m^2 \epsilon \sigma^3}+I_1 \left(\overline{m^2 \epsilon \sigma^3}\right)_{x k}\right] \\
+        &- \pi \hat{\rho}\left\{\left[m_k C_1 I_2+\bar{m} C_{1, x k} I_2+\bar{m} C_1 I_{2, x k}\right] \overline{m^2 \epsilon^2 \sigma^3}+\right.
+        \left.\bar{m} C_1 I_2\left(\overline{m^2 \epsilon^2 \sigma^3}\right)_{x k}\right\}
     \end{aligned}
     \label{eq:disp_ares_dxk}
 \end{equation}
@@ -1536,11 +1677,14 @@ The total temperature derivative is assembled from the five contribution-level t
 % Change note: Moved back under the dispersion Helmholtz contribution so Section 4 owns all equations carrying the dispersion contribution label.
 
 \begin{equation}
-    \left(\frac{\partial\tilde{a}^{disp}}{\partial T}\right)_{\rho,x_{i}}
-    =
-    -2\pi\rho\left(I_{1,T}\overline{m^{2}\epsilon\sigma^{3}}+I_{1}\overline{m^{2}\epsilon\sigma^{3}}_{,T}\right)
-    -\pi\rho\bar{m}\left(C_{1,T}I_{2}+C_{1}I_{2,T}\right)\overline{m^{2}\epsilon^{2}\sigma^{3}}
-    -\pi\rho\bar{m}C_{1}I_{2}\overline{m^{2}\epsilon^{2}\sigma^{3}}_{,T}
+    \begin{aligned}
+        \left(\frac{\partial\tilde{a}^{disp}}{\partial T}\right)_{\hat{\rho},x_{i}}
+        &=-2\pi\hat{\rho}\left[I_{1,T}\overline{m^{2}\epsilon\sigma^{3}}+I_{1}\left(\overline{m^{2}\epsilon\sigma^{3}}\right)_{,T}\right]
+        \\
+        &\quad-\pi\hat{\rho}\bar{m}\left(C_{1,T}I_{2}+C_{1}I_{2,T}\right)\overline{m^{2}\epsilon^{2}\sigma^{3}}
+        \\
+        &\quad-\pi\hat{\rho}\bar{m}C_{1}I_{2}\left(\overline{m^{2}\epsilon^{2}\sigma^{3}}\right)_{,T}
+    \end{aligned}
     \label{eq:disp_ares_dT}
 \end{equation}
 
@@ -1548,10 +1692,10 @@ The total temperature derivative is assembled from the five contribution-level t
 \subsection{Association Contribution}
 
 % EqID: ares_assoc
-% Source: \cite{Chapman1990} (exact equation number not available in local PDFs)
-% Status: No direct numbered source in local corpus
+% Source: \cite{Chapman1990}, Eq.~(21)
+% Status: Close literature match
 % Description: Provides a residual Helmholtz-energy relation for association contribution.
-% Change note: Association Helmholtz form is traced to Chapman/Wertheim SAFT association theory, but the exact numbered equation is not present in the local progression PDFs.
+% Change note: The per-site \(+1/2\) form is algebraically equivalent to Chapman's \(+M_i/2\) component term.
 
 \begin{equation}
     \tilde{a}^{\mathrm{assoc}}= \sum_{i} x_{i}\sum_{\mathrm{A}_{i}}\left(\ln X^{\mathrm{A}_{i}}-\frac{X^{\mathrm{A}_{i}}}{2}+\frac{1}{2}\right)
@@ -1560,46 +1704,46 @@ The total temperature derivative is assembled from the five contribution-level t
 
 
 % EqID: assoc_ares_dadrho
-% Source: \cite{Chapman1990} (exact equation number not available in local PDFs)
-% Status: No direct numbered source in local corpus
+% Source: Derived from \cite{Chapman1990}, Eq.~(21)
+% Status: Derived helper relation
 % Description: Provides the density differential of the association Helmholtz contribution.
-% Change note: Moved back under the association Helmholtz contribution so Section 4 owns all equations carrying the association contribution label.
+% Change note: Uses the angstrom-basis number-density derivative defined by the association mass-action chain.
 
 \begin{equation}
-    \rho\left(\frac{\partial\tilde{a}^{assoc}}{\partial\rho}\right)_{T,x}
-    =\rho\sum_{i}x_{i}\sum_{A_{i}}\left(\frac{1}{X^{A_{i}}}-\frac{1}{2}\right)\left(\frac{\partial X^{A_{i}}}{\partial\rho}\right)_{T,x}.
+    \hat{\rho}\left(\frac{\partial\tilde{a}^{assoc}}{\partial\hat{\rho}}\right)_{T,x}
+    =\hat{\rho}\sum_{i}x_{i}\sum_{A_{i}}\left(\frac{1}{X^{A_{i}}}-\frac{1}{2}\right)\left(\frac{\partial X^{A_{i}}}{\partial\hat{\rho}}\right)_{T,x}.
     \label{eq:assoc_ares_dadrho}
 \end{equation}
 
 % EqID: assoc_ares_dxk
-% Source: \cite{Chapman1990} (exact equation number not available in local PDFs)
-% Status: No direct numbered source in local corpus
+% Source: Derived from \cite{Chapman1990}, Eq.~(21)
+% Status: Derived helper relation
 % Description: Provides the composition differential of the association Helmholtz contribution.
-% Change note: Moved back under the association Helmholtz contribution so Section 4 owns all equations carrying the association contribution label.
+% Change note: Differentiates the verified association Helmholtz form at fixed temperature and angstrom-basis number density.
 
 \begin{equation}
-    \left(\frac{\partial \tilde a^{assoc}}{\partial x_{k}}\right)_{T,v,x_{i\neq k}}
+    \left(\frac{\partial \tilde a^{assoc}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{i\neq k}}
     =
     \sum_{A_{k}}\left(\ln X^{A_{k}}-\frac{X^{A_{k}}}{2}+\frac{1}{2}\right)
     +
     \sum_{i} x_{i}\sum_{A_{i}}
     \left(\frac{1}{X^{A_{i}}}-\frac{1}{2}\right)
-    \left(\frac{\partial X^{A_{i}}}{\partial x_{k}}\right)_{T,v,x_{i\neq k}}
+    \left(\frac{\partial X^{A_{i}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{i\neq k}}
     \label{eq:assoc_ares_dxk}
 \end{equation}
 
 % EqID: assoc_ares_dT
-% Source: Native implementation owner \texttt{dadt\_assoc\_cpp(...)}
-% Status: Implementation-owned equation
+% Source: Derived from \cite{Chapman1990}, Eq.~(21); native owner \texttt{dadt\_assoc\_cpp(...)}
+% Status: Derived implementation relation
 % Description: Provides the analytical temperature differential of the association Helmholtz contribution.
-% Change note: Moved back under the association Helmholtz contribution so Section 4 owns all equations carrying the association contribution label.
+% Change note: The site-fraction temperature chain consumes the \(\Delta_{,T}\) relation defined in Eq.~\eqref{eq:ddelta_assoc_dT}.
 
 \begin{equation}
-    \left(\frac{\partial\tilde{a}^{\mathrm{assoc}}}{\partial T}\right)_{\rho,x_i}
+    \left(\frac{\partial\tilde{a}^{\mathrm{assoc}}}{\partial T}\right)_{\hat{\rho},x_i}
     =
     \sum_i x_i \sum_{A_i}
     \left(\frac{1}{X^{A_i}}-\frac{1}{2}\right)
-    \left(\frac{\partial X^{A_i}}{\partial T}\right)_{\rho,x_i}
+    \left(\frac{\partial X^{A_i}}{\partial T}\right)_{\hat{\rho},x_i}
     \label{eq:assoc_ares_dT}
 \end{equation}
 
@@ -1865,11 +2009,11 @@ The explicit analytical density differentials now live with their owning setup a
 
 \begin{equation}
     Z = 1
-    + \rho\left(\frac{\partial\tilde{a}^{hc}}{\partial\rho}\right)_{T,x}
-    + \rho\left(\frac{\partial\tilde{a}^{disp}}{\partial\rho}\right)_{T,x}
-    + \rho\left(\frac{\partial\tilde{a}^{assoc}}{\partial\rho}\right)_{T,x}
-    + \rho\left(\frac{\partial\tilde{a}^{DH}}{\partial\rho}\right)_{T,x}
-    + \rho\left(\frac{\partial\tilde{a}^{Born}}{\partial\rho}\right)_{T,x}
+    + \rho_m\left(\frac{\partial\tilde{a}^{hc}}{\partial\rho_m}\right)_{T,x}
+    + \rho_m\left(\frac{\partial\tilde{a}^{disp}}{\partial\rho_m}\right)_{T,x}
+    + \rho_m\left(\frac{\partial\tilde{a}^{assoc}}{\partial\rho_m}\right)_{T,x}
+    + \rho_m\left(\frac{\partial\tilde{a}^{DH}}{\partial\rho_m}\right)_{T,x}
+    + \rho_m\left(\frac{\partial\tilde{a}^{Born}}{\partial\rho_m}\right)_{T,x}
     \label{eq:z_total}
 \end{equation}
 
@@ -1882,7 +2026,7 @@ The explicit analytical density differentials now live with their owning setup a
 \begin{equation}
     Z^{\alpha}
     =
-    \rho\left(\frac{\partial\tilde{a}^{\alpha}}{\partial\rho}\right)_{T,x}
+    \rho_m\left(\frac{\partial\tilde{a}^{\alpha}}{\partial\rho_m}\right)_{T,x}
     ,
     \qquad
     \alpha\in\{hc,disp,assoc,DH,Born\}
@@ -1915,9 +2059,9 @@ This section uses the upstream residual Helmholtz equations together with the co
     \begin{aligned}
         \tilde{\mu_{k}}^{\mathrm{res}}
         &=\tilde{a}^{\mathrm{res}}+(\mathrm{Z}-1)
-        +\left(\frac{\partial\tilde{a}^{\mathrm{res}}}{\partial x_{k}}\right)_{T,\nu,x_{i\neq k}}
+        +\left(\frac{\partial\tilde{a}^{\mathrm{res}}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{i\neq k}}
         \\
-        &\quad -\sum_{j=1}^{N}\left[x_{j}\left(\frac{\partial\tilde{a}^{\mathrm{res}}}{\partial x_{j}}\right)_{T,\nu,x_{i\neq j}}\right]
+        &\quad -\sum_{j=1}^{N}\left[x_{j}\left(\frac{\partial\tilde{a}^{\mathrm{res}}}{\partial x_{j}}\right)_{T,\hat{\rho},x_{i\neq j}}\right]
     \end{aligned}
     \label{eq:mu_res_from_ares}
 \end{equation}
@@ -1945,10 +2089,10 @@ This section uses the upstream residual Helmholtz equations together with the co
         &=
         \tilde{a}^{\alpha}
         + Z^{\alpha}
-        +\left(\frac{\partial\tilde{a}^{\alpha}}{\partial x_{k}}\right)_{T,\nu,x_{i\neq k}}
+        +\left(\frac{\partial\tilde{a}^{\alpha}}{\partial x_{k}}\right)_{T,\hat{\rho},x_{i\neq k}}
         \\
         &\quad
-        -\sum_{j=1}^{N}\left[x_{j}\left(\frac{\partial\tilde{a}^{\alpha}}{\partial x_{j}}\right)_{T,\nu,x_{i\neq j}}\right],
+        -\sum_{j=1}^{N}\left[x_{j}\left(\frac{\partial\tilde{a}^{\alpha}}{\partial x_{j}}\right)_{T,\hat{\rho},x_{i\neq j}}\right],
         \qquad
         \alpha\in\{hc,disp,assoc,DH,Born\}
     \end{aligned}
@@ -2203,16 +2347,16 @@ The infinite-dilution reference is the one used for electrolyte solutes and for 
 
 This section uses the upstream residual Helmholtz, compressibility, and colocated temperature-differential identities from Sections~\ref{sec:ares}, \ref{sec:pressure_compressibility_factor}, and \ref{sec:contribution_intermediates}.
 
-\subsection{Entropy}
+\subsection{Enthalpy}
 
 % EqID: h_res
-% Source: \cite{Figiel2025}, Eq.~(13)
-% Status: Adapted implementation form
-% Description: Provides a differential relation needed for entropy calculations.
-% Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
+% Source: \cite{Gross2001}, Eq.~(A.46)
+% Status: Close literature match
+% Description: Provides the residual enthalpy relation from the residual Helmholtz-energy temperature derivative and compressibility factor.
+% Change note: Uses the explicit molar-density notation introduced in the neutral-EOS density convention; the constant density-basis conversion makes fixed molar density and fixed number density equivalent for this temperature derivative.
 
 \begin{equation}
-    \tilde{h}^{\mathrm{res}} = \frac{\hat{h}^{\mathrm{res}}}{RT}=-T\left(\frac{\partial\tilde{a}^{\mathrm{res}}}{\partial T}\right)_{\rho,x_{i}}+(Z-1)
+    \tilde{h}^{\mathrm{res}} = \frac{\hat{h}^{\mathrm{res}}}{RT}=-T\left(\frac{\partial\tilde{a}^{\mathrm{res}}}{\partial T}\right)_{\rho_m,x_{i}}+(Z-1)
     \label{eq:h_res}
 \end{equation}
 
@@ -2236,7 +2380,7 @@ This section uses the upstream residual Helmholtz, compressibility, and colocate
 % Change note: Mapped manually to the residual-entropy temperature-derivative form.
 
 \begin{equation}
-    \tilde{s}^{\mathrm{res}} = \frac{\hat{s}^{\mathrm{res}}(P,T)}{R}=-T\left[\left(\frac{\partial\tilde{a}^{\mathrm{res}}}{\partial T}\right)_{\rho,x_{i}}+\frac{\tilde{a}^{\mathrm{res}}}{T}\right]+\ln(Z)
+    \tilde{s}^{\mathrm{res}} = \frac{\hat{s}^{\mathrm{res}}(P,T)}{R}=-T\left[\left(\frac{\partial\tilde{a}^{\mathrm{res}}}{\partial T}\right)_{\rho_m,x_{i}}+\frac{\tilde{a}^{\mathrm{res}}}{T}\right]+\ln(Z)
     \label{eq:s_res}
 \end{equation}
 

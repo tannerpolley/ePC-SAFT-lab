@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 from epcsaft._core import NativeValueError
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from support.native_cases import _ionic_state, _neutral_state
 from support.numeric import assert_allclose
 
@@ -17,6 +18,38 @@ def _assert_close_terms(observed: dict[str, float], expected: dict[str, float]) 
 def _assert_finite_mapping_values(values: dict[str, float]) -> None:
     assert values
     assert all(np.isfinite(float(value)) for value in values.values())
+
+
+def _one_site_associating_state():
+    """Return a source-backed nonzero-diagonal association topology case.
+
+    Huang and Radosz (1990), Tables VII and IX, assign methanoic acid the
+    one-site topology and report the parameters used here. The segment diameter
+    follows their segment-volume definition. This fixture exercises a
+    thermodynamic derivative identity; it is not a PC-SAFT fit comparison.
+    """
+
+    avogadro = 6.02214076e23
+    close_packing_fraction = 0.74048
+    segment_volume_m3_per_mol = 15.5e-6
+    segment_diameter_angstrom = (
+        6.0
+        * close_packing_fraction
+        * segment_volume_m3_per_mol
+        / (np.pi * avogadro)
+        * 1.0e30
+    ) ** (1.0 / 3.0)
+    params = {
+        "m": np.asarray([1.341]),
+        "s": np.asarray([segment_diameter_angstrom]),
+        "e": np.asarray([333.28]),
+        "e_assoc": np.asarray([7522.0]),
+        "vol_a": np.asarray([0.001625]),
+        "assoc_scheme": ["1"],
+    }
+    mix = ePCSAFTMixture.from_params(params, species=["methanoic acid"])
+    assert np.asarray(mix.parameters["assoc_matrix"]).tolist() == [1.0]
+    return mix, 5000.0, 350.0, np.asarray([1.0])
 
 def test_nonionic_state_rejects_electrolyte_only_activity_methods() -> None:
     mix, species, _, density, temperature, composition = _neutral_state()
@@ -97,6 +130,79 @@ def test_temperature_derivative_reports_finite_accounted_terms() -> None:
 
     assert np.isfinite(derivative["total"])
     assert sum(derivative["terms"].values()) == pytest.approx(derivative["total"])
+
+
+def test_association_temperature_derivative_matches_centered_helmholtz_slope() -> None:
+    mix, _, _, density, temperature, composition = _ionic_state()
+    step = 0.01
+
+    state = mix.state(T=temperature, x=composition, rho=density)
+    analytic = state.temperature_derivative_residual_helmholtz(
+        return_contribution_terms=True
+    )["terms"]["assoc"]
+    assoc_plus = mix.state(
+        T=temperature + step,
+        x=composition,
+        rho=density,
+    ).ares(return_contribution_terms=True)["terms"]["assoc"]
+    assoc_minus = mix.state(
+        T=temperature - step,
+        x=composition,
+        rho=density,
+    ).ares(return_contribution_terms=True)["terms"]["assoc"]
+    centered_slope = (assoc_plus - assoc_minus) / (2.0 * step)
+
+    assert abs(centered_slope) > 1e-6
+    assert analytic == pytest.approx(centered_slope, rel=2e-6, abs=2e-9)
+
+
+def test_one_site_association_temperature_derivative_matches_centered_helmholtz_slope() -> None:
+    mix, density, temperature, composition = _one_site_associating_state()
+    step = 0.01
+
+    state = mix.state(T=temperature, x=composition, rho=density)
+    analytic = state.temperature_derivative_residual_helmholtz(
+        return_contribution_terms=True
+    )["terms"]["assoc"]
+    assoc_plus = mix.state(
+        T=temperature + step,
+        x=composition,
+        rho=density,
+    ).ares(return_contribution_terms=True)["terms"]["assoc"]
+    assoc_minus = mix.state(
+        T=temperature - step,
+        x=composition,
+        rho=density,
+    ).ares(return_contribution_terms=True)["terms"]["assoc"]
+    centered_slope = (assoc_plus - assoc_minus) / (2.0 * step)
+
+    assert abs(centered_slope) > 1e-6
+    assert analytic == pytest.approx(centered_slope, rel=2e-6, abs=2e-9)
+
+
+def test_one_site_association_compressibility_matches_centered_density_slope() -> None:
+    mix, density, temperature, composition = _one_site_associating_state()
+    relative_step = 1.0e-5
+    density_plus = density * (1.0 + relative_step)
+    density_minus = density * (1.0 - relative_step)
+
+    state = mix.state(T=temperature, x=composition, rho=density)
+    analytic = state.z(return_contribution_terms=True)["terms"]["assoc"]
+    assoc_plus = mix.state(
+        T=temperature,
+        x=composition,
+        rho=density_plus,
+    ).ares(return_contribution_terms=True)["terms"]["assoc"]
+    assoc_minus = mix.state(
+        T=temperature,
+        x=composition,
+        rho=density_minus,
+    ).ares(return_contribution_terms=True)["terms"]["assoc"]
+    centered_slope = density * (assoc_plus - assoc_minus) / (density_plus - density_minus)
+
+    assert abs(centered_slope) > 1e-6
+    assert analytic == pytest.approx(centered_slope, rel=2e-6, abs=2e-9)
+
 
 def test_temperature_derivative_is_available_across_density_branches() -> None:
     mix, _, _, _, _, composition = _neutral_state()

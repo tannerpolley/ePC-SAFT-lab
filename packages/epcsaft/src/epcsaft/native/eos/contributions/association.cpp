@@ -208,7 +208,7 @@ static AssociationSolveResult solve_association_site_fractions_cpp(
     throw SolutionError(association_solve_diagnostics_message_cpp(diagnostics));
 }
 
-// EqID: dx_assoc_drho
+// EqID: dx_assoc_dT
 static vector<double> association_site_fraction_dt_cpp(vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dt, vector<double> x) {
     int num_sites = static_cast<int>(XA.size());
     Eigen::MatrixXd B = Eigen::MatrixXd::Zero(num_sites, 1);
@@ -216,14 +216,12 @@ static vector<double> association_site_fraction_dt_cpp(vector<double> delta_ij, 
 
     int ij = 0;
     for (int i = 0; i < num_sites; ++i) {
-        double summ = 0.0;
         for (int j = 0; j < num_sites; ++j) {
             B(i) -= x[j] * XA[j] * ddelta_dt[ij];
             A(i, j) = x[j] * delta_ij[ij];
-            summ += x[j] * XA[j] * delta_ij[ij];
             ij += 1;
         }
-        A(i, i) = std::pow(1.0 + den * summ, 2.0) / den;
+        A(i, i) += 1.0 / (den * XA[i] * XA[i]);
     }
 
     Eigen::MatrixXd solution = A.lu().solve(B);
@@ -331,6 +329,7 @@ AssociationSetup association_setup_cpp(const vector<double> &x, const ProviderPa
 namespace assoc_detail {
 
 // EqID: ddelta_assoc_drho
+// EqID: dx_assoc_drho
 static vector<double> association_site_fraction_density_terms_cpp(
     const vector<double> &delta_ij,
     double den,
@@ -352,7 +351,7 @@ static vector<double> association_site_fraction_density_terms_cpp(
             ++ij;
         }
         B(i) -= summ;
-        A(i, i) = std::pow(1.0 + den * summ, 2.0) / den;
+        A(i, i) += 1.0 / (den * XA[i] * XA[i]);
     }
 
     Eigen::MatrixXd solution = A.lu().solve(B);
@@ -441,6 +440,7 @@ AssociationIntermediateState association_intermediate_state_cpp(
     state.solve_diagnostics = solve_result.diagnostics;
 
     if (include_dt) {
+        // EqID: ddelta_assoc_dT
         vector<double> ddelta_dt(num_sites * num_sites, 0.0);
         if (dghs_dt == nullptr) {
             throw ValueError("Association temperature derivatives require externally provided hard-sphere contact time derivatives.");
@@ -451,13 +451,10 @@ AssociationIntermediateState association_intermediate_state_cpp(
                 if (cppargs.assoc_matrix[i * num_sites + j] != 0) {
                     double eABij = 0.5 * (cppargs.e_assoc[site_component_index[i]] + cppargs.e_assoc[site_component_index[j]]);
                     double volABij = association_volume_cpp(site_component_index[i], site_component_index[j], ncomp, thermo.s_ij, cppargs);
-                    double pair_diameter = pair_diameter_cpp(
-                        thermo.d[site_component_index[i]],
-                        thermo.d[site_component_index[j]]
-                    );
-                    ddelta_dt[i * num_sites + j] = std::pow(pair_diameter, 3) * volABij * (
-                        -eABij / std::pow(t, 2) * std::exp(eABij / t) * hc_state.ghs[site_component_index[i] * ncomp + site_component_index[j]]
-                        + (*dghs_dt)[site_component_index[i] * ncomp + site_component_index[j]] * (std::exp(eABij / t) - 1.0)
+                    int pair_index = site_component_index[i] * ncomp + site_component_index[j];
+                    ddelta_dt[i * num_sites + j] = std::pow(thermo.s_ij[pair_index], 3) * volABij * (
+                        -eABij / std::pow(t, 2) * std::exp(eABij / t) * hc_state.ghs[pair_index]
+                        + (*dghs_dt)[pair_index] * (std::exp(eABij / t) - 1.0)
                     );
                 }
             }
