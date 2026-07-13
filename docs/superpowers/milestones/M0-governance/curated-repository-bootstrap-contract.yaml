@@ -1,0 +1,251 @@
+schema: epcsaft.curated-repository-bootstrap-contract
+schema_version: 1
+date: 2026-07-13
+stage: 11
+local_parent: /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated
+transition_repository:
+  path: /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT
+  program_amendment_commit: 9da384c1005c764a5d1d681a49df398a579948ca
+  origin: https://github.com/ePC-SAFT/ePC-SAFT.git
+license:
+  source_path: /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/LICENSE
+  sha256: 0b383d5a63da644f628d99c33976ea6487ed89aaa59f0b3257992deac1171e6b
+clean_history_policy: single_local_bootstrap_commit
+production_transfer_authorized: false
+remote_creation_authorized: false
+push_authorized: false
+source_of_truth_change_authorized: false
+optional_validation_repository: deferred
+exact_gitattributes: "* text=auto eol=lf\n"
+exact_gitignore:
+  - .venv/
+  - __pycache__/
+  - "*.py[cod]"
+  - "*.so"
+  - "*.pyd"
+  - .pytest_cache/
+  - .ruff_cache/
+  - .mypy_cache/
+  - build/
+  - dist/
+  - "*.egg-info/"
+  - .idea/
+  - .vscode/
+protected_remnants:
+  - path: /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-regression/.git
+    sha256: da3d66692907ab7d8e18ca01c66c474b333a4facd49bba3daa8eae787f8903d9
+  - path: /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-CE/.git
+    sha256: 0d74eae9dee9277d3669dbf2122a89a70f87676369ae45a2dc567d983e636df7
+repositories:
+  - role: provider
+    local_path: /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT
+    intended_github_home: ePC-SAFT/ePC-SAFT
+    github_home_state: existing_transition_remote_identity
+    deferred_remote_strategy: retain_rename_or_repurpose_without_force_push_or_history_replacement
+    distribution_name: epcsaft
+    import_name: epcsaft
+    depends_on: []
+    forbidden_dependencies:
+      - epcsaft-equilibrium
+      - epcsaft-regression
+      - Ipopt
+      - Ceres
+    remote_created: false
+    tracked_files:
+      - .gitattributes
+      - .gitignore
+      - AGENTS.md
+      - CONTEXT.md
+      - LICENSE
+      - README.md
+      - docs/README.md
+      - docs/migration/bootstrap-receipt.yaml
+      - docs/ownership.md
+      - src/README.md
+      - tests/README.md
+    content_markers:
+      AGENTS.md:
+        - "Bootstrap state: governance-only skeleton."
+        - "Do not add production source, package/build metadata, executable tests, workflows, releases, or capability claims without an approved stage-owned transfer plan."
+      CONTEXT.md:
+        - "This is a governance-only skeleton, not a usable package."
+        - "source_of_truth: false"
+        - "program amendment `9da384c1005c764a5d1d681a49df398a579948ca`"
+      README.md:
+        - "Repository role: provider"
+        - "Intended GitHub home: `ePC-SAFT/ePC-SAFT`"
+        - "Bootstrap state: governance-only skeleton; not a usable package."
+      docs/README.md:
+        - "Transition source: `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT`"
+        - "Program amendment: `9da384c1005c764a5d1d681a49df398a579948ca`"
+      docs/ownership.md:
+        - "Allowed owners: provider EOS/state/parameters, CppAD, resolved-input SDK."
+        - "depends_on: []"
+        - "forbidden_dependencies: [epcsaft-equilibrium, epcsaft-regression, Ipopt, Ceres]"
+      docs/migration/bootstrap-receipt.yaml:
+        - "repository_role: provider"
+        - "production_owners_transferred: []"
+        - "scientific_capabilities_claimed: []"
+        - "remote_created: false"
+        - "push_performed: false"
+        - "source_of_truth: false"
+      src/README.md:
+        - "reserved"
+        - "no accepted runtime owner"
+      tests/README.md:
+        - "reserved"
+        - "no accepted proof owner"
+  - role: equilibrium
+    local_path: /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-equilibrium
+    intended_github_home: ePC-SAFT/ePC-SAFT-equilibrium
+    github_home_state: intended_mapping_only
+    distribution_name: epcsaft-equilibrium
+    import_name: epcsaft_equilibrium
+    depends_on:
+      - epcsaft
+    forbidden_dependencies:
+      - epcsaft-regression
+      - Ceres
+    remote_created: false
+    tracked_files:
+      - .gitattributes
+      - .gitignore
+      - AGENTS.md
+      - CONTEXT.md
+      - LICENSE
+      - README.md
+      - docs/README.md
+      - docs/migration/bootstrap-receipt.yaml
+      - docs/ownership.md
+      - src/README.md
+      - tests/README.md
+    content_markers:
+      AGENTS.md:
+        - "Bootstrap state: governance-only skeleton."
+        - "Do not add production source, package/build metadata, executable tests, workflows, releases, or capability claims without an approved stage-owned transfer plan."
+      CONTEXT.md:
+        - "This is a governance-only skeleton, not a usable package."
+        - "source_of_truth: false"
+        - "program amendment `9da384c1005c764a5d1d681a49df398a579948ca`"
+      README.md:
+        - "Repository role: equilibrium"
+        - "Intended GitHub home: `ePC-SAFT/ePC-SAFT-equilibrium`"
+        - "Bootstrap state: governance-only skeleton; not a usable package."
+      docs/README.md:
+        - "Transition source: `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT`"
+        - "Program amendment: `9da384c1005c764a5d1d681a49df398a579948ca`"
+      docs/ownership.md:
+        - "Allowed owners: equilibrium routes, phase discovery, local NLPs, Ipopt, certification, equilibrium results."
+        - "depends_on: [epcsaft]"
+        - "forbidden_dependencies: [epcsaft-regression, Ceres]"
+      docs/migration/bootstrap-receipt.yaml:
+        - "repository_role: equilibrium"
+        - "production_owners_transferred: []"
+        - "scientific_capabilities_claimed: []"
+        - "remote_created: false"
+        - "push_performed: false"
+        - "source_of_truth: false"
+      src/README.md:
+        - "reserved"
+        - "no accepted runtime owner"
+      tests/README.md:
+        - "reserved"
+        - "no accepted proof owner"
+  - role: regression
+    local_path: /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-regression
+    intended_github_home: ePC-SAFT/ePC-SAFT-regression
+    github_home_state: intended_mapping_only
+    distribution_name: epcsaft-regression
+    import_name: epcsaft_regression
+    depends_on:
+      - epcsaft
+    forbidden_dependencies:
+      - epcsaft-equilibrium
+      - Ipopt
+    deferred_issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/469
+    remote_created: false
+    tracked_files:
+      - .gitattributes
+      - .gitignore
+      - AGENTS.md
+      - CONTEXT.md
+      - LICENSE
+      - README.md
+      - docs/README.md
+      - docs/migration/bootstrap-receipt.yaml
+      - docs/ownership.md
+      - src/README.md
+      - tests/README.md
+    content_markers:
+      AGENTS.md:
+        - "Bootstrap state: governance-only skeleton."
+        - "Do not add production source, package/build metadata, executable tests, workflows, releases, or capability claims without an approved stage-owned transfer plan."
+      CONTEXT.md:
+        - "This is a governance-only skeleton, not a usable package."
+        - "source_of_truth: false"
+        - "program amendment `9da384c1005c764a5d1d681a49df398a579948ca`"
+      README.md:
+        - "Repository role: regression"
+        - "Intended GitHub home: `ePC-SAFT/ePC-SAFT-regression`"
+        - "Bootstrap state: governance-only skeleton; not a usable package."
+      docs/README.md:
+        - "Transition source: `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT`"
+        - "Program amendment: `9da384c1005c764a5d1d681a49df398a579948ca`"
+      docs/ownership.md:
+        - "Allowed owners: strict target datasets, fitted parameters, Ceres, fit receipts, regression results."
+        - "depends_on: [epcsaft]"
+        - "forbidden_dependencies: [epcsaft-equilibrium, Ipopt]"
+      docs/migration/bootstrap-receipt.yaml:
+        - "repository_role: regression"
+        - "production_owners_transferred: []"
+        - "scientific_capabilities_claimed: []"
+        - "remote_created: false"
+        - "push_performed: false"
+        - "source_of_truth: false"
+      src/README.md:
+        - "reserved"
+        - "no accepted runtime owner"
+      tests/README.md:
+        - "reserved"
+        - "no accepted proof owner"
+  - role: organization_policy
+    local_path: /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated/ePC-SAFT-organization
+    intended_github_home: ePC-SAFT/.github
+    github_home_state: intended_mapping_only
+    remote_created: false
+    tracked_files:
+      - .gitattributes
+      - .gitignore
+      - AGENTS.md
+      - CONTEXT.md
+      - LICENSE
+      - README.md
+      - docs/migration/bootstrap-receipt.yaml
+      - docs/ownership.md
+      - profile/README.md
+    content_markers:
+      AGENTS.md:
+        - "Bootstrap state: governance-only skeleton."
+        - "Do not add live organization policy, workflows, templates, releases, or package capability claims without a separately approved external-write plan."
+      CONTEXT.md:
+        - "This is a governance-only skeleton, not live organization policy."
+        - "source_of_truth: false"
+        - "program amendment `9da384c1005c764a5d1d681a49df398a579948ca`"
+      README.md:
+        - "Repository role: organization_policy"
+        - "Intended GitHub home: `ePC-SAFT/.github`"
+        - "Bootstrap state: governance-only skeleton; not live organization policy."
+      docs/ownership.md:
+        - "Allowed future owners: organization profile, shared issue/PR templates, reusable workflow policy, roadmap conventions."
+        - "Package-owned boundaries: tests, builds, releases, capabilities, package documentation."
+      docs/migration/bootstrap-receipt.yaml:
+        - "repository_role: organization_policy"
+        - "production_owners_transferred: []"
+        - "scientific_capabilities_claimed: []"
+        - "remote_created: false"
+        - "push_performed: false"
+        - "source_of_truth: false"
+        - "live_organization_policy_changed: false"
+      profile/README.md:
+        - "reserved"
+        - "no live organization profile"
