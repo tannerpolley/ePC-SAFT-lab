@@ -352,8 +352,6 @@ struct CppADMixtureState {
 };
 
 struct CppADDispersionState {
-    std::array<double, 7> a{};
-    std::array<double, 7> b{};
     CppADScalar I1 = make_cppad_scalar(0.0);
     CppADScalar I2 = make_cppad_scalar(0.0);
     CppADScalar C1 = make_cppad_scalar(0.0);
@@ -393,13 +391,15 @@ CppADMixtureState mixture_state_cppad_cpp(double t, double rho, const vector<Cpp
 
 CppADDispersionState dispersion_state_cppad_cpp(const CppADScalar &m_avg, const CppADScalar &eta) {
     CppADDispersionState state;
+    const CppADScalar m1_factor = (m_avg - 1.0) / m_avg;
+    const CppADScalar m2_factor = (m_avg - 2.0) / m_avg;
     for (int i = 0; i < 7; ++i) {
-        state.a[i] = kDispersionA0[i] + (1.0 - 1.0 / scalar_value(m_avg)) * kDispersionA1[i]
-            + (1.0 - 1.0 / scalar_value(m_avg)) * (1.0 - 2.0 / scalar_value(m_avg)) * kDispersionA2[i];
-        state.b[i] = kDispersionB0[i] + (1.0 - 1.0 / scalar_value(m_avg)) * kDispersionB1[i]
-            + (1.0 - 1.0 / scalar_value(m_avg)) * (1.0 - 2.0 / scalar_value(m_avg)) * kDispersionB2[i];
-        state.I1 += state.a[i] * scalar_pow(eta, i);
-        state.I2 += state.b[i] * scalar_pow(eta, i);
+        const CppADScalar a_i = kDispersionA0[i] + m1_factor * kDispersionA1[i]
+            + m1_factor * m2_factor * kDispersionA2[i];
+        const CppADScalar b_i = kDispersionB0[i] + m1_factor * kDispersionB1[i]
+            + m1_factor * m2_factor * kDispersionB2[i];
+        state.I1 += a_i * scalar_pow(eta, i);
+        state.I2 += b_i * scalar_pow(eta, i);
     }
     state.C1 = 1.0 / (
         1.0

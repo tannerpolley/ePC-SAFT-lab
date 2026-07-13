@@ -60,6 +60,25 @@ def test_cppad_eos_contribution_recording_matches_double_value_path() -> None:
     assert jacobian[-1] == pytest.approx(jacobian[:-1].sum(axis=0))
 
 
+def test_public_cppad_dispersion_composition_derivative_matches_canonical_tape() -> None:
+    args = _neutral_args()
+    args.disp_dadx_diff_mode = 2
+    x = [0.35, 0.65]
+    t = 310.0
+    rho = 8200.0
+
+    canonical = _core._native_cppad_eos_contributions(t, rho, x, args)
+    jacobian = np.asarray(canonical["jacobian_row_major"], dtype=float).reshape(canonical["shape"])
+    expected = jacobian[canonical["outputs"].index("disp")]
+
+    state = _core.NativeState(_core.NativeMixture(args), t, x, 0, False, 0.0, True, rho, False, 0.0)
+    result = state.composition_derivative_residual_helmholtz_result()
+    observed = np.asarray(result.dadx.disp, dtype=float)
+
+    assert dict(result.derivative_backend)["disp"] == "cppad"
+    assert observed == pytest.approx(expected, rel=1.0e-11, abs=1.0e-12)
+
+
 def test_cppad_eos_contribution_recording_accepts_canonical_born_model() -> None:
     args = _nonassociating_born_ionic_args()
     x = [0.9998, 1.0e-4, 1.0e-4]
