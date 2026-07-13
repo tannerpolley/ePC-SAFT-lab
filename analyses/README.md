@@ -11,6 +11,7 @@ analyses/
     <paper_id>/
   data_validation/
   package_validation/
+  reference_oracles/
 ```
 
 Each real analysis should be self-contained inside one of those category folders:

@@ -150,8 +150,8 @@ Pre-fix evidence at the retained state:
 
 ```text
 analytic association d(a_res)/dT: 0.0032659862738105886 K^-1
-centered finite difference:         0.026396826879748758 K^-1
-analytic / finite difference:       0.12372647245401315
+centered reference slope:          0.026396826879748758 K^-1
+analytic / reference slope:        0.12372647245401315
 ```
 
 ### Step 2: Prove RED
@@ -201,7 +201,7 @@ uv run --no-sync python run_pytest.py \
   -q
 ```
 
-Expected: the new finite-difference test and all association implicit-derivative contracts pass.
+Expected: the new centered-slope test and all association implicit-derivative contracts pass.
 
 ### Step 6: Prove which outputs can change and commit
 

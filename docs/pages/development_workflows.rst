@@ -323,6 +323,7 @@ TeX installation that provides ``latexmk``:
    cd docs/latex
    latexmk -pdf equations.tex
    latexmk -pdf explicit_assocation.tex
+   latexmk -pdf equilibrium_formulations.tex
 
 Parallel worker safety
 ----------------------

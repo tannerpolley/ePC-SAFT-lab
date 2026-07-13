@@ -1,0 +1,1193 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[margin=0.82in]{geometry}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue,pdfusetitle]{hyperref}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\Evidence}[1]{\textsf{#1}}
+\newcommand{\Status}[1]{\textbf{Status:} \Evidence{#1}.}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\TPD}{\operatorname{TPD}}
+\newcommand{\rank}{\operatorname{rank}}
+
+\title{Formal Equilibrium Formulations for ePC-SAFT\\
+\large Source, numerical, and implementation boundaries}
+\author{ePC-SAFT project}
+\date{13 July 2026}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Purpose, evidence discipline, and capability boundary}
+\label{sec:eqform:purpose}
+
+This document is the canonical mathematical owner for equilibrium formulations
+in the M4 package context. It does not replace the EOS equation catalogue or
+the algorithm inventory, and it deliberately does not import either standalone
+document. It separates thermodynamic formulations that share quantities but
+do not share coordinates, controllers, certificates, or globality claims.
+
+\paragraph{Evidence vocabulary.}
+\Evidence{verified} means that a statement is supported by a governing primary
+source, an executable repository owner, or both, with the type of support named
+nearby. \Evidence{inference} marks a mathematical consequence derived from
+verified equations but not stated verbatim by the source. \Evidence{assumption}
+marks a declared modelling or numerical choice needed to make a problem
+well-posed. \Evidence{unknown} marks missing or ambiguous source evidence; it
+must not be converted into a default, parameter, or capability claim.
+
+\paragraph{Current public surface.}
+\Status{verified implementation evidence}
+The complete production-exposed equilibrium route set is
+\texttt{bubble\_pressure}, \texttt{dew\_pressure}, and scoped
+\texttt{single\_component\_vle}. The pure route is restricted to
+nonassociating methane on \(100\)--\(180\,\mathrm{K}\), ethane on
+\(100\)--\(280\,\mathrm{K}\), and propane on \(100\)--\(340\,\mathrm{K}\),
+with inclusive endpoints from the retained NIST evidence. Bubble/dew
+association is restricted to exact source-backed Gross--Sadowski 2002
+Figures 2--9 fixtures and parameter fingerprints. Ion-containing inputs are
+not public boundary inputs. None of the broader formulations below is admitted
+by this document.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.32\textwidth}X}
+\toprule
+Family & Exact current implementation status \\
+\midrule
+Public pressure boundaries and scoped pure saturation &
+production exposed only in the scope stated above \\
+Neutral HELD & internal components; controller absent/deferred \\
+Association-aware neutral HELD & internal components; controller absent/deferred \\
+Perdomo modified-mole HELD2 & absent/deferred \\
+Ascani counterion-pair equilibrium & internal components; controller absent/deferred \\
+Standalone CE & public schemas/helpers; executable solver internal validation only \\
+CPE & absent/deferred \\
+\bottomrule
+\end{tabularx}
+\caption{Capability status. Descriptive family names are not activation evidence.}
+\label{tab:eqform:status}
+\end{table}
+
+\section{Shared notation, conventions, and topology}
+\label{sec:eqform:shared}
+
+\subsection{Ensembles, amounts, volumes, and domains}
+
+Unless a family states otherwise, temperature \(T>0\), imposed pressure
+\(P^0>0\), and conserved inventory are fixed. Components are indexed by
+\(i\in\mathcal C=\{1,\ldots,C\}\), candidate phases by
+\(\alpha\in\mathcal P=\{1,\ldots,\Pi\}\), and independent reactions by
+\(r\in\mathcal R=\{1,\ldots,R\}\). Phase amounts, totals, compositions, and
+volumes are
+\begin{equation}
+ n_{i\alpha}\geq 0,\qquad
+ n_\alpha=\sum_{i=1}^{C}n_{i\alpha},\qquad
+ x_{i\alpha}=\frac{n_{i\alpha}}{n_\alpha},\qquad
+ V_\alpha>0,\qquad v_\alpha=\frac{V_\alpha}{n_\alpha}.
+\label{eq:eqform:phase-definitions}
+\end{equation}
+Composition is defined only when \(n_\alpha>0\). An \emph{active} phase has
+\(n_\alpha>0\); an absent phase lies on \(n_\alpha=0\), where amount--volume
+coordinates or a limiting tangent-plane construction must be used instead of
+evaluating \(x_{i\alpha}\) by division. This is the common
+appearance/disappearance topology.
+
+For nonreactive problems the material balances are
+\begin{equation}
+ \sum_{\alpha\in\mathcal P} n_{i\alpha}=N_i,
+ \qquad i\in\mathcal C.
+\label{eq:eqform:material-balances}
+\end{equation}
+For reactive problems, let \(B\in\R^{E\times C}\) be a full-row-rank
+element--species matrix and \(\boldsymbol b\) the conserved elemental
+inventory. The independent conservation statement is
+\begin{equation}
+ B\sum_{\alpha\in\mathcal P}\boldsymbol n_\alpha=\boldsymbol b.
+\label{eq:eqform:element-balances}
+\end{equation}
+Writing both Eq.~\eqref{eq:eqform:material-balances} for a fixed feed and
+Eq.~\eqref{eq:eqform:element-balances} as independent constraints in a reactive
+problem generally overconstrains the system. A reaction-extent formulation uses
+\begin{equation}
+ \boldsymbol n=\boldsymbol n^0+\nu\boldsymbol\xi,\qquad
+ B\nu=0,\qquad \rank(\nu)=R.
+\label{eq:eqform:reaction-extents}
+\end{equation}
+where the columns of \(\nu\in\R^{C\times R}\) are independent reaction vectors.
+An extent representation spans every elemental-feasible composition direction
+only when
+\begin{equation}
+ \operatorname{im}(\nu)=\ker(B),\qquad
+ R=C-\rank(B).
+\label{eq:eqform:reaction-completeness}
+\end{equation}
+If Eq.~\eqref{eq:eqform:reaction-completeness} is not satisfied, the extents
+define a deliberately network-restricted feasible set
+\(\boldsymbol n^0+\operatorname{im}(\nu)\), not an equivalent coordinate
+system for elemental Gibbs minimization. Charge is included as a row of \(B\)
+when it is an independent conserved quantity.
+
+\subsection{Helmholtz evaluator and derivative contract}
+
+For an active phase, the EOS supplies an extensive Helmholtz free energy
+\begin{equation}
+ A_\alpha=A(T,V_\alpha,\boldsymbol n_\alpha;\boldsymbol s_\alpha),
+\label{eq:eqform:helmholtz-owner}
+\end{equation}
+where \(\boldsymbol s_\alpha\) is absent for a nonassociating evaluator and is
+an implicit association state otherwise. Thermodynamic consistency requires
+\begin{equation}
+ P_\alpha=-\left(\frac{\partial A}{\partial V_\alpha}\right)_
+ {T,\boldsymbol n_\alpha},\qquad
+ \mu_{i\alpha}=\left(\frac{\partial A}{\partial n_{i\alpha}}\right)_
+ {T,V_\alpha,n_{j\neq i,\alpha}}.
+\label{eq:eqform:eos-derivatives}
+\end{equation}
+The isothermal--isobaric phase contribution is
+\begin{equation}
+ \mathcal G_\alpha(T,P^0,V_\alpha,\boldsymbol n_\alpha)
+ =A(T,V_\alpha,\boldsymbol n_\alpha)+P^0V_\alpha.
+\label{eq:eqform:phase-gibbs-transform}
+\end{equation}
+Its volume stationarity gives \(P_\alpha=P^0\), and its amount gradient gives
+\(\boldsymbol\mu_\alpha\). These are identities in physical energy units; an
+implementation may divide the complete objective and its derivatives by
+\(RT\), but must not mix dimensional and dimensionless residuals.
+
+At minimum, a direct-minimization formulation needs finite \(A\), \(P\), and
+\(\boldsymbol\mu\) throughout its declared domain, together with gradients of
+all constraints. A Newton or exact-Hessian NLP additionally needs consistent
+second derivatives of the reduced objective. A formulation that constrains
+chemical-potential equality needs derivatives of \(\boldsymbol\mu\), and an
+exact Hessian of that residual problem can require third derivatives of \(A\).
+Derivative availability is not a global-minimum certificate.
+
+\subsection{Ions, electroneutrality, and the Galvani convention}
+
+Let \(z_i\) be signed charge number and \(F\) Faraday's constant. Bulk phases
+are locally electroneutral unless a formulation explicitly models interfacial
+charge:
+\begin{equation}
+ \sum_{i=1}^{C}z_i n_{i\alpha}=0,\qquad \alpha\in\mathcal P.
+\label{eq:eqform:phase-electroneutrality}
+\end{equation}
+With phase electric potential \(\Phi_\alpha\), the electrochemical potential is
+\begin{equation}
+ \widetilde\mu_{i\alpha}=\mu_{i\alpha}+z_iF\Phi_\alpha.
+\label{eq:eqform:electrochemical-potential}
+\end{equation}
+\Status{verified thermodynamic convention}
+Individual ionic chemical potentials are convention dependent. Therefore
+individual ionic chemical-potential equality is not a certificate unless an
+explicit common Galvani convention fixes every \(\Phi_\alpha\). The
+electrolyte families below instead use charge-neutral modified-potential or
+counterion-pair combinations in which the Galvani contribution cancels.
+
+\subsection{Common KKT structure and phase appearance}
+
+For a fixed candidate phase set in a neutral nonreactive problem, define
+\begin{equation}
+ G_{\mathcal P}^{*}=
+ \min_{\{\boldsymbol n_\alpha,V_\alpha\}}
+ \sum_{\alpha\in\mathcal P}\mathcal G_\alpha
+ \quad\text{subject to Eq.~\eqref{eq:eqform:material-balances}, }
+ \boldsymbol n_\alpha\geq0,\ V_\alpha>0.
+\label{eq:eqform:generic-neutral-min}
+\end{equation}
+With material-balance multipliers \(\lambda_i\) and lower-bound multipliers
+\(\gamma_{i\alpha}\geq0\), the amount KKT conditions are
+\begin{equation}
+ \mu_{i\alpha}-\lambda_i-\gamma_{i\alpha}=0,\qquad
+ n_{i\alpha}\gamma_{i\alpha}=0,\qquad
+ P_\alpha=P^0.
+\label{eq:eqform:generic-neutral-kkt}
+\end{equation}
+Thus an interior component has equal chemical potential across active phases.
+At zero amount, the inequality and complementarity condition replaces
+equality. At phase disappearance, nonnegative tangent-plane distance for all
+admissible trial phases supplies the topology certificate. Stationarity at
+reported phases alone does not exclude an unreported lower-energy phase.
+
+\paragraph{Acceptance template.}
+A formulation-specific record must report: finite-domain and positivity
+checks; independent balance and electroneutrality norms; objective or residual
+convergence; stationarity/KKT or complementarity; an independent equilibrium
+certificate; and the evidence, if any, for global phase-set completeness.
+Tolerances are named inputs, not universal constants silently shared across
+families.
+
+\section{Public pressure-boundary and pure-saturation formulations}
+\label{sec:eqform:public-boundary}
+
+\subsection{Source, ensemble, and independent variables}
+
+\Status{inferred thermodynamic specialization; verified implementation evidence}
+The displayed phase-equilibrium conditions are derived from the verified
+fixed-\(T,P\) Gibbs minimization/KKT construction in Pereira
+et al.~\cite{Pereira2012} and agree with the direct constrained implementation
+owner; Pereira does not specify these bubble/dew controllers. The retained
+public routes are local
+two-phase boundary problems, not executions of Pereira's HELD discovery
+controller. For bubble pressure, \(T\) and parent-liquid composition
+\(\boldsymbol x^{L,0}\) are fixed; unknowns are
+\((P,\boldsymbol y,v_L,v_V)\), with \(C\) ambient composition entries and one
+normalization constraint, hence \(C-1\) composition degrees of freedom. For
+dew pressure, \(T\) and parent-vapour composition
+\(\boldsymbol y^{V,0}\) are fixed; unknowns are
+\((P,\boldsymbol x,v_L,v_V)\).
+
+\subsection{Residual maps, domains, and topology}
+
+The bubble-pressure residual map is
+\begin{equation}
+ \boldsymbol R_{\mathrm{bub}}=
+ \begin{bmatrix}
+ P_L(T,v_L,\boldsymbol x^{L,0})-P\\
+ P_V(T,v_V,\boldsymbol y)-P\\
+ \boldsymbol\mu_L(T,v_L,\boldsymbol x^{L,0})
+ -\boldsymbol\mu_V(T,v_V,\boldsymbol y)\\
+ \sum_i y_i-1
+ \end{bmatrix}
+ =\boldsymbol0.
+\label{eq:eqform:bubble-residual}
+\end{equation}
+The dew-pressure residual interchanges fixed and trial compositions:
+\begin{equation}
+ \boldsymbol R_{\mathrm{dew}}=
+ \begin{bmatrix}
+ P_L(T,v_L,\boldsymbol x)-P\\
+ P_V(T,v_V,\boldsymbol y^{V,0})-P\\
+ \boldsymbol\mu_L(T,v_L,\boldsymbol x)
+ -\boldsymbol\mu_V(T,v_V,\boldsymbol y^{V,0})\\
+ \sum_i x_i-1
+ \end{bmatrix}
+ =\boldsymbol0.
+\label{eq:eqform:dew-residual}
+\end{equation}
+Domains are \(P>0\), \(v_L>0\), \(v_V>v_L\), and compositions in the
+simplex interior or on explicitly supported trace bounds. At an incipient
+boundary the new phase amount tends to zero, so there is no finite two-phase
+lever-rule material balance to impose. The fixed parent composition and unit
+normalization of each phase define the boundary limit.
+
+For one component, both composition vectors equal \(1\), leaving
+\begin{equation}
+ P(T,v_L)=P_{\mathrm{sat}},\qquad
+ P(T,v_V)=P_{\mathrm{sat}},\qquad
+ \mu(T,v_L)=\mu(T,v_V),\qquad v_V>v_L.
+\label{eq:eqform:pure-saturation}
+\end{equation}
+This is the scoped public \texttt{single\_component\_vle} formulation.
+
+\subsection{Objective/KKT interpretation and derivative contract}
+
+\Evidence{verified implementation}
+The current native owner represents both unit-normalized phases in amount and
+volume variables, adds \(P\) as a route scalar, minimizes the dimensionless sum
+of Eq.~\eqref{eq:eqform:phase-gibbs-transform}, and constrains fixed
+composition, each phase total, both pressure residuals, all neutral
+chemical-potential differences, and a positive phase-volume gap. That local
+NLP implements Eqs.~\eqref{eq:eqform:bubble-residual}--%
+\eqref{eq:eqform:pure-saturation}; it is not the global multiphase objective in
+Eq.~\eqref{eq:eqform:generic-neutral-min}.
+
+The evaluator must supply phase \(A,P,\boldsymbol\mu\); the residual Jacobian
+needs first derivatives of \(P\) and \(\boldsymbol\mu\). The exposed exact
+Hessian route needs corresponding higher derivatives. For narrow associating
+bubble/dew proof scope, derivatives include the implicit association response.
+The public pure route rejects association.
+
+\subsection{Initialization, certificate, acceptance, and failure}
+
+Density/volume roots must start in separated liquid and vapour regions and
+remain inside EOS and volume bounds. Pressure and residual scaling must be
+reported. The route-owned acceptance checks include pressure and neutral
+chemical-potential consistency, fixed-parent composition, unit phase totals,
+ln-fugacity consistency for non-pure boundaries, and the required
+volume-gap/density-separation condition. These are local boundary checks, not a
+stability certificate; no TPD stability certificate is currently public.
+Multiple roots, root swapping, critical coalescence, trace-bound activity,
+EOS-domain failure, and a vanishing phase-volume gap are explicit failures.
+Ions would require
+Eq.~\eqref{eq:eqform:electrochemical-potential} or a charge-neutral reduced
+certificate and are outside this public family.
+
+\paragraph{Relationship to other families.}
+Bubble/dew and pure saturation solve one prescribed incipient topology. They do
+not discover the number of phases, do not execute HELD Stages I--III, and do
+not solve CE or CPE.
+
+\section{Neutral HELD}
+\label{sec:eqform:neutral-held}
+
+\subsection{Source, scope, and canonical Stage III problem}
+
+\Status{verified source formulation}
+Pereira et al.~\cite{Pereira2012} define HELD for nonreactive multicomponent,
+multiphase equilibrium at fixed \(T^0,P^0,\boldsymbol N\) using generic EOS
+evaluations. Stage I searches for unstable trial states, Stage II alternates a
+linear dual outer problem with nonconvex composition--volume lower problems,
+and Stage III refines the candidate phase simplex.
+
+For candidate set \(\mathcal P^*\), the canonical Stage III problem is direct
+total-free-energy minimization:
+\begin{equation}
+ G_{\mathrm{HELD}}^{*}=
+ \min_{\{\boldsymbol n_\alpha,V_\alpha\}_{\alpha\in\mathcal P^*}}
+ \sum_{\alpha\in\mathcal P^*}
+ \left[A(T^0,V_\alpha,\boldsymbol n_\alpha)+P^0V_\alpha\right],
+\label{eq:eqform:held-stage-three}
+\end{equation}
+subject to
+\begin{equation}
+ \sum_{\alpha\in\mathcal P^*}n_{i\alpha}=N_i,\quad
+ \boldsymbol n_\alpha^{L}\leq\boldsymbol n_\alpha\leq
+ \boldsymbol n_\alpha^{U},\quad
+ V_\alpha^{L}\leq V_\alpha\leq V_\alpha^{U}.
+\label{eq:eqform:held-stage-three-constraints}
+\end{equation}
+The source uses a one-mole mass-number basis and tight candidate-neighbourhood
+bounds. If the candidate set cannot satisfy balances, the problem is
+infeasible and control returns to Stage II. The canonical Stage III problem is
+direct total-free-energy minimization. Residual solving is not the canonical
+Stage III formulation; it may be used only as a correction or diagnostic after
+the direct minimization.
+
+\subsection{Stages I and II, phase topology, and globality}
+
+For normalized reference state \(\boldsymbol z\), a convenient
+source-consistent tangent-plane representation is
+\begin{equation}
+ d(\boldsymbol x,v;\boldsymbol z)=
+ g(T^0,P^0,\boldsymbol x,v)
+ -g(T^0,P^0,\boldsymbol z,v_z)
+ -\sum_{i=1}^{C-1}
+ \left.\frac{\partial g}{\partial x_i}\right|_{\boldsymbol z}
+ (x_i-z_i),
+\label{eq:eqform:held-tpd}
+\end{equation}
+with volume included among lower-level variables and pressure stationarity
+enforced at a minimizer. \Evidence{inference} Equation
+\eqref{eq:eqform:held-tpd} fixes normalized notation for the source's
+tangent-plane construction; the PDF's primal/dual equations remain the
+authoritative source coordinates. A negative minimum identifies a missing
+stable candidate. Stage II constructs upper and lower information from sampled
+supporting planes. Finite multistart sampling does not prove the global minimum
+of the nonconvex lower problem.
+
+Phase appearance changes the candidate simplex. Duplicate candidates that
+converge to the same composition and volume are merged. Trace species at source
+lower bounds are refined in logarithmic coordinates. A candidate phase may
+disappear at an active amount bound; complementarity and nonnegative TPD then
+replace an undefined composition condition.
+
+\subsection{KKT conditions and independent certificate}
+
+For variables not active at candidate-neighbourhood bounds, the KKT equations
+reduce to Eq.~\eqref{eq:eqform:generic-neutral-kkt}. Hence
+\begin{equation}
+ P_\alpha=P^0,\qquad
+ \mu_{i\alpha}=\lambda_i
+ \quad\text{for every interior component in every active phase}.
+\label{eq:eqform:held-interior-kkt}
+\end{equation}
+\Evidence{inference} These relations follow from
+Eqs.~\eqref{eq:eqform:held-stage-three}--%
+\eqref{eq:eqform:held-stage-three-constraints}; they do not replace global dual
+evidence.
+
+The source's independent convergence certificate is
+\begin{equation}
+ 0\leq UBD^{V}-G_{\mathrm{HELD}}^{*}\leq\epsilon_g,\qquad
+ \max_{i,\alpha}
+ \left|\frac{\mu_{i\alpha}-\mu_{i,\alpha+1}}{\mu_{i\alpha}}\right|
+ \leq\epsilon_\mu,
+\label{eq:eqform:held-certificate}
+\end{equation}
+together with feasibility, distinct-phase filtering, and trace refinement.
+The chemical-potential check is independent of objective convergence but does
+not alone prove global phase-set completeness. A stronger audit also requires
+nonnegative globally minimized TPD over the admissible domain.
+
+\subsection{Scaling, initialization, acceptance, and failure}
+
+\Status{verified source numerics}
+Pereira reports packing-fraction volume scaling, a one-mole mass basis, up to
+\(10C\) Stage-I tunnelling starts, and Stage-II starts drawn from random,
+shifted-previous, and near-pure states. Reported source values are
+\(\epsilon_\lambda=0.5\), \(\epsilon_b=10^{-2}\),
+\(\epsilon_x=\epsilon_\eta=10^{-3}\), and
+\(\epsilon_\mu=\epsilon_g=10^{-6}\), with composition bounds
+\(10^{-8}\) and \(1-10^{-8}\). These are historical source settings, not
+invented repository defaults.
+
+Acceptance requires a declared EOS domain, balance feasibility, converged
+direct Stage III objective, KKT residuals, Eq.~\eqref{eq:eqform:held-certificate},
+and an honest globality receipt for Stage-I/II lower searches. Failures include
+missing candidate phases, infeasible Stage III balances, metastable local
+minima, duplicate phases, active trace bounds, EOS failure, ill-scaled
+mass/volume variables, and unproven lower-level globality.
+
+\paragraph{Implementation and relationship.}
+\Status{verified implementation evidence}
+The repository contains neutral local NLP, deterministic candidate screening,
+continuous TPD minimization, sampled-candidate audit, and local certification
+components. It does not contain a completed Pereira Stage-I/II/III controller.
+Neutral HELD is neither a direct boundary route nor CE/CPE.
+
+\section{Association-aware neutral HELD}
+\label{sec:eqform:association-held}
+
+\subsection{Scope and implicit association state}
+
+\Status{verified source scope; inferred derivative contract}
+Pereira et al.~\cite{Pereira2012} use the same HELD controller with
+association-capable SAFT evaluators and solve association equations at each EOS
+evaluation. The controller and Stage III objective remain
+Eqs.~\eqref{eq:eqform:held-stage-three}--%
+\eqref{eq:eqform:held-stage-three-constraints}; this is an evaluator extension,
+not a different phase-discovery algorithm.
+
+Let association variables satisfy
+\begin{equation}
+ \boldsymbol R^{\mathrm{assoc}}
+ (T,V,\boldsymbol n,\boldsymbol s)=\boldsymbol0,\qquad
+ \boldsymbol s\in\mathcal S_{\mathrm{phys}},
+\label{eq:eqform:association-state}
+\end{equation}
+and let \(\boldsymbol s^*(T,V,\boldsymbol n)\) be the unique physical solution
+asserted by Pereira for this association system.
+The reduced Helmholtz function used by HELD is
+\begin{equation}
+ \widehat A(T,V,\boldsymbol n)=
+ A(T,V,\boldsymbol n;\boldsymbol s^*(T,V,\boldsymbol n)).
+\label{eq:eqform:association-reduced-helmholtz}
+\end{equation}
+Every phase, trial TPD state, and derivative evaluation must solve
+Eq.~\eqref{eq:eqform:association-state}; carrying a stale state between trial
+points changes the mathematical function.
+
+\subsection{Implicit derivatives}
+
+If \(R_s=\partial\boldsymbol R^{\mathrm{assoc}}/\partial\boldsymbol s\)
+is nonsingular at that solution, then for any outer variable \(y\),
+\begin{equation}
+ \frac{\dd\boldsymbol s^*}{\dd y}
+ =-R_s^{-1}R_y,\qquad
+ \frac{\dd\widehat A}{\dd y}
+ =A_y+A_s\frac{\dd\boldsymbol s^*}{\dd y}.
+\label{eq:eqform:association-implicit-derivative}
+\end{equation}
+\Evidence{inference} Equation
+\eqref{eq:eqform:association-implicit-derivative} is the required
+implicit-function derivative contract. Pereira does not print this equation,
+the association residual, its tolerance, or the exact reduced-Hessian formula.
+Those details are \Evidence{unknown} at primary-source level. A local NLP with
+exact Hessians must differentiate
+Eq.~\eqref{eq:eqform:association-implicit-derivative} again or use an
+equivalent exact automatic/implicit construction.
+
+\subsection{KKT, certificate, and numerical behavior}
+
+The outer KKT and phase-topology conditions are
+Eqs.~\eqref{eq:eqform:held-interior-kkt} and
+\eqref{eq:eqform:held-certificate}, evaluated with \(\widehat A\) and its total
+derivatives. \Evidence{inference} A designed repository acceptance certificate
+adds
+\begin{equation}
+ \max_{\alpha\in\mathcal P^*}
+ \norm{\boldsymbol R^{\mathrm{assoc}}_\alpha}_{\infty}
+ \leq\epsilon_{\mathrm{assoc}},
+\label{eq:eqform:association-certificate}
+\end{equation}
+ plus a derivative-consistency receipt; Pereira does not define this
+\(\epsilon_{\mathrm{assoc}}\) test. Pereira states that its association system
+has a unique solution and solves it independently at each EOS evaluation.
+Broader multiple-root behavior for other association evaluators is
+\Evidence{unknown}, not a Pereira result. The verified root can still become
+ill-conditioned, \(R_s\) may approach singularity, inner tolerances can pollute
+outer stationarity, and EOS calls can fail in Stage-I/II trial states.
+Initialization must declare the inner-solve initialization, warm-start, and
+continuation policy without silently changing the selected thermodynamic
+branch.
+
+\paragraph{Implementation and non-equivalence.}
+\Status{verified implementation evidence}
+The repository has association mass-action residual/Jacobian components,
+implicit sensitivities, and exact derivative corrections. A generalized
+association-aware HELD controller remains absent/deferred. Narrow public
+associating bubble/dew evidence does not admit this family.
+
+\section{Perdomo modified-mole HELD2}
+\label{sec:eqform:perdomo-held2}
+
+\subsection{Source, scope, and eliminated-ion coordinates}
+
+\Status{verified source formulation}
+Perdomo et al.~\cite{Perdomo2025} treat nonreactive strong electrolytes in
+fluid phases at fixed \(T,P^0\), with at least one molecular species and
+complete dissociation. Solids, weak-electrolyte reactions, and CPE are outside
+source scope.
+
+Choose charged species \(E\), with \(z_E\neq0\). Local electroneutrality
+eliminates its amount:
+\begin{equation}
+ n_E=-\frac{1}{z_E}\sum_{i\neq E}z_i n_i.
+\label{eq:eqform:perdomo-elimination}
+\end{equation}
+For \(i\in\mathcal C^{(E)}=\mathcal C\setminus\{E\}\), define
+\begin{equation}
+ \overline n_i^{(E)}
+ =\left(1-\frac{z_i}{z_E}\right)n_i,\qquad
+ \overline n=\sum_{i\in\mathcal C^{(E)}}\overline n_i^{(E)},\qquad
+ \overline x_i^{(E)}=\frac{\overline n_i^{(E)}}{\overline n}.
+\label{eq:eqform:perdomo-modified-moles}
+\end{equation}
+The modified fractions sum to one. There are \(C-1\) retained modified species
+and \(C-2\) independent modified compositions; volume is the additional
+lower-level variable. Choose one dependent modified species \(q\in
+\mathcal C^{(E)}\), define
+\(\mathcal C^{(EC)}=\mathcal C^{(E)}\setminus\{q\}\), and reconstruct
+\(\overline x_q^{(E)}=1-\sum_{i\in\mathcal C^{(EC)}}
+\overline x_i^{(E)}\). Thus
+\(\overline{\boldsymbol x}^{(EC)}\in\R^{C-2}\) is the independent coordinate
+vector used below.
+
+Define charge-constrained and modified potentials by
+\begin{equation}
+ \mu_i^{(E)}
+ =\widetilde\mu_i-\frac{z_i}{z_E}\widetilde\mu_E,\qquad
+ \overline\mu_i^{(E)}
+ =\frac{\mu_i^{(E)}}{1-z_i/z_E}.
+\label{eq:eqform:perdomo-modified-potential}
+\end{equation}
+Galvani terms cancel in \(\mu_i^{(E)}\). The source's eliminated-species
+representation can assign a phase-potential relation, but it must not be
+promoted to a unique measurable Galvani potential.
+
+\subsection{Canonical Stage III objective and constraints}
+
+For \(m_p\) candidate phases, fractions \(\phi^\alpha\in[0,1]\), molar
+volumes \(v_\alpha\), and modified compositions
+\(\overline{\boldsymbol x}^{(EC),\alpha}\), Perdomo's direct Stage III is
+\begin{equation}
+ \overline G_{\mathrm{HELD2}}^{*}
+ =\min_{\{\phi^\alpha,v_\alpha,\overline{\boldsymbol x}^{(E),\alpha}\}}
+ \sum_{\alpha=1}^{m_p}\phi^\alpha
+ \left[
+ \overline A^{\mathrm{el}}
+ (T,v_\alpha,\overline{\boldsymbol x}^{(EC),\alpha})
+ +P^0v_\alpha
+ \right],
+\label{eq:eqform:perdomo-stage-three}
+\end{equation}
+subject to
+\begin{equation}
+ \sum_{\alpha=1}^{m_p}\phi^\alpha
+ \overline x_i^{(E),\alpha}
+ =\overline x_{0,i}^{(E)},\quad i\in\mathcal C^{(EC)},\qquad
+ \sum_{\alpha=1}^{m_p}\phi^\alpha=1,\quad
+ \phi^\alpha\geq0,\quad
+ \overline{\boldsymbol x}^{(EC),\alpha}\in\overline{\mathcal X}^{(EC)},\quad
+ v_\alpha\in[v^L,v^U].
+\label{eq:eqform:perdomo-stage-three-constraints}
+\end{equation}
+Candidate-neighbourhood composition bounds are also imposed in the source.
+The \(C-2\) displayed modified balances and the phase-fraction normalization
+are independent; the omitted modified balance follows from modified-fraction
+normalization. Together with Eq.~\eqref{eq:eqform:perdomo-elimination}, they
+recover ordinary balances and local charge neutrality.
+
+\subsection{KKT, certificate, scaling, and failure}
+
+For an active phase and interior modified component, KKT conditions give
+\begin{equation}
+ P_\alpha=P^0,\qquad
+ \overline\mu_i^{(E),\alpha}
+ =\overline\lambda_i,
+\label{eq:eqform:perdomo-kkt}
+\end{equation}
+so the independent interphase condition is equality of modified potentials,
+not convention-dependent individual ionic potentials. The source certificate
+is
+\begin{equation}
+ 0\leq UBD^{V}-\overline G_{\mathrm{HELD2}}^{*}\leq\epsilon_g,\qquad
+ \max_{i,\alpha}
+ \left|
+ \frac{\overline\mu_i^{(E),\alpha}
+ -\overline\mu_i^{(E),\alpha+1}}
+ {\overline\mu_i^{(E),\alpha}}
+ \right|\leq\epsilon_\mu,
+\label{eq:eqform:perdomo-certificate}
+\end{equation}
+plus modified-balance, normalization, volume, duplicate-phase, and
+electroneutrality checks.
+
+\Status{verified source numerics}
+The eliminated ion is chosen with largest absolute charge. The source uses
+fixed-seed \(10C\) stability starts, packing-fraction bounds
+\(10^{-6}\leq\eta\leq0.74\), modified lower fractions initially proportional
+to \(10^{-10}(1-z_i/z_E)\), logarithmic trace refinement as low as
+\(10^{-300}\), and default reported
+\(\epsilon_g=\epsilon_\mu=10^{-6}\). Nonconvex multistart lower solves do not
+provide a deterministic global guarantee. Exact derivative provenance and
+Hessian use are \Evidence{unknown}.
+
+Failures include a nonpositive eliminated amount, singular modified coordinate
+factor, infeasible modified balances, missing phase candidates, trace-bound
+distortion, metastable lower solves, and inconsistent recovery to ordinary ion
+amounts.
+
+\paragraph{Implementation and non-equivalence.}
+\Status{verified implementation evidence}
+No source-faithful modified-mole HELD2 controller is implemented. Historical
+repository names containing \texttt{held2} operate on counterion-pair
+coordinates and do not establish Perdomo parity. Perdomo and Ascani
+formulations are not equated.
+
+\section{Ascani counterion-pair equilibrium}
+\label{sec:eqform:ascani-pairs}
+
+\subsection{Source, coordinates, and residual map}
+
+\Status{verified source formulation}
+Ascani, Sadowski, and Held~\cite{Ascani2022} treat fixed-\(T,P\)
+multiphase electrolyte equilibrium with locally electroneutral bulk phases.
+Their published controller is a counterion-pair residual and successive
+phase-addition algorithm, not HELD2.
+
+Let \(\mathcal C_{\mathrm{ch}}\) contain \(C_{\mathrm{ch}}\) charged species.
+Construct \(C_{\mathrm{ch}}-1\) independent cation--anion pairs and
+\(E\in\R^{(C_{\mathrm{ch}}-1)\times C_{\mathrm{ch}}}\), with
+\begin{equation}
+ \rank(E)=C_{\mathrm{ch}}-1,\qquad
+ E\boldsymbol z_{\mathrm{ch}}=\boldsymbol0.
+\label{eq:eqform:ascani-pair-rank}
+\end{equation}
+A row has inverse-absolute-valence weights on its selected cation and anion.
+The independent pair potential is
+\begin{equation}
+ \widehat{\boldsymbol\mu}_{\pm,\alpha}
+ =E\widetilde{\boldsymbol\mu}_{\mathrm{ch},\alpha}
+ =E\boldsymbol\mu_{\mathrm{ch},\alpha}.
+\label{eq:eqform:ascani-pair-potential}
+\end{equation}
+The second equality follows from Eq.~\eqref{eq:eqform:ascani-pair-rank}; the
+Galvani term cancels. Row normalization changes numerical scale but not
+cross-phase equality.
+
+Let \(\mathcal S_{\mathrm{ch}}\) select \(C_{\mathrm{ch}}-1\) independent
+charged-species balances. Taking phase \(1\) as reference, the source's
+\emph{reduced} equilibrium residual is
+\begin{equation}
+ \boldsymbol R_{\mathrm{Ascani}}=
+ \begin{bmatrix}
+ \{\mu_{i\alpha}-\mu_{i1}\}_{z_i=0,\ \alpha>1}\\
+ \{\widehat{\boldsymbol\mu}_{\pm,\alpha}
+ -\widehat{\boldsymbol\mu}_{\pm,1}\}_{\alpha>1}\\
+ \{\sum_\alpha n_{i\alpha}-N_i\}_{z_i=0}\\
+ \{\sum_\alpha n_{k\alpha}-N_k\}_{k\in\mathcal S_{\mathrm{ch}}}
+ \end{bmatrix}
+ =\boldsymbol0,
+\label{eq:eqform:ascani-residual}
+\end{equation}
+written in reduced pair-transfer variables that move selected ions in
+inverse-valence proportions and preserve phase electroneutrality. The omitted
+charged balance follows from globally neutral feed plus per-phase neutrality.
+No explicit charge row appears because neutrality is an identity of the
+coordinates. This is source Eqs.~(22), (23), (31), and (32), not a mixture of
+that reduced system with the full Eqs.~(22)--(25).
+
+\subsection{Stability, topology, KKT interpretation, and certificate}
+
+The source defines transformed tangent-plane distance over the same
+electroneutral pair coordinates:
+\begin{equation}
+ \TPD_{\mathrm{pair}}(\boldsymbol\xi)
+ =g(\boldsymbol n(\boldsymbol\xi))
+ -g(\boldsymbol n^0)
+ -\boldsymbol\mu_{\mathrm{neutral}}^{0\mathsf T}
+ \Delta\boldsymbol n_{\mathrm{neutral}}
+ -\widehat{\boldsymbol\mu}_{\pm}^{0\mathsf T}
+ \Delta\boldsymbol n_{\mathrm{pair}}.
+\label{eq:eqform:ascani-tpd}
+\end{equation}
+\Evidence{inference} Equation \eqref{eq:eqform:ascani-tpd} is a compact
+coordinate statement of source Eqs.~(33)--(35); the source transform defines
+the exact \(\boldsymbol n(\boldsymbol\xi)\).
+
+A negative TPD trial generates a split, after which a modified-Powell solve of
+Eq.~\eqref{eq:eqform:ascani-residual} is attempted. Stability testing and phase
+addition repeat. KKT interpretation is equality of neutral potentials and of
+the \(C_{\mathrm{ch}}-1\) independent pair potentials, with balances and local
+charge constraints. The independent certificate is small residual norm, full
+pair-matrix rank, and balance and charge feasibility. \Evidence{verified} The
+published controller retests the light phase. \Evidence{inference} Requiring
+nonnegative admissible pair TPD for every retained phase and objective
+comparison across phase sets is a stronger designed certificate needed before
+a globality claim; its completeness is not established by Ascani.
+
+The source reports random search and shrinking perturbations but does not give
+a deterministic seed, complete tolerance set, Jacobian construction, or formal
+global guarantee; these are \Evidence{unknown}. Failures include a
+rank-deficient pair basis, infeasible reduced coordinates, negative amounts,
+missed negative-TPD regions, local residual roots, duplicate phases, and
+ill-scaled multivalent pairs.
+
+\paragraph{Implementation and non-equivalence.}
+\Status{verified implementation evidence}
+Counterion-pair matrices, reduced coordinates, mean-ionic bookkeeping, TPD and
+postsolve components exist internally. The full source controller remains
+absent/deferred. This is separate from Perdomo's eliminated-ion modified-mole
+HELD2 and from reactive CE/CPE.
+
+\section{Standalone chemical equilibrium}
+\label{sec:eqform:ce}
+
+\subsection{Ensemble, objective, constraints, and domains}
+
+\Status{verified source basis}
+Specializing the thermodynamic construction in Ascani~\cite{Ascani2023} to one
+homogeneous phase gives standalone CE at fixed \(T,P^0,\boldsymbol b\):
+\begin{equation}
+ G_{\mathrm{CE}}^{*}
+ =\min_{\boldsymbol n\geq0}
+ G(T,P^0,\boldsymbol n)
+ \quad\text{subject to}\quad
+ B\boldsymbol n=\boldsymbol b.
+\label{eq:eqform:ce-objective}
+\end{equation}
+If charged species are present, bulk electroneutrality is an additional
+independent constraint unless charge conservation is already an independent
+row of \(B\). Standard states and activity conventions must be declared; no
+single-ion standard chemical potential is observable without a convention.
+
+When Eq.~\eqref{eq:eqform:reaction-completeness} holds, extent coordinates are
+equivalent and Eq.~\eqref{eq:eqform:reaction-extents} gives
+\begin{equation}
+ \boldsymbol R_{\mathrm{CE}}(\boldsymbol\xi)
+ =\nu^\mathsf T\boldsymbol\mu
+ (T,P^0,\boldsymbol n^0+\nu\boldsymbol\xi)
+ =\boldsymbol0,
+\label{eq:eqform:ce-affinity}
+\end{equation}
+on \(\boldsymbol n^0+\nu\boldsymbol\xi\geq0\). Under a declared activity
+standard state, each row is equivalently
+\begin{equation}
+ \sum_{i=1}^{C}\nu_{ir}\mu_i
+ =\Delta_r G_r^0+RT\sum_{i=1}^{C}\nu_{ir}\ln a_i=0.
+\label{eq:eqform:ce-mass-action}
+\end{equation}
+For a deliberately specified reaction network that does not span \(\ker B\),
+Eqs.~\eqref{eq:eqform:ce-affinity}--\eqref{eq:eqform:ce-mass-action} certify
+only the restricted extent problem
+\(\min_{\boldsymbol\xi}G(T,P^0,\boldsymbol n^0+\nu\boldsymbol\xi)\), not the
+elemental problem in Eq.~\eqref{eq:eqform:ce-objective}.
+
+\subsection{KKT, boundary species, and certificate}
+
+With multipliers \(\boldsymbol\lambda\) for \(B\boldsymbol n=\boldsymbol b\)
+and \(\boldsymbol\gamma\geq0\) for nonnegativity,
+\begin{equation}
+ \boldsymbol\mu-B^\mathsf T\boldsymbol\lambda-\boldsymbol\gamma
+ =\boldsymbol0,\qquad
+ n_i\gamma_i=0.
+\label{eq:eqform:ce-kkt}
+\end{equation}
+For a complete interior extent basis, Eq.~\eqref{eq:eqform:ce-kkt} implies
+Eq.~\eqref{eq:eqform:ce-affinity}. At zero species amount, complementarity
+replaces invalid logarithmic equality.
+
+An independent CE certificate reports elemental and charge balances,
+positivity/complementarity, affinities, standard-state identity, and objective
+comparison. If the reduced Gibbs objective is proven convex over the feasible
+set, KKT is sufficient globally; otherwise an affinity root is only necessary.
+Initialization must use a strictly feasible composition or a declared boundary
+strategy. An incomplete undeclared reaction span, rank-deficient \(B\) or
+\(\nu\), dependent reactions, inconsistent
+standard states, log-domain failure, boundary species, multiple stationary
+points, and nonconvex activities are explicit failures.
+
+\paragraph{Topology, implementation, and relationship.}
+Standalone CE has one homogeneous phase and no phase-appearance topology or
+interphase certificate. \Status{verified implementation evidence}
+Public schemas and helpers exist, while the executable CE solver is internal
+validation only and the retained nonideal proof is not accepted. CE is not
+HELD2, counterion-pair phase equilibrium, or CPE.
+
+\section{Coupled phase-and-chemical equilibrium}
+\label{sec:eqform:cpe}
+
+\subsection{Thermodynamic problem and independent constraints}
+
+\Status{verified source Gibbs problem; inferred Helmholtz specialization;
+separately designed repository family}
+For fixed \(T,P^0,\boldsymbol b\), simultaneous CPE minimizes over phase count,
+phase amounts, and phase volumes:
+\begin{equation}
+ G_{\mathrm{CPE}}^{*}
+ =\min_{\mathcal P,\{\boldsymbol n_\alpha,V_\alpha\}}
+ \sum_{\alpha\in\mathcal P}
+ \left[A(T,V_\alpha,\boldsymbol n_\alpha)+P^0V_\alpha\right],
+\label{eq:eqform:cpe-objective}
+\end{equation}
+subject to
+\begin{equation}
+ B\sum_{\alpha\in\mathcal P}\boldsymbol n_\alpha=\boldsymbol b,\qquad
+ \boldsymbol n_\alpha\geq0,\quad V_\alpha>0,
+\label{eq:eqform:cpe-constraints}
+\end{equation}
+and, when ions occur, independent per-phase electroneutrality constraints.
+Ascani~\cite{Ascani2023} verifies the total-Gibbs problem; rewriting each
+phase contribution as \(A+P^0V\) in
+Eq.~\eqref{eq:eqform:cpe-objective} is an \Evidence{inference} from the shared
+Legendre transform. A stoichiometric version may introduce a complete
+reaction-extent basis and a reference-phase balance. A network-restricted
+version must say so explicitly, and neither version may duplicate elemental
+constraints.
+
+\subsection{KKT/residual conditions and phase topology}
+
+For neutral interior species, derived KKT conditions imply
+\begin{equation}
+ P_\alpha=P^0,\qquad
+ \mu_{i\alpha}=\mu_{i\beta},\qquad
+ \nu^\mathsf T\boldsymbol\mu_\alpha=\boldsymbol0,
+\label{eq:eqform:cpe-kkt}
+\end{equation}
+for active phases \(\alpha,\beta\), with inequality/complementarity at zero
+amounts. The affinity rows cover every elemental-feasible reaction direction
+only under Eq.~\eqref{eq:eqform:reaction-completeness}; otherwise they certify
+only the declared reaction network. If ions are present, interphase conditions
+must use explicitly
+Galvani-referenced electrochemical potentials or an independent charge-neutral
+modified/pair basis; generic individual ionic equality is forbidden.
+
+Ascani's demonstrated final solver uses coupled interphase-fugacity and
+reaction-affinity residuals after homogeneous CE, nonreactive TPD, and
+phasewise CE initialization. Those preliminary solves initialize CPE; they are
+not CPE themselves. The paper explicitly notes that interphase and reaction
+residual roots are necessary but not sufficient and may include trivial or
+metastable solutions.
+
+Phase appearance/disappearance combines topology of
+Eq.~\eqref{eq:eqform:generic-neutral-kkt} with reactive feasible directions.
+An absent phase must have nonnegative \emph{reactive} tangent-plane distance
+over compositions reachable under elemental conservation; nonreactive TPD
+alone is not a complete certificate.
+
+\subsection{Certificate, numerics, and failure}
+
+A complete CPE certificate must independently establish elemental and charge
+feasibility, pressure stationarity, interphase neutral or charge-neutral
+potential equality, reaction affinities, complementarity, nonnegative reactive
+phase-appearance tests, and objective comparison across competing phase counts
+and reaction branches. \Evidence{unknown} The Ascani source supplies no final
+reactive global-minimum certificate, reactive-TPD completeness proof, or
+electrolyte/Galvani extension. Those requirements must be designed and tested
+before capability admission.
+
+Scaling must distinguish energy, reaction-affinity, material, volume, and
+charge rows. Initialization may use the source's staged CE/TPD/phasewise-CE
+sequence, but final acceptance must depend on simultaneous solve and its
+independent certificate. Failures include inconsistent elemental inventory,
+dependent reaction bases, missed phases, nonreactive-stability false positives,
+trivial or metastable roots, phase extinction, boundary species, and
+incompatible standard states.
+
+\paragraph{Implementation and non-equivalence.}
+\Status{verified implementation evidence}
+No runtime CPE formulation is implemented. CPE is not standalone CE followed
+by a nonreactive flash, and it is not silently identified with CE, HELD2, or
+counterion-pair equilibrium.
+
+\section{Source-to-formulation reconciliation}
+\label{sec:eqform:reconciliation}
+
+\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.13\textwidth}
+                  >{\raggedright\arraybackslash}p{0.24\textwidth}
+                  >{\raggedright\arraybackslash}p{0.25\textwidth}
+                  >{\raggedright\arraybackslash}p{0.27\textwidth}}
+\caption{Source reconciliation. Owner means equation owner in this document,
+not public runtime ownership.}
+\label{tab:eqform:reconciliation}\\
+\toprule
+Owner & Source equation or statement & Evidence and source anchor &
+Repository formulation owner / unresolved point \\
+\midrule
+\endfirsthead
+\toprule
+Owner & Source equation or statement & Evidence and source anchor &
+Repository formulation owner / unresolved point \\
+\midrule
+\endhead
+Eqs.~\eqref{eq:eqform:phase-definitions}--%
+\eqref{eq:eqform:phase-gibbs-transform} &
+Extensive Helmholtz/Gibbs variables and derivatives &
+\Evidence{verified}: Pereira 2012, Sections 2--3; current phase evaluator &
+Shared notation only; EOS equations remain in their separate canonical owner. \\
+\addlinespace
+Eqs.~\eqref{eq:eqform:phase-electroneutrality}--%
+\eqref{eq:eqform:electrochemical-potential} &
+Local charge and electrochemical potential &
+\Evidence{verified}: Ascani 2022, Eqs.~(5), (9)--(15) &
+Shared ionic convention; absolute Galvani potential remains convention
+dependent. \\
+\addlinespace
+Eqs.~\eqref{eq:eqform:bubble-residual}--%
+\eqref{eq:eqform:pure-saturation} &
+Incipient two-phase pressure and chemical-potential conditions &
+\Evidence{inference}: specialization of verified fixed-\(T,P\) KKT in Pereira
+2012; residual structure and pure NIST scope are verified implementation
+evidence &
+Public direct boundary formulation. A paper-specific global boundary
+controller is \Evidence{unknown} and not claimed. \\
+\addlinespace
+Eqs.~\eqref{eq:eqform:held-stage-three}--%
+\eqref{eq:eqform:held-stage-three-constraints} &
+HELD Stage III direct total-free-energy problem &
+\Evidence{verified}: Pereira 2012, Section 3.3.1, problem
+\(\mathrm{GM}_{x,V}\) &
+Neutral HELD owner; controller absent/deferred. \\
+\addlinespace
+Eq.~\eqref{eq:eqform:held-tpd} &
+Normalized TPD notation &
+\Evidence{inference}: compact rewrite of Pereira 2012, Eqs.~(1)--(8) &
+Exact PDF primal/dual coordinates remain authoritative. \\
+\addlinespace
+Eqs.~\eqref{eq:eqform:held-interior-kkt}--%
+\eqref{eq:eqform:held-certificate} &
+Interior stationarity, energy gap, chemical-potential convergence &
+\Evidence{verified}: Pereira 2012, Eqs.~(12)--(13);
+KKT reduction is \Evidence{inference} &
+No deterministic global guarantee from finite multistart. \\
+\addlinespace
+Eqs.~\eqref{eq:eqform:association-state}--%
+\eqref{eq:eqform:association-reduced-helmholtz} &
+Association-aware evaluator and unique inner solution &
+Inner association solve is \Evidence{verified}: Pereira 2012, Section 4;
+the source states uniqueness &
+Association residual details and primary-source tolerance are
+\Evidence{unknown}. \\
+\addlinespace
+Eqs.~\eqref{eq:eqform:association-implicit-derivative}--%
+\eqref{eq:eqform:association-certificate} &
+Implicit derivative and repository acceptance contract &
+\Evidence{inference}: implicit-function derivation and designed acceptance
+test; not printed by Pereira &
+Residual form, primary-source tolerance, and exact source Hessian are
+\Evidence{unknown}. \\
+\addlinespace
+Eqs.~\eqref{eq:eqform:perdomo-elimination}--%
+\eqref{eq:eqform:perdomo-modified-potential} &
+Eliminated ion, modified moles/fractions/potentials &
+\Evidence{verified}: Perdomo 2025, Eqs.~(9), (15), (23), and (28)--(31) &
+Perdomo HELD2 owner; implementation absent/deferred. \\
+\addlinespace
+Eqs.~\eqref{eq:eqform:perdomo-stage-three}--%
+\eqref{eq:eqform:perdomo-certificate} &
+Modified-mole Stage III and certificate &
+\Evidence{verified}: Perdomo 2025, Eqs.~(67)--(69) &
+Derivative/Hessian provenance is \Evidence{unknown}. \\
+\addlinespace
+Eqs.~\eqref{eq:eqform:ascani-pair-rank}--%
+\eqref{eq:eqform:ascani-residual} &
+Independent pair basis and equilibrium residual &
+\Evidence{verified}: Ascani 2022, Eqs.~(22), (23), and (26)--(32); the displayed
+residual is the reduced system &
+Pair components internal; complete controller absent/deferred. \\
+\addlinespace
+Eq.~\eqref{eq:eqform:ascani-tpd} &
+Electroneutral transformed TPD &
+\Evidence{inference}: compact rewrite of Ascani 2022, Eqs.~(33)--(35) &
+Search counts, seed, tolerances, and global guarantee are
+\Evidence{unknown}. \\
+\addlinespace
+Eqs.~\eqref{eq:eqform:ce-objective}--%
+\eqref{eq:eqform:ce-mass-action} &
+Homogeneous Gibbs minimization and reaction affinities &
+\Evidence{verified}: Ascani 2023, Eqs.~(1)--(10), specialized to one phase;
+reaction-space equivalence requires
+Eq.~\eqref{eq:eqform:reaction-completeness} &
+Rawlings--Ekerdt convexity details are retained only in a secondary local note;
+primary verification is \Evidence{unknown}. \\
+\addlinespace
+Eq.~\eqref{eq:eqform:ce-kkt} &
+Species nonnegativity complementarity &
+\Evidence{inference}: KKT expansion of the verified Gibbs problem &
+Boundary-species acceptance remains a repository design requirement. \\
+\addlinespace
+Eqs.~\eqref{eq:eqform:cpe-objective}--%
+\eqref{eq:eqform:cpe-constraints} &
+Simultaneous total-Gibbs CPE &
+\Evidence{verified}: Ascani 2023, Eqs.~(1)--(10), for total Gibbs;
+the displayed \(A+P^0V\) transform is \Evidence{inference} &
+Elemental-inventory direct formulation is the canonical repository design. \\
+\addlinespace
+Eq.~\eqref{eq:eqform:cpe-kkt} &
+Interphase and reaction necessary conditions plus complementarity &
+\Evidence{verified}: Ascani 2023 for interphase/reaction necessary conditions;
+explicit Helmholtz-coordinate KKT and complementarity are
+\Evidence{inference} &
+Stoichiometric-matrix orientation in source is dimensionally ambiguous; final
+reactive global certificate is \Evidence{unknown}. \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\section{Thermodynamic and numerical consistency review}
+\label{sec:eqform:consistency}
+
+\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.15\textwidth}
+                  >{\raggedright\arraybackslash}p{0.19\textwidth}
+                  >{\raggedright\arraybackslash}p{0.18\textwidth}
+                  >{\raggedright\arraybackslash}p{0.18\textwidth}
+                  >{\raggedright\arraybackslash}p{0.17\textwidth}}
+\caption{Internal consistency audit.}
+\label{tab:eqform:consistency}\\
+\toprule
+Family & Degrees of freedom / rank & Units and basis &
+Certificate independence & Phase-degeneracy behavior \\
+\midrule
+\endfirsthead
+\toprule
+Family & Degrees of freedom / rank & Units and basis &
+Certificate independence & Phase-degeneracy behavior \\
+\midrule
+\endhead
+Public boundaries &
+Bubble/dew use \(C+3\) ambient unknowns: \(P\), two volumes, and all \(C\)
+trial entries. Two pressure rows, \(C\) potential rows, and normalization give
+\(C+3\) equations; normalization leaves \(C-1\) composition degrees. The pure
+case leaves three unknowns and three independent equations. &
+Pressure in Pa, molar volume in \(\mathrm{m^3\,mol^{-1}}\), potentials in
+\(\mathrm{J\,mol^{-1}}\), or one declared complete \(RT\) scaling. &
+Pressure, potential, normalization, and phase-gap checks are distinct from NLP
+termination. &
+At critical coalescence \(v_V-v_L\to0\); route must reject or change topology. \\
+\addlinespace
+Neutral HELD &
+For fixed \(\Pi\), \(\Pi(C+1)\) amount/volume variables minus \(C\) independent
+balances before active bounds. &
+Pereira Stage III uses extensive free energy and a one-mole mass-number basis;
+conversion must be explicit. &
+Dual/free-energy gap and cross-phase potential checks are independent; global
+TPD is stronger than either local check. &
+Zero phase amount uses complementarity; duplicate phases are merged; infeasible
+candidate simplex returns to Stage II. \\
+\addlinespace
+Association HELD &
+Neutral HELD degrees plus association states eliminated by a square,
+nonsingular \(R_s\). &
+Association residual and energy derivatives must use one declared site and
+amount basis. &
+Association residual and derivative receipt are additional to HELD
+certificates. &
+Inner-root loss or singular \(R_s\) invalidates the phase evaluator before
+outer topology decisions. \\
+\addlinespace
+Perdomo HELD2 &
+\(C-2\) independent \(\mathcal C^{(EC)}\) coordinates and balances plus phase
+normalization avoid the dependent modified-fraction row; volume adds one lower
+variable. &
+Modified moles preserve total mole basis under electroneutral elimination;
+potentials retain energy-per-mole units. &
+Modified-potential equality and dual/free-energy gap are independent; ordinary
+individual-ion equality is not used. &
+\(\phi^\alpha=0\) removes a phase; trace modified fractions require reversible
+recovery to physical ion amounts. \\
+\addlinespace
+Ascani pairs &
+Pair matrix rank is \(C_{\mathrm{ch}}-1\); charge-preserving variables remove
+redundant neutrality directions. The reduced system retains
+\(C_{\mathrm{ch}}-1\) ionic balances and no explicit charge rows. &
+Pair row scaling must be declared; inverse-valence weighting preserves
+energy-per-mole combinations up to row scale. &
+Mean-ionic/pair equality, balance/charge, and TPD are separate checks. &
+Successive phase addition handles appearance; missed TPD regions or duplicate
+roots leave topology unproven. \\
+\addlinespace
+Standalone CE &
+\(\rank(B)\) independent conservation rows and \(\rank(\nu)=R\) independent
+reaction directions. Equivalence needs
+\(\operatorname{im}(\nu)=\ker(B)\) and \(R=C-\rank(B)\); otherwise the network
+is explicitly restricted. &
+Activities are dimensionless and require declared standard states; affinities
+are energy per reaction extent. &
+Balances, complementarity, affinities, and objective/global-convexity evidence
+are distinct. &
+No phase topology; zero species amounts activate inequalities and invalidate
+naive log residuals. \\
+\addlinespace
+CPE &
+Use either full-row-rank elemental constraints or an independent extent/
+reference-balance system, not both redundantly. Extents must be complete or
+explicitly network restricted. &
+All phases share one energy, amount, pressure, and standard-state convention. &
+Coupled residual convergence is necessary; reactive TPD and global objective
+comparison are additional and currently unknown. &
+Appearance requires reactive feasible directions; disappearance combines
+phase and species complementarity. \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\paragraph{Review conclusion.}
+\Status{verified internal review}
+The seven families use consistent fixed-\(T,P\) thermodynamic bases while
+remaining non-equated. Balance ranks, amount/volume bases, ionic conventions,
+derivative requirements, certificate independence, and phase-degeneracy
+behavior are explicit. Unresolved items in
+Table~\ref{tab:eqform:reconciliation} remain unknown rather than being filled
+with parameters or defaults.
+
+\begin{thebibliography}{9}
+
+\bibitem{Pereira2012}
+F.~E. Pereira, G.~Jackson, A.~Galindo, and C.~S. Adjiman,
+\emph{The HELD algorithm for multicomponent, multiphase equilibrium
+calculations with generic equations of state},
+Computers \& Chemical Engineering 36 (2012) 99--118.
+\href{https://doi.org/10.1016/j.compchemeng.2011.07.009}
+{doi:10.1016/j.compchemeng.2011.07.009}.
+
+\bibitem{Perdomo2025}
+F.~A. Perdomo, G.~Jackson, A.~Mitsos, A.~Galindo, and C.~S. Adjiman,
+\emph{Phase stability criteria and fluid-phase equilibria in
+strong-electrolyte systems},
+Computers \& Chemical Engineering 194 (2025) 108977.
+\href{https://doi.org/10.1016/j.compchemeng.2024.108977}
+{doi:10.1016/j.compchemeng.2024.108977}.
+
+\bibitem{Ascani2022}
+M.~Ascani, G.~Sadowski, and C.~Held,
+\emph{Calculation of Multiphase Equilibria Containing Mixed Solvents and
+Mixed Electrolytes: General Formulation and Case Studies},
+Journal of Chemical \& Engineering Data 67 (2022) 1972--1984.
+\href{https://doi.org/10.1021/acs.jced.1c00866}
+{doi:10.1021/acs.jced.1c00866}.
+
+\bibitem{Ascani2023}
+M.~Ascani, G.~Sadowski, and C.~Held,
+\emph{Simultaneous Predictions of Chemical and Phase Equilibria in Systems
+with an Esterification Reaction Using PC-SAFT},
+Molecules 28 (2023) 1768.
+\href{https://doi.org/10.3390/molecules28041768}
+{doi:10.3390/molecules28041768}.
+
+\end{thebibliography}
+
+\end{document}

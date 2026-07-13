@@ -1,0 +1,8 @@
+analysis_id: equilibrium_formulation_conformance
+title: Equilibrium formulation conformance kernel
+kind: reference_oracle
+status: non_production
+package: epcsaft-equilibrium
+commands:
+  test: uv run --no-sync python run_pytest.py analyses/reference_oracles/equilibrium_formulations/tests -q
+outputs: {}
