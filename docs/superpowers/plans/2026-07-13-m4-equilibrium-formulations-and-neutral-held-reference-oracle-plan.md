@@ -30,7 +30,8 @@ pytest, repository text/workflow validators, and Git.
   scoped methane/ethane/propane `single_component_vle` route only.
 - Keep Phase B outside `packages/epcsaft-equilibrium` and stop after the neutral
   manufactured topology.
-- Do not add SciPy or `cyipopt` to the reference-oracle tree. Repository
+- Do not add SciPy or the retired Python Ipopt wrapper to the reference-oracle
+  tree. Repository
   structure policy currently prohibits those analysis dependencies outside the
   separately owned explicit-association toybox. The oracle will report that
   backend decision explicitly and use deterministic NumPy local solves plus an

@@ -1,0 +1,8 @@
+analysis_id: neutral_held_reference_oracle
+title: Neutral HELD direct-minimization manufactured reference oracle
+kind: reference_oracle
+status: non_production
+package: epcsaft-equilibrium
+commands:
+  test: uv run --no-sync python run_pytest.py analyses/reference_oracles/neutral_held/tests/test_oracle.py -q
+outputs: {}
