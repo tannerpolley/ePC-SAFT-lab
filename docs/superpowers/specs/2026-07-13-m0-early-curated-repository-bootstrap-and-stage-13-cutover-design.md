@@ -87,12 +87,14 @@ The dependency graph, not numeric order, controls execution:
 ```text
 1 -> 2 -> 3 -> 11 repository-home bootstrap
                    |
-                   +-> 4 -> 5 -> 6 -> 13 transfer and cutover -> 12 closeout
-                                      |
-                                      +-> 7 neutral HELD
-                                      |     +-> 8 association
-                                      |     +-> 9 electrolyte HELD2
-                                      +-> 10 standalone CE -> later CPE
+                   +-> 4 -> 5 -> 6
+                                  |
+                                  +-> 13 core transfer/cutover -> 12 core closeout
+                                  |
+                                  +-> 7 neutral HELD
+                                  |     +-> 8 association
+                                  |     +-> 9 electrolyte HELD2
+                                  +-> 10 standalone CE -> later CPE
 ```
 
 Stage 11 may create and govern empty local homes before Stage 4. It does not
@@ -101,13 +103,16 @@ entry and exit gates. A stage may later receive a separately approved transfer
 leaf that moves its accepted baseline and new work into the appropriate
 repository; until then the transition monorepo remains the executable source.
 
-Stage 13 consumes accepted Stage 4-6 receipts and any independently accepted
-Stage 7-10 receipts. It owns remaining proven-owner transfer, installed
-provider compatibility, cross-repository API and numerical parity,
-source/native identity, provenance closure, and the user-approved
-source-of-truth cutover.
+Stage 13 consumes the accepted core Stage 4-6 receipts. It owns remaining
+core proven-owner transfer, installed provider compatibility,
+cross-repository API and numerical parity, source/native identity, provenance
+closure, and a separately user-approved development-source-of-truth cutover.
+Stages 7-10 are independent optional branches from Stage 6, not Stage 13
+inputs. Any accepted optional branch requires its own bounded transfer leaf;
+when deferred, its algorithm family remains closed.
 
-Stage 12 consumes Stage 13 and remains the final retirement/archive decision.
+Stage 12 consumes Stage 13 and remains the sole final retirement/archive
+decision. Stage 13 does not archive or retire the transition repository.
 
 ## Stage 11 Repository-Home Contract
 
@@ -123,7 +128,7 @@ Stage 12 consumes Stage 13 and remains the final retirement/archive decision.
 - a superseding ADR that establishes the final multi-repository topology;
 - collision-free local repository homes;
 - one ownership contract and one bootstrap receipt per repository;
-- a future GitHub name and tracker-routing map;
+- an intended GitHub-home identity and tracker-routing map;
 - a clean independent Git history with no remotes; and
 - an explicit record that no production owner or scientific capability moved.
 
@@ -154,7 +159,8 @@ Stages 4-6 to be accepted. Its deliverables are:
 - API, schema, source/native identity, and numerical parity;
 - package-local tests, docs, capability reports, release ownership, and
   provenance; and
-- a separate user-approved source-of-truth and archive cutover.
+- a separate user-approved development-source-of-truth cutover that preserves
+  the transition repository pending Stage 12.
 
 Stage 13 cannot convert a Stage 4 blocker into deferred success. Issue #469
 remains M5-owned work and must pass before Stage 13 admits the regression
@@ -168,7 +174,7 @@ The collision-free parent is:
 
 It contains:
 
-| Local path | Future GitHub repository | Owner |
+| Local path | Intended GitHub home | Owner |
 | --- | --- | --- |
 | `ePC-SAFT` | `ePC-SAFT/ePC-SAFT` | Provider, CppAD, resolved-input SDK |
 | `ePC-SAFT-equilibrium` | `ePC-SAFT/ePC-SAFT-equilibrium` | Equilibrium, Ipopt, certification |
@@ -177,6 +183,14 @@ It contains:
 
 The optional `ePC-SAFT/ePC-SAFT-validation` repository is not created. Its M6
 and cross-package evidence boundary needs a separate ownership decision.
+
+`ePC-SAFT/ePC-SAFT` is the existing `origin` identity of the transition
+monorepo, not an unallocated future repository. This bootstrap does not attach
+the clean local provider skeleton to that remote. Before Stage 13 changes any
+remote or development source of truth, a separate approved strategy must choose
+how to retain, rename, or repurpose the existing remote without force-pushing,
+replacing its history, or destroying the transition record. The other intended
+GitHub homes are mappings only until their own external-creation gates pass.
 
 ## Exact Governance Skeletons
 
@@ -238,6 +252,13 @@ Each package repository records:
 - `remote_created: false`;
 - `push_performed: false`; and
 - `source_of_truth: false`.
+
+The source contract also stores literal `content_markers` for every governance
+file. Structural validation must load that contract and prove the repository
+identity, bootstrap-only state, intended ownership, dependency and forbidden
+dependency boundaries, transition-source identity, reserved-directory state,
+and all negative capability/transfer/source-of-truth claims appear in the
+required files. A matching filename without its required content does not pass.
 
 The `src/README.md` and `tests/README.md` files state that the directories are
 reserved and contain no accepted runtime or proof owner. They must not contain
