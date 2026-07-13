@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from .capabilities import capabilities, provider_contract
+from importlib import import_module
+
+from .controls import LossKind, RegressionControls
+from .parameters import FittedParameter
+from .problem import CompiledRegressionProblem, compile_regression_problem
 from .targets import (
     CompositionBasis,
     CompositionRecord,
@@ -31,7 +35,11 @@ _CORE_EXPORTS = {
 __all__ = [
     "CompositionBasis",
     "CompositionRecord",
+    "CompiledRegressionProblem",
+    "FittedParameter",
+    "LossKind",
     "Regression",
+    "RegressionControls",
     "SourceIdentity",
     "SourceKind",
     "TargetDataset",
@@ -39,12 +47,18 @@ __all__ = [
     "TargetRow",
     "__version__",
     "capabilities",
+    "compile_regression_problem",
     "provider_contract",
     *_CORE_EXPORTS,
 ]
 
 
 def __getattr__(name: str):
+    if name in {"capabilities", "provider_contract"}:
+        capability_module = import_module(".capabilities", __name__)
+        value = getattr(capability_module, name)
+        globals()[name] = value
+        return value
     if name in _CORE_EXPORTS:
         from . import core
 

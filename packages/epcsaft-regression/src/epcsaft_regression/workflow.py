@@ -9,6 +9,11 @@ from typing import Any
 from epcsaft import InputError, Mixture
 from epcsaft.model.options import require_cppad_backend
 
+from .controls import RegressionControls
+from .parameters import FittedParameter
+from .problem import CompiledRegressionProblem, compile_regression_problem
+from .targets import TargetDataset
+
 
 @dataclass(slots=True)
 class Regression:
@@ -33,6 +38,22 @@ class Regression:
         result = dict(_evaluate(records, component, **payload))
         require_cppad_backend(result, label="Regression.evaluate_pure_neutral_derivatives")
         return result
+
+    def compile(
+        self,
+        dataset: TargetDataset,
+        *,
+        parameters: tuple[FittedParameter, ...],
+        controls: RegressionControls,
+    ) -> CompiledRegressionProblem:
+        """Compile this workflow's exact configured mixture without solving."""
+
+        return compile_regression_problem(
+            mixture=self.mixture,
+            dataset=dataset,
+            parameters=parameters,
+            controls=controls,
+        )
 
     def fit_pure_neutral(self, records: Any, *, component: str, **overrides: Any) -> Any:
         """Fit pure-component neutral parameters."""
