@@ -21,6 +21,7 @@ from .correlations import (
 )
 from .options import BornModelOptions, MissingModelParameterError, ModelOptions
 from .parameters import ParameterSet
+from .resolved_input import EvaluatedModelInput, ResolvedModelInput
 from .source_bundles import SourceBundleSelection, load_source_bundle_selection
 from .templates import create_input_template
 
@@ -31,6 +32,7 @@ __all__ = [
     "DependencySignature",
     "DomainEvidence",
     "ExponentialTerm",
+    "EvaluatedModelInput",
     "IndependentVariable",
     "LogTemperatureCorrelation",
     "MissingModelParameterError",
@@ -39,6 +41,7 @@ __all__ = [
     "PiecewiseQuadraticTemperatureCorrelation",
     "QuadraticCoefficients",
     "ReferenceTemperatureLinearCorrelation",
+    "ResolvedModelInput",
     "SaltFreeWaterMoleFractionCubicPermittivityCorrelation",
     "ScientificInteractionRecord",
     "ScientificRecord",

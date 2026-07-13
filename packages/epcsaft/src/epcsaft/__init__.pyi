@@ -9,6 +9,7 @@ ConstantPlusExponentialTermsCorrelation: Any
 DependencySignature: Any
 DomainEvidence: Any
 ExponentialTerm: Any
+EvaluatedModelInput: Any
 IndependentVariable: Any
 LogTemperatureCorrelation: Any
 MissingModelParameterError: TypeAlias = Any
@@ -18,6 +19,7 @@ ParameterSet: Any
 PiecewiseQuadraticTemperatureCorrelation: Any
 QuadraticCoefficients: Any
 ReferenceTemperatureLinearCorrelation: Any
+ResolvedModelInput: Any
 SaltFreeWaterMoleFractionCubicPermittivityCorrelation: Any
 ScientificInteractionRecord: Any
 ScientificRecord: Any

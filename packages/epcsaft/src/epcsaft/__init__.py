@@ -24,6 +24,7 @@ from epcsaft.model.correlations import (
 )
 from epcsaft.model.options import BornModelOptions, MissingModelParameterError, ModelOptions
 from epcsaft.model.parameters import ParameterSet
+from epcsaft.model.resolved_input import EvaluatedModelInput, ResolvedModelInput
 from epcsaft.model.source_bundles import SourceBundleSelection, load_source_bundle_selection
 from epcsaft.model.templates import create_input_template
 from epcsaft.runtime import __version__, capabilities, provider_native_sdk, runtime_build_info
@@ -35,6 +36,7 @@ __all__ = [
     "DependencySignature",
     "DomainEvidence",
     "ExponentialTerm",
+    "EvaluatedModelInput",
     "IndependentVariable",
     "InputError",
     "LogTemperatureCorrelation",
@@ -45,6 +47,7 @@ __all__ = [
     "PiecewiseQuadraticTemperatureCorrelation",
     "QuadraticCoefficients",
     "ReferenceTemperatureLinearCorrelation",
+    "ResolvedModelInput",
     "SaltFreeWaterMoleFractionCubicPermittivityCorrelation",
     "ScientificInteractionRecord",
     "ScientificRecord",
