@@ -80,6 +80,7 @@ CATEGORY_ROOTS = {
     REPO_ROOT / "analyses" / "paper_validation",
     REPO_ROOT / "analyses" / "data_validation",
     REPO_ROOT / "analyses" / "package_validation",
+    REPO_ROOT / "analyses" / "reference_oracles",
 }
 PAPER_VALIDATION_DOC_ROOTS = {
     "analyses/paper_validation/2015_baygi",
