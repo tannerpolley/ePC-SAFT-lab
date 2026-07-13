@@ -18,10 +18,10 @@
 - Label scientific conclusions in review notes as **verified**, **inference**, **assumption**, or **unknown**.
 - Retained literature authority for this slice:
   - Gross and Sadowski (2001), PC-SAFT appendix equations in the local paper records.
-  - Huang and Radosz (1990), PC-SAFT association-strength convention in the local paper records.
+  - Huang and Radosz (1990), SAFT \(\sigma^3\kappa\) association-strength lineage retained by the active PC-SAFT convention in the local paper records.
   - Chapman et al. (1990), `Phase Equilibria in Polymer-Liquid 1-Liquid 2 Systems.md`, especially Eqs. 21--28 and Appendix A.6.
 - Chapman Eq. 24 uses the original-SAFT convention `d_ij^3 kappa`; active PC-SAFT C++ uses `sigma_ij^3 kappa`. Document the lineage translation; do not change the active C++ baseline from `sigma_ij^3` to `d_ij^3`.
-- `docs/latex/algorithms.tex` is read-only in this implementation unless a broken neutral-EOS pointer is found. Do not redesign equilibrium algorithms.
+- `docs/latex/algorithms.tex` is read-only in this implementation except for broken neutral-EOS pointers or compile-only TeX corrections. Do not redesign equilibrium algorithms.
 - Electrolyte/Debye--Huckel/Born equations and the full Figiel/Cameretti campaigns remain later slices. Only record dependencies that explain whether the neutral fixes can affect those results.
 
 ---
@@ -329,7 +329,7 @@ Assign the new EqID `ddelta_assoc_dT`.
 
 Metadata must distinguish:
 
-- Huang and Radosz PC-SAFT Eq. 19: `sigma_ij^3 kappa` active convention.
+- Huang and Radosz SAFT Eq. 19: pure-component `sigma^3 kappa` lineage retained in the active pair-indexed PC-SAFT convention.
 - Chapman original-SAFT Eq. 24: `d_ij^3 kappa`, with arithmetic `d_ij`.
 - Chapman Eq. 21: association Helmholtz energy.
 - Chapman Eq. 22 sequence: site mass-action relation.
@@ -440,7 +440,7 @@ Run:
 
 ```bash
 git diff --check
-git diff --stat HEAD~3..HEAD
+git diff --stat a5790e7c...HEAD
 git status --short
 ```
 

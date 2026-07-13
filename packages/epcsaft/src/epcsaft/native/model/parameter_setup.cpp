@@ -389,6 +389,11 @@ CppADMixtureState mixture_state_cppad_cpp(double t, double rho, const vector<Cpp
     return state;
 }
 
+// EqID: c1_disp
+// EqID: i1_disp
+// EqID: i2_disp
+// EqID: a_i_mbar
+// EqID: b_i_mbar
 CppADDispersionState dispersion_state_cppad_cpp(const CppADScalar &m_avg, const CppADScalar &eta) {
     CppADDispersionState state;
     const CppADScalar m1_factor = (m_avg - 1.0) / m_avg;

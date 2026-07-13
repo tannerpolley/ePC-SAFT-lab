@@ -14,7 +14,7 @@ The LaTeX document remains the current source of truth; this Markdown view and `
 - Description: Provides a supporting relation used in hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:27`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:561` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:566` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -123,7 +123,7 @@ $$
 - Description: Provides a supporting relation used in hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:89`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:561` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:566` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -144,7 +144,7 @@ $$
 - Description: Provides a differential relation needed for temperature differential calculations.
 - Change note: Computed by differentiating Eq. (A.9) with respect to temperature.
 - LaTeX: `docs/latex/equations.tex:100`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:561` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:566` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -192,7 +192,7 @@ $$
 - Description: Provides the grouped ion-diameter rule used in Debye-Huckel electrolyte calculations.
 - Change note: Consolidates the documented sigma, constant-factor, and Barker-Henderson ion-diameter options into one visible case-set presentation.
 - LaTeX: `docs/latex/equations.tex:127`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:561` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:566` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -248,7 +248,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: The binary size correction extends the arithmetic PC-SAFT combining rule used by Gross and Sadowski.
 - LaTeX: `docs/latex/equations.tex:158`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:561` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:566` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -269,7 +269,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: This is the base Berthelot-style pair-dispersion combining rule before any ePC-SAFT ionic override is applied.
 - LaTeX: `docs/latex/equations.tex:169`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:561` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:566` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -294,7 +294,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: The active implementation suppresses short-range dispersion for same-sign ionic pairs by overriding the base combining rule with zero; this is why the second equation is simply \(=0\).
 - LaTeX: `docs/latex/equations.tex:182`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:561` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:566` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -338,7 +338,7 @@ $$
 - Description: Provides a supporting relation used in association contribution.
 - Change note: Gross 2002 Eq.~(3) supplies the geometric association-volume base; Held 2012 Eq.~(14) supplies the hydrogen-bond correction applied to that base.
 - LaTeX: `docs/latex/equations.tex:207`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:419` (double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const ProviderParameterAccessV1<double> &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:424` (double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const ProviderParameterAccessV1<double> &cppargs) {)
 
 **LaTeX source**
 
@@ -396,7 +396,7 @@ $$
 - Description: Specifies dielectric-property mixing or derivative form for debye and huckel electrolyte term contribution.
 - Change note: Direct derivative of the mole-fraction dielectric mixing rule.
 - LaTeX: `docs/latex/equations.tex:242`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:619` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:624` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
 
 **LaTeX source**
 
@@ -421,7 +421,7 @@ $$
 - Description: Specifies dielectric-property mixing or derivative form for debye and huckel electrolyte term contribution.
 - Change note: Direct derivative of the mass-fraction dielectric mixing rule.
 - LaTeX: `docs/latex/equations.tex:257`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:619` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:624` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
 
 **LaTeX source**
 
@@ -448,7 +448,7 @@ $$
 - Description: Specifies dielectric-property mixing or derivative form for debye and huckel electrolyte term contribution.
 - Change note: Direct derivative of the mixed solvent-plus-ion dielectric mixing rule.
 - LaTeX: `docs/latex/equations.tex:273`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:619` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:624` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
 
 **LaTeX source**
 
@@ -626,7 +626,7 @@ $$
 - Description: Provides a differential relation needed for debye and huckel electrolyte term contribution calculations.
 - Change note: Derivative of solvent-mixture dielectric expression in Eq. (12).
 - LaTeX: `docs/latex/equations.tex:366`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:619` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:624` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
 
 **LaTeX source**
 
@@ -663,7 +663,7 @@ $$
 - Description: Provides a differential relation needed for debye and huckel electrolyte term contribution calculations.
 - Change note: Derivative of the 2025 dielectric mixing rule via chain rule.
 - LaTeX: `docs/latex/equations.tex:385`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:619` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:624` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
 
 **LaTeX source**
 
@@ -694,7 +694,7 @@ $$
 - Description: Provides a differential relation needed for debye and huckel electrolyte term contribution calculations.
 - Change note: Piecewise closed-form derivative obtained by combining Eq. (11) and Eq. (12).
 - LaTeX: `docs/latex/equations.tex:401`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:619` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:624` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs) {)
 
 **LaTeX source**
 
@@ -1339,7 +1339,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Moderate-to-high similarity; notation/arrangement appears adapted from the cited equation.
 - LaTeX: `docs/latex/equations.tex:765`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {), `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:397` (CppADDispersionState dispersion_state_cppad_cpp(const CppADScalar &m_avg, const CppADScalar &eta) {)
 
 **LaTeX source**
 
@@ -1445,7 +1445,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:822`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:561` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:566` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -1518,7 +1518,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:862`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:561` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:566` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -1591,7 +1591,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:902`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {), `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:397` (CppADDispersionState dispersion_state_cppad_cpp(const CppADScalar &m_avg, const CppADScalar &eta) {)
 
 **LaTeX source**
 
@@ -1685,7 +1685,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:953`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {), `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:397` (CppADDispersionState dispersion_state_cppad_cpp(const CppADScalar &m_avg, const CppADScalar &eta) {)
 
 **LaTeX source**
 
@@ -1779,7 +1779,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:1004`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {), `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:397` (CppADDispersionState dispersion_state_cppad_cpp(const CppADScalar &m_avg, const CppADScalar &eta) {)
 
 **LaTeX source**
 
@@ -1827,7 +1827,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:1031`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {), `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:397` (CppADDispersionState dispersion_state_cppad_cpp(const CppADScalar &m_avg, const CppADScalar &eta) {)
 
 **LaTeX source**
 
@@ -2067,10 +2067,10 @@ $$
 
 ##### `delta_assoc`
 - Label: `eq:delta_assoc`
-- Source: \cite{Huang1990}, Eq.~(19) for the active \(\sigma_{ij}^{3}\kappa^{A_iB_j}\) convention; compare \cite{Chapman1990}, Eq.~(24) for original-SAFT \(d_{ij}^{3}\kappa^{A_iB_j}\)
-- Status: Convention translation
+- Source: \cite{Huang1990}, Eq.~(19) for the pure-component SAFT \(\sigma^{3}\kappa\) lineage; pair-indexed mixture extension from \cite{Gross2001}, Eq.~(A.14), \cite{Gross2002}, Eqs.~(2)--(3), and \cite{Held2012}, Eq.~(14); compare \cite{Chapman1990}, Eq.~(24) for original-SAFT \(d_{ij}^{3}\kappa^{A_iB_j}\)
+- Status: Adapted mixture extension
 - Description: Provides a residual Helmholtz-energy relation for association contribution.
-- Change note: The active PC-SAFT convention is verified as \(\sigma_{ij}^{3}\kappa\); Chapman supplies the original-SAFT lineage with \(d_{ij}^{3}\kappa\), not the active prefactor.
+- Change note: The active implementation extends Huang and Radosz's pure-component SAFT \(\sigma^{3}\kappa\) relation to pair quantities using PC-SAFT size and cross-association mixing rules; the pair-indexed form is not claimed as a verbatim Huang and Radosz equation. Chapman supplies the original-SAFT lineage with \(d_{ij}^{3}\kappa\), not the active prefactor.
 - LaTeX: `docs/latex/equations.tex:1167`
 - C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:296` (AssociationSetup association_setup_cpp(const vector<double> &x, const ProviderParameterAccessV1<double> &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
 
@@ -2090,7 +2090,7 @@ $$
 
 ##### `ddelta_assoc_drho`
 - Label: `eq:ddelta_assoc_drho`
-- Source: Derived from \cite{Huang1990}, Eq.~(19); original-SAFT lineage in \cite{Chapman1990}, Eqs.~(24)--(27) and Appendix Eq.~(A.4)
+- Source: Derived from Eq.~\eqref{eq:delta_assoc}; original-SAFT lineage in \cite{Chapman1990}, Eqs.~(24)--(27) and Appendix Eq.~(A.4)
 - Status: Derived helper relation
 - Description: Defines the density differential of the association strength term.
 - Change note: Uses the same active \(\sigma_{ij}^{3}\kappa\) prefactor as the baseline association strength.
@@ -2111,7 +2111,7 @@ $$
 
 ##### `ddelta_assoc_dxk`
 - Label: `eq:ddelta_assoc_dxk`
-- Source: Derived from \cite{Huang1990}, Eq.~(19)
+- Source: Derived from Eq.~\eqref{eq:delta_assoc}
 - Status: Derived helper relation
 - Description: Defines the composition differential of the association strength term.
 - Change note: Uses the same active \(\sigma_{ij}^{3}\kappa\) prefactor as the baseline association strength at fixed temperature and number density.
@@ -2140,7 +2140,7 @@ $$
 
 ##### `ddelta_assoc_dT`
 - Label: `eq:ddelta_assoc_dT`
-- Source: Derived from \cite{Huang1990}, Eq.~(19)
+- Source: Derived from Eq.~\eqref{eq:delta_assoc}
 - Status: Derived helper relation
 - Description: Defines the temperature differential of the active PC-SAFT association strength.
 - Change note: Differentiates both the hard-sphere contact value and the association Mayer factor while retaining the baseline \(\sigma_{ij}^{3}\kappa\) prefactor.
@@ -2515,7 +2515,7 @@ $$
 - Description: Provides the selectable Born-diameter rule used in born electrolyte term contribution.
 - Change note: Groups the repeated-left-hand-side Born-diameter setup equations into one visible case set so the selectable diameter definition is documented as one variable with alternative parameterization choices.
 - LaTeX: `docs/latex/equations.tex:1408`
-- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:466` (double ion_born_radius_cpp(int i, double t, const ProviderParameterAccessV1<double> &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:471` (double ion_born_radius_cpp(int i, double t, const ProviderParameterAccessV1<double> &cppargs) {)
 
 **LaTeX source**
 
@@ -4202,14 +4202,14 @@ $$
 
 ## Enthalpy, Entropy, and Gibbs Free Energy
 
-### Entropy
+### Enthalpy
 
 #### `h_res`
 - Label: `eq:h_res`
-- Source: \cite{Figiel2025}, Eq.~(13)
-- Status: Adapted implementation form
-- Description: Provides a differential relation needed for entropy calculations.
-- Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
+- Source: \cite{Gross2001}, Eq.~(A.46)
+- Status: Close literature match
+- Description: Provides the residual enthalpy relation from the residual Helmholtz-energy temperature derivative and compressibility factor.
+- Change note: Uses the explicit molar-density notation introduced in the neutral-EOS density convention; the constant density-basis conversion makes fixed molar density and fixed number density equivalent for this temperature derivative.
 - LaTeX: `docs/latex/equations.tex:2352`
 - C++: `packages/epcsaft/src/epcsaft/native/eos/residual/thermodynamic_properties.cpp:4` (double hres_cpp(double t, double rho, vector<double> x, const ProviderParameterAccessV1<double> &cppargs) {)
 
@@ -4224,6 +4224,8 @@ $$
 $$
 \tilde{h}^{\mathrm{res}} = \frac{\hat{h}^{\mathrm{res}}}{RT}=-T\left(\frac{\partial\tilde{a}^{\mathrm{res}}}{\partial T}\right)_{\rho_m,x_{i}}+(Z-1)
 $$
+
+### Entropy
 
 #### `s_res_from_s_vol`
 - Label: `eq:s_res_from_s_vol`

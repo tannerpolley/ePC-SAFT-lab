@@ -1165,10 +1165,10 @@ The component number density \(\hat\rho_j\) is the per-component site-density fa
 
 The association strength \(\Delta^{A_iB_j}\) collects the temperature-independent pair size, association volume, Boltzmann, and hard-sphere contact terms into one site-pair interaction measure.
 % EqID: delta_assoc
-% Source: \cite{Huang1990}, Eq.~(19) for the active \(\sigma_{ij}^{3}\kappa^{A_iB_j}\) convention; compare \cite{Chapman1990}, Eq.~(24) for original-SAFT \(d_{ij}^{3}\kappa^{A_iB_j}\)
-% Status: Convention translation
+% Source: \cite{Huang1990}, Eq.~(19) for the pure-component SAFT \(\sigma^{3}\kappa\) lineage; pair-indexed mixture extension from \cite{Gross2001}, Eq.~(A.14), \cite{Gross2002}, Eqs.~(2)--(3), and \cite{Held2012}, Eq.~(14); compare \cite{Chapman1990}, Eq.~(24) for original-SAFT \(d_{ij}^{3}\kappa^{A_iB_j}\)
+% Status: Adapted mixture extension
 % Description: Provides a residual Helmholtz-energy relation for association contribution.
-% Change note: The active PC-SAFT convention is verified as \(\sigma_{ij}^{3}\kappa\); Chapman supplies the original-SAFT lineage with \(d_{ij}^{3}\kappa\), not the active prefactor.
+% Change note: The active implementation extends Huang and Radosz's pure-component SAFT \(\sigma^{3}\kappa\) relation to pair quantities using PC-SAFT size and cross-association mixing rules; the pair-indexed form is not claimed as a verbatim Huang and Radosz equation. Chapman supplies the original-SAFT lineage with \(d_{ij}^{3}\kappa\), not the active prefactor.
 
 \begin{equation}
     \Delta^{A_iB_j}=\sigma_{ij}^{3}\kappa^{A_iB_j}g_{ij}^{\mathrm{hs}}
@@ -1177,7 +1177,7 @@ The association strength \(\Delta^{A_iB_j}\) collects the temperature-independen
 \end{equation}
 
 % EqID: ddelta_assoc_drho
-% Source: Derived from \cite{Huang1990}, Eq.~(19); original-SAFT lineage in \cite{Chapman1990}, Eqs.~(24)--(27) and Appendix Eq.~(A.4)
+% Source: Derived from Eq.~\eqref{eq:delta_assoc}; original-SAFT lineage in \cite{Chapman1990}, Eqs.~(24)--(27) and Appendix Eq.~(A.4)
 % Status: Derived helper relation
 % Description: Defines the density differential of the association strength term.
 % Change note: Uses the same active \(\sigma_{ij}^{3}\kappa\) prefactor as the baseline association strength.
@@ -1188,7 +1188,7 @@ The association strength \(\Delta^{A_iB_j}\) collects the temperature-independen
 \end{equation}
 
 % EqID: ddelta_assoc_dxk
-% Source: Derived from \cite{Huang1990}, Eq.~(19)
+% Source: Derived from Eq.~\eqref{eq:delta_assoc}
 % Status: Derived helper relation
 % Description: Defines the composition differential of the association strength term.
 % Change note: Uses the same active \(\sigma_{ij}^{3}\kappa\) prefactor as the baseline association strength at fixed temperature and number density.
@@ -1203,7 +1203,7 @@ The association strength \(\Delta^{A_iB_j}\) collects the temperature-independen
 \end{equation}
 
 % EqID: ddelta_assoc_dT
-% Source: Derived from \cite{Huang1990}, Eq.~(19)
+% Source: Derived from Eq.~\eqref{eq:delta_assoc}
 % Status: Derived helper relation
 % Description: Defines the temperature differential of the active PC-SAFT association strength.
 % Change note: Differentiates both the hard-sphere contact value and the association Mayer factor while retaining the baseline \(\sigma_{ij}^{3}\kappa\) prefactor.
@@ -2347,13 +2347,13 @@ The infinite-dilution reference is the one used for electrolyte solutes and for 
 
 This section uses the upstream residual Helmholtz, compressibility, and colocated temperature-differential identities from Sections~\ref{sec:ares}, \ref{sec:pressure_compressibility_factor}, and \ref{sec:contribution_intermediates}.
 
-\subsection{Entropy}
+\subsection{Enthalpy}
 
 % EqID: h_res
-% Source: \cite{Figiel2025}, Eq.~(13)
-% Status: Adapted implementation form
-% Description: Provides a differential relation needed for entropy calculations.
-% Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
+% Source: \cite{Gross2001}, Eq.~(A.46)
+% Status: Close literature match
+% Description: Provides the residual enthalpy relation from the residual Helmholtz-energy temperature derivative and compressibility factor.
+% Change note: Uses the explicit molar-density notation introduced in the neutral-EOS density convention; the constant density-basis conversion makes fixed molar density and fixed number density equivalent for this temperature derivative.
 
 \begin{equation}
     \tilde{h}^{\mathrm{res}} = \frac{\hat{h}^{\mathrm{res}}}{RT}=-T\left(\frac{\partial\tilde{a}^{\mathrm{res}}}{\partial T}\right)_{\rho_m,x_{i}}+(Z-1)
