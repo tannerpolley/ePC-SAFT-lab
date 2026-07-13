@@ -27,6 +27,10 @@ structural checks, strict Sphinx documentation validation.
 - Initialize each skeleton with `git init --initial-branch=main` and one local
   bootstrap commit; add no remote.
 - Copy `LICENSE` byte-for-byte from the transition monorepo.
+- Treat the checked-out transition `LICENSE` as the copy source. Record its
+  pre-existing normalized `HEAD:LICENSE` hash separately; do not rewrite
+  transition history. Destination worktree and committed license hashes must
+  both match the checked-out source.
 - Create no `pyproject.toml`, `CMakeLists.txt`, build backend, package module,
   executable test, workflow, capability file, or release configuration.
 - Copy no production source, native library, build output, distribution,

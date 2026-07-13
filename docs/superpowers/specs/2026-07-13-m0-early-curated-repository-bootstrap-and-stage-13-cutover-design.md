@@ -285,6 +285,12 @@ GitHub resources during this checkpoint.
 Stage 13 may approve a bounded history-transfer policy, but clean skeleton
 histories remain the default.
 
+The transition worktree's checked-out `LICENSE` bytes are the bootstrap copy
+source. Its pre-existing `HEAD:LICENSE` blob is LF-normalized and has a
+different hash; this stage does not rewrite transition history. The bootstrap
+contract records both source hashes and requires each destination worktree and
+committed `HEAD:LICENSE` blob to match the checked-out source bytes.
+
 ## Tracker And Milestone Routing
 
 Stage 11 defines, but does not execute, the routing:

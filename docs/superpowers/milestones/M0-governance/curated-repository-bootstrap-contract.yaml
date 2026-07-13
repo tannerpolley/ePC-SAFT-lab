@@ -10,6 +10,10 @@ transition_repository:
 license:
   source_path: /home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT/LICENSE
   sha256: 0b383d5a63da644f628d99c33976ea6487ed89aaa59f0b3257992deac1171e6b
+  source_worktree_sha256: 0b383d5a63da644f628d99c33976ea6487ed89aaa59f0b3257992deac1171e6b
+  source_head_blob_sha256: 8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903
+  destination_worktree_and_head_blob_sha256: 0b383d5a63da644f628d99c33976ea6487ed89aaa59f0b3257992deac1171e6b
+  transition_history_rewritten: false
 clean_history_policy: single_local_bootstrap_commit
 production_transfer_authorized: false
 remote_creation_authorized: false
