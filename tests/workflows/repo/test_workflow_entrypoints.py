@@ -578,6 +578,7 @@ def test_linux_documentation_uses_real_latex_and_optional_ipopt_workflows() -> N
         "cd docs/latex",
         "latexmk -pdf equations.tex",
         "latexmk -pdf explicit_assocation.tex",
+        "latexmk -pdf equilibrium_formulations.tex",
         "docs/latex/builds",
     ):
         assert token in development_workflows
