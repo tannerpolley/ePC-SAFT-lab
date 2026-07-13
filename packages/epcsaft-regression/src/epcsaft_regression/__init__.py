@@ -3,14 +3,21 @@
 from __future__ import annotations
 
 from .capabilities import capabilities, provider_contract
+from .targets import (
+    CompositionBasis,
+    CompositionRecord,
+    SourceIdentity,
+    SourceKind,
+    TargetDataset,
+    TargetFamily,
+    TargetRow,
+)
 from .workflow import Regression
 
 __version__ = "0.1.0"
 
 _CORE_EXPORTS = {
     "FitResult",
-    "TargetDataset",
-    "TargetRow",
     "evaluate_pure_neutral_derivatives",
     "fit_binary_pair",
     "fit_binary_parameters",
@@ -22,7 +29,14 @@ _CORE_EXPORTS = {
 }
 
 __all__ = [
+    "CompositionBasis",
+    "CompositionRecord",
     "Regression",
+    "SourceIdentity",
+    "SourceKind",
+    "TargetDataset",
+    "TargetFamily",
+    "TargetRow",
     "__version__",
     "capabilities",
     "provider_contract",
