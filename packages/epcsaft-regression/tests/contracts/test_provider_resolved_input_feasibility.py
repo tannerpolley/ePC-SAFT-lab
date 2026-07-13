@@ -3,10 +3,23 @@
 from __future__ import annotations
 
 import ast
+import json
 from pathlib import Path
+
+import epcsaft_regression
+import yaml
+from api.test_problem_compiler import _compile
+from epcsaft.model.resolved_input import EvaluatedModelInput
+from epcsaft_regression.native_adapter import _native_problem_from_compiled
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 PACKAGE_ROOT = REPO_ROOT / "packages" / "epcsaft-regression" / "src" / "epcsaft_regression"
+CAPABILITY_BASELINE = Path(__file__).with_name("fixtures") / "stage4_capability_baseline.json"
+BLOCKER_RECEIPT = (
+    REPO_ROOT
+    / "docs/superpowers/milestones/M5-regression/"
+    "stage-4-provider-input-prerequisite-blocker.yaml"
+)
 
 REQUIRED_FILES = (
     "targets.py",
@@ -28,19 +41,6 @@ REQUIRED_PROBLEM_MARKERS = (
 REQUIRED_NATIVE_SYMBOLS = (
     "NativeRegressionProblem",
 )
-
-EXPECTED_ABSENT_FILES = REQUIRED_FILES
-EXPECTED_ABSENT_SYMBOLS = (
-    "controls.py:RegressionControls",
-    "native/regression/regression_problem.h:NativeRegressionProblem",
-    "parameters.py:FittedParameter",
-    "problem.py:CompiledRegressionProblem",
-    "problem.py:EvaluatedModelInput",
-    "problem.py:compile_regression_problem",
-    "problem.py:native_handle",
-    "targets.py:TargetDataset",
-)
-
 
 def _python_symbols(path: Path) -> set[str]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -92,14 +92,119 @@ def _prerequisite_report() -> dict[str, object]:
     }
 
 
-def test_stage4_gate_records_exact_current_m5_prerequisite_absence() -> None:
+def _function_node(path: Path, function_name: str) -> ast.FunctionDef:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == function_name:
+            return node
+    raise AssertionError(f"missing function {function_name!r} in {path}")
+
+
+def _public_entrypoint_ownership_report() -> dict[str, object]:
+    workflow_path = PACKAGE_ROOT / "workflow.py"
+    core_path = PACKAGE_ROOT / "core.py"
+    workflow_fit = _function_node(workflow_path, "fit_pure_neutral")
+    workflow_source = ast.get_source_segment(
+        workflow_path.read_text(encoding="utf-8"), workflow_fit
+    )
+    assert workflow_source is not None
+
+    statuses: dict[str, str] = {}
+    statuses["Regression.fit_pure_neutral"] = (
+        "configured_mixture_not_consumed_by_compiler"
+        if "self.compile(" not in workflow_source
+        and "compile_regression_problem(" not in workflow_source
+        else "configured_compiler_owned"
+    )
+    for function_name in (
+        "fit_binary_parameters",
+        "fit_liquid_electrolyte_parameters",
+    ):
+        function = _function_node(core_path, function_name)
+        argument_names = {
+            argument.arg
+            for argument in (*function.args.posonlyargs, *function.args.args, *function.args.kwonlyargs)
+        }
+        statuses[function_name] = (
+            "public_free_function_has_no_configured_mixture"
+            if "mixture" not in argument_names
+            else "configured_compiler_owned"
+        )
+    return {
+        "classification": "blocked_before_immutable_baseline_overlay",
+        "entrypoints": statuses,
+        "all_production_entrypoints_configured": all(
+            status == "configured_compiler_owned" for status in statuses.values()
+        ),
+    }
+
+
+def test_stage4_gate_confirms_the_approved_m5_prerequisites_are_ready() -> None:
     report = _prerequisite_report()
-    legacy_core = (PACKAGE_ROOT / "core.py").read_text(encoding="utf-8")
 
     assert report == {
-        "classification": "requires_approved_m5_tasks_1_to_3",
-        "absent_files": EXPECTED_ABSENT_FILES,
-        "absent_symbols": EXPECTED_ABSENT_SYMBOLS,
+        "classification": "ready_for_stage4_overlay_gate",
+        "absent_files": (),
+        "absent_symbols": (),
     }
-    assert "class TargetDataset" in legacy_core
-    assert "targets.py:TargetDataset" in report["absent_symbols"]
+    assert "NativeRegressionProblem" in (
+        PACKAGE_ROOT / "native/regression/regression_problem.h"
+    ).read_text(encoding="utf-8")
+
+
+def test_stage4_regression_capability_baseline_is_exact() -> None:
+    baseline = json.loads(CAPABILITY_BASELINE.read_text(encoding="utf-8"))
+
+    current = json.loads(json.dumps(epcsaft_regression.capabilities(), sort_keys=True))
+    assert current == baseline
+
+
+def test_stage4_gate_records_exact_public_entrypoint_ownership_blocker() -> None:
+    compiled = _compile()
+    native_problem = _native_problem_from_compiled(compiled)
+
+    assert compiled.evaluated_inputs
+    assert all(isinstance(item, EvaluatedModelInput) for item in compiled.evaluated_inputs)
+    assert compiled.native_handles == tuple(item.native_handle for item in compiled.evaluated_inputs)
+    assert native_problem.snapshot_fingerprints == compiled.snapshot_fingerprints
+    assert _public_entrypoint_ownership_report() == {
+        "classification": "blocked_before_immutable_baseline_overlay",
+        "entrypoints": {
+            "Regression.fit_pure_neutral": (
+                "configured_mixture_not_consumed_by_compiler"
+            ),
+            "fit_binary_parameters": "public_free_function_has_no_configured_mixture",
+            "fit_liquid_electrolyte_parameters": (
+                "public_free_function_has_no_configured_mixture"
+            ),
+        },
+        "all_production_entrypoints_configured": False,
+    }
+    assert not (
+        PACKAGE_ROOT / "native/regression/resolved_input_adapter.h"
+    ).exists()
+
+
+def test_stage4_blocker_receipt_matches_the_live_entrypoint_gate() -> None:
+    receipt = yaml.safe_load(BLOCKER_RECEIPT.read_text(encoding="utf-8"))
+    report = _public_entrypoint_ownership_report()
+
+    assert receipt["prerequisite_contracts"]["classification"] == (
+        "ready_for_stage4_overlay_gate"
+    )
+    assert receipt["public_entrypoint_ownership_gate"] == {
+        "classification": report["classification"],
+        "all_production_entrypoints_configured": False,
+        "blocking_entrypoints": receipt["public_entrypoint_ownership_gate"][
+            "blocking_entrypoints"
+        ],
+    }
+    assert {
+        row["entrypoint"]: row["reason"]
+        for row in receipt["public_entrypoint_ownership_gate"]["blocking_entrypoints"]
+    } == report["entrypoints"]
+    assert receipt["decisive_gate"]["stage_4_status"] == (
+        "blocked_before_immutable_baseline_overlay"
+    )
+    assert receipt["decisive_gate"]["native_overlay_adapter_created"] is False
+    assert receipt["push_performed"] is False

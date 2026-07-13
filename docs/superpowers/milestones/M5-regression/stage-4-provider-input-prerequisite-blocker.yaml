@@ -1,46 +1,88 @@
 schema: epcsaft.stage-4-provider-input-prerequisite-blocker
-schema_version: 1
+schema_version: 2
 recorded_on: 2026-07-13
 source:
   branch: codex/stage4-resolved-input-stack
-  commit: c5532b317d20c5fe407e8f8de44339572de349df
+  commit: 51aa277185fa89f8dab30a677f182a5e4b657eb0
 package: epcsaft-regression
-classification: requires_approved_m5_tasks_1_to_3
-stage_4_status: blocked_before_incompatible_cutover
-absent_files:
-  - targets.py
-  - controls.py
-  - parameters.py
-  - problem.py
-  - native/regression/regression_problem.h
-absent_symbols:
-  - controls.py:RegressionControls
-  - native/regression/regression_problem.h:NativeRegressionProblem
-  - parameters.py:FittedParameter
-  - problem.py:CompiledRegressionProblem
-  - problem.py:EvaluatedModelInput
-  - problem.py:compile_regression_problem
-  - problem.py:native_handle
-  - targets.py:TargetDataset
-nonqualifying_legacy_owner:
-  path: packages/epcsaft-regression/src/epcsaft_regression/core.py
-  symbol: TargetDataset
-  reason: The approved strict contract requires TargetDataset ownership in targets.py.
-required_separately_approved_work:
-  plan: docs/superpowers/plans/2026-07-10-m5-regression-traceable-native-problem-contract-plan.md
-  tasks:
-    - 1
-    - 2
-    - 3
+prerequisite_contracts:
+  classification: ready_for_stage4_overlay_gate
+  absent_files: []
+  absent_symbols: []
+  accepted_commits:
+    strict_target_datasets: 8506e831
+    compiled_resolved_problem: 466159cb
+    native_problem_and_receipt: f55b59b0
+configured_compiler_probe:
+  dataset_id: methane-contract-targets
+  evaluated_input_type: EvaluatedModelInput
+  ordered_native_handle_count: 2
+  native_problem_type: NativeRegressionProblem
+  definition_and_snapshot_identity_preserved: true
+public_entrypoint_ownership_gate:
+  classification: blocked_before_immutable_baseline_overlay
+  all_production_entrypoints_configured: false
+  blocking_entrypoints:
+    - entrypoint: Regression.fit_pure_neutral
+      reason: configured_mixture_not_consumed_by_compiler
+      evidence: >-
+        workflow.py delegates loose records to the legacy free function and
+        does not call self.compile or compile_regression_problem.
+    - entrypoint: fit_binary_parameters
+      reason: public_free_function_has_no_configured_mixture
+      evidence: >-
+        The public signature in core.py has no Mixture and therefore cannot
+        obtain explicit ModelOptions or a ResolvedModelInput baseline.
+    - entrypoint: fit_liquid_electrolyte_parameters
+      reason: public_free_function_has_no_configured_mixture
+      evidence: >-
+        The public signature in core.py has no Mixture and therefore cannot
+        obtain explicit ModelOptions or a ResolvedModelInput baseline.
+decisive_gate:
+  stage_4_status: blocked_before_immutable_baseline_overlay
+  native_overlay_adapter_created: false
+  production_parity_probe_started: false
+  reason: >-
+    Stage 4 Task 5 Step 3 requires every still-public production entrypoint to
+    compile through an explicit configured Mixture before adapter code. That
+    predicate is false, so Steps 4-8 and the incompatible consumer cutover are
+    not authorized by this gate.
+  required_next_work:
+    plan: docs/superpowers/plans/2026-07-10-m5-regression-traceable-native-problem-contract-plan.md
+    task: 4
+    scope: cut public workflows to CompiledRegressionProblem before repeating this gate
+m4_disposition_evidence:
+  commit: 51aa277185fa89f8dab30a677f182a5e4b657eb0
+  binding_count: 25
+  exact_route_keyed_selector_rows: 2
+  capability_baseline:
+    path: packages/epcsaft-equilibrium/tests/contracts/fixtures/stage4_activation_capability_baseline.json
+    sha256: 6fecec15216483dc8033102aa2c36af57ed4741a1a82b53d95e3ed12d2d940fe
+m5_capability_baseline:
+  path: packages/epcsaft-regression/tests/contracts/fixtures/stage4_capability_baseline.json
+  sha256: 0c14c1c820b849aa019ff1c0ad08f8a81511e2de43180a3d006703cd103af51d
 test_evidence:
   command: >-
     uv run --no-sync python run_pytest.py
     packages/epcsaft-regression/tests/contracts/test_provider_resolved_input_feasibility.py -q
-  result: 1 passed in 0.01s
+  result: 4 passed in 0.23s
+legacy_scientific_test_state:
+  command: >-
+    uv run --no-sync python run_pytest.py
+    packages/epcsaft-regression/tests/native/test_pure.py
+    packages/epcsaft-regression/tests/native/test_binary.py
+    packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py -q
+  result: collection_blocked
+  cause: >-
+    Legacy core.py imports the provider check_association/create_struct raw
+    payload helpers deleted by the resolved-input cutover.
+  interpretation: >-
+    This is evidence that the public regression paths are not migrated; it is
+    not numerical parity evidence and cannot be waived as Stage 4 success.
 cleanup:
   command: bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
   result: candidates_found
-  task_owned_artifacts_removed: []
-m4_preservation_manifest_modified: false
-native_overlay_adapter_created: false
+  task_owned_failed_pytest_directories_removed:
+    - build/pytest-temp/run-1958080-cc92e0cb
+    - build/pytest-temp/run-1960136-57caa2b0
 push_performed: false

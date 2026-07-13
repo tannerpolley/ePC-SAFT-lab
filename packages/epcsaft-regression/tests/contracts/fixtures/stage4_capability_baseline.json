@@ -1,0 +1,323 @@
+{
+  "derivatives": {
+    "cppad": {
+      "available": true,
+      "backend": "cppad",
+      "compiled": true,
+      "required": true,
+      "scope": "package-wide AD substrate; production derivative routes are listed in coverage_matrix",
+      "status": "enabled_available"
+    },
+    "regression_ceres_jacobians": {
+      "available": true,
+      "backends": [
+        "cppad_implicit"
+      ],
+      "production": true,
+      "requires": [
+        "ceres",
+        "cppad"
+      ],
+      "routes": [
+        "pure_neutral",
+        "binary_pair_constant_kij",
+        "liquid_electrolyte_born"
+      ]
+    }
+  },
+  "forbidden_default_dependencies": [
+    "ipopt"
+  ],
+  "native_dependencies": {
+    "ceres": {
+      "available": true,
+      "backend": "ceres",
+      "compiled": true,
+      "native_hot_loop": true,
+      "production": true,
+      "production_routes": [
+        "regression:pure_neutral"
+      ],
+      "required": true,
+      "required_for": [
+        "epcsaft-regression"
+      ],
+      "scope": "native optimizer backend owned by the regression extension",
+      "status": "enabled_available"
+    },
+    "cppad": {
+      "available": true,
+      "backend": "cppad",
+      "compiled": true,
+      "required": true,
+      "scope": "package-wide AD substrate; production derivative routes are listed in coverage_matrix",
+      "status": "enabled_available"
+    }
+  },
+  "optimizers": {
+    "ceres": {
+      "available": true,
+      "backend": "ceres",
+      "compiled": true,
+      "native_hot_loop": true,
+      "production": true,
+      "production_routes": [
+        "regression:pure_neutral"
+      ],
+      "required": true,
+      "required_for": [
+        "epcsaft-regression"
+      ],
+      "scope": "native optimizer backend owned by the regression extension",
+      "status": "enabled_available"
+    }
+  },
+  "owner": "regression_extension",
+  "package": "epcsaft-regression",
+  "provider_contract": {
+    "provider_api_contract_id": "provider_api_v1",
+    "provider_native_sdk_contract_id": "provider_native_sdk_v1",
+    "provider_package": "epcsaft"
+  },
+  "regression": {
+    "binary_pair_constant_kij": {
+      "available": true,
+      "backend": "native_ceres",
+      "entrypoint": "fit_binary_parameters(..., parameters_to_fit=('k_ij',))",
+      "jacobian_backend": "cppad_implicit",
+      "production": true,
+      "target_kinds": [
+        "k_ij"
+      ]
+    },
+    "liquid_electrolyte_born": {
+      "available": true,
+      "backend": "native_ceres",
+      "entrypoint": "fit_liquid_electrolyte_parameters(...)",
+      "jacobian_backend": "cppad_implicit",
+      "production": true,
+      "target_kinds": [
+        "d_born",
+        "f_solv"
+      ]
+    },
+    "production_supported_target_kinds": [
+      "m",
+      "s",
+      "e",
+      "d_born",
+      "k_ij",
+      "f_solv"
+    ],
+    "pure_neutral": {
+      "available": true,
+      "backend": "native_ceres",
+      "entrypoint": "Regression(mixture, ...).fit_pure_neutral(...)",
+      "jacobian_backend": "cppad_implicit",
+      "production": true,
+      "target_kinds": [
+        "m",
+        "s",
+        "e"
+      ]
+    },
+    "target_kind_evidence": {
+      "dimensions": [
+        "registry_known_target_kind",
+        "derivative_supported_target_kind",
+        "optimizer_supported_target_kind",
+        "public_production_supported_target_kind"
+      ],
+      "production_supported_target_kinds": [
+        "m",
+        "s",
+        "e",
+        "d_born",
+        "k_ij",
+        "f_solv"
+      ],
+      "registry_only_or_pending_target_kinds": [
+        "e_assoc",
+        "vol_a",
+        "l_ij",
+        "k_hb_ij",
+        "dielc"
+      ],
+      "revisit_after": [
+        "#136",
+        "#137"
+      ],
+      "rows": [
+        {
+          "derivative_backend": "cppad_implicit",
+          "derivative_supported_target_kind": true,
+          "optimizer_backend": "native_ceres",
+          "optimizer_supported_target_kind": true,
+          "production_scope": "nonassociating pure-neutral Ceres regression",
+          "public_production_supported_target_kind": true,
+          "registry_known_target_kind": true,
+          "route_key": "pure_neutral",
+          "target_kind": "m",
+          "tests": [
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
+            "packages/epcsaft-regression/tests/api/test_regression.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api"
+          ]
+        },
+        {
+          "derivative_backend": "cppad_implicit",
+          "derivative_supported_target_kind": true,
+          "optimizer_backend": "native_ceres",
+          "optimizer_supported_target_kind": true,
+          "production_scope": "tested pure-neutral and pure-ion Ceres regression routes",
+          "public_production_supported_target_kind": true,
+          "registry_known_target_kind": true,
+          "route_key": "pure_neutral; pure_ion",
+          "target_kind": "s",
+          "tests": [
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac"
+          ]
+        },
+        {
+          "derivative_backend": "cppad_implicit",
+          "derivative_supported_target_kind": true,
+          "optimizer_backend": "native_ceres",
+          "optimizer_supported_target_kind": true,
+          "production_scope": "tested pure-neutral and pure-ion Ceres regression routes",
+          "public_production_supported_target_kind": true,
+          "registry_known_target_kind": true,
+          "route_key": "pure_neutral; pure_ion",
+          "target_kind": "e",
+          "tests": [
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac"
+          ]
+        },
+        {
+          "derivative_backend": "cppad_implicit",
+          "derivative_supported_target_kind": true,
+          "optimizer_backend": "not_claimed",
+          "optimizer_supported_target_kind": false,
+          "production_scope": "pure associating component property derivatives only; optimizer support remains unclaimed",
+          "public_production_supported_target_kind": false,
+          "registry_known_target_kind": true,
+          "revisit_after_issue": "#136",
+          "route_key": "pure_association_parameter_property_derivatives",
+          "target_kind": "e_assoc",
+          "tests": [
+            "packages/epcsaft/tests/native/state/test_fugacity_derivatives.py::test_associating_pure_parameter_derivative_results_support_e_assoc_and_vol_a"
+          ]
+        },
+        {
+          "derivative_backend": "cppad_implicit",
+          "derivative_supported_target_kind": true,
+          "optimizer_backend": "not_claimed",
+          "optimizer_supported_target_kind": false,
+          "production_scope": "pure associating component property derivatives only; optimizer support remains unclaimed",
+          "public_production_supported_target_kind": false,
+          "registry_known_target_kind": true,
+          "revisit_after_issue": "#136",
+          "route_key": "pure_association_parameter_property_derivatives",
+          "target_kind": "vol_a",
+          "tests": [
+            "packages/epcsaft/tests/native/state/test_fugacity_derivatives.py::test_associating_pure_parameter_derivative_results_support_e_assoc_and_vol_a"
+          ]
+        },
+        {
+          "derivative_backend": "cppad_implicit",
+          "derivative_supported_target_kind": true,
+          "optimizer_backend": "native_ceres",
+          "optimizer_supported_target_kind": true,
+          "production_scope": "tested liquid-electrolyte Born/SSM/DS Ceres regression route",
+          "public_production_supported_target_kind": true,
+          "registry_known_target_kind": true,
+          "route_key": "liquid_electrolyte_born",
+          "target_kind": "d_born",
+          "tests": [
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
+            "packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py::test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives"
+          ]
+        },
+        {
+          "derivative_backend": "cppad_implicit",
+          "derivative_supported_target_kind": true,
+          "optimizer_backend": "native_ceres",
+          "optimizer_supported_target_kind": true,
+          "production_scope": "tested constant binary k_ij Ceres regression route",
+          "public_production_supported_target_kind": true,
+          "registry_known_target_kind": true,
+          "route_key": "binary_pair_constant_kij",
+          "target_kind": "k_ij",
+          "tests": [
+            "packages/epcsaft-regression/tests/native/test_binary.py::test_ceres_binary_kij_regression_uses_native_cppad_implicit_jacobian",
+            "packages/epcsaft-regression/tests/native/test_binary.py::test_ceres_binary_kij_regression_accepts_associating_neutral_rows"
+          ]
+        },
+        {
+          "derivative_backend": "cppad_implicit",
+          "derivative_supported_target_kind": true,
+          "optimizer_backend": "not_claimed",
+          "optimizer_supported_target_kind": false,
+          "production_scope": "binary pair property derivatives, including active-association implicit sensitivity; optimizer support remains unclaimed",
+          "public_production_supported_target_kind": false,
+          "registry_known_target_kind": true,
+          "revisit_after_issue": "#137",
+          "route_key": "binary_association_parameter_property_derivatives",
+          "target_kind": "l_ij",
+          "tests": [
+            "packages/epcsaft/tests/native/state/test_fugacity_derivatives.py::test_associating_binary_parameter_derivative_results_support_lij_and_khb"
+          ]
+        },
+        {
+          "derivative_backend": "cppad_implicit",
+          "derivative_supported_target_kind": true,
+          "optimizer_backend": "not_claimed",
+          "optimizer_supported_target_kind": false,
+          "production_scope": "active-association binary pair property derivatives only; optimizer support remains unclaimed",
+          "public_production_supported_target_kind": false,
+          "registry_known_target_kind": true,
+          "revisit_after_issue": "#137",
+          "route_key": "binary_association_parameter_property_derivatives",
+          "target_kind": "k_hb_ij",
+          "tests": [
+            "packages/epcsaft/tests/native/state/test_fugacity_derivatives.py::test_associating_binary_parameter_derivative_results_support_lij_and_khb"
+          ]
+        },
+        {
+          "derivative_backend": "cppad_implicit",
+          "derivative_supported_target_kind": true,
+          "optimizer_backend": "native_ceres",
+          "optimizer_supported_target_kind": true,
+          "production_scope": "tested liquid-electrolyte Born/SSM/DS Ceres regression route",
+          "public_production_supported_target_kind": true,
+          "registry_known_target_kind": true,
+          "route_key": "liquid_electrolyte_born",
+          "target_kind": "f_solv",
+          "tests": [
+            "packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py::test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives"
+          ]
+        },
+        {
+          "derivative_backend": "not_claimed",
+          "derivative_supported_target_kind": false,
+          "optimizer_backend": "not_claimed",
+          "optimizer_supported_target_kind": false,
+          "production_scope": "registry only until relative-permittivity parameter optimizer evidence exists",
+          "public_production_supported_target_kind": false,
+          "registry_known_target_kind": true,
+          "revisit_after_issue": "#135-follow-up",
+          "route_key": "liquid_electrolyte_relative_permittivity_pending",
+          "target_kind": "dielc",
+          "tests": []
+        }
+      ],
+      "source": "registered_regression_extension_evidence"
+    }
+  },
+  "requires": [
+    "epcsaft",
+    "cppad",
+    "ceres"
+  ],
+  "status": "workspace_shell_pre_migration"
+}
