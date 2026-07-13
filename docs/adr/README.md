@@ -17,3 +17,5 @@ Accepted ADRs:
 - `0002-hard-public-api-reset-cppad-only-frontend.md`: records the hard public API cutoff, `ModelOptions` boundary, and CppAD-only public derivative policy.
 - `0003-selector-core-activation-capabilities.md`: records selector-core ownership, activation-matrix capability reporting, and deletion of non-production equilibrium routes.
 - `0004-associating-equilibrium-architecture.md`: records the nonassociating production-equilibrium boundary and the required complete implicit or lifted-`X_A` architecture for any future associating route.
+- `0005-package-extension-split.md`: historical transition-monorepo package split, superseded by ADR 0006 while its package ownership decisions remain source evidence.
+- `0006-curated-multi-repository-ownership.md`: records the final separate repository homes, early governance-only bootstrap, and later proven-owner transfer and cutover gates.

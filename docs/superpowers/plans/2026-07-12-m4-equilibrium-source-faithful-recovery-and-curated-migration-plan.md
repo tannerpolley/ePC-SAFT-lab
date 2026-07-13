@@ -10,14 +10,14 @@
 
 **Goal:** Recover a source-faithful, compact equilibrium architecture from the
 valuable current implementation, then transfer only accepted owners and
-evidence into a curated repository.
+evidence into a curated repository set.
 
 **Architecture:** Stabilize doctrine and ownership before changing code.
 Preserve one provider-resolved model boundary, one phase evaluator, one local
 NLP interface, one Ipopt adapter, typed problem formulations, a distinct HELD
-controller, and native-owned certification. Execute the program as twelve
+controller, and native-owned certification. Execute the program as thirteen
 independent stage checkpoints; this program plan coordinates them and never
-authorizes all twelve as one implementation batch.
+authorizes all thirteen as one implementation batch.
 
 **Tech Stack:** C++17, pybind11, CppAD, Ipopt, a Stage II LP backend selected by
 the neutral HELD child design, Python 3.13 development baseline, NumPy, pytest,
@@ -120,18 +120,21 @@ overlapping route owners, broad diagnostic bindings, and mixed M4/M6 evidence.
 
 **Expected Outcome:** A compact provider-to-equilibrium boundary, canonical
 local solver kernel, consolidated public routes, source-faithful neutral and
-electrolyte algorithm plans, separated CE/CPE work, and a curated repository
-migration path with explicit preservation provenance.
+electrolyte algorithm plans, separated CE/CPE work, and a curated
+multi-repository migration path under the `ePC-SAFT` GitHub organization with
+explicit preservation provenance.
 
-**Target Output:** Twelve accepted stage receipts, corrected doctrine and
+**Target Output:** Thirteen accepted stage receipts, corrected doctrine and
 tracker state, preservation manifest, stable resolved-input SDK, minimal
 equilibrium kernel, canonical public-green routes, source-faithful algorithm
-controllers when implemented, curated migration manifest, and final retirement
-receipt.
+controllers when implemented, per-repository curated migration manifests,
+cross-repository installed-artifact receipt, and final retirement receipt.
 
-**Owner:** M0 sequences the program; M3 owns resolved model input and EOS
-validity; M4 owns algorithms, local NLPs, activation, Ipopt, and certification;
-M6 owns literature data and reproduction evidence; M1 owns package artifacts.
+**Owner:** M0 sequences the program and owns repository-home governance; M3
+owns resolved model input and EOS validity; M4 owns algorithms, local NLPs,
+activation, Ipopt, and certification; M5 owns regression and its admission
+blockers; M6 owns literature data and reproduction evidence; M1 owns package
+artifacts and Stage 13 package-boundary proof.
 
 **Interface:** `ResolvedNativeInput` or its accepted M3 successor,
 provider-backed `PhaseEvaluator`, `LocalNlpProblem`, the shared Ipopt adapter,
@@ -164,7 +167,7 @@ live owner, cross-stage scope expansion, unexplained numerical drift, failed
 focused proof, or a need to repair individual paper programs outside the
 stage's M6 scope.
 
-**Avoid:** Do not execute the twelve stages as one branch, mechanically split
+**Avoid:** Do not execute the thirteen stages as one branch, mechanically split
 large files, preserve wrappers for convenience, tune solvers before verifying
 inputs, or use full-suite volume as a substitute for focused scientific proof.
 
@@ -182,7 +185,9 @@ stage design has not selected the interface.
 
 **Files To Modify:** M4/M6 doctrine and trackers in Stages 1-2; provider input
 owners in Stage 4; equilibrium kernel and public routes in Stages 5-6; selected
-algorithm owners in Stages 7-10; package/repository metadata in Stages 11-12.
+algorithm owners in Stages 7-10; repository-home governance in Stage 11;
+package/repository metadata and proven owners in Stage 13; retirement/archive
+records in Stage 12.
 
 **Files To Avoid:** Individual paper-analysis programs outside their selected
 M6 stage, regression implementation, release credentials, downstream private
@@ -205,10 +210,13 @@ Ipopt adapter, selected LP backend, native activation, result builder, Python
 request/result surface, M6 evidence registry, CMake manifests, and package
 build profiles.
 
-**Migration Or Cutover:** Stages 1-6 prepare the stable skeleton and Stage 11
-performs one bounded core migration. Stages 7-10 are separate advanced branches
-implemented in the curated repository after their own designs and proofs. The
-current repository remains the archive/source until Stage 12.
+**Migration Or Cutover:** Stage 11 creates governance-only local repository
+homes after Stage 3. Stages 4-6 then prepare the stable core, and Stage 13
+performs its bounded proven-owner transfer and separately approved
+development-source cutover. Stages 7-10 are independent optional branches from
+Stage 6 and require separate transfer leaves when accepted. Stage 12 alone owns
+transition-repository retirement/archive; the optional validation repository
+remains deferred pending a separate ownership decision.
 
 **Replaced Path Handling:** Delete superseded runtime paths after the last
 caller moves. Preserve historical documents with explicit supersession notes
@@ -230,25 +238,33 @@ gates owned by that claim.
 | Validation ownership | M6 evidence separate from M4 algorithms | M4/M6 |
 | Native proof breadth | Focused per slice, confidence per stage | M1/M4 |
 | Paper programs | Deferred unless selected by active capability dependency | M6 |
-| New repository | Selective transfer after public-green kernel | M0/M1 |
-| Old repository | Reference archive until explicit Stage 12 decision | User/M0 |
+| Final repository topology | Separate provider, equilibrium, and regression repositories; optional validation owner | User/M0/M1 |
+| ADR 0005 | Supersede its final-monorepo target before destination creation; retain the monorepo as the transition proving ground | User/M0 |
+| New repository homes | Governance-only local bootstrap after Stage 3; proven-owner transfer after Stage 6; remotes remain separate approval gates | M0/M1 |
+| Old repository | Transition source and reference archive until explicit Stage 12 decision | User/M0 |
+| Existing provider remote identity | `ePC-SAFT/ePC-SAFT` already names the transition remote; retain/rename/repurpose without force-push or history replacement requires a separate gate | User/M0/M1 |
 
 ## Execution DAG
 
 ```text
-1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 11 -> 12
-                              |
-                              +-> 7
-                              |    +-> 8
-                              |    +-> 9
-                              +-> 10 -> later CPE
+1 -> 2 -> 3 -> 11 repository-home bootstrap
+                   |
+                   +-> 4 -> 5 -> 6
+                                  |
+                                  +-> 13 core transfer/cutover -> 12 core closeout
+                                  |
+                                  +-> 7 neutral HELD
+                                  |     +-> 8 association
+                                  |     +-> 9 electrolyte HELD2
+                                  +-> 10 standalone CE -> later CPE
 ```
 
-Stage 11 transfers and closes the core public-green skeleton. Stages 7-10 are
-optional advanced capability branches performed as separate tasks in the
-curated repository. Stage 12 may close the core migration with those branches
-deferred, provided their capability families remain closed and their source,
-preservation, and child-plan records remain durable.
+Stage 11 creates only clean local governance homes and stops. Stage 13 later
+transfers and closes the accepted public-green core after Stages 4-6. Stages
+7-10 are independent optional branches from Stage 6, not Stage 13 inputs, and
+need separate transfer leaves when accepted. Stage 12 may close the transferred
+core with those branches deferred, provided their capability families remain
+closed and their source, preservation, and child-plan records remain durable.
 
 ## Verification Ladder
 
@@ -502,7 +518,7 @@ and scientific re-reviews found no remaining Stage 3 blocker.
 - [ ] Run equilibrium API, native contracts, equilibrium confidence, selected
   NIST/Gross current-capability checks, docs, Ruff, diff, and cleanup.
 - [ ] Request independent review and commit each route cutover separately.
-- [ ] Record the public-green migration receipt consumed by Task 11.
+- [ ] Record the public-green migration receipt consumed by Task 13.
 
 ### Task 7: Implement Source-Faithful Neutral HELD
 
@@ -635,54 +651,109 @@ and scientific re-reviews found no remaining Stage 3 blocker.
 - [ ] Do not implement reactive electrolyte CPE in this stage without a new
   scope approval.
 
-### Task 11: Create And Populate The Curated Repository
+### Task 11: Bootstrap The Curated Repository Homes
 
 **Use Cases:**
 
-- The new repository receives proven owners and essential evidence without
-  inherited compatibility or historical diagnostic structure.
-- Every transferred owner has source-commit and acceptance provenance.
-- The migration cutover leaves one development owner and a separately
-  identified reference archive rather than two active implementations.
+- Provider, equilibrium, regression, and organization-policy work have clean
+  local governance homes before blocked scientific work resumes.
+- A skeleton cannot be mistaken for a package, runtime owner, capability,
+  remote, or development source of truth.
+- Existing retired Windows-worktree remnants and the transition monorepo remain
+  untouched and independently verifiable.
 
 **Files:**
 
-- Create child spec in the current repository:
-  `docs/superpowers/specs/2026-07-12-m0-curated-repository-transfer.md`
-- Create child plan after the destination path/name is approved:
-  `docs/superpowers/plans/2026-07-12-m0-curated-repository-transfer-plan.md`
-- Create destination repository only after explicit user approval of path,
-  name, remote policy, and initial commit policy
+- Design:
+  `docs/superpowers/specs/2026-07-13-m0-early-curated-repository-bootstrap-and-stage-13-cutover-design.md`
+- Child plan:
+  `docs/superpowers/plans/2026-07-13-m0-early-curated-repository-bootstrap-and-stage-13-cutover-plan.md`
+- Create: ADR 0006, machine-readable bootstrap contract, four exact local
+  governance skeletons under
+  `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-curated`, four destination
+  receipts, and one transition-repository Stage 11 receipt
+- Modify only ADR 0005 status, the ADR index, and controlling program records
 
 **Interfaces:**
 
-- Produces a Linux-first repository containing the accepted provider skeleton,
-  resolved-input SDK, minimal equilibrium kernel, public-green routes, and
-  proof harness.
-- Consumes Stage 6 migration receipt and later stage receipts individually.
+- Produces four independent one-commit `main` repositories with exact
+  governance files, no remotes, and literal content-marker proof.
+- Records intended GitHub homes and a one-way ownership/dependency doctrine,
+  while treating `ePC-SAFT/ePC-SAFT` as the existing transition remote identity.
+- Consumes only accepted Stages 1-3 records and the approved July 13 child
+  design/plan; it does not consume Stage 6 runtime evidence.
 
-- [ ] Approve repository name/path, license/history policy, remote policy, and
-  provenance format before filesystem or remote creation.
-- [ ] Bootstrap only package/build/governance skeleton required by the first
-  transferred vertical slice.
-- [ ] Transfer provider and public-green equilibrium owners with provenance;
-  do not copy giant owners merely to make imports pass.
-- [ ] Prove Linux clean build, provider/equilibrium isolation, public API and
-  numerical parity, artifacts, and selected retained evidence.
-- [ ] Admit later Stage 7-10 implementations into the curated repository only
-  after each independent receipt passes.
-- [ ] Keep the source repository unchanged as the reference archive until
-  Stage 12 approval.
-- [ ] Close Stage 11 after the core public-green transfer. Execute Stages 7-10
-  later as separate curated-repository tasks rather than leaving Stage 11
-  perpetually open.
+- [ ] Prove the collision-free parent is absent and protected remnant/license
+  hashes match the approved child design.
+- [ ] Create ADR 0006 and mark only ADR 0005's status superseded.
+- [ ] Record exact tracked-file and literal content-marker contracts, intended
+  GitHub homes, protected hashes, and negative transfer flags.
+- [ ] Bootstrap exactly `ePC-SAFT`, `ePC-SAFT-equilibrium`,
+  `ePC-SAFT-regression`, and `ePC-SAFT-organization` as governance-only,
+  deliberately non-buildable local repositories with one clean commit each.
+- [ ] Create no production source, package/build metadata, executable tests,
+  workflows, capability files, remotes, releases, or external resources.
+- [ ] Record exact destination commits and source receipt; independently review
+  every tree/content/negative claim; then stop before Stage 4 or Stage 13.
+
+### Task 13: Transfer Proven Core Owners And Cut Over Development
+
+**Use Cases:**
+
+- Provider, equilibrium, and regression repositories receive only accepted
+  owners and essential evidence, without inherited compatibility or historical
+  diagnostic structure.
+- Equilibrium and regression build against installed compatible provider
+  artifacts without sibling-source or fixed-relative-path access.
+- Every transferred owner has source-commit and acceptance provenance, leaving
+  one development owner per admitted core concern.
+
+**Files:**
+
+- Create a bounded Stage 13 child spec and plan after Stages 4-6 pass.
+- Modify package/build/test/docs/capability/release owners only in the repository
+  that owns each accepted vertical slice.
+- Preserve the transition monorepo until Stage 12; do not force-push or replace
+  the history of its existing `ePC-SAFT/ePC-SAFT` remote identity.
+
+**Interfaces:**
+
+- Produces provider core and resolved-input SDK in `ePC-SAFT`, the minimal
+  equilibrium kernel and public-green routes in `ePC-SAFT-equilibrium`, and
+  proven regression owners in `ePC-SAFT-regression`.
+- Produces explicit distribution/import names, compatible provider ranges,
+  independent package artifacts, and a one-way dependency graph: provider owns
+  CppAD, equilibrium owns Ipopt, regression owns Ceres, and extensions do not
+  depend on each other.
+- Consumes Stage 11 home identities and accepted Stage 4-6 receipts. Stages
+  7-10 are independent optional branches and require separate transfer leaves.
+
+- [ ] Approve the existing provider-remote retain/rename/repurpose strategy,
+  repository visibility, compatibility/version policy, history policy,
+  provenance format, and any remote/development-source mutation.
+- [ ] Transfer provider, equilibrium, and proven regression owners one vertical
+  slice at a time, with source-commit and accepted-receipt provenance; delete
+  displaced live owners in the same checkpoint.
+- [ ] Make both extensions consume compatible installed `epcsaft` wheels/sdists
+  and reject provider-native-SDK mismatch; add no extension-to-extension edge.
+- [ ] Prove independent Linux clean builds, minimum/latest provider
+  compatibility, source-path-leak rejection, exact API/schema/activation and
+  source/native identity, numerical parity, artifacts, and selected evidence.
+- [ ] Record the core transfer/parity receipt and any separately approved
+  development-source cutover. Do not archive or retire the transition
+  repository.
 
 ### Task 12: Retire Superseded Paths And Close Out
 
 **Use Cases:**
 
-- The project has one development source of truth, an explicit archive policy,
-  clean Git state, and accurate capability documentation.
+- The project has one development source of truth per concern across the
+  provider, equilibrium, regression, and approved validation repositories,
+  plus an explicit archive policy, clean Git state, and accurate capability
+  documentation.
+- The organization roadmap routes every issue and pull request to the
+  repository that owns the affected behavior, with no duplicate active
+  tracker or release owner in the transition monorepo.
 - Failed evidence and historical reasoning remain traceable without remaining
   executable production paths.
 - The final acceptance proof names every retired path and the receipt that
@@ -691,15 +762,18 @@ and scientific re-reviews found no remaining Stage 3 blocker.
 **Files:**
 
 - Modify: source and destination capability/docs/roadmap owners selected by the
-  Stage 12 child plan
+  Stage 12 child plan across the transition monorepo and every curated
+  repository
 - Remove: only paths proven superseded and approved by exact manifest
 - Preserve: literature sources, accepted/failed evidence required for
   scientific traceability, and user-designated stashes/branches
 
 **Interfaces:**
 
-- Produces final source-of-truth, archive, capability, and release receipts.
-- Consumes all accepted stage receipts and explicit user retirement approval.
+- Produces final per-repository source-of-truth, archive, capability,
+  compatibility, and release receipts plus one organization ownership map.
+- Consumes the accepted Stage 13 core transfer/parity receipt, other selected
+  accepted stage receipts, and explicit user retirement/archive approval.
 - May close the core migration with Stages 7-10 deferred when their families
   remain closed and their durable source/preservation records are present.
 
@@ -713,9 +787,13 @@ and scientific re-reviews found no remaining Stage 3 blocker.
 - [ ] Audit branches, stashes, remotes, unreachable objects, generated files,
   and worktree state without deleting unapproved recovery data.
 - [ ] Record the final capability/limitation table and provenance of the
-  curated repository.
-- [ ] Push, publish, archive, or change the source-of-truth repository only
-  after a separate explicit user authorization.
+  provider, equilibrium, regression, and approved validation repositories,
+  including supported package and provider-native-SDK version combinations.
+- [ ] Prove the final installed-artifact matrix without checkout-path leakage
+  before removing duplicate active ownership from the transition monorepo.
+- [ ] Archive or retire the transition repository only after separate explicit
+  user authorization. Push, publish, change organization settings, or change a
+  development source of truth remain separately gated actions.
 
 ## Program Handoff Rule
 
