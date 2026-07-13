@@ -394,15 +394,19 @@ uv run --no-sync python run_pytest.py \
   packages/epcsaft/tests/native/state/test_eos_contributions.py \
   packages/epcsaft/tests/native/state/test_contributions.py \
   packages/epcsaft/tests/native/contracts/test_association_implicit_derivative_contract.py \
-  packages/epcsaft/tests/api/frontend/test_state_properties.py \
   tests/native/contracts/test_equation_registry.py \
   -q
 ```
 
-Then run:
+Then run the retained hydrocarbon public-property regression and provider
+health check:
 
 ```bash
-uv run --no-sync python scripts/dev/build_epcsaft.py --doctor \
+uv run --no-sync python run_pytest.py \
+  packages/epcsaft/tests/api/frontend/test_state_properties.py \
+  -q -k cppad_state_proves_hydrocarbon_values_and_derivatives
+
+uv run --no-sync python scripts/dev/doctor.py \
   --require-provider-sdk --require-provider-native
 ```
 

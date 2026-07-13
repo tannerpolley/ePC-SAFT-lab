@@ -208,6 +208,7 @@ static AssociationSolveResult solve_association_site_fractions_cpp(
     throw SolutionError(association_solve_diagnostics_message_cpp(diagnostics));
 }
 
+// EqID: dx_assoc_dT
 static vector<double> association_site_fraction_dt_cpp(vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dt, vector<double> x) {
     int num_sites = static_cast<int>(XA.size());
     Eigen::MatrixXd B = Eigen::MatrixXd::Zero(num_sites, 1);
