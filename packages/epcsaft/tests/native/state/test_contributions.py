@@ -98,6 +98,31 @@ def test_temperature_derivative_reports_finite_accounted_terms() -> None:
     assert np.isfinite(derivative["total"])
     assert sum(derivative["terms"].values()) == pytest.approx(derivative["total"])
 
+
+def test_association_temperature_derivative_matches_centered_helmholtz_slope() -> None:
+    mix, _, _, density, temperature, composition = _ionic_state()
+    step = 0.01
+
+    state = mix.state(T=temperature, x=composition, rho=density)
+    analytic = state.temperature_derivative_residual_helmholtz(
+        return_contribution_terms=True
+    )["terms"]["assoc"]
+    assoc_plus = mix.state(
+        T=temperature + step,
+        x=composition,
+        rho=density,
+    ).ares(return_contribution_terms=True)["terms"]["assoc"]
+    assoc_minus = mix.state(
+        T=temperature - step,
+        x=composition,
+        rho=density,
+    ).ares(return_contribution_terms=True)["terms"]["assoc"]
+    centered_slope = (assoc_plus - assoc_minus) / (2.0 * step)
+
+    assert abs(centered_slope) > 1e-6
+    assert analytic == pytest.approx(centered_slope, rel=2e-6, abs=2e-9)
+
+
 def test_temperature_derivative_is_available_across_density_branches() -> None:
     mix, _, _, _, _, composition = _neutral_state()
     states = [
