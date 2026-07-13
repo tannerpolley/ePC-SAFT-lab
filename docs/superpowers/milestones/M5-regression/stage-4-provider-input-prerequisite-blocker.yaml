@@ -1,5 +1,5 @@
 schema: epcsaft.stage-4-provider-input-prerequisite-blocker
-schema_version: 3
+schema_version: 4
 recorded_on: 2026-07-13
 source:
   branch: codex/stage4-resolved-input-stack
@@ -38,22 +38,124 @@ public_entrypoint_ownership_gate:
     - fit_pure_ion
     - fit_pure_neutral
     - fit_pure_parameters
+overlay_feasibility_gate:
+  plan_target_kinds:
+    - m
+    - s
+    - e
+    - e_assoc
+    - vol_a
+    - d_born
+    - k_ij
+    - l_ij
+    - k_hb_ij
+    - f_solv
+    - dielc
+  compiled_target_kinds:
+    - m
+    - s
+    - e
+    - k_ij
+  requires_new_compiler_meaning:
+    - e_assoc
+    - vol_a
+    - d_born
+    - l_ij
+    - k_hb_ij
+    - f_solv
+    - dielc
+  compiler_incompatibility_reasons:
+    e_assoc: >-
+      fitted parameter 'Methane.epsilon_k_ab' is not compatible with target
+      family 'pure_saturation_fugacity_balance'.
+    vol_a: >-
+      fitted parameter 'Methane.kappa_ab' is not compatible with target family
+      'pure_saturation_fugacity_balance'.
+    d_born: >-
+      fitted parameter 'Methane.born_diameter' is not compatible with target
+      family 'pure_saturation_fugacity_balance'.
+    l_ij: >-
+      fitted parameter 'Methane:Ethane.l_ij' is not compatible with target
+      family 'binary_vle'.
+    k_hb_ij: >-
+      fitted parameter 'Methane:Ethane.k_hb_ij' is not compatible with target
+      family 'binary_vle'.
+    f_solv: >-
+      fitted parameter 'Methane.solvation_factor' is not compatible with target
+      family 'pure_saturation_fugacity_balance'.
+    dielc: >-
+      fitted parameter 'Methane.relative_permittivity' is not compatible with
+      target family 'pure_saturation_fugacity_balance'.
+  unexpected_rejections: {}
+  source_backed_strict_target_kinds:
+    - m
+    - s
+    - e
+  component_test_only_strict_target_kinds:
+    - k_ij
+  unclassified_compiled_target_sources: []
+  missing_strict_target_family_kinds:
+    - e_assoc
+    - vol_a
+    - d_born
+    - l_ij
+    - k_hb_ij
+    - f_solv
+    - dielc
+  fixture_evidence:
+    pure_neutral:
+      dataset_id: methane-contract-targets
+      rows:
+        - row_id: methane-fugacity-130K
+          target_family: pure_saturation_fugacity_balance
+          source:
+            source_id: NIST_methane_saturation
+            source_kind: literature
+            citation: NIST Chemistry WebBook SRD 69
+            locator: Methane saturation table, 130 K
+        - row_id: methane-density-130K
+          target_family: pure_liquid_density_at_pressure
+          source:
+            source_id: NIST_methane_saturation
+            source_kind: literature
+            citation: NIST Chemistry WebBook SRD 69
+            locator: Methane saturation table, 130 K
+    constant_binary_interaction:
+      dataset_id: binary-contract-targets
+      rows:
+        - row_id: methane-ethane-vle-001
+          target_family: binary_vle
+          source:
+            source_id: binary-component-contract
+            source_kind: component_test
+            citation: ""
+            locator: test_problem_compiler.py binary row
+  red_result: >-
+    compiled target kinds were (m, s, e, k_ij), not the eleven-kind plan
+    surface; the adapter existence assertion was not reached.
 decisive_gate:
-  stage_4_status: ready_for_immutable_baseline_overlay_feasibility
+  stage_4_status: blocked_before_immutable_overlay_adapter
   native_overlay_adapter_created: false
   production_parity_probe_started: false
   reason: >-
-    M5 Task 4 resolved the prior public-entrypoint ownership blocker. Stage 4
-    may now write and run its feasibility RED tests, but adapter implementation
-    remains unauthorized until those exact source-backed target and parity
-    preconditions are characterized.
+    Seven plan-owned targets require new compiler meanings, only three target
+    kinds have strict literature-backed target fixtures, and the compiled
+    k_ij fixture is component-test-only. The literal Task 5 Step 5 regression
+    build also fails on the retired add_args owner and its combined scientific
+    lane collection fails on retired provider mapping helpers. Stage 4 declares
+    FAIL before adapter code because target meaning, runnable native parity,
+    and source-backed parity authority are not mechanical adaptations of the
+    approved compiler.
   required_next_work:
-    plan: docs/superpowers/plans/2026-07-13-m3-m4-stage-4-provider-resolved-input-boundary-plan.md
-    task: 5
-    steps:
-      - 4
-      - 5
-    scope: characterize exact production-target overlay feasibility before adapter code
+    owner: M5-regression
+    approval: separately_approved_child_design_and_plan_required
+    scope: >-
+      Add explicit strict target/compiler meanings for the seven blocked
+      target kinds and source-backed strict fixtures for constant-binary,
+      associating, pure-ion, and liquid-electrolyte regression. Separately
+      migrate the retained native characterization lane from add_args and the
+      removed check_association/create_struct mapping helpers before repeating
+      Stage 4 Task 5 Steps 4-5.
 m4_disposition_evidence:
   commit: 51aa277185fa89f8dab30a677f182a5e4b657eb0
   binding_count: 25
@@ -72,7 +174,37 @@ test_evidence:
   command: >-
     uv run --no-sync python run_pytest.py
     packages/epcsaft-regression/tests/contracts/test_provider_resolved_input_feasibility.py -q
-  result: 4 passed in 0.20s
+  result: 5_passed_in_0.17s
+task_5_step_5_evidence:
+  regression_profile_build:
+    command: >-
+      uv run --no-sync python scripts/dev/build_epcsaft.py
+      --profile regression --parallel 1
+    result: failed_before_feasibility_red_slice
+    first_failure: >-
+      packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:176:
+      'add_args' does not name a type
+    interpretation: >-
+      The retained native regression characterization owner still consumes the
+      retired mutable add_args carrier, so the required regression profile is
+      not buildable from the configured-workflow revision.
+  combined_red_slice:
+    command: >-
+      uv run --no-sync python run_pytest.py
+      packages/epcsaft-regression/tests/contracts/test_provider_resolved_input_feasibility.py
+      packages/epcsaft-regression/tests/api/test_regression.py
+      packages/epcsaft-regression/tests/native/test_pure.py
+      packages/epcsaft-regression/tests/native/test_binary.py
+      packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py -q
+    result: collection_failed_with_2_errors
+    first_failures:
+      - packages/epcsaft-regression/tests/native/test_pure.py
+      - packages/epcsaft-regression/tests/native/test_binary.py
+    cause: >-
+      epcsaft_regression.core imports removed provider mapping helpers
+      check_association and create_struct from epcsaft.state.native_adapter.
+    scientific_regressions_green: false
+    adapter_absence_red_reached: false
 build_evidence:
   regression_extension:
     command: >-
@@ -110,4 +242,7 @@ cleanup:
     - build/pytest-temp/run-2044356-4d89f83b
     - build/pytest-temp/run-2058804-8e667806
     - build/pytest-temp/run-2064622-d197dea1
+    - build/pytest-temp/run-2169071-eb9c7544
+    - build/pytest-temp/run-2180721-d0d7369f
+    - build/pytest-temp/run-2227563-8531d0a3
 push_performed: false

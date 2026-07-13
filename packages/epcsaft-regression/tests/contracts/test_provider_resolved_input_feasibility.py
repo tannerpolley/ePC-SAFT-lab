@@ -10,9 +10,22 @@ import epcsaft_regression
 import epcsaft_regression.workflow as workflow_module
 import pytest
 import yaml
-from api.test_problem_compiler import _controls, _dataset, _mixture, _parameters
+from api.test_problem_compiler import (
+    _binary_dataset,
+    _binary_mixture,
+    _controls,
+    _dataset,
+    _mixture,
+    _parameters,
+)
+from epcsaft import InputError
 from epcsaft.model.resolved_input import EvaluatedModelInput
-from epcsaft_regression import Regression
+from epcsaft_regression import (
+    FittedParameter,
+    Regression,
+    TargetDataset,
+    compile_regression_problem,
+)
 from epcsaft_regression.native_adapter import _native_problem_from_compiled
 from epcsaft_regression.problem import CompiledRegressionProblem
 
@@ -24,6 +37,33 @@ BLOCKER_RECEIPT = (
     / "docs/superpowers/milestones/M5-regression/"
     "stage-4-provider-input-prerequisite-blocker.yaml"
 )
+
+PLAN_OVERLAY_TARGET_KINDS = (
+    "m",
+    "s",
+    "e",
+    "e_assoc",
+    "vol_a",
+    "d_born",
+    "k_ij",
+    "l_ij",
+    "k_hb_ij",
+    "f_solv",
+    "dielc",
+)
+TARGET_PARAMETER_CASES = {
+    "m": ("Methane.m", 1.0, 0.5, 2.0),
+    "s": ("Methane.sigma", 3.5, 2.0, 5.0),
+    "e": ("Methane.epsilon_k", 150.0, 50.0, 400.0),
+    "e_assoc": ("Methane.epsilon_k_ab", 100.0, 0.0, 500.0),
+    "vol_a": ("Methane.kappa_ab", 0.01, 0.0, 0.1),
+    "d_born": ("Methane.born_diameter", 3.0, 2.0, 4.0),
+    "k_ij": ("Methane:Ethane.k_ij", 0.0, -0.2, 0.2),
+    "l_ij": ("Methane:Ethane.l_ij", 0.0, -0.2, 0.2),
+    "k_hb_ij": ("Methane:Ethane.k_hb_ij", 0.0, -0.2, 0.2),
+    "f_solv": ("Methane.solvation_factor", 1.0, 0.5, 2.0),
+    "dielc": ("Methane.relative_permittivity", 1.0, 0.5, 100.0),
+}
 
 REQUIRED_FILES = (
     "targets.py",
@@ -154,6 +194,93 @@ def _public_entrypoint_ownership_report() -> dict[str, object]:
     }
 
 
+def _plan_target_compiler_report() -> dict[str, object]:
+    fixtures = {
+        "pure_neutral": _dataset(),
+        "constant_binary_interaction": _binary_dataset(),
+    }
+    compiled: list[str] = []
+    requires_new_compiler_meaning: list[str] = []
+    incompatibility_reasons: dict[str, str] = {}
+    unexpected_rejections: dict[str, str] = {}
+    source_backed_strict_target_kinds: list[str] = []
+    component_test_only_strict_target_kinds: list[str] = []
+    unclassified_compiled_target_sources: list[str] = []
+    for target_kind in PLAN_OVERLAY_TARGET_KINDS:
+        parameter = FittedParameter(*TARGET_PARAMETER_CASES[target_kind])
+        interaction = ":" in parameter.key
+        fixture_name = (
+            "constant_binary_interaction" if interaction else "pure_neutral"
+        )
+        dataset = fixtures[fixture_name]
+        try:
+            compile_regression_problem(
+                mixture=_binary_mixture() if interaction else _mixture(),
+                dataset=dataset,
+                parameters=(parameter,),
+                controls=_controls(),
+            )
+        except InputError as exc:
+            reason = str(exc)
+            expected_reason = (
+                f"fitted parameter {parameter.key!r} is not compatible with target "
+                f"family {dataset.rows[0].target_family.value!r}."
+            )
+            if reason == expected_reason:
+                requires_new_compiler_meaning.append(target_kind)
+                incompatibility_reasons[target_kind] = reason
+            else:
+                unexpected_rejections[target_kind] = reason
+        else:
+            compiled.append(target_kind)
+            source_kinds = {
+                row.source.source_kind.value for row in dataset.rows
+            }
+            if source_kinds == {"literature"}:
+                source_backed_strict_target_kinds.append(target_kind)
+            elif source_kinds == {"component_test"}:
+                component_test_only_strict_target_kinds.append(target_kind)
+            else:
+                unclassified_compiled_target_sources.append(target_kind)
+    return {
+        "plan_target_kinds": PLAN_OVERLAY_TARGET_KINDS,
+        "compiled_target_kinds": tuple(compiled),
+        "requires_new_compiler_meaning": tuple(requires_new_compiler_meaning),
+        "compiler_incompatibility_reasons": incompatibility_reasons,
+        "unexpected_rejections": unexpected_rejections,
+        "source_backed_strict_target_kinds": tuple(
+            source_backed_strict_target_kinds
+        ),
+        "component_test_only_strict_target_kinds": tuple(
+            component_test_only_strict_target_kinds
+        ),
+        "unclassified_compiled_target_sources": tuple(
+            unclassified_compiled_target_sources
+        ),
+        "missing_strict_target_family_kinds": tuple(
+            requires_new_compiler_meaning
+        ),
+        "fixture_evidence": {
+            name: _target_dataset_evidence(dataset)
+            for name, dataset in fixtures.items()
+        },
+    }
+
+
+def _target_dataset_evidence(dataset: TargetDataset) -> dict[str, object]:
+    return {
+        "dataset_id": dataset.dataset_id,
+        "rows": [
+            {
+                "row_id": row.row_id,
+                "target_family": row.target_family.value,
+                "source": row.source.to_dict(),
+            }
+            for row in dataset.rows
+        ],
+    }
+
+
 def test_stage4_gate_confirms_the_approved_m5_prerequisites_are_ready() -> None:
     report = _prerequisite_report()
 
@@ -237,7 +364,160 @@ def test_stage4_blocker_receipt_matches_the_live_entrypoint_gate() -> None:
         "fit_pure_parameters",
     ]
     assert receipt["decisive_gate"]["stage_4_status"] == (
-        "ready_for_immutable_baseline_overlay_feasibility"
+        "blocked_before_immutable_overlay_adapter"
     )
     assert receipt["decisive_gate"]["native_overlay_adapter_created"] is False
+    step_5 = receipt["task_5_step_5_evidence"]
+    assert step_5["regression_profile_build"] == {
+        "command": (
+            "uv run --no-sync python scripts/dev/build_epcsaft.py "
+            "--profile regression --parallel 1"
+        ),
+        "result": "failed_before_feasibility_red_slice",
+        "first_failure": (
+            "packages/epcsaft-regression/src/epcsaft_regression/native/regression/"
+            "ceres_regression.cpp:176: 'add_args' does not name a type"
+        ),
+        "interpretation": (
+            "The retained native regression characterization owner still consumes "
+            "the retired mutable add_args carrier, so the required regression profile "
+            "is not buildable from the configured-workflow revision."
+        ),
+    }
+    combined_red = step_5["combined_red_slice"]
+    assert combined_red["command"] == (
+        "uv run --no-sync python run_pytest.py "
+        "packages/epcsaft-regression/tests/contracts/"
+        "test_provider_resolved_input_feasibility.py "
+        "packages/epcsaft-regression/tests/api/test_regression.py "
+        "packages/epcsaft-regression/tests/native/test_pure.py "
+        "packages/epcsaft-regression/tests/native/test_binary.py "
+        "packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py -q"
+    )
+    assert combined_red["result"] == "collection_failed_with_2_errors"
+    assert combined_red["scientific_regressions_green"] is False
+    assert combined_red["adapter_absence_red_reached"] is False
     assert receipt["push_performed"] is False
+
+
+def test_stage4_plan_target_surface_records_exact_pre_adapter_blocker() -> None:
+    report = _plan_target_compiler_report()
+
+    assert report == {
+        "plan_target_kinds": PLAN_OVERLAY_TARGET_KINDS,
+        "compiled_target_kinds": ("m", "s", "e", "k_ij"),
+        "requires_new_compiler_meaning": (
+            "e_assoc",
+            "vol_a",
+            "d_born",
+            "l_ij",
+            "k_hb_ij",
+            "f_solv",
+            "dielc",
+        ),
+        "compiler_incompatibility_reasons": {
+            "e_assoc": (
+                "fitted parameter 'Methane.epsilon_k_ab' is not compatible with "
+                "target family 'pure_saturation_fugacity_balance'."
+            ),
+            "vol_a": (
+                "fitted parameter 'Methane.kappa_ab' is not compatible with target "
+                "family 'pure_saturation_fugacity_balance'."
+            ),
+            "d_born": (
+                "fitted parameter 'Methane.born_diameter' is not compatible with "
+                "target family 'pure_saturation_fugacity_balance'."
+            ),
+            "l_ij": (
+                "fitted parameter 'Methane:Ethane.l_ij' is not compatible with "
+                "target family 'binary_vle'."
+            ),
+            "k_hb_ij": (
+                "fitted parameter 'Methane:Ethane.k_hb_ij' is not compatible with "
+                "target family 'binary_vle'."
+            ),
+            "f_solv": (
+                "fitted parameter 'Methane.solvation_factor' is not compatible with "
+                "target family 'pure_saturation_fugacity_balance'."
+            ),
+            "dielc": (
+                "fitted parameter 'Methane.relative_permittivity' is not compatible "
+                "with target family 'pure_saturation_fugacity_balance'."
+            ),
+        },
+        "unexpected_rejections": {},
+        "source_backed_strict_target_kinds": ("m", "s", "e"),
+        "component_test_only_strict_target_kinds": ("k_ij",),
+        "unclassified_compiled_target_sources": (),
+        "missing_strict_target_family_kinds": (
+            "e_assoc",
+            "vol_a",
+            "d_born",
+            "l_ij",
+            "k_hb_ij",
+            "f_solv",
+            "dielc",
+        ),
+        "fixture_evidence": {
+            "pure_neutral": {
+                "dataset_id": "methane-contract-targets",
+                "rows": [
+                    {
+                        "row_id": "methane-fugacity-130K",
+                        "target_family": "pure_saturation_fugacity_balance",
+                        "source": {
+                            "source_id": "NIST_methane_saturation",
+                            "source_kind": "literature",
+                            "citation": "NIST Chemistry WebBook SRD 69",
+                            "locator": "Methane saturation table, 130 K",
+                        },
+                    },
+                    {
+                        "row_id": "methane-density-130K",
+                        "target_family": "pure_liquid_density_at_pressure",
+                        "source": {
+                            "source_id": "NIST_methane_saturation",
+                            "source_kind": "literature",
+                            "citation": "NIST Chemistry WebBook SRD 69",
+                            "locator": "Methane saturation table, 130 K",
+                        },
+                    },
+                ],
+            },
+            "constant_binary_interaction": {
+                "dataset_id": "binary-contract-targets",
+                "rows": [
+                    {
+                        "row_id": "methane-ethane-vle-001",
+                        "target_family": "binary_vle",
+                        "source": {
+                            "source_id": "binary-component-contract",
+                            "source_kind": "component_test",
+                            "citation": "",
+                            "locator": "test_problem_compiler.py binary row",
+                        },
+                    }
+                ],
+            },
+        },
+    }
+    assert not (PACKAGE_ROOT / "native/regression/resolved_input_adapter.h").exists()
+    assert not (PACKAGE_ROOT / "native/regression/resolved_input_adapter.cpp").exists()
+    receipt = yaml.safe_load(BLOCKER_RECEIPT.read_text(encoding="utf-8"))
+    gate = receipt["overlay_feasibility_gate"]
+    for key in (
+        "plan_target_kinds",
+        "compiled_target_kinds",
+        "requires_new_compiler_meaning",
+        "compiler_incompatibility_reasons",
+        "unexpected_rejections",
+        "source_backed_strict_target_kinds",
+        "component_test_only_strict_target_kinds",
+        "unclassified_compiled_target_sources",
+        "missing_strict_target_family_kinds",
+        "fixture_evidence",
+    ):
+        expected = report[key]
+        if isinstance(expected, tuple):
+            expected = list(expected)
+        assert gate[key] == expected
