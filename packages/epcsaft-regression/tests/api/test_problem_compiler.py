@@ -308,11 +308,11 @@ def test_binary_row_compiles_liquid_then_vapor_handles_against_one_fixed_graph()
 
 
 def test_configured_workflow_compiles_its_exact_mixture() -> None:
-    first = Regression(_mixture())
-    second = Regression(_mixture(epsilon_k=151.0))
+    first = Regression(_mixture(), controls=_controls())
+    second = Regression(_mixture(epsilon_k=151.0), controls=_controls())
 
-    first_problem = first.compile(_dataset(), parameters=_parameters(), controls=_controls())
-    second_problem = second.compile(_dataset(), parameters=_parameters(), controls=_controls())
+    first_problem = first.compile(_dataset(), parameters=_parameters())
+    second_problem = second.compile(_dataset(), parameters=_parameters())
 
     assert first_problem.provider_definition_fingerprint != second_problem.provider_definition_fingerprint
     assert first_problem.provider_definition_fingerprint == first.mixture.resolved_model_input.fingerprint_sha256

@@ -13,7 +13,7 @@
       "backends": [
         "cppad_implicit"
       ],
-      "production": true,
+      "production": false,
       "requires": [
         "ceres",
         "cppad"
@@ -34,10 +34,9 @@
       "backend": "ceres",
       "compiled": true,
       "native_hot_loop": true,
-      "production": true,
-      "production_routes": [
-        "regression:pure_neutral"
-      ],
+      "production": false,
+      "production_routes": [],
+      "reason": "resolved_input_overlay_pending",
       "required": true,
       "required_for": [
         "epcsaft-regression"
@@ -60,10 +59,9 @@
       "backend": "ceres",
       "compiled": true,
       "native_hot_loop": true,
-      "production": true,
-      "production_routes": [
-        "regression:pure_neutral"
-      ],
+      "production": false,
+      "production_routes": [],
+      "reason": "resolved_input_overlay_pending",
       "required": true,
       "required_for": [
         "epcsaft-regression"
@@ -81,40 +79,36 @@
   },
   "regression": {
     "binary_pair_constant_kij": {
-      "available": true,
+      "available": false,
       "backend": "native_ceres",
-      "entrypoint": "fit_binary_parameters(..., parameters_to_fit=('k_ij',))",
+      "entrypoint": "Regression(mixture, controls=...).fit(dataset, parameters=...)",
       "jacobian_backend": "cppad_implicit",
-      "production": true,
+      "production": false,
+      "reason": "resolved_input_overlay_pending",
       "target_kinds": [
         "k_ij"
       ]
     },
     "liquid_electrolyte_born": {
-      "available": true,
+      "available": false,
       "backend": "native_ceres",
-      "entrypoint": "fit_liquid_electrolyte_parameters(...)",
+      "entrypoint": "Regression(mixture, controls=...).fit(dataset, parameters=...)",
       "jacobian_backend": "cppad_implicit",
-      "production": true,
+      "production": false,
+      "reason": "resolved_input_overlay_pending",
       "target_kinds": [
         "d_born",
         "f_solv"
       ]
     },
-    "production_supported_target_kinds": [
-      "m",
-      "s",
-      "e",
-      "d_born",
-      "k_ij",
-      "f_solv"
-    ],
+    "production_supported_target_kinds": [],
     "pure_neutral": {
-      "available": true,
+      "available": false,
       "backend": "native_ceres",
-      "entrypoint": "Regression(mixture, ...).fit_pure_neutral(...)",
+      "entrypoint": "Regression(mixture, controls=...).fit(dataset, parameters=...)",
       "jacobian_backend": "cppad_implicit",
-      "production": true,
+      "production": false,
+      "reason": "resolved_input_overlay_pending",
       "target_kinds": [
         "m",
         "s",
@@ -128,19 +122,18 @@
         "optimizer_supported_target_kind",
         "public_production_supported_target_kind"
       ],
-      "production_supported_target_kinds": [
+      "production_supported_target_kinds": [],
+      "registry_only_or_pending_target_kinds": [
         "m",
         "s",
         "e",
-        "d_born",
-        "k_ij",
-        "f_solv"
-      ],
-      "registry_only_or_pending_target_kinds": [
         "e_assoc",
         "vol_a",
+        "d_born",
+        "k_ij",
         "l_ij",
         "k_hb_ij",
+        "f_solv",
         "dielc"
       ],
       "revisit_after": [
@@ -154,7 +147,7 @@
           "optimizer_backend": "native_ceres",
           "optimizer_supported_target_kind": true,
           "production_scope": "nonassociating pure-neutral Ceres regression",
-          "public_production_supported_target_kind": true,
+          "public_production_supported_target_kind": false,
           "registry_known_target_kind": true,
           "route_key": "pure_neutral",
           "target_kind": "m",
@@ -169,7 +162,7 @@
           "optimizer_backend": "native_ceres",
           "optimizer_supported_target_kind": true,
           "production_scope": "tested pure-neutral and pure-ion Ceres regression routes",
-          "public_production_supported_target_kind": true,
+          "public_production_supported_target_kind": false,
           "registry_known_target_kind": true,
           "route_key": "pure_neutral; pure_ion",
           "target_kind": "s",
@@ -184,7 +177,7 @@
           "optimizer_backend": "native_ceres",
           "optimizer_supported_target_kind": true,
           "production_scope": "tested pure-neutral and pure-ion Ceres regression routes",
-          "public_production_supported_target_kind": true,
+          "public_production_supported_target_kind": false,
           "registry_known_target_kind": true,
           "route_key": "pure_neutral; pure_ion",
           "target_kind": "e",
@@ -229,7 +222,7 @@
           "optimizer_backend": "native_ceres",
           "optimizer_supported_target_kind": true,
           "production_scope": "tested liquid-electrolyte Born/SSM/DS Ceres regression route",
-          "public_production_supported_target_kind": true,
+          "public_production_supported_target_kind": false,
           "registry_known_target_kind": true,
           "route_key": "liquid_electrolyte_born",
           "target_kind": "d_born",
@@ -244,7 +237,7 @@
           "optimizer_backend": "native_ceres",
           "optimizer_supported_target_kind": true,
           "production_scope": "tested constant binary k_ij Ceres regression route",
-          "public_production_supported_target_kind": true,
+          "public_production_supported_target_kind": false,
           "registry_known_target_kind": true,
           "route_key": "binary_pair_constant_kij",
           "target_kind": "k_ij",
@@ -289,7 +282,7 @@
           "optimizer_backend": "native_ceres",
           "optimizer_supported_target_kind": true,
           "production_scope": "tested liquid-electrolyte Born/SSM/DS Ceres regression route",
-          "public_production_supported_target_kind": true,
+          "public_production_supported_target_kind": false,
           "registry_known_target_kind": true,
           "route_key": "liquid_electrolyte_born",
           "target_kind": "f_solv",
@@ -319,5 +312,5 @@
     "cppad",
     "ceres"
   ],
-  "status": "workspace_shell_pre_migration"
+  "status": "configured_workflow_overlay_pending"
 }

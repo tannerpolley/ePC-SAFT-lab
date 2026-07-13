@@ -7,10 +7,14 @@ import json
 from pathlib import Path
 
 import epcsaft_regression
+import epcsaft_regression.workflow as workflow_module
+import pytest
 import yaml
-from api.test_problem_compiler import _compile
+from api.test_problem_compiler import _controls, _dataset, _mixture, _parameters
 from epcsaft.model.resolved_input import EvaluatedModelInput
+from epcsaft_regression import Regression
 from epcsaft_regression.native_adapter import _native_problem_from_compiled
+from epcsaft_regression.problem import CompiledRegressionProblem
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 PACKAGE_ROOT = REPO_ROOT / "packages" / "epcsaft-regression" / "src" / "epcsaft_regression"
@@ -102,40 +106,51 @@ def _function_node(path: Path, function_name: str) -> ast.FunctionDef:
 
 def _public_entrypoint_ownership_report() -> dict[str, object]:
     workflow_path = PACKAGE_ROOT / "workflow.py"
-    core_path = PACKAGE_ROOT / "core.py"
-    workflow_fit = _function_node(workflow_path, "fit_pure_neutral")
+    workflow_fit = _function_node(workflow_path, "fit")
     workflow_source = ast.get_source_segment(
         workflow_path.read_text(encoding="utf-8"), workflow_fit
     )
     assert workflow_source is not None
 
-    statuses: dict[str, str] = {}
-    statuses["Regression.fit_pure_neutral"] = (
-        "configured_mixture_not_consumed_by_compiler"
-        if "self.compile(" not in workflow_source
-        and "compile_regression_problem(" not in workflow_source
-        else "configured_compiler_owned"
+    status = (
+        "configured_compiler_owned"
+        if "self.compile(" in workflow_source
+        and "_solve_regression(" in workflow_source
+        else "configured_compiler_not_owned"
     )
-    for function_name in (
+    removed_free_exports = (
+        "fit_binary_pair",
         "fit_binary_parameters",
         "fit_liquid_electrolyte_parameters",
+        "fit_pure_ion",
+        "fit_pure_neutral",
+        "fit_pure_parameters",
+    )
+    if any(
+        name in epcsaft_regression.__all__ or hasattr(epcsaft_regression, name)
+        for name in removed_free_exports
     ):
-        function = _function_node(core_path, function_name)
-        argument_names = {
-            argument.arg
-            for argument in (*function.args.posonlyargs, *function.args.args, *function.args.kwonlyargs)
-        }
-        statuses[function_name] = (
-            "public_free_function_has_no_configured_mixture"
-            if "mixture" not in argument_names
-            else "configured_compiler_owned"
+        status = "loose_record_fit_export_remains"
+    constructor = _function_node(workflow_path, "__init__")
+    constructor_arguments = {
+        argument.arg
+        for argument in (
+            *constructor.args.posonlyargs,
+            *constructor.args.args,
+            *constructor.args.kwonlyargs,
         )
+    }
+    if "controls" not in constructor_arguments:
+        status = "configured_controls_not_owned"
     return {
-        "classification": "blocked_before_immutable_baseline_overlay",
-        "entrypoints": statuses,
-        "all_production_entrypoints_configured": all(
-            status == "configured_compiler_owned" for status in statuses.values()
+        "classification": (
+            "ready_for_immutable_baseline_overlay"
+            if status == "configured_compiler_owned"
+            else "blocked_before_immutable_baseline_overlay"
         ),
+        "entrypoints": {"Regression.fit": status},
+        "all_production_entrypoints_configured": status
+        == "configured_compiler_owned",
     }
 
 
@@ -159,26 +174,40 @@ def test_stage4_regression_capability_baseline_is_exact() -> None:
     assert current == baseline
 
 
-def test_stage4_gate_records_exact_public_entrypoint_ownership_blocker() -> None:
-    compiled = _compile()
+def test_stage4_gate_records_exact_public_entrypoint_ownership(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: list[CompiledRegressionProblem] = []
+
+    class CapturedSolve(RuntimeError):
+        pass
+
+    def capture(problem: CompiledRegressionProblem) -> dict[str, object]:
+        captured.append(problem)
+        raise CapturedSolve
+
+    monkeypatch.setattr(workflow_module, "_solve_regression", capture)
+    workflow = Regression(_mixture(), controls=_controls())
+
+    with pytest.raises(CapturedSolve):
+        workflow.fit(_dataset(), parameters=_parameters())
+
+    assert len(captured) == 1
+    compiled = captured[0]
     native_problem = _native_problem_from_compiled(compiled)
 
     assert compiled.evaluated_inputs
     assert all(isinstance(item, EvaluatedModelInput) for item in compiled.evaluated_inputs)
     assert compiled.native_handles == tuple(item.native_handle for item in compiled.evaluated_inputs)
     assert native_problem.snapshot_fingerprints == compiled.snapshot_fingerprints
+    assert compiled.provider_definition_fingerprint == (
+        workflow.mixture.resolved_model_input.fingerprint_sha256
+    )
+    assert not hasattr(compiled, "provider_payload")
     assert _public_entrypoint_ownership_report() == {
-        "classification": "blocked_before_immutable_baseline_overlay",
-        "entrypoints": {
-            "Regression.fit_pure_neutral": (
-                "configured_mixture_not_consumed_by_compiler"
-            ),
-            "fit_binary_parameters": "public_free_function_has_no_configured_mixture",
-            "fit_liquid_electrolyte_parameters": (
-                "public_free_function_has_no_configured_mixture"
-            ),
-        },
-        "all_production_entrypoints_configured": False,
+        "classification": "ready_for_immutable_baseline_overlay",
+        "entrypoints": {"Regression.fit": "configured_compiler_owned"},
+        "all_production_entrypoints_configured": True,
     }
     assert not (
         PACKAGE_ROOT / "native/regression/resolved_input_adapter.h"
@@ -192,19 +221,23 @@ def test_stage4_blocker_receipt_matches_the_live_entrypoint_gate() -> None:
     assert receipt["prerequisite_contracts"]["classification"] == (
         "ready_for_stage4_overlay_gate"
     )
-    assert receipt["public_entrypoint_ownership_gate"] == {
-        "classification": report["classification"],
-        "all_production_entrypoints_configured": False,
-        "blocking_entrypoints": receipt["public_entrypoint_ownership_gate"][
-            "blocking_entrypoints"
-        ],
-    }
+    ownership_gate = receipt["public_entrypoint_ownership_gate"]
+    assert ownership_gate["classification"] == report["classification"]
+    assert ownership_gate["all_production_entrypoints_configured"] is True
     assert {
-        row["entrypoint"]: row["reason"]
-        for row in receipt["public_entrypoint_ownership_gate"]["blocking_entrypoints"]
+        row["entrypoint"]: row["ownership"]
+        for row in ownership_gate["configured_entrypoints"]
     } == report["entrypoints"]
+    assert ownership_gate["removed_free_exports"] == [
+        "fit_binary_pair",
+        "fit_binary_parameters",
+        "fit_liquid_electrolyte_parameters",
+        "fit_pure_ion",
+        "fit_pure_neutral",
+        "fit_pure_parameters",
+    ]
     assert receipt["decisive_gate"]["stage_4_status"] == (
-        "blocked_before_immutable_baseline_overlay"
+        "ready_for_immutable_baseline_overlay_feasibility"
     )
     assert receipt["decisive_gate"]["native_overlay_adapter_created"] is False
     assert receipt["push_performed"] is False

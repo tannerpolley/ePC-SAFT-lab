@@ -437,24 +437,25 @@
   subsection: ""
   subsubsection: ""
   family: "Regression"
-  status: "Implemented"
-  public_api: "Regression(mixture, ...).fit_pure_neutral(...)"
+  status: "Implemented with caveat"
+  public_api: "Internal native characterization only; configured workflow overlay pending"
   backend: "Native C++ Ceres regression"
   dependency: "Ceres"
   derivative_backend: "Native residual Jacobian for supported target families"
   solver_role: "Native least-squares pure-neutral parameter regression"
   implementation_owner: "packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp; packages/epcsaft-regression/src/epcsaft_regression/native/regression/module.cpp"
-  validation: "packages/epcsaft-regression/tests/api/test_regression.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api"
+  validation: "packages/epcsaft-regression/tests/native/test_pure.py"
   capability_key: "regression:pure_neutral"
-  description: "Fits currently supported pure-neutral parameter targets through native Ceres."
-  change_note: "Initial algorithm-registry entry for pure-neutral regression."
+  description: "Characterizes supported pure-neutral parameter targets through the retained native Ceres source path."
+  change_note: "Public production dispatch is closed during the immutable resolved-input overlay migration."
   tex_file: "docs/latex/algorithms.tex"
   tex_line: 311
   body: |
-    This entry covers the implemented nonassociating pure-neutral native Ceres route
-    for \(m\), \(\sigma\), and \(\epsilon/k_B\). It is not a production Ceres
-    optimizer for association-energy \verb|e_assoc| or association-volume
-    \verb|vol_a| targets until the association parameter-sensitivity work lands.
+    This entry covers the retained nonassociating pure-neutral native Ceres source
+    path for \(m\), \(\sigma\), and \(\epsilon/k_B\). It is not a public
+    production route until the immutable resolved-input overlay passes parity. It
+    also does not claim association-energy \verb|e_assoc| or association-volume
+    \verb|vol_a| optimizer support.
   owner_refs:
     - file: "packages/epcsaft-regression/src/epcsaft_regression/core.py"
       line: 2437
@@ -485,7 +486,7 @@
   description: "Fits currently supported pure-ion and Born-related target sets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 330
+  tex_line: 331
   body: |
     This entry is limited to the currently implemented pure-ion target surface. It
     does not claim support for association-affecting target kinds merely because the
@@ -520,7 +521,7 @@
   description: "Fits the currently implemented constant-k_ij binary parameter route through native Ceres."
   change_note: "Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 348
+  tex_line: 349
   body: |
     This entry intentionally does not claim native optimizer support for every
     binary parameter family. It is not a production Ceres optimizer for \(l_{ij}\)

@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
-
 class NativeFittedParameter:
     def __init__(
         self,

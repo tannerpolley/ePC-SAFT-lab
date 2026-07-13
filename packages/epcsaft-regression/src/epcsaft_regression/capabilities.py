@@ -29,7 +29,7 @@ REGRESSION_TARGET_KIND_ROWS = (
         "registry_known_target_kind": True,
         "derivative_supported_target_kind": True,
         "optimizer_supported_target_kind": True,
-        "public_production_supported_target_kind": True,
+        "public_production_supported_target_kind": False,
         "production_scope": "nonassociating pure-neutral Ceres regression",
         "route_key": "pure_neutral",
         "derivative_backend": "cppad_implicit",
@@ -44,7 +44,7 @@ REGRESSION_TARGET_KIND_ROWS = (
         "registry_known_target_kind": True,
         "derivative_supported_target_kind": True,
         "optimizer_supported_target_kind": True,
-        "public_production_supported_target_kind": True,
+        "public_production_supported_target_kind": False,
         "production_scope": "tested pure-neutral and pure-ion Ceres regression routes",
         "route_key": "pure_neutral; pure_ion",
         "derivative_backend": "cppad_implicit",
@@ -59,7 +59,7 @@ REGRESSION_TARGET_KIND_ROWS = (
         "registry_known_target_kind": True,
         "derivative_supported_target_kind": True,
         "optimizer_supported_target_kind": True,
-        "public_production_supported_target_kind": True,
+        "public_production_supported_target_kind": False,
         "production_scope": "tested pure-neutral and pure-ion Ceres regression routes",
         "route_key": "pure_neutral; pure_ion",
         "derivative_backend": "cppad_implicit",
@@ -104,7 +104,7 @@ REGRESSION_TARGET_KIND_ROWS = (
         "registry_known_target_kind": True,
         "derivative_supported_target_kind": True,
         "optimizer_supported_target_kind": True,
-        "public_production_supported_target_kind": True,
+        "public_production_supported_target_kind": False,
         "production_scope": "tested liquid-electrolyte Born/SSM/DS Ceres regression route",
         "route_key": "liquid_electrolyte_born",
         "derivative_backend": "cppad_implicit",
@@ -119,7 +119,7 @@ REGRESSION_TARGET_KIND_ROWS = (
         "registry_known_target_kind": True,
         "derivative_supported_target_kind": True,
         "optimizer_supported_target_kind": True,
-        "public_production_supported_target_kind": True,
+        "public_production_supported_target_kind": False,
         "production_scope": "tested constant binary k_ij Ceres regression route",
         "route_key": "binary_pair_constant_kij",
         "derivative_backend": "cppad_implicit",
@@ -164,7 +164,7 @@ REGRESSION_TARGET_KIND_ROWS = (
         "registry_known_target_kind": True,
         "derivative_supported_target_kind": True,
         "optimizer_supported_target_kind": True,
-        "public_production_supported_target_kind": True,
+        "public_production_supported_target_kind": False,
         "production_scope": "tested liquid-electrolyte Born/SSM/DS Ceres regression route",
         "route_key": "liquid_electrolyte_born",
         "derivative_backend": "cppad_implicit",
@@ -206,12 +206,14 @@ def _ceres_capability() -> dict[str, object]:
     ceres_available = bool(ceres.get("available", False))
     out: dict[str, object] = {
         **ceres,
-        "production": ceres_available,
+        "production": False,
         "scope": "native optimizer backend owned by the regression extension",
         "native_hot_loop": ceres_available,
-        "production_routes": ["regression:pure_neutral"],
+        "production_routes": [],
     }
-    if not ceres_available:
+    if ceres_available:
+        out["reason"] = "resolved_input_overlay_pending"
+    else:
         out["reason"] = "extension_dependency_missing"
     return out
 
@@ -248,11 +250,13 @@ def capabilities() -> dict[str, object]:
     cppad = _provider_cppad_capability()
     ceres = _ceres_capability()
     regression_target_evidence = _regression_target_kind_evidence()
-    regression_route_available = bool(bool(ceres.get("available", False)) and bool(cppad.get("available", False)))
+    native_regression_evidence_available = bool(
+        bool(ceres.get("available", False)) and bool(cppad.get("available", False))
+    )
     return {
         "package": "epcsaft-regression",
         "owner": "regression_extension",
-        "status": "workspace_shell_pre_migration",
+        "status": "configured_workflow_overlay_pending",
         "provider_contract": provider_contract(),
         "native_dependencies": {
             "cppad": cppad,
@@ -266,8 +270,8 @@ def capabilities() -> dict[str, object]:
         "derivatives": {
             "cppad": cppad,
             "regression_ceres_jacobians": {
-                "available": regression_route_available,
-                "production": regression_route_available,
+                "available": native_regression_evidence_available,
+                "production": False,
                 "routes": list(REGRESSION_CAPABILITY_KEYS),
                 "backends": ["cppad_implicit"],
                 "requires": ["ceres", "cppad"],
@@ -277,28 +281,31 @@ def capabilities() -> dict[str, object]:
             "target_kind_evidence": regression_target_evidence,
             "production_supported_target_kinds": list(regression_target_evidence["production_supported_target_kinds"]),
             "pure_neutral": {
-                "available": regression_route_available,
-                "production": regression_route_available,
+                "available": False,
+                "production": False,
                 "backend": "native_ceres",
-                "entrypoint": "Regression(mixture, ...).fit_pure_neutral(...)",
+                "entrypoint": "Regression(mixture, controls=...).fit(dataset, parameters=...)",
                 "jacobian_backend": "cppad_implicit",
                 "target_kinds": ["m", "s", "e"],
+                "reason": "resolved_input_overlay_pending",
             },
             "binary_pair_constant_kij": {
-                "available": regression_route_available,
-                "production": regression_route_available,
+                "available": False,
+                "production": False,
                 "backend": "native_ceres",
-                "entrypoint": "fit_binary_parameters(..., parameters_to_fit=('k_ij',))",
+                "entrypoint": "Regression(mixture, controls=...).fit(dataset, parameters=...)",
                 "jacobian_backend": "cppad_implicit",
                 "target_kinds": ["k_ij"],
+                "reason": "resolved_input_overlay_pending",
             },
             "liquid_electrolyte_born": {
-                "available": regression_route_available,
-                "production": regression_route_available,
+                "available": False,
+                "production": False,
                 "backend": "native_ceres",
-                "entrypoint": "fit_liquid_electrolyte_parameters(...)",
+                "entrypoint": "Regression(mixture, controls=...).fit(dataset, parameters=...)",
                 "jacobian_backend": "cppad_implicit",
                 "target_kinds": ["d_born", "f_solv"],
+                "reason": "resolved_input_overlay_pending",
             },
         },
     }

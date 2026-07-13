@@ -1,38 +1,26 @@
 from __future__ import annotations
 
-import epcsaft
-import pytest
+from api.test_problem_compiler import _controls, _dataset, _mixture, _parameters
 from epcsaft_regression import Regression
-from regression_support.hydrocarbon_cases import hydrocarbon_parameter_set
-from regression_support.regression_cases import (
-    _load_workbook_reference_rows,
-    _neutral_fixed_parameters,
-    _real_saturation_records,
-)
 
 
-def test_workflow_object_is_constructed_directly() -> None:
-    mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
+def test_workflow_object_owns_explicit_controls_and_mixture() -> None:
+    mixture = _mixture()
+    controls = _controls()
 
-    regression = Regression(mixture)
+    regression = Regression(mixture, controls=controls)
 
     assert regression.mixture is mixture
+    assert regression.controls is controls
 
 
-def test_regression_hydrocarbon_anchor_routes_through_new_object_api() -> None:
-    reference = _load_workbook_reference_rows()["Methane"]
+def test_regression_compiles_only_its_configured_provider_definition() -> None:
+    regression = Regression(_mixture(), controls=_controls())
 
-    debug = Regression(epcsaft.Mixture(hydrocarbon_parameter_set())).evaluate_pure_neutral_derivatives(
-        _real_saturation_records("Methane"),
-        component="Methane",
-        assoc_scheme="",
-        fixed_parameters=_neutral_fixed_parameters("Methane"),
-        initial_guess=reference,
-        x=reference,
+    problem = regression.compile(_dataset(), parameters=_parameters())
+
+    assert problem.provider_definition_fingerprint == (
+        regression.mixture.resolved_model_input.fingerprint_sha256
     )
-
-    assert debug["objective"] == pytest.approx(9.701615164740784e-06, rel=2.0e-4)
-    assert debug["jacobian_shape"] == (8, 3)
-    assert debug["jacobian_backend"].startswith("cppad")
-    assert debug["density_solves"] >= 4
-    assert debug["fused_state_evaluations"] >= 4
+    assert problem.controls is regression.controls
+    assert problem.row_ids == _dataset().row_ids

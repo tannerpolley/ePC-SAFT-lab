@@ -493,32 +493,34 @@ same tolerance as the exact solve.
 
 ### `pure_neutral_ceres_regression`
 - Family: Regression
-- Status: Implemented
-- Public API: Regression(mixture, ...).fit_pure_neutral(...)
+- Status: Implemented with caveat
+- Public API: Internal native characterization only; configured workflow overlay pending
 - Backend: Native C++ Ceres regression
 - Dependency: Ceres
 - Derivative backend: Native residual Jacobian for supported target families
 - Solver role: Native least-squares pure-neutral parameter regression
 - Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp; packages/epcsaft-regression/src/epcsaft_regression/native/regression/module.cpp
-- Validation: packages/epcsaft-regression/tests/api/test_regression.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api
+- Validation: packages/epcsaft-regression/tests/native/test_pure.py
 - Capability key: regression:pure_neutral
-- Description: Fits currently supported pure-neutral parameter targets through native Ceres.
-- Change note: Initial algorithm-registry entry for pure-neutral regression.
+- Description: Characterizes supported pure-neutral parameter targets through the retained native Ceres source path.
+- Change note: Public production dispatch is closed during the immutable resolved-input overlay migration.
 - LaTeX: `docs/latex/algorithms.tex:311`
 - Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2437` (def fit_pure_neutral(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2771` (def fit_pure_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:524` (class PureNeutralCeresCostFunction final : public ceres::CostFunction {)
 
-This entry covers the implemented nonassociating pure-neutral native Ceres route
-for `m`, `\sigma`, and `\epsilon/k_B`. It is not a production Ceres
-optimizer for association-energy \verb|e_assoc| or association-volume
-\verb|vol_a| targets until the association parameter-sensitivity work lands.
+This entry covers the retained nonassociating pure-neutral native Ceres source
+path for `m`, `\sigma`, and `\epsilon/k_B`. It is not a public
+production route until the immutable resolved-input overlay passes parity. It
+also does not claim association-energy \verb|e_assoc| or association-volume
+\verb|vol_a| optimizer support.
 
 **LaTeX source**
 
 ```tex
-This entry covers the implemented nonassociating pure-neutral native Ceres route
-for \(m\), \(\sigma\), and \(\epsilon/k_B\). It is not a production Ceres
-optimizer for association-energy \verb|e_assoc| or association-volume
-\verb|vol_a| targets until the association parameter-sensitivity work lands.
+This entry covers the retained nonassociating pure-neutral native Ceres source
+path for \(m\), \(\sigma\), and \(\epsilon/k_B\). It is not a public
+production route until the immutable resolved-input overlay passes parity. It
+also does not claim association-energy \verb|e_assoc| or association-volume
+\verb|vol_a| optimizer support.
 ```
 
 **Rendered formulae**
@@ -549,7 +551,7 @@ $$
 - Capability key: regression:pure_ion
 - Description: Fits currently supported pure-ion and Born-related target sets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits.
-- LaTeX: `docs/latex/algorithms.tex:330`
+- LaTeX: `docs/latex/algorithms.tex:331`
 - Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2819` (def fit_pure_ion(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:3022` (def fit_liquid_electrolyte_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:1464` (class PureIonCeresCostFunction final : public ceres::CostFunction {)
 
 This entry is limited to the currently implemented pure-ion target surface. It
@@ -578,7 +580,7 @@ native target-kind registry knows their labels.
 - Capability key: regression:binary_pair
 - Description: Fits the currently implemented constant-k_ij binary parameter route through native Ceres.
 - Change note: Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists.
-- LaTeX: `docs/latex/algorithms.tex:348`
+- LaTeX: `docs/latex/algorithms.tex:349`
 - Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2848` (def fit_binary_parameters(), `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp:1601` (class BinaryKijCeresCostFunction final : public ceres::CostFunction {)
 
 This entry intentionally does not claim native optimizer support for every

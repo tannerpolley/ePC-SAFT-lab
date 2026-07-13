@@ -4,7 +4,6 @@ import json
 
 import epcsaft
 import epcsaft_regression
-import epcsaft_regression.core as regression_core
 from epcsaft_regression.native_adapter import native_ceres_backend_info
 
 REGRESSION_CAPABILITY_DIMENSIONS = (
@@ -13,6 +12,20 @@ REGRESSION_CAPABILITY_DIMENSIONS = (
     "optimizer_supported_target_kind",
     "public_production_supported_target_kind",
 )
+
+REGISTRY_TARGET_KINDS = {
+    "d_born",
+    "dielc",
+    "e",
+    "e_assoc",
+    "f_solv",
+    "k_hb_ij",
+    "k_ij",
+    "l_ij",
+    "m",
+    "s",
+    "vol_a",
+}
 
 
 def test_runtime_reports_ceres_build_contract() -> None:
@@ -30,8 +43,12 @@ def test_runtime_reports_ceres_build_contract() -> None:
     assert capabilities["forbidden_default_dependencies"] == ["ipopt"]
     assert capabilities["optimizers"]["ceres"]["status"] == ceres["status"]
     assert capabilities["optimizers"]["ceres"]["compiled"] is ceres["compiled"]
-    assert capabilities["optimizers"]["ceres"]["production"] is ceres["available"]
+    assert capabilities["optimizers"]["ceres"]["production"] is False
     assert capabilities["optimizers"]["ceres"]["native_hot_loop"] is ceres["available"]
+    assert capabilities["optimizers"]["ceres"]["production_routes"] == []
+    assert capabilities["optimizers"]["ceres"]["reason"] == (
+        "resolved_input_overlay_pending"
+    )
 
 
 def test_ceres_cppad_capability_claims_require_enabled_native_dependencies() -> None:
@@ -47,18 +64,18 @@ def test_ceres_cppad_capability_claims_require_enabled_native_dependencies() -> 
     assert cppad["available"] is True
 
     assert jacobians["available"] is True
-    assert jacobians["production"] is True
+    assert jacobians["production"] is False
     assert jacobians["routes"] == [
         "pure_neutral",
         "binary_pair_constant_kij",
         "liquid_electrolyte_born",
     ]
-    pure_neutral_targets = {
+    public_targets = {
         row["target_kind"]
         for row in target_rows
-        if row["public_production_supported_target_kind"] and "pure_neutral" in row["route_key"]
+        if row["public_production_supported_target_kind"]
     }
-    assert pure_neutral_targets.issuperset({"m", "s", "e"})
+    assert public_targets == set()
     assert "numerical" + "_derivative" not in json.dumps(
         {"ceres": ceres, "cppad": cppad, "target_rows": target_rows}
     ).lower()
@@ -70,7 +87,7 @@ def test_regression_capability_evidence_separates_registry_derivative_optimizer_
 
     assert evidence["dimensions"] == list(REGRESSION_CAPABILITY_DIMENSIONS)
     assert evidence["revisit_after"] == ["#136", "#137"]
-    assert {row["target_kind"] for row in rows} == set(regression_core.NATIVE_TARGET_KINDS)
+    assert {row["target_kind"] for row in rows} == REGISTRY_TARGET_KINDS
 
     for row in rows:
         assert set(REGRESSION_CAPABILITY_DIMENSIONS).issubset(row)
@@ -99,7 +116,8 @@ def test_association_affecting_regression_targets_remain_nonproduction_until_evi
         assert rows[target]["optimizer_supported_target_kind"] is False
         assert rows[target]["revisit_after_issue"] == "#137"
 
-    assert rows["k_ij"]["public_production_supported_target_kind"] is True
+    assert rows["k_ij"]["optimizer_supported_target_kind"] is True
+    assert rows["k_ij"]["public_production_supported_target_kind"] is False
 
 
 def test_property_derivative_parameter_families_scope_active_association_lij_out_of_production() -> None:

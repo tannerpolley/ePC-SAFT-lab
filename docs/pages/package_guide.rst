@@ -89,20 +89,23 @@ Hessian:
 Regression
 ----------
 
-Construct ``Regression`` directly from a ``Mixture``. The current public proof
-is pure-neutral hydrocarbon regression through the CppAD/Ceres route:
+Construct ``Regression`` from a ``Mixture`` plus one explicit
+``RegressionControls`` record. Fit calls accept only a strict
+``TargetDataset`` and explicit ``FittedParameter`` records:
 
 .. code-block:: python
 
    from epcsaft_regression import Regression
 
-   result = Regression(mixture).fit_pure_neutral(
-       records,
-       component="Methane",
-       assoc_scheme="",
-       fixed_parameters=fixed_parameters,
-       initial_guess={"m": 1.1, "s": 3.6, "e": 145.0},
+   regression = Regression(mixture, controls=controls)
+   result = regression.fit(
+       dataset,
+       parameters=fitted_parameters,
    )
+
+The result owns an immutable native receipt and the exact compiled
+``FitProblem``. Production target dispatch remains closed until the Stage 4
+resolved-input overlay parity gate passes.
 
 Input Templates
 ---------------

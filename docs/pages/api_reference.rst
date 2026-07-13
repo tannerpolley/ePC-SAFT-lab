@@ -59,10 +59,27 @@ Regression
    :undoc-members:
    :no-index:
 
-The trusted public regression proof is
-``Regression(mixture, ...).fit_pure_neutral(...)`` from ``epcsaft_regression``
-for the hydrocarbon
-Gross/Sadowski anchor.
+.. autoclass:: epcsaft_regression.FitProblem
+   :members:
+   :no-index:
+
+.. autoclass:: epcsaft_regression.FitResult
+   :members:
+   :no-index:
+
+.. autoclass:: epcsaft_regression.RegressionEvaluation
+   :members:
+   :no-index:
+
+.. autoclass:: epcsaft_regression.RegressionReceipt
+   :members:
+   :no-index:
+
+The public regression contract is
+``Regression(mixture, controls=...).fit(dataset, parameters=...)``. It compiles
+one configured provider graph and returns immutable receipt-backed views. The
+production target routes remain closed until the resolved-input overlay passes
+the Stage 4 parity gate.
 
 Parameters And Model Options
 ----------------------------
