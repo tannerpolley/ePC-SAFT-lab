@@ -1,0 +1,46 @@
+schema: epcsaft.stage-4-provider-input-prerequisite-blocker
+schema_version: 1
+recorded_on: 2026-07-13
+source:
+  branch: codex/stage4-resolved-input-stack
+  commit: c5532b317d20c5fe407e8f8de44339572de349df
+package: epcsaft-regression
+classification: requires_approved_m5_tasks_1_to_3
+stage_4_status: blocked_before_incompatible_cutover
+absent_files:
+  - targets.py
+  - controls.py
+  - parameters.py
+  - problem.py
+  - native/regression/regression_problem.h
+absent_symbols:
+  - controls.py:RegressionControls
+  - native/regression/regression_problem.h:NativeRegressionProblem
+  - parameters.py:FittedParameter
+  - problem.py:CompiledRegressionProblem
+  - problem.py:EvaluatedModelInput
+  - problem.py:compile_regression_problem
+  - problem.py:native_handle
+  - targets.py:TargetDataset
+nonqualifying_legacy_owner:
+  path: packages/epcsaft-regression/src/epcsaft_regression/core.py
+  symbol: TargetDataset
+  reason: The approved strict contract requires TargetDataset ownership in targets.py.
+required_separately_approved_work:
+  plan: docs/superpowers/plans/2026-07-10-m5-regression-traceable-native-problem-contract-plan.md
+  tasks:
+    - 1
+    - 2
+    - 3
+test_evidence:
+  command: >-
+    uv run --no-sync python run_pytest.py
+    packages/epcsaft-regression/tests/contracts/test_provider_resolved_input_feasibility.py -q
+  result: 1 passed in 0.01s
+cleanup:
+  command: bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
+  result: candidates_found
+  task_owned_artifacts_removed: []
+m4_preservation_manifest_modified: false
+native_overlay_adapter_created: false
+push_performed: false
