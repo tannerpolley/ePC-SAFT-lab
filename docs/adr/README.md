@@ -19,3 +19,4 @@ Accepted ADRs:
 - `0004-associating-equilibrium-architecture.md`: records the nonassociating production-equilibrium boundary and the required complete implicit or lifted-`X_A` architecture for any future associating route.
 - `0005-package-extension-split.md`: historical transition-monorepo package split, superseded by ADR 0006 while its package ownership decisions remain source evidence.
 - `0006-curated-multi-repository-ownership.md`: records the final separate repository homes, early governance-only bootstrap, and later proven-owner transfer and cutover gates.
+- `0007-clean-ecosystem-doctrine.md`: records the canonical six-home doctrine, permanent lab role, first-class validation owner, and strict per-slice authority transfer rules; it supersedes conflicting target-state language in ADR 0006 while preserving its bootstrap evidence.

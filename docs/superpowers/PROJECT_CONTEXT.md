@@ -1,5 +1,21 @@
 # ePC-SAFT Project Context And Milestone Plan
 
+## Ecosystem authority notice
+
+The canonical permanent ecosystem authority is
+`ePC-SAFT/.github/GOVERNANCE.md`, doctrine revision 1. Until that public remote
+is created, its approved local source is
+`/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project/ePC-SAFT-organization/GOVERNANCE.md`.
+The canonical one-time cutover design is
+`docs/superpowers/specs/2026-07-14-clean-ecosystem-cutover-design.md`.
+
+This file remains the execution and current-capability context for the
+transition repository and future lab. For final repository topology,
+organization ownership, lab and validation boundaries, production derivative
+policy, promotion receipts, and architecture-ratchet rules, doctrine revision
+1 supersedes conflicting language below and in older plans. Governance
+authority has changed; no runtime source or capability authority has moved.
+
 ## Purpose of this document
 
 Every Codex agent working on this ePC-SAFT repository must read this document before planning, coding, reviewing, or merging.
