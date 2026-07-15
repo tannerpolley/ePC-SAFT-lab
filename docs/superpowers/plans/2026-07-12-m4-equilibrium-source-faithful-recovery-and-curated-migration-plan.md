@@ -666,13 +666,11 @@ and scientific re-reviews found no remaining Stage 3 blocker.
 
 - Design:
   `docs/superpowers/specs/2026-07-13-m0-early-curated-repository-bootstrap-and-stage-13-cutover-design.md`
-- Child plan:
-  `docs/superpowers/plans/2026-07-13-m0-early-curated-repository-bootstrap-and-stage-13-cutover-plan.md`
-- Create: ADR 0006, machine-readable bootstrap contract, four exact local
+- Create: machine-readable bootstrap contract, four exact local
   governance skeletons under
   `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project`, four destination
   receipts, and one transition-repository Stage 11 receipt
-- Modify only ADR 0005 status, the ADR index, and controlling program records
+- Modify only the ADR index and controlling program records
 
 **Interfaces:**
 
@@ -680,12 +678,13 @@ and scientific re-reviews found no remaining Stage 3 blocker.
   governance files, no remotes, and literal content-marker proof.
 - Records intended GitHub homes and a one-way ownership/dependency doctrine,
   while treating `ePC-SAFT/ePC-SAFT` as the existing transition remote identity.
-- Consumes only accepted Stages 1-3 records and the approved July 13 child
-  design/plan; it does not consume Stage 6 runtime evidence.
+- Consumes only accepted Stages 1-3 records and the approved July 13 bootstrap
+  design; it does not consume Stage 6 runtime evidence.
 
 - [ ] Prove the collision-free parent is absent and protected remnant/license
   hashes match the approved child design.
-- [ ] Create ADR 0006 and mark only ADR 0005's status superseded.
+- [ ] Record the separate-repository ownership decision and mark ADR 0005 as
+  historical transition evidence.
 - [ ] Record exact tracked-file and literal content-marker contracts, intended
   GitHub homes, protected hashes, and negative transfer flags.
 - [ ] Bootstrap exactly `ePC-SAFT`, `ePC-SAFT-equilibrium`,

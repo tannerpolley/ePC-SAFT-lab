@@ -460,8 +460,9 @@ parent is absent; and the retired Windows-worktree remnants are hash-protected.
 
 Deliverables:
 
-- ADR 0006 supersedes ADR 0005's final-monorepo target while preserving the
-  transition monorepo as executable source and reference evidence;
+- organization doctrine supersedes ADR 0005's final-monorepo target while
+  preserving the transition monorepo as executable source and reference
+  evidence;
 - clean local governance-only homes under
   `/home/tnnrpolley21/Workspaces/Engineering/ePC-SAFT-project` for `ePC-SAFT`,
   `ePC-SAFT-equilibrium`, `ePC-SAFT-regression`, and

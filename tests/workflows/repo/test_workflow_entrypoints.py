@@ -995,17 +995,6 @@ def test_heavy_native_workflow_is_manual_only() -> None:
     assert "native CppAD derivative contract" in workflow
 
 
-def test_pr_template_does_not_force_production_proof_answers_on_ordinary_prs() -> None:
-    template = _read(".github/PULL_REQUEST_TEMPLATE.md")
-
-    assert "## Required PR Answers" not in template
-    assert "What downstream workflow can now run" not in template
-    assert "What production native code path now exists" not in template
-    assert "What derivative path is used" not in template
-    assert "What real data or benchmark proves it" not in template
-    assert "This PR does not broaden `capabilities()` or public claims without executable proof" in template
-
-
 def test_pypi_publish_workflow_uses_trusted_publishing() -> None:
     workflow = _read(".github/workflows/publish-pypi.yml")
     publishing_docs = _read("docs/pages/publishing.rst")

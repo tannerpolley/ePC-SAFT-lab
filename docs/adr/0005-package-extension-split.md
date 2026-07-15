@@ -2,7 +2,8 @@
 
 ## Status
 
-Superseded by ADR 0006.
+Historical transition decision. Final ecosystem ownership is governed by
+`ePC-SAFT/.github/GOVERNANCE.md`, doctrine revision 2.
 
 ## Context
 
