@@ -1,5 +1,7 @@
 # ePC-SAFT Agent Instructions
 
+Repository Profile: scientific-computing
+
 This is tracked repo policy for agents working in this repository. Keep it short.
 Durable workflow details belong in the referenced docs, not in this file.
 

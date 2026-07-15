@@ -1,5 +1,12 @@
 # epcsaft
 
+> [!IMPORTANT]
+> This is the preserved legacy/lab repository for the original ePC-SAFT
+> monorepo. Historical links under `ePC-SAFT/ePC-SAFT` map to the corresponding
+> issue, pull request, release, or commit under `tannerpolley/ePC-SAFT-lab`.
+> Clean production packages are migrated separately and do not inherit this
+> repository's runtime authority automatically.
+
 `epcsaft` is a Windows-first Python package for PC-SAFT and electrolyte PC-SAFT thermodynamic calculations. The public API is Python; the equation-of-state runtime is implemented in native C++ through `pybind11`.
 
 This release is still a monorepo transition build. Ipopt-backed equilibrium is
