@@ -1,5 +1,0 @@
-blank_issues_enabled: false
-contact_links:
-  - name: ePC-SAFT milestone and tracker rules
-    url: https://github.com/ePC-SAFT/ePC-SAFT/blob/main/docs/agents/issue-tracker.md
-    about: Read this before filing milestone tracking, micro, or gate issues.
