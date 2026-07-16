@@ -68,7 +68,7 @@
 ## Task 1: Create The Stage II HELD Issue And Refresh #187 Readiness
 
 **Files:**
-- Read: `docs/agents/issue-tracker.md`
+- Read: the then-active issue and milestone routing policy
 - Read: `docs/superpowers/specs/2026-06-11-m4-equilibrium-held-1-0-full-adoption.md`
 - GitHub: `https://github.com/ePC-SAFT/ePC-SAFT/issues/187`
 - GitHub: `https://github.com/ePC-SAFT/ePC-SAFT/issues/188`

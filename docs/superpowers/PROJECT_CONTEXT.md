@@ -487,26 +487,18 @@ Required benchmark families:
 
 ---
 
-# 8. Required milestones
+# 8. Preserved milestone taxonomy
 
-GitHub milestones use short dashboard names. This file owns the detailed
-meaning behind each name; issues and slice plans must not invent a separate
-milestone taxonomy.
+The milestone names below preserve how the monorepo program divided ownership
+and completion evidence. They remain useful provenance for classifying files
+and migration slices, but they are not a live intake queue or roadmap. Clean
+repositories may narrow this taxonomy through their canonical governance; they
+must not silently broaden a migrated capability.
 
-Every GitHub issue must belong to exactly one milestone. Larger local plan files
-map to one tracking issue inside the matching milestone, and implementation
-issues are the micro changes that move that tracking issue forward. The
-GitHub Project is the operating dashboard: group and sort by Milestone,
-Package, Capability, Backend, Readiness, and Release target. Keep technical
-precision in issue bodies and plan checklists, not in milestone titles.
-Use the repository issue templates for tracking, micro, and gate issues, and
-use the pull request template so PRs carry issue, milestone, Project, plan,
-validation, and capability evidence explicitly.
-
-`docs/superpowers/milestones/` is the local planning root for the GitHub milestone
-dashboard. It stores package context, milestone-owned plans, optional issue
-handoff files, and milestone-owned registries. GitHub Issues and the
-`ePC-SAFT Roadmap` Project remain authoritative for live tracker state.
+`docs/superpowers/milestones/` stores the retained milestone maps, plans, issue
+mirrors, and registries. Historical issue and Project links document prior
+execution only. New issue intake and active roadmap state belong to the clean
+repository that owns the admitted slice.
 
 For generalized fluid-phase equilibrium work, use
 `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md` as the GFPE-first
@@ -516,8 +508,8 @@ and exit evidence.
 
 ## M0 - Governance
 
-Planning hygiene, tracker setup, labels, issue templates, completion rules,
-GoalBuddy/project discipline, and repo-wide process gates.
+Planning hygiene, completion rules, ownership records, and repo-wide process
+gates.
 
 - purge banned literal tokens from the repo
 - add lexical guard
@@ -525,7 +517,7 @@ GoalBuddy/project discipline, and repo-wide process gates.
 - remove classification-as-completion language
 - update future prompts
 - ensure no merged goal remains active
-- keep issue, milestone, Project, plan, and capability state aligned
+- keep retained plans and capability evidence internally consistent
 
 ## M1 - Packages
 
@@ -533,7 +525,7 @@ Monorepo package layout, package ownership, test relocation, provider-only
 build proof, extension-native boundaries, and package CI/docs/release
 structure. Historical source-consolidation specs are removed after completion;
 current package ownership is governed by ADR 0005, package-local instructions,
-and the active M1 issue set.
+and the retained package-boundary evidence.
 
 - keep the monorepo package layout aligned with ADR 0005 and the current
   `packages/epcsaft`, `packages/epcsaft-equilibrium`, and
@@ -627,15 +619,14 @@ docs, and no private downstream workarounds.
 Every agent must:
 
 1. Read this file.
-2. Read the replacement master issue.
-3. Inspect current `origin/main`.
-4. State whether its task is derivative, regression, equilibrium, benchmark, process, or downstream.
-5. Identify the exact production workflow it must make work.
-6. Identify tests that prove it.
-7. Refuse to close by inventory, diagnostics, staging, synthetic fixtures, or limitation text.
-8. Avoid banned exact literals in committed text.
-9. Keep APIs generic.
-10. Open capability, release, benchmark, or production-native PRs only when the
+2. Inspect current `origin/main`.
+3. State whether its task is derivative, regression, equilibrium, benchmark, process, or downstream.
+4. Identify the exact production workflow it must make work.
+5. Identify tests that prove it.
+6. Refuse to close by inventory, diagnostics, staging, synthetic fixtures, or limitation text.
+7. Avoid banned exact literals in committed text.
+8. Keep APIs generic.
+9. Open capability, release, benchmark, or production-native PRs only when the
     claimed production workflow works.
 
 PRs that claim release readiness, capability support, benchmark evidence, or

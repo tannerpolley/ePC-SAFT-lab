@@ -161,7 +161,7 @@ Superpowers Project mirrors under `docs/superpowers`.
 
 - `docs/superpowers/issues/*.md`
 - `docs/superpowers/milestones/M4-equilibrium/README.md`
-- `docs/agents/issue-tracker.md`
+- the historical issue and milestone routing record
 
 - [ ] Run the proof oracle below.
 - [ ] Update the child issue with validation evidence and scope boundaries.

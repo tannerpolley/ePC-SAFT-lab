@@ -52,9 +52,8 @@ local issue mirrors for #420 and #421.
 old M4 Khudaida source spec/plan.
 **Files To Avoid:** Solver code, parameter data, figure scripts, retained plot
 artifacts, package tests, and unrelated milestone registries.
-**Source Of Truth:** GitHub Issues #420/#421/#406-#417, the milestone table in
-`docs/agents/issue-tracker.md`, and the retained Khudaida/Figiel validation
-folders.
+**Source Of Truth:** the historical GitHub Issues #420/#421/#406-#417 and the
+retained Khudaida/Figiel validation folders.
 **Read Path:** Inspect GitHub issue milestone, label, parent, and sub-issue
 fields before editing local mirrors.
 **Write Path:** Update GitHub issue hierarchy with first-class `gh issue`

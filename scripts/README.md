@@ -5,7 +5,7 @@ The root `scripts/` package is intentionally split between shared helper modules
 Canonical rules:
 
 - Keep shared helper modules at the root when analysis code imports them directly.
-- Put runnable repo workflows under purpose-specific subfolders such as `dev/`, `validation/`, `docs/`, `data/`, and `support/`.
+- Put runnable repo workflows under purpose-specific subfolders such as `dev/`, `validation/`, `docs/`, and `data/`.
 - Move study-specific or figure-specific tooling into `analyses/<study>/scripts/` instead of keeping it under the repo-root `scripts/` tree.
 
 Current layout:
@@ -19,4 +19,3 @@ Current layout:
 - `scripts/validation/`: opt-in specialty validation entrypoints.
 - `scripts/docs/`: documentation, equation-registry, and LaTeX-mirror maintenance entrypoints.
 - `scripts/data/`: reference-data curation helpers.
-- `scripts/support/`: issue triage and other support tooling.

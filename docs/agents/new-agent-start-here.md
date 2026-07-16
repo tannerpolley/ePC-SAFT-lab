@@ -1,9 +1,9 @@
 # New Agent Start Here
 
-This is the current entry point for a new ePC-SAFT repo thread. GitHub Issues
-and the `ePC-SAFT Roadmap` Project are authoritative for live tracker state;
-`docs/superpowers/PROJECT_CONTEXT.md` is the package-context and completion
-standard.
+This is the entry point for work in the preserved ePC-SAFT lab.
+`docs/superpowers/PROJECT_CONTEXT.md` remains the monorepo package-context and
+completion-standard record while the clean repositories are populated. The
+lab does not own new issue intake, roadmap state, or production authority.
 
 ## Fresh Checkout
 
@@ -113,12 +113,10 @@ dependency trees.
 Missing Ipopt is not a production equilibrium package proof. Fix the SDK path
 or run a non-equilibrium lane instead.
 
-## Tracker
+## Archive boundary
 
-For implementation work, use the matching GitHub issue, source spec under
-`docs/superpowers/specs/`, and implementation plan under
-`docs/superpowers/plans/` when one exists. Do not resurrect superseded roadmap files or
-old source-layout commands. Current package work stays in this monorepo under
-`packages/epcsaft`, `packages/epcsaft-equilibrium`, and
-`packages/epcsaft-regression`; retired sibling extension checkouts are not
-authoritative inputs.
+Use retained specs and plans as provenance, not as a live intake queue. Do not
+resurrect retired roadmap files, issue forms, tracker automation, or old
+source-layout commands. A future production change must be admitted by the
+clean repository that owns its vertical slice; this lab remains recoverable
+historical evidence.

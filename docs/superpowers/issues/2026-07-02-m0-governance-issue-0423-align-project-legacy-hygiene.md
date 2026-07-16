@@ -43,7 +43,7 @@ last_synced: "2026-07-02"
 **Intent:** Turn the remaining align-project findings after the Khudaida M6 hierarchy repair into one AFK governance repair.
 **Target Output:** Parser-compatible closed mirror lifecycle evidence and milestone page discovery evidence for the remaining align-project findings.
 **Owner:** M0 governance owns project workflow metadata, tracker hygiene, issue mirrors, and align-project audit compatibility.
-**Interface:** `docs/superpowers/issues`, `docs/superpowers/milestones`, `docs/agents/triage-labels.md`, GitHub Issues, and the align-project audit output.
+**Interface:** `docs/superpowers/issues`, `docs/superpowers/milestones`, the historical GitHub tracker, and the align-project audit output.
 **Cutover:** Keep the merged Khudaida M6 hierarchy as-is; route only the remaining legacy cleanup through this M0 issue.
 **Replaced Path:** Opportunistic broad edits during unrelated issue work.
 **Acceptance Proof:** The issue closes only when the GitHub-aware align audit has no blocking findings and no repairables for closed mirror lifecycle or milestone page discovery, with a clean worktree and docs validation.

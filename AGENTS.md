@@ -13,7 +13,6 @@ Durable workflow details belong in the referenced docs, not in this file.
 - For test selection, validation, and routine development workflows, read `docs/pages/development_workflows.rst`.
 - For build, package, CMake, dependency, Ceres, CppAD, Ipopt, CI-lane, wheel, or sdist changes, read `docs/protocols/build_package_dependency_protocol.rst`.
 - For direct CMake preset work, read `CMAKE.md` and use the repo wrapper policy there.
-- For GitHub Issues, milestones, Projects, labels, issue types, dependencies, and PR policy, read `docs/agents/issue-tracker.md`.
 - For file and analysis layout, read `docs/pages/project_structure.rst`.
 
 ## Tooling Rules
@@ -22,13 +21,12 @@ Durable workflow details belong in the referenced docs, not in this file.
 
 ## Agent skills
 
-### Issue tracker
+### Archive boundary
 
-Issues and PRDs are tracked in GitHub Issues for `ePC-SAFT/ePC-SAFT`. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Use the repo triage vocabulary, including `agent-ready` for AFK-ready issues. See `docs/agents/triage-labels.md`.
+This personal lab preserves the monorepo's history and evidence. It does not
+own active issue intake, roadmap state, labels, tracker automation, or future
+production authority. New work belongs to the approved clean repository that
+owns its slice. Remote or tracker mutations require explicit user approval.
 
 ### Domain docs
 
@@ -37,9 +35,9 @@ Single-context repo; read root `CONTEXT.md`, `docs/superpowers/PROJECT_CONTEXT.m
 ## Repo Invariants
 
 - The active package layout is `packages/epcsaft`, `packages/epcsaft-equilibrium`, and `packages/epcsaft-regression`.
-- Before creating or updating any issue, milestone plan, proof oracle, candidate
-  file list, acceptance criteria, or hidden execution marker, identify the
-  owning milestone and package. M3 provider/EOS work is `packages/epcsaft/**`
+- Before creating or updating any milestone plan, proof oracle, candidate file
+  list, acceptance criteria, or hidden execution marker, identify the owning
+  milestone and package. M3 provider/EOS work is `packages/epcsaft/**`
   plus provider-owned repo docs/build metadata/SDK manifests/provider tests; M4
   is `packages/epcsaft-equilibrium/**`; M5 is
   `packages/epcsaft-regression/**`. Search hits in sibling packages are

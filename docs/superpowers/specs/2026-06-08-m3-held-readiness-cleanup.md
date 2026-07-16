@@ -336,9 +336,9 @@ uv run python run_pytest.py tests/workflows/repo/test_run_pytest.py -q
 uv run python scripts/validation/check_phase_discovery.py --json
 ```
 
-For GitHub tracker changes, also verify issue state, milestone, labels, Project
-fields, and dependency edges through the issue-tracker workflow before claiming
-tracker completion.
+At the time of execution, GitHub tracker changes also required verification of
+issue state, milestone, labels, Project fields, and dependency edges. This is
+historical execution context, not current lab authority.
 
 ## Completion Criteria For The Cleanup Plan
 

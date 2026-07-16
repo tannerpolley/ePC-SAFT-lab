@@ -1,14 +1,19 @@
-# M0 - Governance
+# Historical M0 - Governance
 
-Planning hygiene, tracker setup, labels, issue templates, completion rules,
-GoalBuddy/project discipline, and repo-wide process gates.
+This page preserves the monorepo governance tranche and its issue links as
+historical evidence. It is not a current roadmap or intake queue.
+
+The exact retired issue-form, label, dependency, and Project setup remains
+recoverable from Git history before the lab cleanup commit that removed those
+active owners. It is provenance, not a template for clean repositories.
 
 ## Operating Rule
 
-Use this milestone for tracker/process changes that make agents, GitHub Issues,
-Project fields, local docs, templates, and completion standards agree.
+Use the retained entries to understand prior decisions and dependencies. New
+governance work belongs to the clean repository or migration control plane
+that owns it.
 
-## Current Open Issues
+## Issues open at archival
 
 | Issue | Role | Readiness | Summary |
 | --- | --- | --- | --- |
@@ -17,7 +22,7 @@ Project fields, local docs, templates, and completion standards agree.
 | [#433](../../issues/2026-07-11-m0-governance-issue-0433-m0-activate-measured-ownership-baselines-and-repository-ratchet-gate.md) | leaf | `blocked` | Activate measured baselines after the M3/M5 cutovers and M4 characterization. |
 | [#434](../../issues/2026-07-11-m0-governance-issue-0434-m0-close-tasks-9-22-validation-correctness-program.md) | leaf | `blocked` | Assemble exact terminal receipts and close the Tasks 9-22 program. |
 
-## Current Plans
+## Retained plans
 
 - [Characterized ownership and maintainability ratchets](../../plans/2026-07-10-m0-characterized-ownership-and-maintainability-ratchets-plan.md)
 - [Validation-correctness program closeout](../../plans/2026-07-10-m0-validation-correctness-program-closeout-plan.md)

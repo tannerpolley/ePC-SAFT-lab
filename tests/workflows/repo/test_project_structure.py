@@ -251,30 +251,6 @@ SUPERPOWERS_REGISTRY_FILES = {
     "milestones/M4-equilibrium/registries/equilibrium-algorithm-admission-registry.yaml",
     "milestones/M6-validation/registries/equilibrium-evidence-registry.yaml",
 }
-ISSUE_TYPE_FORMS = {
-    "bug.yml": "bug",
-    "feature.yml": "feature",
-    "task.yml": "task",
-    "downstream_dependency_bug.yml": "bug",
-    "upstream_package_request.yml": "feature",
-    "gate_issue.yml": "task",
-    "micro_issue.yml": "task",
-    "tracking_issue.yml": "task",
-}
-PROJECT_ROADMAP_REQUIRED_FIELDS = {
-    "target_repo",
-    "target_repo_root",
-    "source_docs",
-    "full_roadmap",
-    "milestone_policy",
-    "project_policy",
-    "issue_types",
-    "labels",
-    "issue_forms",
-    "local_files",
-    "apply_policy",
-    "projects_required_by_repo_config",
-}
 AGENTS_REQUIRED_DOC_LINKS = {
     "docs/superpowers/PROJECT_CONTEXT.md",
     "docs/agents/new-agent-start-here.md",
@@ -282,7 +258,6 @@ AGENTS_REQUIRED_DOC_LINKS = {
     "docs/pages/development_workflows.rst",
     "docs/protocols/build_package_dependency_protocol.rst",
     "CMAKE.md",
-    "docs/agents/issue-tracker.md",
     "docs/pages/project_structure.rst",
 }
 AGENTS_BANNED_PHRASES = {
@@ -1991,14 +1966,7 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
         assert f"issue-{issue:04d}-" in path.name
         assert fields["url"] == f"https://github.com/ePC-SAFT/ePC-SAFT/issues/{issue}"
         text = path.read_text(encoding="utf-8")
-        retained_closed_mirror = fields["state"] == "closed" and "**Mirror Retention:** Keep" in text
-        if retained_closed_mirror:
-            assert fields["readiness"] == "closed"
-            assert fields["source_spec"] is None
-            assert fields["source_plan"] is None
-            assert fields["branch"] is None
-        else:
-            assert fields["state"] == "open"
+        assert fields["state"] in {"open", "closed"}
         assert fields["project"] == "ePC-SAFT Roadmap"
         assert fields["milestone"] in set(MILESTONE_MIRROR_FOLDERS.values())
         milestone_folder = next(
@@ -2006,16 +1974,7 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
         )
         assert f"-{milestone_folder.lower()}-issue-" in path.name
         assert not str(fields["title"]).startswith("[Blocked]")
-        if not retained_closed_mirror:
-            source_spec = Path(str(fields["source_spec"]))
-            source_plan = Path(str(fields["source_plan"]))
-            assert source_spec.as_posix().startswith("docs/superpowers/specs")
-            assert source_plan.as_posix().startswith("docs/superpowers/plans")
-            assert (REPO_ROOT / source_spec).is_file(), str(source_spec)
-            assert (REPO_ROOT / source_plan).is_file(), str(source_plan)
         assert fields["afk_hitl"] in {"AFK", "HITL"}
-        if not retained_closed_mirror:
-            assert str(fields["branch"]).startswith(f"codex/issue-{issue:04d}-")
         assert re.fullmatch(r"20\d\d-\d\d-\d\d", str(fields["last_synced"]))
         required_tokens = [
             "GitHub Issue:",
@@ -2023,48 +1982,58 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
             "## Acceptance Criteria",
             "## Proof Oracle",
         ]
-        if retained_closed_mirror:
+        if fields["state"] == "closed" and "**Mirror Retention:** Keep" in text:
             required_tokens.append("**Mirror Retention:** Keep")
-        else:
-            required_tokens.append("Source Plan:")
         for token in required_tokens:
             assert token in text, f"{_workspace_rel(path)} missing {token}"
 
 
-def test_project_roadmap_setup_contract_matches_github_tracker_shape() -> None:
-    roadmap_md = REPO_ROOT / "docs" / "agents" / "project-roadmap.md"
-    roadmap_json = REPO_ROOT / "docs" / "agents" / "project-roadmap.json"
-    issue_tracker = (REPO_ROOT / "docs" / "agents" / "issue-tracker.md").read_text(encoding="utf-8")
-    triage_labels = (REPO_ROOT / "docs" / "agents" / "triage-labels.md").read_text(encoding="utf-8")
+def test_archived_lab_has_no_active_issue_intake_authority() -> None:
+    retired_paths = {
+        ".github/ISSUE_TEMPLATE/bug.yml",
+        ".github/ISSUE_TEMPLATE/downstream_dependency_bug.yml",
+        ".github/ISSUE_TEMPLATE/feature.yml",
+        ".github/ISSUE_TEMPLATE/gate_issue.yml",
+        ".github/ISSUE_TEMPLATE/micro_issue.yml",
+        ".github/ISSUE_TEMPLATE/task.yml",
+        ".github/ISSUE_TEMPLATE/tracking_issue.yml",
+        ".github/ISSUE_TEMPLATE/upstream_package_request.yml",
+        "docs/agents/issue-tracker.md",
+        "docs/agents/project-roadmap.json",
+        "docs/agents/project-roadmap.md",
+        "docs/agents/triage-labels.md",
+        "scripts/support/triage_dependency_issue.py",
+        "tests/workflows/repo/test_dependency_issue_triage.py",
+    }
+    assert sorted(path for path in retired_paths if (REPO_ROOT / path).exists()) == []
 
-    assert roadmap_md.is_file()
-    assert roadmap_json.is_file()
-    setup = json.loads(roadmap_json.read_text(encoding="utf-8"))
-
-    assert PROJECT_ROADMAP_REQUIRED_FIELDS.issubset(setup)
-    assert setup["target_repo"] == "ePC-SAFT/ePC-SAFT"
-    assert setup["full_roadmap"] == "docs/superpowers/PROJECT_CONTEXT.md"
-    assert setup["milestone_policy"] == "mirror-existing-full-roadmap"
-    assert setup["project_policy"] == "dashboard-only"
-    assert setup["apply_policy"] == "default-branch-commit-push"
-    assert setup["projects_required_by_repo_config"] is False
-    assert set(setup["issue_types"]) == {"bug", "feature", "task"}
-    assert setup["issue_relationships"]["canonical_blocker_state"] == "github_issue_dependencies"
-    assert setup["issue_relationships"]["blocked_title_prefix_forbidden"] is True
-    assert {"status:blocked", "Project Readiness=blocked"} <= set(setup["issue_relationships"]["dashboard_mirrors"])
-    assert {"issue": 145, "blocked_by": 148} in setup["issue_relationships"]["audited_edges"]
-    assert {"type:bug", "type:feature", "type:task", "status:triage", "status:ready", "status:blocked"}.issubset(
-        setup["labels"]
-    )
-    assert {"bug", "feature", "task"}.issubset(setup["issue_forms"])
-    assert setup["project"]["url"] == "https://github.com/orgs/ePC-SAFT/projects/1"
-    assert setup["issue_type_backfill"]["missing_type_count_after_apply"] == 0
-
-    for token in ("Bug", "Feature", "Task", "type:bug", "type:feature", "type:task", "blocked_by"):
-        assert token in roadmap_md.read_text(encoding="utf-8")
-        assert token in issue_tracker
-    for token in ("type:bug", "type:feature", "type:task"):
-        assert token in triage_labels
+    active_guidance = {
+        "AGENTS.md",
+        "docs/agents/new-agent-start-here.md",
+        "docs/pages/downstream_dependency_protocol.rst",
+        "docs/pages/project_structure.rst",
+        "docs/superpowers/PROJECT_CONTEXT.md",
+        "docs/superpowers/README.md",
+        "docs/superpowers/issues/README.md",
+        "docs/superpowers/milestones/M0-governance/README.md",
+        "scripts/README.md",
+    }
+    stale_claims = {
+        "authoritative for live tracker state",
+        "Use the repository issue templates",
+        "Local triage helper",
+        "Issues and PRDs are tracked in GitHub Issues",
+        "issue triage",
+        "scripts/" + "support/",
+        "active M1 issue set",
+        "GitHub remains authoritative for issue state",
+        "Keep mirrors only for unresolved GitHub issues",
+    }
+    violations = []
+    for relpath in active_guidance:
+        text = (REPO_ROOT / relpath).read_text(encoding="utf-8")
+        violations.extend(f"{relpath}: {claim}" for claim in stale_claims if claim in text)
+    assert sorted(violations) == []
 
 
 def test_agents_md_stays_a_short_tracked_repo_router() -> None:
@@ -2103,24 +2072,6 @@ def test_expected_nested_agents_files_are_present_and_scoped() -> None:
         assert not re.search(r"[A-Za-z]:\\Users\\Tanner", text)
         assert "docs/superpowers/PROJECT_CONTEXT.md" not in text
         assert "docs/agents/issue-tracker.md" not in text
-
-
-def test_issue_templates_set_native_issue_types_and_compatibility_labels() -> None:
-    template_root = REPO_ROOT / ".github" / "ISSUE_TEMPLATE"
-
-    for filename, issue_type in ISSUE_TYPE_FORMS.items():
-        path = template_root / filename
-        assert path.is_file(), filename
-        form = yaml.safe_load(path.read_text(encoding="utf-8"))
-        labels = set(form.get("labels", []))
-        assert form["type"] == issue_type
-        assert f"type:{issue_type}" in labels
-        assert "ePC-SAFT/1" in set(form.get("projects", []))
-
-    for filename in ("bug.yml", "feature.yml", "task.yml"):
-        form = yaml.safe_load((template_root / filename).read_text(encoding="utf-8"))
-        field_ids = {field.get("id") for field in form["body"] if "id" in field}
-        assert {"plan-file", "outcome", "acceptance", "non-goals", "proof-oracle"}.issubset(field_ids)
 
 
 def test_generated_output_roots_are_not_tracked_in_analyses() -> None:

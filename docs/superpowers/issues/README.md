@@ -1,12 +1,13 @@
 # Issue Mirrors
 
-This folder stores local mirrors for GitHub issues that need durable handoff or
-execution context. GitHub remains authoritative for issue state, labels,
-comments, dependencies, and PR links.
+This folder preserves snapshots of GitHub issues that supplied durable handoff
+or execution context during the monorepo program. Their fields describe the
+state observed at the recorded synchronization date; they are not live intake,
+readiness, dependency, or execution authority.
 
-Issue mirrors used by `project-resolve` must include source spec or source plan
-linkage, AFK/HITL classification, acceptance criteria, proof oracle, and goal
-execution metadata.
+The retained mirrors may include source linkage, AFK/HITL classification,
+acceptance criteria, proof oracles, and execution metadata as historical
+evidence.
 
 Issue mirror filenames use the GitHub issue creation date, owning milestone,
 and issue number:
@@ -15,9 +16,7 @@ and issue number:
 docs/superpowers/issues/YYYY-MM-DD-m#-milestone-issue-####-<slug>.md
 ```
 
-Keep mirrors only for unresolved GitHub issues that need local handoff or
-execution context. Delete mirrors for closed issues unless a repo maintainer
-explicitly marks the file as archival documentation with:
+Historical closed mirrors may carry this earlier retention marker:
 
 ```markdown
 **Mirror Retention:** Keep

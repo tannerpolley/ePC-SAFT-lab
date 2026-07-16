@@ -19,7 +19,7 @@ Package Surfaces
     Repository/workflow, docs/registry, integration, and cross-package governance contracts. Provider tests live under ``packages/epcsaft/tests``; extension tests live under their package-local ``tests`` trees. Default tests should stay fast and should not reproduce full scientific studies, benchmark scripts, regenerate plot galleries, or run long fitting/equilibrium sweeps.
 
 ``scripts/``
-    Repository tooling only: native builds, doctor checks, validation orchestration, packaging, docs, reference-data curation, LaTeX sync, and issue triage. Analysis-specific coordinators may live under ``analyses/<category>/<short_id>/scripts/``, while figure-local generation and rendering scripts belong under ``analyses/<category>/<short_id>/figures/<figure_id>/scripts/``.
+    Repository tooling only: native builds, doctor checks, validation orchestration, packaging, docs, reference-data curation, and LaTeX sync. Analysis-specific coordinators may live under ``analyses/<category>/<short_id>/scripts/``, while figure-local generation and rendering scripts belong under ``analyses/<category>/<short_id>/figures/<figure_id>/scripts/``.
 
 ``data/reference/``
     Reusable checkout data: parameter datasets, benchmark records, literature tables, and curation sources that may be shared by several analyses or package tests.

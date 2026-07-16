@@ -57,8 +57,8 @@ validation registry, Ruff, Sphinx, Git, and GitHub issue dependency evidence.
   and its matching plan.
 - Canonical validation command registry:
   `scripts/dev/validation_registry.py`.
-- Canonical milestone and dependency policy:
-  `docs/agents/issue-tracker.md`.
+- Historical milestone and dependency policy recorded by the retained issue
+  graph.
 - Required child evidence comes only from the terminal leaves selected in the
   published Tasks 9-22 issue graph.
 - The focused Gross public-route prerequisite is defined by

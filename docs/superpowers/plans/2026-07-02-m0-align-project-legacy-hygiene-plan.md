@@ -14,9 +14,8 @@ the repo's `docs/superpowers/milestones/M*/README.md` layout.
 proof commands, and stop criteria for the remaining align-project hygiene.
 **Owner:** M0 governance owns project workflow metadata, tracker hygiene,
 issue mirrors, and align-project audit compatibility.
-**Interface:** `docs/superpowers/issues`, `docs/superpowers/milestones`,
-`docs/agents/triage-labels.md`, the GitHub issue tracker, and the
-`align-project` audit output.
+**Interface:** `docs/superpowers/issues`, `docs/superpowers/milestones`, the
+historical GitHub tracker, and the `align-project` audit output.
 **Cutover:** Keep the merged Khudaida M6 hierarchy as-is; route only the
 remaining legacy cleanup through the new M0 issue.
 **Replaced Path:** Opportunistic broad edits during unrelated issue work.
@@ -102,8 +101,7 @@ files, and retained closed mirror policy in the closing PR.
 - The governance repair must close with executable evidence.
 - Manual claims that the tracker is cleaner should not close the issue.
 
-**Files:** `docs/superpowers/issues/*.md`, `docs/superpowers/milestones/**`,
-`docs/agents/triage-labels.md`
+**Files:** `docs/superpowers/issues/*.md`, `docs/superpowers/milestones/**`
 
 1. Rerun `align-project -Mode GitHubAware`.
 2. Rerun changed issue mirror validation where mirrors were edited.

@@ -367,14 +367,12 @@ def test_provider_owns_pure_neutral_parameter_derivative_native_symbol() -> None
     assert definitions == ["packages/epcsaft/src/epcsaft/native/eos/derivatives/parameters/pure_neutral.cpp"]
 
 
-def test_issue_tracker_and_downstream_docs_are_transfer_aware() -> None:
-    issue_tracker = _read(REPO_ROOT / "docs" / "agents" / "issue-tracker.md")
+def test_downstream_protocol_uses_clean_repository_intake_boundary() -> None:
     downstream = _read(REPO_ROOT / "docs" / "pages" / "downstream_dependency_protocol.rst")
 
-    assert "git remote -v" in issue_tracker
-    assert "git remote -v" in downstream
-    assert "ePC-SAFT/ePC-SAFT" in issue_tracker
-    assert "ePC-SAFT/ePC-SAFT" in downstream
+    assert "current clean repository's own contribution channel" in downstream
+    assert "preserved lab does not route or mutate live issues" in downstream
+    assert "ePC-SAFT/ePC-SAFT" not in downstream
 
 
 def test_downstream_local_install_docs_use_provider_scoped_capabilities() -> None:

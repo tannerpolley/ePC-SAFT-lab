@@ -628,42 +628,6 @@ def test_linux_extension_docs_and_execution_records_use_current_package_ownershi
     assert 'epcsaft.runtime_build_info()["source_git_commit"]' in downstream_installs
 
 
-def test_open_issue_execution_oracles_use_linux_commands() -> None:
-    windows_markers = (
-        "```powershell",
-        "pwsh.exe",
-        "scripts\\",
-        "analyses\\",
-        "$env:",
-        "Remove-Item",
-        ".ps1",
-        ".venv\\Scripts",
-        '"$HOME\\/.codex',
-    )
-    execution_documents: set[Path] = set()
-    open_issues: list[Path] = []
-    for path in sorted((REPO_ROOT / "docs" / "superpowers" / "issues").glob("*.md")):
-        text = path.read_text(encoding="utf-8")
-        if "\nstate: open\n" not in text:
-            continue
-        open_issues.append(path)
-        for line in text.splitlines():
-            if line.startswith(("source_spec:", "source_plan:")):
-                source_path = line.split(":", 1)[1].strip()
-                if source_path and source_path != "null":
-                    execution_documents.add(REPO_ROOT / source_path)
-    execution_documents.update(open_issues)
-
-    offenders: dict[str, list[str]] = {}
-    for path in sorted(execution_documents):
-        text = path.read_text(encoding="utf-8")
-        hits = [marker for marker in windows_markers if marker.lower() in text.lower()]
-        if hits:
-            offenders[path.relative_to(REPO_ROOT).as_posix()] = hits
-
-    assert offenders == {}
-
-
 def test_linux_agent_and_shared_object_guidance_fail_loudly_and_match_linux_semantics() -> None:
     agents_md = _read("AGENTS.md")
     development_workflows = _read("docs/pages/development_workflows.rst")
@@ -781,11 +745,11 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
         "docs/agents/agent-happy-path.md",
         "docs/pages/development_workflows.rst",
         "docs/protocols/build_package_dependency_protocol.rst",
-        "docs/agents/issue-tracker.md",
         "docs/pages/project_structure.rst",
         "packages/epcsaft-equilibrium",
     ):
         assert token in agents_md
+    assert "This personal lab preserves the monorepo's history and evidence" in agents_md
     assert "Intel" + "liJ" not in agents_md
     assert "Jet" + "Brains" not in agents_md
 

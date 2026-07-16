@@ -88,7 +88,7 @@ Required verification:
 
 **Files:**
 - Read: `docs/superpowers/specs/2026-06-08-m3-held-readiness-cleanup.md`
-- Read: `docs/agents/issue-tracker.md`
+- Read: the then-active issue and milestone routing policy
 - Read: `docs/superpowers/milestones/M3-eos/README.md`
 - Read: `docs/superpowers/milestones/M4-equilibrium/README.md`
 - Read: `packages/epcsaft/src/epcsaft/native/eos/core_internal.h`

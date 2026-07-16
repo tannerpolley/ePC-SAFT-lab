@@ -103,7 +103,7 @@
 | Decision | Source | Answer | Impact | Deferred? | Risk owner |
 | --- | --- | --- | --- | --- | --- |
 | Workflow mode | User correction in this thread | Auto Mode for one issue-creation workflow; stop before implementation | Allows issue/spec/plan/mirror creation without more route prompts | No | Main thread |
-| Milestone owner | `docs/agents/issue-tracker.md` and #407 M6 routing | M4 owns this issue because #407 routes solver/API defects to M4 | Prevents M6 validation issue from absorbing route behavior | No | Main thread |
+| Milestone owner | Historical #407 M6 routing | M4 owns this issue because #407 routes solver/API defects to M4 | Prevents M6 validation issue from absorbing route behavior | No | Main thread |
 | Parameter ownership | #338 body and project context | M5 #338 owns fitted Khudaida parameter work | Keeps this issue focused on truthful route acceptance and diagnosis | No | Main thread |
 | Bug metric | Current retained Figure 2 rows | `phase_distance < 1.0e-3` is collapsed for Khudaida reproduction | Gives checker a concrete failure threshold | No | Implementing agent |
 | Completion target | User request and project context | Reject collapsed splits and debug branch convergence; do not require hidden parameter fitting | Lets issue complete with honest M4 diagnosis when #338 remains required | No | Implementing agent |

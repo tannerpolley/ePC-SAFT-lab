@@ -1,7 +1,7 @@
 # Superpowers Project
 
-This folder is the local Superpowers Project root for durable project context,
-milestone map pages, specs, implementation plans, and issue mirrors.
+This folder preserves the monorepo's project context, milestone map pages,
+specs, implementation plans, and issue mirrors as migration evidence.
 
 - `PROJECT_CONTEXT.md` is the package-context and completion-standard document.
 - `milestones/` stores durable milestone map pages and milestone-owned registries.
@@ -10,5 +10,5 @@ milestone map pages, specs, implementation plans, and issue mirrors.
 - `issues/` stores local GitHub issue mirrors used by project issue execution.
 - `_templates/` stores reusable local spec, plan, and issue-mirror shapes.
 
-GitHub Issues and the `ePC-SAFT Roadmap` Project remain authoritative for live
-issue state, labels, comments, dependencies, and PR links.
+These records do not own live issue intake, roadmap state, or clean-repository
+production authority. Historical issue links and mirrors remain provenance.
