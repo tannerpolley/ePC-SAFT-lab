@@ -1,17 +1,20 @@
-Installation
-============
+Historical Lab Installation Evidence
+====================================
 
-Current package version: ``0.2.0``
+v0.2.0 is historical lab evidence, not a current clean-package release. This
+lab does not publish packages to PyPI or own production release authority.
+Historical v0.2.0 lab evidence is retained through the wheel, source, and
+local build/install proof commands below.
 
 Install from a wheel
 --------------------
 
-The ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel and source
-archive:
+The historical ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel
+and source archive:
 
-``https://github.com/ePC-SAFT/ePC-SAFT/releases/tag/v0.2.0``
+``https://github.com/tannerpolley/ePC-SAFT-lab/releases/tag/v0.2.0``
 
-That URL is the current organization-owned release location.
+That URL is retained lab evidence, not a current clean-package release source.
 
 Windows users on Python 3.13 can download the wheel and install it directly:
 
@@ -24,25 +27,6 @@ built for your platform. The GitHub release wheel is built without a local
 Ipopt runtime dependency; build from source when you need optional
 Ipopt-backed equilibrium routes.
 
-Install from PyPI
------------------
-
-PyPI publishing is configured through GitHub Actions, but the first upload
-requires the PyPI pending publisher for this repository. When the project page
-is live at ``https://pypi.org/project/epcsaft/``, install with:
-
-.. code-block:: bash
-
-   python -m pip install epcsaft
-
-With ``uv``:
-
-.. code-block:: bash
-
-   uv add epcsaft
-
-If PyPI returns 404 for ``epcsaft``, use the GitHub release wheel instead.
-
 Install from tagged source
 --------------------------
 
@@ -51,13 +35,13 @@ locally:
 
 .. code-block:: bash
 
-   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
+   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT-lab.git@v0.2.0#subdirectory=packages/epcsaft"
 
 With ``uv``:
 
 .. code-block:: bash
 
-   uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
+   uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT-lab.git@v0.2.0#subdirectory=packages/epcsaft"
 
 Source builds require:
 
@@ -87,8 +71,8 @@ come directly from the checkout:
 
 .. code-block:: bash
 
-   git clone https://github.com/ePC-SAFT/ePC-SAFT.git
-   cd ePC-SAFT
+   git clone https://github.com/tannerpolley/ePC-SAFT-lab.git ePC-SAFT-lab
+   cd ePC-SAFT-lab
    python -m pip install -e packages/epcsaft
 
 With ``uv``:
@@ -104,7 +88,7 @@ command so the native extension is rebuilt.
 
 Equilibrium and regression workflows live in monorepo workspace packages under
 ``packages/``. Their local distribution artifacts can be built and installed
-from ``dist/`` alongside the provider artifact before PyPI publication:
+from ``dist/`` alongside the provider artifact as local build/install proof:
 
 .. code-block:: bash
 
@@ -122,19 +106,19 @@ artifacts:
 
 .. code-block:: bash
 
-   python -m pip install epcsaft
-   python -m pip install epcsaft epcsaft-equilibrium
-   python -m pip install epcsaft epcsaft-regression
-   python -m pip install epcsaft epcsaft-equilibrium epcsaft-regression
+   python -m pip install --no-index --find-links dist epcsaft
+   python -m pip install --no-index --find-links dist epcsaft epcsaft-equilibrium
+   python -m pip install --no-index --find-links dist epcsaft epcsaft-regression
+   python -m pip install --no-index --find-links dist epcsaft epcsaft-equilibrium epcsaft-regression
 
-The commands above describe the release target. Until the extension packages
-are published, use the local ``dist/`` proof or the monorepo uv workspace.
-Production equilibrium extension artifacts require a real Ipopt SDK; no-Ipopt
-builds are not production equilibrium package evidence.
+The commands above exercise local artifacts and do not assert a hosted release.
+Use the local ``dist/`` proof or the monorepo uv workspace. Production
+equilibrium extension artifacts require a real Ipopt SDK; no-Ipopt builds are
+not production equilibrium package evidence.
 
-All current provider and extension release artifacts are built from this
-monorepo. Retired sibling extension checkouts are not part of release,
-installation, or package-proof workflows.
+The retained provider and extension artifacts are built from this checkout.
+Retired sibling extension checkouts are not part of local installation or
+package-proof workflows.
 
 Local path dependency
 ---------------------

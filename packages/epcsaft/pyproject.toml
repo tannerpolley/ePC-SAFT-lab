@@ -29,9 +29,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ePC-SAFT/ePC-SAFT"
+Homepage = "https://github.com/tannerpolley/ePC-SAFT-lab"
 Documentation = "https://epcsaft.readthedocs.io/en/latest/"
-Repository = "https://github.com/ePC-SAFT/ePC-SAFT"
+Repository = "https://github.com/tannerpolley/ePC-SAFT-lab"
 
 [tool.scikit-build]
 minimum-version = "0.12"

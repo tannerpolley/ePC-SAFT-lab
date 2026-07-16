@@ -15,7 +15,6 @@ REGRESSION_BACKEND_PATH = (
 )
 NATIVE_DEPENDENCY_POLICY_PATH = REPO_ROOT / "packages" / "epcsaft" / "build_backend" / "native_dependency_policy.py"
 PACKAGE_BUILD_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "package-build-lanes.yml"
-PUBLISH_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "publish-pypi.yml"
 EQUILIBRIUM_PYPROJECT_PATH = REPO_ROOT / "packages" / "epcsaft-equilibrium" / "pyproject.toml"
 CPPAD_CMAKE_PATHS = (
     REPO_ROOT / "CMakeLists.txt",
@@ -355,15 +354,3 @@ def test_package_build_workflow_provisions_linux_ipopt() -> None:
     assert "coinor-libipopt-dev" in workflow
     assert workflow.count("--ipopt-root /usr") == 2
     assert "${{ inputs.ipopt_root }}" not in workflow
-
-
-def test_publish_workflow_resolves_version_tag_to_one_commit() -> None:
-    workflow = PUBLISH_WORKFLOW_PATH.read_text(encoding="utf-8")
-
-    assert "tag:" in workflow
-    assert 'default: "v0.2.0"' not in workflow
-    assert "^v[0-9]+\\.[0-9]+\\.[0-9]+$" in workflow
-    assert 'f"v{version}"' in workflow
-    assert 'git checkout --detach "$release_commit"' in workflow
-    assert "release_commit:" in workflow
-    assert workflow.count("ref: ${{ needs.pypi-preflight.outputs.release_commit }}") == 2

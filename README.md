@@ -2,8 +2,9 @@
 
 > [!IMPORTANT]
 > This is the preserved legacy/lab repository for the original ePC-SAFT
-> monorepo. Historical links under `ePC-SAFT/ePC-SAFT` map to the corresponding
-> issue, pull request, release, or commit under `tannerpolley/ePC-SAFT-lab`.
+> monorepo. v0.2.0 is historical lab evidence retained in this archive. This
+> This lab does not publish packages to PyPI or own production release
+> authority.
 > Clean production packages are migrated separately and do not inherit this
 > repository's runtime authority automatically.
 
@@ -15,7 +16,7 @@ owned by `epcsaft-equilibrium`, and Ceres-backed regression is owned by
 packages in this tranche; install them from this checkout, not against a
 provider-only `epcsaft` wheel.
 
-Current package version: `0.2.0`
+Historical package evidence: `0.2.0`
 
 ## What You Can Use It For
 
@@ -31,15 +32,17 @@ The main provider objects are `ParameterSet`, `ModelOptions`, `Mixture`,
 `State`, and `create_input_template(...)`. Import `Equilibrium` from
 `epcsaft_equilibrium` and `Regression` from `epcsaft_regression`.
 
-## Install
+## Historical v0.2.0 evidence
 
-### GitHub Release
+The `v0.2.0` GitHub release is historical lab evidence: a Windows CPython 3.13
+wheel and source archive retained at:
 
-The `v0.2.0` GitHub release provides a Windows CPython 3.13 wheel and source archive:
+<https://github.com/tannerpolley/ePC-SAFT-lab/releases/tag/v0.2.0>
 
-<https://github.com/ePC-SAFT/ePC-SAFT/releases/tag/v0.2.0>
+This archive does not claim a current clean-package release. Use the retained
+artifacts for historical inspection or build/install the packages locally.
 
-That URL is the current organization-owned source location for release history.
+### Historical wheel
 
 Windows users on Python 3.13 can download the wheel and install it directly:
 
@@ -47,36 +50,21 @@ Windows users on Python 3.13 can download the wheel and install it directly:
 python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
 ```
 
-Use the tagged source install below when you need to build for another supported Python version or enable optional Ipopt-backed equilibrium routes.
-
-### PyPI
-
-PyPI publishing is configured through GitHub Actions, but the first upload requires the PyPI pending publisher for this repository. When the project page is live at <https://pypi.org/project/epcsaft/>, install with:
-
-```powershell
-python -m pip install epcsaft
-```
-
-With `uv`:
-
-```powershell
-uv add epcsaft
-```
-
-If PyPI returns 404 for `epcsaft`, use the GitHub release wheel above.
+Use the historical wheel only as archived evidence; this lab has no PyPI
+publication path.
 
 ### Tagged Source
 
 The `v0.2.0` tag supports source installs that build the native extension locally. Source installs require Python `>=3.9`, a C++ compiler, CMake, and Ninja or another CMake generator:
 
 ```powershell
-python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
+python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT-lab.git@v0.2.0#subdirectory=packages/epcsaft"
 ```
 
 With `uv`:
 
 ```powershell
-uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
+uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT-lab.git@v0.2.0#subdirectory=packages/epcsaft"
 ```
 
 ### Local Clone
@@ -84,8 +72,8 @@ uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirecto
 For a local source install:
 
 ```powershell
-git clone https://github.com/ePC-SAFT/ePC-SAFT.git
-cd ePC-SAFT
+git clone https://github.com/tannerpolley/ePC-SAFT-lab.git ePC-SAFT-lab
+cd ePC-SAFT-lab
 python -m pip install packages/epcsaft
 ```
 
@@ -240,7 +228,7 @@ point the build backend at an Ipopt install root:
 
 ```powershell
 $env:EPCSAFT_PEP517_IPOPT_ROOT = "$env:USERPROFILE\Documents\deps\ipopt-msvc"
-python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
+python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT-lab.git@v0.2.0"
 ```
 
 Use `EPCSAFT_PEP517_IPOPT_DIR` instead when the install provides an `IpoptConfig.cmake` directory. Runtime processes that execute Ipopt on Windows must expose the SDK `bin` directory through both `PATH` and `EPCSAFT_RUNTIME_DLL_DIRS`; repo build scripts do this automatically for the local SDK.

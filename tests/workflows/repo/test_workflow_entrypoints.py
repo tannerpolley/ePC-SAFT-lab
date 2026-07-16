@@ -495,29 +495,27 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "README intentionally stays focused on package users" in readme
     assert "uv run python scripts\\validate_project.py quick" not in readme
     assert "uv run python run_pytest.py --confidence -q" not in readme
-    assert "The `v0.2.0` GitHub release provides a Windows CPython 3.13 wheel" in readme
-    assert "If PyPI returns 404 for `epcsaft`, use the GitHub release wheel above." in readme
-    assert "python -m pip install epcsaft" in readme
+    assert "v0.2.0 is historical lab evidence" in readme
+    assert "This lab does not publish packages to PyPI" in readme
+    assert "python -m pip install packages/epcsaft" in readme
     assert "python -m pip install -e packages/epcsaft" in readme
     assert "README intentionally stays focused on package users" in readme
     assert "Editable source install" in release_installation
     assert "python -m pip install -e packages/epcsaft" in release_installation
+    assert "local build/install proof" in release_installation
     assert "Source and editable installs build a native C++ extension" in getting_started
     assert "default source-checkout validation sequence" not in getting_started
     assert "``run_pytest.py -q`` is the default fast contract suite" not in getting_started
-    assert "Current package version: ``0.2.0``" in overview
-    assert "If PyPI returns 404 for ``epcsaft``, use the GitHub release wheel above." in overview
+    assert "v0.2.0 is historical lab evidence" in overview
+    assert "This lab does not publish packages to PyPI" in overview
     assert "The ``v0.2.0`` tag supports source installs" in overview
     assert "python -m pip install -e packages/epcsaft" in overview
-    assert "For the current release, install the Windows CPython 3.13 wheel from GitHub" in getting_started
-    assert "After the package is published on PyPI" in getting_started
-    assert "Current package version: ``0.2.0``" in release_installation
-    assert "The ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel" in release_installation
-    assert "Windows-first native-backed Python package release" in release_note
+    assert "Historical v0.2.0 lab evidence" in getting_started
+    assert "Historical v0.2.0 lab evidence" in release_installation
+    assert "v0.2.0 is historical lab evidence" in release_note
     assert "The evidence-backed routes are `bubble_pressure`, `dew_pressure`, and scoped nonassociating hydrocarbon `single_component_vle`" in release_note
     assert "Neutral LLE, electrolyte LLE, reactive speciation, reactive LLE, and reactive electrolyte LLE are declared not exposed" in release_note
-    assert "Release assets are built for the Windows CPython 3.13" in release_note
-    assert "PyPI publishing remains a manual Trusted Publishing action" in release_note
+    assert "Retained local build/install proof" in release_note
     assert "production-exposed" in overview
     assert "bubble pressure, dew pressure" in overview
     assert "and scoped nonassociating hydrocarbon single-component VLE." in overview
@@ -528,7 +526,7 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "release_installation" in docs_index
     assert "development_workflows" in docs_index
     assert "native_debugging" in docs_index
-    assert "publishing" in docs_index
+    assert "publishing" not in docs_index
     assert "native/equation debugging guide" not in getting_started
     assert "Start every fresh source checkout with this sequence" in development_workflows
     assert "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10" in development_workflows
@@ -622,7 +620,7 @@ def test_linux_extension_docs_and_execution_records_use_current_package_ownershi
     assert "build_extension_dists.py --mode installed-provider --package epcsaft-equilibrium" in equilibrium_readme
     assert "Provider installs do not consume Ipopt" in " ".join(release_installation.split())
     assert 'python -m pip install "epcsaft @ git+' not in ipopt_section
-    assert "provider wheel and its native SDK" in docs_overview
+    assert "provider wheel and its native SDK" in " ".join(docs_overview.split())
     assert "not against a provider-only ``epcsaft`` wheel" not in docs_overview
     assert "epcsaft.__git_commit__" not in downstream_installs
     assert 'epcsaft.runtime_build_info()["source_git_commit"]' in downstream_installs
@@ -959,48 +957,39 @@ def test_heavy_native_workflow_is_manual_only() -> None:
     assert "native CppAD derivative contract" in workflow
 
 
-def test_pypi_publish_workflow_uses_trusted_publishing() -> None:
-    workflow = _read(".github/workflows/publish-pypi.yml")
-    publishing_docs = _read("docs/pages/publishing.rst")
+def test_lab_publication_authority_is_retired() -> None:
+    active_guidance_paths = (
+        "README.md",
+        "docs/pages/README.rst",
+        "docs/pages/getting_started.rst",
+        "docs/pages/release_installation.rst",
+        "docs/releases/v0.2.0.md",
+    )
+    active_guidance = {path: _read(path) for path in active_guidance_paths}
+    docs_index = _read("docs/pages/index.rst")
 
-    for token in (
-        "name: publish-to-pypi",
-        "workflow_dispatch:",
-        "id-token: write",
-        "environment:",
-        "name: pypi",
-        "pypa/gh-action-pypi-publish@release/v1",
-        "actions/download-artifact@v8.0.1",
-        "merge-multiple: true",
-        'CIBW_BUILD: "cp313-*"',
-        'CIBW_ARCHS_LINUX: "x86_64"',
-        "uv build packages/epcsaft --sdist",
-        "pypi-preflight:",
-        "PyPI trusted publisher preflight",
-        "https://pypi.org/pypi/{project}/json",
+    assert not (REPO_ROOT / ".github" / "workflows" / "publish-pypi.yml").exists()
+    assert not (REPO_ROOT / "docs" / "pages" / "publishing.rst").exists()
+    assert "publishing" not in docs_index
+
+    stale_publication_claims = (
+        "PyPI publishing is configured",
+        "PyPI publishing remains",
         "pending publisher",
-        "PyPI first-publish preflight",
-        "already has {project} {version}",
-    ):
-        assert token in workflow
-    assert "release:" not in workflow
-    assert "types: [published]" not in workflow
-    assert "github.event.release" not in workflow
-    assert "needs: [pypi-preflight]" in workflow
-    assert "password:" not in workflow
-    assert "username:" not in workflow
-    assert "PYPI_API_TOKEN" not in workflow
-    assert "pp*" not in workflow
-    dispatch_inputs = workflow.split("  workflow_dispatch:", 1)[1].split("\n\npermissions:", 1)[0]
-    assert "      tag:" in dispatch_inputs
-    assert "      ref:" not in dispatch_inputs
-    assert "Workflow filename: ``publish-pypi.yml``" in publishing_docs
-    assert "Environment name: ``pypi``" in publishing_docs
-    assert "GitHub releases and PyPI uploads are separate steps" in publishing_docs
-    assert "Creating a GitHub release does not upload to PyPI" in publishing_docs
-    assert "-f tag=vX.Y.Z" in publishing_docs
-    assert "-f ref=" not in publishing_docs
-    assert "Ipopt runtime DLLs" not in publishing_docs
+        "Install from PyPI",
+        "After the package is published on PyPI",
+        "publish-pypi.yml",
+        "pypa/gh-action-pypi-publish",
+        "https://pypi.org/project/epcsaft/",
+        "https://pypi.org/pypi/",
+    )
+    for relative_path, text in active_guidance.items():
+        assert "v0.2.0 is historical lab evidence" in text.lower(), relative_path
+        assert "https://github.com/tannerpolley/ePC-SAFT-lab" in text, relative_path
+        assert "https://github.com/ePC-SAFT/ePC-SAFT" not in text, relative_path
+        assert "https://github.com/tannerpolley/ePC-SAFT.git" not in text, relative_path
+        for stale_claim in stale_publication_claims:
+            assert stale_claim not in text, (relative_path, stale_claim)
 
 
 def test_version_defaults_are_derived_from_pyproject() -> None:

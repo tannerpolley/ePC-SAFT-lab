@@ -5,14 +5,15 @@ Overview
 PC-SAFT thermodynamic calculations. The public interface is Python, while the
 equation-of-state runtime is implemented in native C++ through ``pybind11``.
 
-This release is still a monorepo transition build. Ipopt-backed equilibrium is
-owned by ``epcsaft-equilibrium``, and Ceres-backed regression is owned by
-``epcsaft-regression``. Each extension is a separate distribution that can
-consume an installed provider wheel and its native SDK. The monorepo checkout
-remains the development and release-proof source until those extension
-distributions are published.
+This checkout is the preserved personal-lab archive for the original monorepo.
+v0.2.0 is historical lab evidence, not a current clean-package release.
+This lab does not publish packages to PyPI or own production release authority.
+Ipopt-backed equilibrium remains owned by ``epcsaft-equilibrium``, and
+Ceres-backed regression remains owned by ``epcsaft-regression``. Each extension
+is a separate distribution that can consume a provider wheel and its native
+SDK; this checkout retains local build/install proof only.
 
-Current package version: ``0.2.0``
+Historical package evidence: ``0.2.0``
 
 What the package does
 ---------------------
@@ -37,15 +38,16 @@ The main user objects are:
 - ``create_input_template(...)``: creates a versioned parameter document and workflow-option scaffolds.
 - ``capabilities()``: reports available runtime and solver paths.
 
-Install
--------
+Historical v0.2.0 evidence
+--------------------------
 
-The ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel and source
-archive:
+The ``v0.2.0`` GitHub release is historical lab evidence: a Windows CPython
+3.13 wheel and source archive retained at:
 
-``https://github.com/ePC-SAFT/ePC-SAFT/releases/tag/v0.2.0``
+``https://github.com/tannerpolley/ePC-SAFT-lab/releases/tag/v0.2.0``
 
-That URL is the current organization-owned source location for release history.
+This archive does not claim a current clean-package release. Use its retained
+wheel as historical evidence or build/install the packages locally.
 
 Windows users on Python 3.13 can download the wheel and install it directly:
 
@@ -53,34 +55,21 @@ Windows users on Python 3.13 can download the wheel and install it directly:
 
    python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
 
-PyPI publishing is configured through GitHub Actions, but the first upload
-requires the PyPI pending publisher for this repository. When the project page
-is live at ``https://pypi.org/project/epcsaft/``, install with:
-
-.. code-block:: bash
-
-   python -m pip install epcsaft
-
-With ``uv``:
-
-.. code-block:: bash
-
-   uv add epcsaft
-
-If PyPI returns 404 for ``epcsaft``, use the GitHub release wheel above.
+This lab has no PyPI publication path. The retained wheel and source commands
+above are historical evidence or local source-checkout workflows only.
 
 The ``v0.2.0`` tag supports source installs that build the native extension
 locally:
 
 .. code-block:: bash
 
-   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
+   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT-lab.git@v0.2.0#subdirectory=packages/epcsaft"
 
 With ``uv``:
 
 .. code-block:: bash
 
-   uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
+   uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT-lab.git@v0.2.0#subdirectory=packages/epcsaft"
 
 Source builds require Python ``>=3.9``, a C++ compiler, CMake, and Ninja or
 another CMake generator. Python 3.13 is the current project smoke-test
@@ -90,8 +79,8 @@ For a normal local source install:
 
 .. code-block:: bash
 
-   git clone https://github.com/ePC-SAFT/ePC-SAFT.git
-   cd ePC-SAFT
+   git clone https://github.com/tannerpolley/ePC-SAFT-lab.git ePC-SAFT-lab
+   cd ePC-SAFT-lab
    python -m pip install packages/epcsaft
 
 For an editable install while changing Python files:

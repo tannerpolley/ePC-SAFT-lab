@@ -1,37 +1,32 @@
 Getting Started
 ===============
 
-Install
--------
+Historical v0.2.0 lab evidence
+------------------------------
 
-For the current release, install the Windows CPython 3.13 wheel from GitHub:
+v0.2.0 is historical lab evidence, not a current clean-package release. This
+lab does not publish packages to PyPI or own production release authority. For
+archival inspection, install the retained Windows CPython 3.13 wheel:
 
 .. code-block:: powershell
 
    python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
 
-The GitHub URLs below point at the current organization-owned source location.
+The historical repository and release URLs below point at the lab archive:
 
 The ``v0.2.0`` tag also supports source installs that build the native
 extension locally:
 
 .. code-block:: bash
 
-   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
-
-After the package is published on PyPI, use the standard package-manager
-command:
-
-.. code-block:: bash
-
-   python -m pip install epcsaft
+   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT-lab.git@v0.2.0#subdirectory=packages/epcsaft"
 
 For a local editable checkout:
 
 .. code-block:: bash
 
-   git clone https://github.com/ePC-SAFT/ePC-SAFT.git
-   cd ePC-SAFT
+   git clone https://github.com/tannerpolley/ePC-SAFT-lab.git ePC-SAFT-lab
+   cd ePC-SAFT-lab
    python -m pip install -e packages/epcsaft
 
 Source and editable installs build a native C++ extension. They require Python

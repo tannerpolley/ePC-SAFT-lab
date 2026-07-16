@@ -54,10 +54,11 @@ checks or required reviews.
 
 Only the lightweight local-development smoke workflow runs automatically on
 ``pull_request``. Heavy native/profile builds, package build lanes, full wheel
-matrices, publish workflows, and installed-provider extension proofs are
-manual-only workflows. They remain required before a PR claims release
-readiness, capability support, or production native behavior. Ordinary PRs do
-not need boilerplate notes for skipped heavy lanes.
+matrices, and installed-provider extension proofs are manual-only workflows.
+Historical publication automation is not part of this archive's active
+workflow set. The retained build lanes remain required before a PR claims
+local build/install readiness, capability support, or production native
+behavior. Ordinary PRs do not need boilerplate notes for skipped heavy lanes.
 
 Command matrix
 --------------
