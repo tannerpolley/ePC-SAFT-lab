@@ -3,7 +3,9 @@
 This is the entry point for work in the preserved ePC-SAFT lab.
 `docs/superpowers/PROJECT_CONTEXT.md` remains the monorepo package-context and
 completion-standard record while the clean repositories are populated. The
-lab does not own new issue intake, roadmap state, or production authority.
+lab does not own new issue intake, roadmap state, publication, or permanent
+production authority. It remains transitional runtime authority only for
+unpromoted slices.
 
 ## Fresh Checkout
 

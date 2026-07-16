@@ -2036,6 +2036,47 @@ def test_archived_lab_has_no_active_issue_intake_authority() -> None:
     assert sorted(violations) == []
 
 
+def test_lab_planning_surfaces_are_archival_not_execution_authority() -> None:
+    retired_paths = {
+        "scripts/validate_issue_mirror.py",
+        "tests/workflows/repo/test_ce_issue_backbone.py",
+    }
+    assert sorted(path for path in retired_paths if (REPO_ROOT / path).exists()) == []
+
+    context = (
+        REPO_ROOT / "docs" / "superpowers" / "PROJECT_CONTEXT.md"
+    ).read_text(encoding="utf-8")
+    assert len(context.splitlines()) <= 180
+    assert "doctrine revision 2" in context
+    assert "personal lab" in context
+    assert "sole transitional runtime authority" in context
+    assert "docs/superpowers/specs/2026-07-14-clean-ecosystem-cutover-design.md" not in context
+
+    archive_indexes = {
+        "docs/superpowers/plans/README.md": "Historical Plans",
+        "docs/superpowers/specs/README.md": "Historical Specs",
+        "docs/superpowers/milestones/M3-eos/README.md": "Historical M3",
+        "docs/superpowers/milestones/M4-equilibrium/README.md": "Historical M4",
+        "docs/superpowers/milestones/M6-validation/README.md": "Historical M6",
+        "docs/superpowers/milestones/M8-python-toybox/README.md": "Historical M8",
+    }
+    forbidden_headings = {
+        "## Current Open Issues",
+        "## Current Open Work",
+        "## Current Ownership",
+        "## Current Plan",
+        "## Current Plans",
+        "## Current Program",
+        "## Current Specs",
+        "## Current Artifacts",
+    }
+    for relpath, archival_title in archive_indexes.items():
+        text = (REPO_ROOT / relpath).read_text(encoding="utf-8")
+        assert archival_title in text, relpath
+        for heading in forbidden_headings:
+            assert heading not in text, (relpath, heading)
+
+
 def test_agents_md_stays_a_short_tracked_repo_router() -> None:
     agents_path = REPO_ROOT / "AGENTS.md"
     text = agents_path.read_text(encoding="utf-8")

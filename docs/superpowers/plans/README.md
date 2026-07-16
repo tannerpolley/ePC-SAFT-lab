@@ -1,24 +1,9 @@
-# Plans
+# Historical Plans
 
-This folder stores active implementation plans written from approved specs or
-issue mirrors. Plans should be executable by an agent and should name exact
-files, tasks, proof commands, and acceptance criteria.
+This directory preserves implementation plans from the monorepo program as
+historical evidence. They may contain completed, superseded, rejected, or
+partially implemented instructions and stale paths.
 
-After a plan is fully implemented and its durable behavior has moved into code,
-tests, ADRs, project context, or package docs, remove the completed plan from
-this folder. This directory should show the work that remains to be done, not
-the historical implementation log.
-
-New issue execution plans should use the GitHub issue creation date, owning
-milestone, and issue number:
-
-```text
-docs/superpowers/plans/YYYY-MM-DD-m#-milestone-issue-####-<slug>-plan.md
-```
-
-Milestone or spec-only plans that do not come from one GitHub issue should still
-include the creation date and milestone:
-
-```text
-docs/superpowers/plans/YYYY-MM-DD-m#-milestone-<slug>-plan.md
-```
+Do not execute or update these plans as current work. New work belongs to the
+clean repository that owns the named slice and must follow the migration
+control plane. Git history is the detailed implementation log.

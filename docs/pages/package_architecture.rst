@@ -1,207 +1,114 @@
-Package Architecture
-====================
+Archived Monorepo Architecture
+==============================
 
-``epcsaft`` is the current source repository and the long-term core
-thermodynamic provider package. The Python layer owns input validation,
-user-facing provider objects, diagnostics, documentation examples, and workflow
-orchestration. The equation-of-state runtime is native C++ exposed through
-``pybind11``.
+This page describes the runnable personal-lab checkout. It is not the target
+topology or authority for clean production repositories.
 
-During the monorepo transition, Ipopt-backed equilibrium is owned by
-``epcsaft-equilibrium`` and regression is owned by
-``epcsaft-regression``. The monorepo remains the source checkout for core APIs,
-extension packages, and shared native/provider contracts while package
-boundaries are completed.
-
-Organization Boundary
----------------------
-
-The repository root is the workspace/controller. The target repository layout is
-one organization-owned monorepo with three installable distributions:
+The lab contains three workspace distributions:
 
 .. code-block:: text
 
-   ePC-SAFT/ePC-SAFT
-     packages/epcsaft              # core provider distribution: epcsaft
-     packages/epcsaft-equilibrium   # Ipopt-backed equilibrium distribution
-     packages/epcsaft-regression    # Ceres-backed regression distribution
+   packages/epcsaft              # provider EOS/state/property package
+   packages/epcsaft-equilibrium  # equilibrium extension
+   packages/epcsaft-regression   # regression extension
 
-The current repo must keep clean internal subsystem boundaries so the extension
-packages can be built, tested, and released independently without hidden
-compatibility paths.
+The Python layers own public objects, validation, request/result shaping, and
+diagnostics. Native C++ exposed through ``pybind11`` owns the retained
+thermodynamic and solver kernels. The monorepo remains the sole transitional
+runtime authority until each named slice is accepted in its clean owner.
 
-No separate GitHub extension repository is authoritative for current
-development. If a historical extension repository is retained or reappears, it
-is an archived or non-authoritative pointer to this monorepo unless a later
-issue explicitly changes the source-of-truth decision. Normal local
-development uses this checkout and the ``packages/`` workspace members, not
-sibling extension checkouts.
+Archive Boundary
+----------------
 
-The target internal shape is:
+The lab preserves source, tests, papers, equation catalogues, validation data,
+and rejected or deferred work. It does not own clean-package publication,
+live roadmap state, or future production authority.
+
+Clean repositories must not depend on this checkout, the migration repository,
+or sibling source paths. Their only intended production dependency directions
+are:
 
 .. code-block:: text
 
-   packages/epcsaft/src/epcsaft/
-     frontend/
-     model/
-     state/
-     runtime/
-     native/
-   packages/epcsaft-equilibrium/src/epcsaft_equilibrium/
-   packages/epcsaft-regression/src/epcsaft_regression/
+   epcsaft-equilibrium  --> installed epcsaft provider artifact
+   epcsaft-regression   --> installed epcsaft provider artifact
+   validation           --> installed admitted artifacts
 
-Subsystem Boundaries
---------------------
+No directory, old test suite, compatibility layer, or native kernel moves as a
+unit. A promotion manifest selects the minimum call graph and independent
+evidence for one capability.
 
-EOS harness
-   Owns the reset ``Mixture`` and ``State`` frontend. ``Mixture`` establishes
-   components, parameters, and model options; ``State`` owns temperature,
-   pressure or density closure, composition, and phase. It validates user inputs
-   and delegates thermodynamic calculations to the native runtime.
+Retained Package Boundaries
+---------------------------
+
+Provider
+   ``packages/epcsaft`` contains input resolution, model/state objects,
+   EOS/property evaluation, native bindings, capability reporting, and
+   provider-owned tests.
 
 Equilibrium
-   Owned by ``epcsaft-equilibrium``. It owns phase-equilibrium, stability,
-   bubble/dew, electrolyte LLE, and chemical-equilibrium orchestration. It may
-   use Python for problem objects, request normalization, result shaping, and
-   diagnostics, but production thermodynamic evaluations should route through
-   the core provider/native boundary. The current public reset frontend is
-   reached through direct
-   ``Equilibrium(mixture, ...)`` workflow objects. Legacy string facades and
-   typed problem objects are internal transition surfaces until they are ported
-   behind reset methods.
+   ``packages/epcsaft-equilibrium`` contains pressure-boundary and saturation
+   routes plus broader internal/experimental equilibrium work. Public exposure
+   is narrower than the source tree; consult executable capability metadata and
+   accepted evidence.
 
 Regression
-   Owns fitting problem definitions, records, provenance validation, objective
-   assembly, derivative diagnostics, and fit-result serialization in
-   ``epcsaft-regression``. Public regression workflows are reached through
-   ``Regression(mixture, ...)``, while expensive objective and derivative work
-   uses native kernels.
+   ``packages/epcsaft-regression`` contains fitting contracts, native Ceres
+   paths, diagnostics, and characterization tests. Presence in the lab is not
+   production admission.
 
-Native
-   Owns C++ kernels, pybind11 bindings, native capability reporting, and
-   internal C++ helpers. Python code should call native functionality through
-   the public runtime surfaces or thin package-owned adapters, not by reaching
-   into build artifacts directly.
+Evidence
+   ``analyses``, ``data/reference``, ``docs/latex``, and ``docs/papers`` retain
+   broad scientific and validation evidence. Production packages do not import
+   these trees at runtime.
 
-Data
-   Owns packaged parameter datasets, dataset validation, reference-data loading
-   contracts, and reusable package data. Analysis-local inputs belong under the
-   relevant analysis ``source`` or ``parameters`` tree instead of becoming
-   hidden package dependencies.
+Local Archive Imports
+---------------------
 
-Benchmarks
-   Owns package-maintained timing, smoke, and regression benchmarks that protect
-   runtime expectations. The previous local benchmark entrypoints were removed
-   as obsolete, so new performance or literature-coverage claims must add a
-   current owned benchmark or analysis workflow before being cited. Benchmark
-   execution may consume the public package API and packaged/reference data, but
-   should not become a runtime package import dependency for normal users.
-
-Core Surfaces
--------------
-
-Use these imports for current monorepo code:
-
-* ``from epcsaft import Mixture, State`` for core provider workflow
-  construction.
-* ``from epcsaft_equilibrium import Equilibrium`` for equilibrium workflow
-  construction.
-* ``from epcsaft import ParameterSet, ModelOptions`` for parameter data and
-  model formulation choices.
-* ``from epcsaft_regression import Regression`` for regression workflow
-  construction.
-* ``from epcsaft import create_input_template`` for reset input scaffolds.
-* ``from epcsaft import provider_native_sdk`` for provider-native SDK
-  discovery during the package-extension transition.
-* current explicit benchmark or analysis workflows for package-owned timing and smoke claims.
-* ``epcsaft.capabilities()`` and ``epcsaft.runtime_build_info()`` for runtime
-  capability metadata.
-
-Benchmark execution helpers are validation assets, not runtime thermodynamic
-APIs; keep them outside the runtime package.
-
-Import Policy
--------------
-
-Current public user code should import from the top-level package or from
-documented subsystem modules:
-
-* ``import epcsaft``
-* ``from epcsaft import Mixture, ParameterSet, ModelOptions``
-* ``from epcsaft_equilibrium import Equilibrium``
-* ``from epcsaft_regression import Regression``
-
-Internal modules may share package-owned helpers when that keeps behavior
-centralized, but subsystem code should avoid circular ownership. In particular,
-benchmarks and docs may depend on public APIs, while core runtime modules must
-not depend on benchmark entrypoints or generated analysis artifacts.
-
-After the split, extension packages import the core provider contract instead
-of reaching into private core modules. Core must not import extension packages
-by default.
-
-Extension packages that need native-provider build metadata use the
-``provider_native_sdk_v1`` contract exposed by ``provider_native_sdk()``. The
-private ``_core`` pybind module is not the native SDK or a stable extension ABI.
-The SDK payload includes the source/CMake SDK kind and version, CMake config
-path, source manifest path, include root, and supported extension-native
-consumers so extension package builds can fail loudly when provider SDK material
-is absent.
-
-Compatibility Policy
---------------------
-
-The hard reset intentionally cuts off legacy root imports:
+These imports describe the retained monorepo surface only:
 
 .. code-block:: python
 
    import epcsaft
+   from epcsaft import Mixture, ModelOptions, ParameterSet, State
+   from epcsaft_equilibrium import Equilibrium
+   from epcsaft_regression import Regression
 
-   epcsaft.Mixture
-   epcsaft.ParameterSet
-   epcsaft.ModelOptions
+Use ``capabilities()`` and ``runtime_build_info()`` to inspect the compiled lab
+artifact. Do not infer a clean-package capability from an import succeeding.
 
-Internal bridge modules may exist only as actively owned implementation seams
-for current transition work. They are not top-level public imports, and they
-must be deleted when the old path is migrated.
+Native Provider Transport
+-------------------------
 
-Optional Dependency Policy
---------------------------
+The retained ``provider_native_sdk_v1`` source/CMake material is
+pre-extraction experimental evidence needed by this monorepo's extension build
+tests. It is not the approved transport for clean repositories and must not be
+copied or compiled into another owner without a dedicated transport decision
+and isolated proof against duplicate EOS ownership. The private
+``epcsaft._core`` module is not a stable public ABI.
 
-The default provider install should keep the lightweight runtime usable. Heavy
-or platform-sensitive dependencies belong to the capability that needs them:
-Ceres to regression and Ipopt to equilibrium. During the monorepo transition,
-source-checkout builds may still compile all current native capabilities by
-default, but that must not be described as final core dependency ownership.
+Compatibility And Optional Dependencies
+---------------------------------------
 
-Ipopt-dependent workflows must fail with actionable diagnostics when native
-Ipopt is not compiled or a route is outside the compiled native adapter
-surface, instead of making the base package import fail.
-
-Native build capabilities should be reported through ``capabilities()`` and
-``runtime_build_info()`` so downstream projects can select supported workflows
-without probing private modules.
+Do not add compatibility shims, mutable legacy payloads, alternate public
+derivative backends, or fake scientific defaults to keep old call sites alive.
+Heavy dependencies remain capability-scoped: Ipopt belongs with equilibrium
+and Ceres with regression. The provider package must not import extension
+packages by default.
 
 Repository Layout
 -----------------
 
-``packages/epcsaft/src/epcsaft`` contains the provider package and
-``packages/epcsaft/tests`` contains provider-owned API/native tests. Root
-``tests`` contains repo/workflow, build/package, docs/registry, integration,
-and cross-package boundary contracts. ``packages/epcsaft-equilibrium/tests`` and
-``packages/epcsaft-regression/tests`` contain extension-owned API, native, and
-solver-dependency tests. ``data/reference`` is the canonical source-checkout
-reference-data library. ``analyses`` contains paper-validation and analysis workflows with
-analysis-owned ``parameters``, ``figures/<figure_id>/source``,
-``figures/<figure_id>/results``, ``tables``, and ``shared`` artifacts.
+Provider tests live under ``packages/epcsaft/tests``. Equilibrium and
+regression tests live under their package directories. Root ``tests`` retains
+monorepo build, workflow, documentation, integration, and cross-package
+contracts. Generated builds, caches, run payloads, and temporary output are not
+source artifacts.
 
-Generated benchmark output, run payloads, build trees, and local graph or temp
-outputs are not source artifacts.
+Migration Rule
+--------------
 
-Native-First Policy
--------------------
-
-Package-owned regression, equilibrium, and speciation workflows must use native
-runtime kernels for thermodynamic calculations. Python may batch rows, validate
-inputs, and report diagnostics, but it should not
-silently become the production thermodynamic solver.
+A clean slice freezes its equations, source records, units, domain, inputs,
+outputs, derivative orders, failure boundaries, and independent oracles before
+implementation. It is built in isolation, proves excluded legacy seams are
+absent, and moves runtime authority only through an accepted promotion receipt.

@@ -1,13 +1,17 @@
 # ePC-SAFT Package Context
 
-This is the domain glossary for the `epcsaft` upstream package. It names the package-level thermodynamics, solver, regression, benchmark, and downstream-integration concepts that architecture, issue, and debugging skills should use consistently.
+This is the domain glossary for the preserved `epcsaft` lab. It names the
+thermodynamic, solver, regression, validation, and downstream-integration
+concepts used to understand the archived implementation. It does not assign
+clean-repository authority or define a migration slice.
 
 ## Language
 
 ### Package Identity
 
 **ePC-SAFT Package**:
-The upstream thermodynamic package that owns generic ePC-SAFT model interfaces, native implementation paths, tests, documentation, and release behavior.
+The generic thermodynamic provider concept represented by the retained lab
+implementation and, after promotion, by the clean provider repository.
 _Avoid_: downstream study, application wrapper, case-study package
 
 **Downstream Consumer**:
@@ -79,7 +83,10 @@ The C++ metadata table that declares each equilibrium family, its active residua
 _Avoid_: handwritten Python capability list, route availability guess, stale docs table
 
 **Declared-Not-Exposed Route Family**:
-An equilibrium family recorded in the native activation matrix for roadmap and topology continuity but intentionally not callable as a production route. It must not be exported, bound, tested as runnable, or advertised as available until selector-core production evidence exists.
+An equilibrium family recorded for topology and evidence continuity but
+intentionally not callable as a production route. It must not be exported,
+bound, tested as runnable, or advertised as available until selector-core
+production evidence exists.
 _Avoid_: disabled route stub, hidden callable route, soft capability claim
 
 **Neutral VLE Route Spec**:
@@ -115,7 +122,8 @@ The native optimizer adapter module that owns Ipopt option profiles, exact-Hessi
 _Avoid_: route-local Ipopt option assembly, acceptable-point success, finite-variable postsolve shortcut
 
 **Derivative Path**:
-The validated analytic, CppAD, analytic-implicit, or CppAD-implicit derivative route used by a solver or regression workflow.
+The validated CppAD or CppAD-partial implicit derivative route used by an
+admitted solver or regression workflow.
 _Avoid_: approximate derivative substitute, unspecified derivative support
 
 **Equilibrium Derivative Assembly**:
@@ -163,8 +171,11 @@ _Avoid_: documented limitation without a closure path, incomplete proof, depende
 - Treat `ParameterSet` as parameter data only; put formulation and workflow choices in `ModelOptions` or workflow defaults.
 - Use configured `Equilibrium` and `Regression` workflow objects instead of root-level free functions.
 - Use `TargetDataset.target_family_summaries()` when agent output needs the shared target-family summary shape that generic and reactive regression diagnostics both expose.
-- Treat each distribution's `capabilities()` and `capability_evidence` payload as authoritative for that distribution. Capability text elsewhere must agree with those package-owned reports.
-- Treat declared-not-exposed activation rows as roadmap metadata, not callable route support.
+- Treat each lab distribution's `capabilities()` and `capability_evidence`
+  payload as executable evidence for that lab artifact. A clean capability
+  still requires its own accepted receipt.
+- Treat declared-not-exposed activation rows as historical/topology metadata,
+  not callable route support.
 
 ## Example Dialogue
 

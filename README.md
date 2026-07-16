@@ -2,7 +2,7 @@
 
 > [!IMPORTANT]
 > This is the preserved legacy/lab repository for the original ePC-SAFT
-> monorepo. v0.2.0 is historical lab evidence retained in this archive. This
+> monorepo. v0.2.0 is historical lab evidence retained in this archive.
 > This lab does not publish packages to PyPI or own production release
 > authority.
 > Clean production packages are migrated separately and do not inherit this

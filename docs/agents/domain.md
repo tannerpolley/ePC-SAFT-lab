@@ -5,7 +5,9 @@ How engineering skills should consume this repo's domain documentation when expl
 ## Before exploring, read these
 
 - **`CONTEXT.md`** at the repo root.
-- **`docs/superpowers/PROJECT_CONTEXT.md`** at the repo root. Treat it as the package-context and completion-standard milestone plan unless the active task is explicitly narrower.
+- **`docs/superpowers/PROJECT_CONTEXT.md`** at the repo root. Treat it as the
+  compact lab boundary and completion standard unless the active task is
+  explicitly narrower.
 - **`docs/adr/`** at the repo root. Start with `docs/adr/README.md`, then read any numbered ADRs relevant to the current topic.
 - **`CONTEXT-MAP.md`** only if this repo later becomes multi-context and adds one.
 
@@ -29,7 +31,12 @@ When output names a domain concept in an issue title, refactor proposal, hypothe
 
 If the needed concept is not in the glossary yet, either reconsider whether the language belongs in this repo or note the gap for `grill-with-docs`.
 
-When suggesting or documenting package entrypoints, prefer the current public seams recorded in `CONTEXT.md` and the ADRs: `from epcsaft_equilibrium import Equilibrium` followed by `Equilibrium(mixture, route=..., ...).solve()` for the evidence-backed pressure-boundary VLE, source-backed LLE, and nonassociating single-component VLE routes; canonical parameter families through `ParameterSet`; shared regression summaries through `TargetDataset.target_family_summaries()`; provider capability claims through `epcsaft.capabilities()`; and equilibrium capability claims through `epcsaft_equilibrium.capabilities()`.
+When documenting the retained lab entrypoints, use the public seams recorded in
+`CONTEXT.md` and the ADRs. The exposed equilibrium routes are bubble pressure,
+dew pressure, and scoped nonassociating hydrocarbon single-component VLE.
+Neutral LLE and broader phase-discovery families are evidence only. Use
+`ParameterSet` for parameter families and treat package capability reports as
+evidence for the exact lab artifact, not automatic clean-package admission.
 
 ## Flag ADR conflicts
 

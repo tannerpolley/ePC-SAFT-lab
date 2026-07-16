@@ -9,6 +9,9 @@ The retained mirrors may include source linkage, AFK/HITL classification,
 acceptance criteria, proof oracles, and execution metadata as historical
 evidence.
 
+Commands, validators, paths, project fields, and open/closed state inside a
+mirror are preserved observations and may no longer exist or be runnable.
+
 Issue mirror filenames use the GitHub issue creation date, owning milestone,
 and issue number:
 
