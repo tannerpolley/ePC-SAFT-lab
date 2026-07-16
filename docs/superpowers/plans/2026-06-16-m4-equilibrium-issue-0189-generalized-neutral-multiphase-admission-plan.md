@@ -126,7 +126,8 @@ This plan is complete only when all of the following are true:
   enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature
   ```
 
-  After #261 closes, readiness sync should move it to `status:ready`; add `agent-ready` after the local mirror and source plan are committed.
+  Add `agent-ready` only after #261 is closed and the local mirror and source
+  plan are committed.
 
 - [ ] **Step 3: Add the native dependency edge**
 
@@ -540,9 +541,9 @@ This plan is complete only when all of the following are true:
 
   PR body must name #189 and the child issue, state that #145/#190/#191 remain open, and include the full proof oracle.
 
-- [ ] **Step 4: Merge and sync**
+- [ ] **Step 4: Merge**
 
-  After merge, sync local `main` and `origin/main`, run dependency readiness sync for the closed child, and update the local M4 mirror table if the workflow cannot push mirror changes.
+  After merge, sync local `main` and `origin/main`.
 
 - [ ] **Step 5: Close #189**
 

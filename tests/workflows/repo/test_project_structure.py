@@ -778,6 +778,31 @@ def test_native_equilibrium_bindings_are_registered_through_selector_domain_unit
     assert offenders == []
 
 
+def test_lab_has_no_tracker_mutation_automation() -> None:
+    retired_paths = (
+        ".github/workflows/sync-issue-readiness.yml",
+        "scripts/dev/update_issue_dependency_readiness.py",
+    )
+    assert [path for path in retired_paths if (REPO_ROOT / path).exists()] == []
+
+    retired_instruction_fragments = (
+        "readiness" + " sync",
+        "readiness" + " reconciler",
+        "dependency" + " sync",
+        "dependency" + " reconciler",
+    )
+    offenders: list[str] = []
+    for relpath in _tracked_files("docs"):
+        path = REPO_ROOT / relpath
+        if path.suffix.lower() not in {".md", ".rst"} or not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore").lower()
+        for fragment in retired_instruction_fragments:
+            if fragment in text:
+                offenders.append(f"{relpath}: {fragment}")
+    assert offenders == []
+
+
 def test_deleted_equilibrium_route_sources_and_bindings_are_absent() -> None:
     deleted_sources = (
         "packages/epcsaft/src/epcsaft/native/equilibrium/facade.h",

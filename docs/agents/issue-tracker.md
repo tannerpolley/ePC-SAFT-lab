@@ -44,31 +44,11 @@ as `[Blocked]`. Use `blocked_by`/`blocking` relationships, then mirror the
 state with Project `Readiness=blocked` and `status:blocked` only when useful
 for dashboard filtering.
 
-## Dependency Readiness Sync
+## Dependency Readiness
 
-The `sync issue readiness` GitHub Actions workflow runs after issue close,
-manual dispatch, and scheduled reconciliation. It
-checks GitHub native dependency edges and moves a dependent issue from
-`status:blocked` to `status:ready` only when all native blockers are closed.
-Dependency state alone does not add `agent-ready`; the local mirror and source
-plan must prove the issue is AFK-ready. The workflow updates labels and local
-mirrors silently; it does not post issue comments for routine dependency
-readiness changes.
-
-After a clean merge or direct issue close, inspect the workflow result. If the
-workflow could not push mirror changes, run the same check locally and commit
-the mirror/table sync:
-
-```bash
-uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py --issue <closed-issue> --dry-run --json
-uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py --issue <closed-issue> --apply --json
-```
-
-For periodic drift repair:
-
-```bash
-uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py --reconcile --dry-run --json
-```
+The personal lab does not own scheduled or local tracker mutation. Historical
+dependency relationships remain in the preserved GitHub repository; active
+readiness automation belongs only in an approved clean repository.
 
 ## Milestones
 

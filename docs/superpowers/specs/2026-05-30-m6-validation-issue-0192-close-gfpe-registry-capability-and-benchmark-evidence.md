@@ -84,4 +84,4 @@ input implementation.
 - Focused capability and activation contract tests.
 - Gross #455 and single-component #236 strict receipts.
 - Generated-registry checks and strict Sphinx build.
-- Issue/mirror/dependency synchronization, diff check, and cleanup audit.
+- Diff check and cleanup audit.

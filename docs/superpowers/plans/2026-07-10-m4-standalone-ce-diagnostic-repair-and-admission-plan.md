@@ -98,8 +98,8 @@ unavailable.
 
 During tracker publication, remove `status:ready` from #329, apply
 `status:blocked` while #328 remains open, and synchronize the #329 local mirror
-plus M4 milestone row. Readiness may return only through the repository
-dependency reconciler after every native blocker closes.
+plus M4 milestone row. The active clean tracker owner may restore readiness only
+after every native blocker closes.
 
 ## Test Complete And Metrics
 

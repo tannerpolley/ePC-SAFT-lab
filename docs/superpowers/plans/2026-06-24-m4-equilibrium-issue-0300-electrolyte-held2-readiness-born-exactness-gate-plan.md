@@ -45,7 +45,7 @@
 **Read Path:** Read Khudaida data through `check_electrolyte_gfpe_gate.evaluate_case_dir`, provider derivative receipts through `ePCSAFTState` public methods, and route exposure state through `epcsaft_equilibrium.capabilities()`.
 **Write Path:** Write one M4 checker, one contract test module, capability evidence rows, registry evidence rows, and tracker docs.
 **Integration Points:** `scripts/validation/check_electrolyte_gfpe_gate.py`, `epcsaft.state.native_adapter.ePCSAFTState`, `epcsaft_equilibrium.capabilities()`, and `tests/native/contracts/test_generalized_equilibrium_registry.py`.
-**Migration Or Cutover:** The #191 parent stays blocked by #300 until this PR merges; after merge, dependency sync can unblock #191 for the next child.
+**Migration Or Cutover:** The #191 parent stays blocked by #300 until this PR merges; the active clean tracker owner controls any later readiness change.
 **Replaced Path Handling:** Do not execute the invalid #191 parent plan directly; keep its mirror updated to point at completed and pending child gates.
 **Acceptance Proof Gate:** The proof oracle commands in this plan must pass before push, PR, merge, or issue close.
 
@@ -149,7 +149,6 @@
 **Use Cases:**
 - A merge reviewer needs exact proof that #300 is complete and #191 remains honestly blocked by later gates.
 - The repo must not retain stale generated process state or orphaned worktree changes after merge.
-- Dependency sync should unblock or relabel parent issue state only when GitHub blockers are closed.
 
 **Files:**
 - Test: all files changed by Tasks 1-4.
@@ -157,7 +156,6 @@
 - [ ] **Step 1: Run the #300 proof oracle commands.**
 - [ ] **Step 2: Run the repo cleanup hook.**
 - [ ] **Step 3: Commit, push, open a PR that closes #300, merge it when checks pass, and sync local `main` with `origin/main`.**
-- [ ] **Step 4: Run dependency readiness sync for #300 and report the next #191 blocker.**
 
 ## Proof Oracle
 

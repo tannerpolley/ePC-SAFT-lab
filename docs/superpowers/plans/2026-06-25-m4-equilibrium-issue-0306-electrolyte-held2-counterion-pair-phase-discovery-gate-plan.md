@@ -233,9 +233,8 @@ strict derivative evidence, and postsolve certification.
   while HELD2 phase discovery was open.
 - A resolver needs a local #306 mirror with acceptance criteria, proof oracle,
   and cutover boundaries.
-- Dependency readiness needs visible evidence that #306 closed before #312
-  became the active Stage III blocker and that #269/#300/#302 are closed
-  provenance.
+- The retained issue record must show that #306 closed before #312 became the
+  active Stage III blocker and that #269/#300/#302 are closed provenance.
 
 **Files:**
 - `docs/superpowers/issues/2026-06-25-m4-equilibrium-issue-0306-add-electrolyte-held2-counterion-pair-phase-discovery-gate.md`
@@ -334,8 +333,7 @@ strict derivative evidence, and postsolve certification.
 - [ ] Run the proof oracle commands.
 - [ ] Run the repo cleanup hook.
 - [ ] Commit, push, open a PR that closes #306, and merge after clean proof.
-- [ ] Sync local `main`, remove owned branches/worktrees, and run dependency
-  readiness sync.
+- [ ] Sync local `main`, then remove owned branches/worktrees.
 
 ## Proof Oracle
 

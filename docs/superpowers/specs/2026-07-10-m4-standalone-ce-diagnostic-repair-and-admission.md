@@ -214,7 +214,7 @@ M4 classification leaf is `blocked_by` M6, and #330 is `blocked_by` that leaf
 and #328. Issue #329 itself is not blocked by M6.
 Tracker publication must remove `status:ready` from #329, apply
 `status:blocked` while #328 is open, and synchronize the #329 mirror and M4
-milestone row. The normal readiness reconciler may restore `status:ready` only
+milestone row. The active clean tracker owner may restore `status:ready` only
 after all native blockers close.
 
 ## Loud Errors And Stop Gates

@@ -213,31 +213,11 @@ focused tests, and tracker evidence:
 - [ ] Run the #191 final proof oracle before PR creation.
 - [ ] Merge only after the final acceptance criteria pass.
 
-### Task 3: Reconcile Dependency Readiness After Each Merge
-
-**Use Cases:**
-- GitHub dependencies must reflect whether #191 is still blocked by an open
-  child.
-- Local M4 docs need visible acceptance evidence after merge, not only GitHub
-  state.
-- The next child should be created only after the previous proof has closed its
-  gate.
-
-**Files:**
-- `docs/superpowers/issues/**`
-- `docs/superpowers/milestones/M4-equilibrium/README.md`
-- `scripts/dev/update_issue_dependency_readiness.py`
-
-- [ ] Run dependency readiness sync after a child closes.
-- [ ] If another child is needed, create it and block #191 with it.
-- [ ] If no child remains, prepare final #191 closure evidence.
-
 ## Proof Oracle
 
 ```powershell
 uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md
 uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md
-uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py --reconcile --dry-run --json
 uv run --no-sync python analyses\paper_validation\2025_figiel\scripts\validate_figure_data.py
 uv run --no-sync python scripts\validation\check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete
 uv run --no-sync python scripts\validation\check_electrolyte_held2_public_route_scenarios.py --json --require-complete

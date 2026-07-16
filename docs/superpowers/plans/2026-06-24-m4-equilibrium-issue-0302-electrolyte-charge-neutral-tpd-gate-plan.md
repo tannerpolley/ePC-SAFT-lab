@@ -44,7 +44,7 @@
 **Source Of Truth:** M4 GFPE milestone doctrine, #191 source spec, #269 source fixture checker, #300 readiness checker, and native neutral TPD implementation patterns.
 **Read Path:** Read source fixture and public route state through `check_electrolyte_gfpe_gate.py`; read #300 readiness through `check_electrolyte_held2_readiness.py`; read native pressure-root TPD mechanics from `two_phase_eos_route.cpp`.
 **Write Path:** Write one native diagnostic entrypoint, one checker, one contract test module, one issue mirror, and M4 tracker updates.
-**Integration Points:** `evaluate_unit_phase_block_at_pressure_root`, `NeutralPhaseDiscoveryResult`, pybind11 module registration, `_native.py` extension loading, checker CLI payload evaluation, and issue dependency sync.
+**Integration Points:** `evaluate_unit_phase_block_at_pressure_root`, `NeutralPhaseDiscoveryResult`, pybind11 module registration, `_native.py` extension loading, and checker CLI payload evaluation.
 **Migration Or Cutover:** The checker becomes the executable gate for the electrolyte TPD blocker; it does not modify public route selection.
 **Replaced Path Handling:** Keep neutral TPD rejected for charged postsolve certification until an electrolyte postsolve certification issue lands; this issue only supplies the electrolyte-specific validation diagnostic.
 **Acceptance Proof Gate:** The proof oracle commands below must pass before push, PR creation, merge, and issue close.
@@ -84,7 +84,8 @@
 **Use Cases:**
 - A milestone reviewer needs #191 blocked by a concrete issue rather than an unowned blocker phrase.
 - A resolver needs a local issue mirror with acceptance criteria, proof oracle, and outcome summary.
-- GitHub dependency readiness should be able to keep #191 blocked until this child closes.
+- The retained issue record must show that #191 remained blocked until this
+  child closed.
 
 **Files:**
 - Create: `docs/superpowers/issues/2026-06-24-m4-equilibrium-issue-0302-add-electrolyte-charge-neutral-tpd-gate.md`
@@ -161,7 +162,7 @@
 - [ ] **Step 1: Run all proof oracle commands.**
 - [ ] **Step 2: Run the repo cleanup hook.**
 - [ ] **Step 3: Commit, push, open a PR that closes the new child issue, and merge it after clean premerge proof.**
-- [ ] **Step 4: Sync local `main` and `origin/main`, remove the owned worktree/branch, and run dependency readiness sync.**
+- [ ] **Step 4: Sync local `main` and `origin/main`, then remove the owned worktree/branch.**
 
 ## Proof Oracle
 

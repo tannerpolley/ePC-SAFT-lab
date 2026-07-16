@@ -84,7 +84,7 @@ postsolve certification.
 - [x] HELD2 Stage III refinement remains retained as collapsed single-phase evidence and is not counted as accepted two-phase flash evidence.
 - [x] The HELD2 pytest proof collects and runs real electrolyte HELD2 tests; zero selected tests fails the gate.
 - [x] Public capability language remains narrowed to the focused validation binding; no broader electrolyte HELD2 production claim is made.
-- [x] #191 remains open and blocked until #320 is merged and the dependency sync runs.
+- [x] #191 remained open and blocked until #320 merged.
 
 ## Source Audit Receipts
 

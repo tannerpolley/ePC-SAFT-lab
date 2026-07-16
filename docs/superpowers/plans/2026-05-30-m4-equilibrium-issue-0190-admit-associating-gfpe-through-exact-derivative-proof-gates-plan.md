@@ -59,7 +59,7 @@ Required gates:
 - [x] **Step 1: Add a preflight test or checker assertion.** Require the #145 checker output to include source data, exact association Hessian evidence, and public route closed state.
 - [x] **Step 2: Run preflight.** Run `uv run python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete`; expected result is pass before #190 code changes.
 - [x] **Step 3: Sync issue state.** Confirm GitHub #190 has no open blockers after #145 is merged, then update the local issue mirror readiness from `blocked` to `ready`.
-- [x] **Step 4: Commit.** Commit preflight/readiness synchronization with message `docs: mark associating GFPE admission ready after issue 145`.
+- [x] **Step 4: Commit.** Commit the preflight record with message `docs: mark associating GFPE admission ready after issue 145`.
 
 ### Task 2: Admit The Narrow Public Associating LLE Route
 

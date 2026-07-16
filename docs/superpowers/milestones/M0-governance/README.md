@@ -22,13 +22,6 @@ Project fields, local docs, templates, and completion standards agree.
 - [Characterized ownership and maintainability ratchets](../../plans/2026-07-10-m0-characterized-ownership-and-maintainability-ratchets-plan.md)
 - [Validation-correctness program closeout](../../plans/2026-07-10-m0-validation-correctness-program-closeout-plan.md)
 
-## Retained Workflow
-
-`sync issue readiness` runs on issue close, manual dispatch, and scheduled
-reconciliation. The local command is
-`uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py`;
-use `--dry-run --json` before `--apply --json`.
-
 ## Closed Issues
 
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/235](https://github.com/ePC-SAFT/ePC-SAFT/issues/235) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/237](https://github.com/ePC-SAFT/ePC-SAFT/pull/237) on 2026-06-10T21:41:46Z
