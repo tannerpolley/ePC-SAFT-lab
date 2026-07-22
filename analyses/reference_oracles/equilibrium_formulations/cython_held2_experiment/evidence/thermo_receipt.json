@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "result": "pass",
+  "authority_effect": "none",
+  "issue": 472,
+  "implementation_base": "6bd944fc0609ce49733f8e3240131b804cf56a0a",
+  "experiment": {
+    "source": "src/cython_held2_experiment/_thermo.pyx",
+    "source_sha256": "f74a0798eebc87ac864b8bc3e4ec220553e107502810e623c1a73daf6a438b39",
+    "parameter_packet": "src/cython_held2_experiment/data/figiel_2025_h2o_nacl.json",
+    "parameter_packet_sha256": "1212c1e15a2ee2d8747b178e34e848dd6ba171268ed237675f5b26c16f839029",
+    "coordinate_order": [
+      "temperature",
+      "n_water",
+      "n_sodium",
+      "n_chloride",
+      "volume"
+    ],
+    "association_reduction": "mass_action_implicit_first_and_second_derivatives"
+  },
+  "provider_subject": {
+    "commit": "97d7b37db601a147a316f3f2e63293d5ea3a95f6",
+    "tree": "66a4031cf9a07c6cc3d1366869bd132e41d6da09",
+    "wheel": "epcsaft-0.1.0.dev0-cp313-cp313-linux_x86_64.whl",
+    "wheel_sha256": "358b210d66bb6dfec690207d3efd3c33fe96763786bb69d82fde1e7017342bd8",
+    "selected_model_fingerprint": "sha256:7c637771bc9f717b8f47b44bb2a61044c3fe83084dca7c3c16102fba0989912d"
+  },
+  "comparison": {
+    "path": "evidence/provider_comparison.csv",
+    "sha256": "e86c09f3cc573a7de3bf0cfd9e1a5f1551f79728efc46b7bfb694d7baec9e473",
+    "rows": 6,
+    "passed": 6,
+    "understood_discrepancies": 0,
+    "unexplained_discrepancies": 0
+  },
+  "artifact": {
+    "filename": "cython_held2_experiment-0.0.1-cp313-cp313-linux_x86_64.whl",
+    "sha256": "1298979e1e3388d2edb854d6c06c01328dd10fa0dcd4d3d9ad151d14c4f8f76a",
+    "installation_mode": "wheel",
+    "editable": false
+  },
+  "verification": {
+    "command": ".venv/bin/python -m pytest -q",
+    "result": "5 passed",
+    "import_origin": "isolated installed wheel",
+    "provider_runtime_dependency": false
+  },
+  "claim_boundary": {
+    "production_authority": false,
+    "phase_equilibrium_validation": false,
+    "globality_certificate": "not_applicable"
+  }
+}

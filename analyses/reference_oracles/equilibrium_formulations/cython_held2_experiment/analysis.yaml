@@ -1,10 +1,12 @@
 analysis_id: cython_held2_experiment
-title: Cython HELD2 dependency experiment
+title: Cython HELD2 thermodynamic experiment
 kind: reference_oracle
 status: non_production
 package: none
 commands:
   build: python3.13 -m build --wheel
-  test: python3.13 -m pytest -q tests/test_build_smoke.py
+  test: python3.13 -m pytest -q
 outputs:
   build_receipt: evidence/build_receipt.json
+  thermodynamic_receipt: evidence/thermo_receipt.json
+  provider_comparison: evidence/provider_comparison.csv

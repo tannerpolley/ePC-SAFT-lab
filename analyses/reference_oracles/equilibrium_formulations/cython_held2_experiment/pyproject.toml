@@ -20,11 +20,18 @@ dependencies = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["cython_held2_experiment"]
+packages = ["cython_held2_experiment", "cython_held2_experiment.data"]
+
+[tool.setuptools.package-data]
+cython_held2_experiment = ["data/*.json"]
 
 [[tool.setuptools.ext-modules]]
 name = "cython_held2_experiment._smoke"
 sources = ["src/cython_held2_experiment/_smoke.pyx"]
+
+[[tool.setuptools.ext-modules]]
+name = "cython_held2_experiment._thermo"
+sources = ["src/cython_held2_experiment/_thermo.pyx"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

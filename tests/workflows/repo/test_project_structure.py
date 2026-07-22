@@ -445,6 +445,7 @@ def test_removed_numerics_stack_is_not_a_package_dev_test_or_analysis_runtime_de
     scipy_allowed_prefixes = ("analyses/package_validation/explicit_association_toybox/",)
     python_ipopt_allowed_prefixes = (
         "analyses/package_validation/explicit_association_toybox/",
+        "analyses/reference_oracles/equilibrium_formulations/cython_held2_experiment/",
         "docs/superpowers/issues/2026-06-04-m8-python-toybox-",
         "docs/superpowers/plans/2026-06-04-m8-python-toybox-",
         "docs/superpowers/specs/2026-06-04-m8-python-toybox-",
