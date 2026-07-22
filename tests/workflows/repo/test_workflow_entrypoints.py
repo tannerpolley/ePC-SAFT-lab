@@ -360,6 +360,17 @@ def test_bootstrap_scripts_use_normal_build_and_fast_suite() -> None:
     assert "*.dll" in transfer_cleanup
 
 
+def test_provider_install_smokes_use_strict_schema3_parameters() -> None:
+    wheels_workflow = _read(".github/workflows/wheels.yml")
+    retired_payload = "ParameterSet.from_dict({'MW':"
+
+    assert retired_payload not in wheels_workflow
+    assert wheels_workflow.count("ParameterSet.from_schema3_records") == 1
+    assert wheels_workflow.count("math.isfinite(z)") == 1
+    assert 'CIBW_ENVIRONMENT_PASS_LINUX: "PROVIDER_SMOKE_PYTHON"' in wheels_workflow
+    assert wheels_workflow.count('python -c "$PROVIDER_SMOKE_PYTHON"') == 2
+
+
 def test_python_bootstrap_entrypoint_orchestrates_current_setup_sequence() -> None:
     bootstrap = _read("scripts/dev/bootstrap.py")
     development_workflows = _read("docs/pages/development_workflows.rst")
