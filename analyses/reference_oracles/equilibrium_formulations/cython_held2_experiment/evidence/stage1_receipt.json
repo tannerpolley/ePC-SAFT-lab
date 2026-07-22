@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "result": "pass",
+  "authority_effect": "none",
+  "issue": 473,
+  "implementation_base": "8590c5d22aa06a020aaf6908d46181d37f04e48e",
+  "experiment": {
+    "source": "src/cython_held2_experiment/_held2.pyx",
+    "source_sha256": "1b3d1edd7074cf8d94a08154b53338a4906ff99557a43af58ec0279cd82ff0c0",
+    "test": "tests/test_stage1.py",
+    "test_sha256": "85339e62378226b9d0069b189b0ba20e5be53bc4e01bbb3bbf3e7cda2f0070ea",
+    "modified_coordinate": "one_independent_h2o_nacl_ion_fraction",
+    "pressure_reference": "finite_log_volume_scan_lowest_detected_strict_stable_a_plus_pv",
+    "tpd_solver": "cyipopt_local_multistart_exact_gradient_and_hessian",
+    "constraint_jacobian_nonzeros": 0,
+    "lagrangian_hessian_lower_nonzeros": 3
+  },
+  "manufactured_evidence": {
+    "three_root_classes": [
+      "strict_stable",
+      "unstable",
+      "strict_stable"
+    ],
+    "selected_log_volume": 2.0,
+    "marginal_boundary_and_tie_cases": "fail_closed",
+    "stable_outcome": "no_negative_witness_detected",
+    "stable_attempts": 3,
+    "unstable_outcome": "negative_tpd",
+    "unstable_search_status": "partial",
+    "negative_tpd": -0.015625,
+    "distinct_negative_witness": true
+  },
+  "real_tape_smoke": {
+    "temperature_k": 298.15,
+    "pressure_pa": 30223.300708045346,
+    "selected_volume_m3_per_mol": 0.08000000000000816,
+    "mechanical_class": "strict_stable",
+    "attempts": 2,
+    "solver_passed": 2,
+    "numerical_passed": 2,
+    "physical_passed": 2,
+    "outcome": "no_negative_witness_detected"
+  },
+  "artifact": {
+    "filename": "cython_held2_experiment-0.0.1-cp313-cp313-linux_x86_64.whl",
+    "sha256": "6f856157312a34d56bb0c28b0cbc169b94e636d929ae1e59f06d730e214e2bf2",
+    "installation_mode": "wheel",
+    "editable": false
+  },
+  "verification": {
+    "command": ".venv/bin/python -m pytest -q",
+    "result": "13 passed",
+    "import_origin": "isolated installed wheel"
+  },
+  "claim_boundary": {
+    "production_authority": false,
+    "electrolyte_lle_prediction": false,
+    "finite_search_only": true,
+    "globality_field_emitted": false
+  }
+}

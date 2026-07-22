@@ -9,4 +9,5 @@ commands:
 outputs:
   build_receipt: evidence/build_receipt.json
   thermodynamic_receipt: evidence/thermo_receipt.json
+  stage1_receipt: evidence/stage1_receipt.json
   provider_comparison: evidence/provider_comparison.csv

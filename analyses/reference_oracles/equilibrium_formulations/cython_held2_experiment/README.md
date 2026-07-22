@@ -40,6 +40,27 @@ The APIs are deliberately narrow:
 - `derivative_bundle(T, amounts, V)` returns the reduced five-coordinate
   gradient and symmetric Hessian from the same tape definition.
 
+## Stage-I experiment
+
+`_held2.pyx` adds only the first HELD2 stage. It reuses `_thermo.pyx`; it does
+not contain another EOS. `solve_stage1(...)` deterministically scans the
+declared log-volume interval, refines detected pressure roots, rejects
+boundary/marginal/tied references, and selects the unique lowest-`A+PV`
+strict-stable detected root. The selected state supplies the modified-coordinate
+tangent for local `cyipopt` TPD searches.
+
+The H2O/Na+/Cl- chart has one independent modified ion fraction. Its inverse is
+explicitly electroneutral, and the salt modified potential is invariant to an
+equal-and-opposite ionic Galvani shift. The TPD callback provides an empty exact
+sparse constraint Jacobian and the three entries of the exact lower-triangular
+two-coordinate Hessian derived from the thermodynamic tape.
+
+The controller reports local solver termination, numerical certification, and
+physical certification separately. A certified negative witness has precedence
+over an incomplete sibling start. Conversely, a completed finite multistart
+search with no negative witness reports only `no_negative_witness_detected`.
+No globality field or global-stability claim is emitted.
+
 ## Bounded comparison evidence
 
 [`evidence/provider_comparison.csv`](evidence/provider_comparison.csv) compares
@@ -55,6 +76,14 @@ heat-capacity identities. No discrepancy is deferred to the next issue.
 The comparison does not make this implementation authoritative, validate a
 phase-equilibrium prediction, or establish behavior outside the exact species,
 temperature, composition, and packing domain.
+
+[`evidence/stage1_receipt.json`](evidence/stage1_receipt.json) binds the Stage-I
+source, tests, and installed wheel. Its manufactured three-root topology selects
+the lower strict-stable root, the stable TPD case completes all starts, and the
+unstable case retains a `-0.015625` negative witness despite one deliberately
+failed start. A real-tape smoke selects the known 0.08 m3/mol pressure root and
+completes two certified local searches. These are controller-conformance facts,
+not electrolyte-LLE prediction evidence.
 
 ## Rebuild and test
 
