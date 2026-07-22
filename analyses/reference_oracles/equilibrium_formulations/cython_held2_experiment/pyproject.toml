@@ -33,5 +33,9 @@ sources = ["src/cython_held2_experiment/_smoke.pyx"]
 name = "cython_held2_experiment._thermo"
 sources = ["src/cython_held2_experiment/_thermo.pyx"]
 
+[[tool.setuptools.ext-modules]]
+name = "cython_held2_experiment._held2"
+sources = ["src/cython_held2_experiment/_held2.pyx"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
