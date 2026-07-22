@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "result": "pass",
+  "authority_effect": "none",
+  "issue": 475,
+  "implementation_base": "462e46c0fd1344515c85a56eb0c2274fd599d148",
+  "experiment": {
+    "source": "src/cython_held2_experiment/_stage3.pyx",
+    "source_sha256": "d6c1d8bd88ceba34a9eb633ce8e5b9b0296ae8e88cbb83bbafc97501b04e1e58",
+    "test": "tests/test_stage3.py",
+    "test_sha256": "a674ce878f1270efd22c59eec2f219e48efc7c39793d976307b2d4db9ffb30b2",
+    "evidence_runner": "evidence_runner.py",
+    "evidence_runner_sha256": "0fa373c20f4bfb97d6523aef6bc00c1fab1fdc600593c3000c3afde225a75b60",
+    "stage3_coordinates": [
+      "phase_fraction",
+      "modified_ion_fraction",
+      "log_volume"
+    ],
+    "constraints": [
+      "phase_fraction_normalization",
+      "modified_material_balance"
+    ],
+    "jacobian_nonzeros_per_phase": 3,
+    "lagrangian_hessian_lower_nonzeros_per_phase": 5,
+    "dual_pullback": "z_physical_equals_z_chart_divided_by_affine_scale",
+    "inactive_retirement": "positive_lower_bound_kkt_multiplier_then_unchanged_active_set_resolve"
+  },
+  "manufactured_evidence": {
+    "path": "evidence/stage3_manufactured.json",
+    "sha256": "b7abc93aa6b499bf9a33759f94d3a7bd4c72f8072f30c766c0d433696d0f46c2",
+    "stable_outcome": "one_phase",
+    "unstable_outcome": "two_phase",
+    "feedback_outcome": "return_to_stage2",
+    "trace_outcome": "two_phase",
+    "inactive_phase_retired": "inactive",
+    "active_set_confirmation": "passed"
+  },
+  "perdomo_table3_evidence": {
+    "path": "evidence/perdomo_table3_cross_eos.json",
+    "sha256": "60d2f3f6f927b63f9e3501d76f24df1ca5597a4c7998eb56bb1d6f2a24c9724d",
+    "source_eos": "SAFT-gamma-Mie_GC",
+    "experiment_eos": "ePC-SAFT_Figiel_2025_bounded_H2O_Na_Cl",
+    "scope": "cross_EOS_controller_challenge_not_source_model_reproduction",
+    "terminal": "stage1_indeterminate",
+    "solver_status": "passed",
+    "numerical_status": "failed",
+    "physical_status": "not_adjudicated",
+    "stage2_run": false,
+    "stage3_run": false,
+    "parameter_tuning": false
+  },
+  "artifact": {
+    "filename": "cython_held2_experiment-0.0.1-cp313-cp313-linux_x86_64.whl",
+    "sha256": "4563b4ee4e712d43a65c8c1455be2b8ab673f1515851ab362509d0174bb6e832",
+    "installation_mode": "wheel",
+    "editable": false
+  },
+  "verification": {
+    "command": ".venv/bin/python -m pytest -q",
+    "result": "29 passed",
+    "import_origin": "isolated installed wheel",
+    "negative_space": "passed"
+  },
+  "claim_boundary": {
+    "production_authority": false,
+    "source_model_reproduction": false,
+    "parameter_tuning": false,
+    "global_minimum_proven": false,
+    "globality_field_emitted": false,
+    "backend_selector_retained": false,
+    "python_full_controller_retained": false
+  }
+}

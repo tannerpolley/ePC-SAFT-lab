@@ -1,0 +1,547 @@
+{
+  "artifact": {
+    "editable": false,
+    "filename": "cython_held2_experiment-0.0.1-cp313-cp313-linux_x86_64.whl",
+    "import_origin": {
+      "kind": "installed_site_packages",
+      "relative_path": "site-packages/cython_held2_experiment/__init__.py",
+      "site_packages": true
+    },
+    "sha256": "4563b4ee4e712d43a65c8c1455be2b8ab673f1515851ab362509d0174bb6e832"
+  },
+  "authority_effect": "none",
+  "cases": {
+    "feedback": {
+      "numerical_status": "passed",
+      "outcome": "return_to_stage2",
+      "physical_status": "failed",
+      "solver_status": "passed",
+      "step_ledger": [
+        {
+          "action": "modified_coordinate_construction",
+          "status": "completed",
+          "step": 1
+        },
+        {
+          "outcome": "negative_tpd",
+          "status": "completed",
+          "step": 2
+        },
+        {
+          "action": "dual_initialization",
+          "status": "completed",
+          "step": 3
+        },
+        {
+          "action": "upper_linear_program",
+          "status": "completed",
+          "step": 4
+        },
+        {
+          "action": "lower_local_multistart",
+          "status": "completed",
+          "step": 5
+        },
+        {
+          "candidate_ids": [
+            "witness",
+            "C1"
+          ],
+          "status": "completed",
+          "step": 6
+        },
+        {
+          "major_iterations": 2,
+          "status": "completed",
+          "step": 7
+        },
+        {
+          "action": "extensive_gibbs_refinement",
+          "status": "completed",
+          "step": 8
+        },
+        {
+          "outcome": "failed",
+          "status": "completed",
+          "step": 9
+        },
+        {
+          "status": "not_required",
+          "step": 10
+        }
+      ]
+    },
+    "stable": {
+      "numerical_status": "passed",
+      "outcome": "one_phase",
+      "physical_status": "passed",
+      "solver_status": "passed",
+      "step_ledger": [
+        {
+          "action": "modified_coordinate_construction",
+          "status": "completed",
+          "step": 1
+        },
+        {
+          "outcome": "no_negative_witness_detected",
+          "status": "completed",
+          "step": 2
+        },
+        {
+          "status": "not_run",
+          "step": 3
+        },
+        {
+          "status": "not_run",
+          "step": 4
+        },
+        {
+          "status": "not_run",
+          "step": 5
+        },
+        {
+          "status": "not_run",
+          "step": 6
+        },
+        {
+          "status": "not_run",
+          "step": 7
+        },
+        {
+          "status": "not_run",
+          "step": 8
+        },
+        {
+          "status": "not_run",
+          "step": 9
+        },
+        {
+          "status": "not_run",
+          "step": 10
+        }
+      ]
+    },
+    "trace": {
+      "numerical_status": "passed",
+      "outcome": "two_phase",
+      "physical_status": "passed",
+      "solver_status": "passed",
+      "step_ledger": [
+        {
+          "action": "modified_coordinate_construction",
+          "status": "completed",
+          "step": 1
+        },
+        {
+          "outcome": "negative_tpd",
+          "status": "completed",
+          "step": 2
+        },
+        {
+          "action": "dual_initialization",
+          "status": "completed",
+          "step": 3
+        },
+        {
+          "action": "upper_linear_program",
+          "status": "completed",
+          "step": 4
+        },
+        {
+          "action": "lower_local_multistart",
+          "status": "completed",
+          "step": 5
+        },
+        {
+          "candidate_ids": [
+            "witness",
+            "C1"
+          ],
+          "status": "completed",
+          "step": 6
+        },
+        {
+          "major_iterations": 2,
+          "status": "completed",
+          "step": 7
+        },
+        {
+          "action": "extensive_gibbs_refinement",
+          "status": "completed",
+          "step": 8
+        },
+        {
+          "outcome": "passed",
+          "status": "completed",
+          "step": 9
+        },
+        {
+          "outcome": "passed",
+          "status": "completed",
+          "step": 10
+        }
+      ]
+    },
+    "unstable": {
+      "numerical_status": "passed",
+      "outcome": "two_phase",
+      "physical_status": "passed",
+      "solver_status": "passed",
+      "step_ledger": [
+        {
+          "action": "modified_coordinate_construction",
+          "status": "completed",
+          "step": 1
+        },
+        {
+          "outcome": "negative_tpd",
+          "status": "completed",
+          "step": 2
+        },
+        {
+          "action": "dual_initialization",
+          "status": "completed",
+          "step": 3
+        },
+        {
+          "action": "upper_linear_program",
+          "status": "completed",
+          "step": 4
+        },
+        {
+          "action": "lower_local_multistart",
+          "status": "completed",
+          "step": 5
+        },
+        {
+          "candidate_ids": [
+            "witness",
+            "C1"
+          ],
+          "status": "completed",
+          "step": 6
+        },
+        {
+          "major_iterations": 2,
+          "status": "completed",
+          "step": 7
+        },
+        {
+          "action": "extensive_gibbs_refinement",
+          "status": "completed",
+          "step": 8
+        },
+        {
+          "outcome": "passed",
+          "status": "completed",
+          "step": 9
+        },
+        {
+          "status": "not_required",
+          "step": 10
+        }
+      ]
+    }
+  },
+  "claim_boundary": {
+    "global_minimum_proven": false,
+    "manufactured_controller_conformance_only": true,
+    "production_authority": false
+  },
+  "feedback_step9": {
+    "domain": "passed",
+    "kkt_and_feasibility": "passed",
+    "material_balance": "passed",
+    "metrics": {
+      "charge_inf_norm": 0.0,
+      "complementarity_inf_norm": 9.09090896108838e-12,
+      "dual_pullback_status": "passed",
+      "feasibility_inf_norm": 5.551115123125783e-17,
+      "minimum_phase_distance": 0.5999999999998107,
+      "modified_material_residual": 5.551115123125783e-17,
+      "modified_potential_gap": 1.0,
+      "ordinary_material_inf_norm": 2.7755575615628914e-17,
+      "pressure_inf_norm": 0.0,
+      "stationarity_inf_norm": 1.8195589391520875e-15,
+      "total_free_energy_residual": 0.0
+    },
+    "modified_potential_equality": "failed",
+    "ordinary_balance": "passed",
+    "phase_charge": "passed",
+    "phase_distinction": "passed",
+    "pressure_equality": "passed",
+    "status": "failed",
+    "total_free_energy": "passed"
+  },
+  "inactive_retirement": {
+    "active_set_confirmation": {
+      "numerical_status": "passed",
+      "performed": true,
+      "physical_status": "passed",
+      "remaining_inactive_ids": [],
+      "settings_unchanged": true,
+      "solver_status": "passed"
+    },
+    "final_phases": [
+      {
+        "beta": 0.5000000000000001,
+        "charge_residual": 0.0,
+        "id": "alpha",
+        "modified_fraction": 0.2000000000000947,
+        "packing_fraction": 0.5,
+        "relative_pressure_residual": 0.0,
+        "volume": 1.0
+      },
+      {
+        "beta": 0.49999999999999983,
+        "charge_residual": 0.0,
+        "id": "beta",
+        "modified_fraction": 0.7999999999999053,
+        "packing_fraction": 0.5,
+        "relative_pressure_residual": 0.0,
+        "volume": 1.0
+      }
+    ],
+    "initial_complementarity_inf_norm": 9.09090967873062e-12,
+    "initial_dual_pullback": {
+      "mapping": "z_physical_equals_z_chart_divided_by_affine_scale",
+      "reconstruction_inf_norm": 1.0374811405376342e-18,
+      "signs": "passed",
+      "status": "passed"
+    },
+    "initial_kkt_inf_norm": 9.147751558323303e-12,
+    "retirement": {
+      "basis": "kkt_certified_lower_bound_inactivity",
+      "retired_ids": [
+        "inactive"
+      ]
+    }
+  },
+  "result": "pass",
+  "schema_version": 1,
+  "trace": {
+    "final_fraction": 1.0000000000502555e-14,
+    "initial_fraction": 1e-08,
+    "iterations": 39,
+    "ledger": [
+      {
+        "fraction": 9.999999999999982e-09,
+        "iteration": 0,
+        "log_residual": 13.815510557964274
+      },
+      {
+        "fraction": 9.999999999999985e-12,
+        "iteration": 1,
+        "log_residual": 6.907755278982137
+      },
+      {
+        "fraction": 3.162277660168375e-13,
+        "iteration": 2,
+        "log_residual": 3.4538776394910684
+      },
+      {
+        "fraction": 5.6234132519034836e-14,
+        "iteration": 3,
+        "log_residual": 1.7269388197455342
+      },
+      {
+        "fraction": 2.3713737056616522e-14,
+        "iteration": 4,
+        "log_residual": 0.8634694098727671
+      },
+      {
+        "fraction": 1.5399265260594873e-14,
+        "iteration": 5,
+        "log_residual": 0.4317347049363818
+      },
+      {
+        "fraction": 1.2409377607517124e-14,
+        "iteration": 6,
+        "log_residual": 0.21586735246818733
+      },
+      {
+        "fraction": 1.1139738599947945e-14,
+        "iteration": 7,
+        "log_residual": 0.10793367623409011
+      },
+      {
+        "fraction": 1.0554496008785949e-14,
+        "iteration": 8,
+        "log_residual": 0.053966838117041505
+      },
+      {
+        "fraction": 1.0273507681792943e-14,
+        "iteration": 9,
+        "log_residual": 0.0269834190585172
+      },
+      {
+        "fraction": 1.0135831333340575e-14,
+        "iteration": 10,
+        "log_residual": 0.013491709529255047
+      },
+      {
+        "fraction": 1.0067686592927141e-14,
+        "iteration": 11,
+        "log_residual": 0.006745854764623971
+      },
+      {
+        "fraction": 1.0033786221026964e-14,
+        "iteration": 12,
+        "log_residual": 0.0033729273823084327
+      },
+      {
+        "fraction": 1.001687886570806e-14,
+        "iteration": 13,
+        "log_residual": 0.0016864636911506636
+      },
+      {
+        "fraction": 1.0008435874654928e-14,
+        "iteration": 14,
+        "log_residual": 0.0008432318455717791
+      },
+      {
+        "fraction": 1.0004217048152666e-14,
+        "iteration": 15,
+        "log_residual": 0.00042161592278233684
+      },
+      {
+        "fraction": 1.000210830182946e-14,
+        "iteration": 16,
+        "log_residual": 0.0002108079613876157
+      },
+      {
+        "fraction": 1.0001054095358837e-14,
+        "iteration": 17,
+        "log_residual": 0.00010540398069025514
+      },
+      {
+        "fraction": 1.0000527033791216e-14,
+        "iteration": 18,
+        "log_residual": 5.270199034868028e-05
+      },
+      {
+        "fraction": 1.0000263513423672e-14,
+        "iteration": 19,
+        "log_residual": 2.6350995177892855e-05
+      },
+      {
+        "fraction": 1.0000131755843885e-14,
+        "iteration": 20,
+        "log_residual": 1.3175497592499141e-05
+      },
+      {
+        "fraction": 1.0000065877704908e-14,
+        "iteration": 21,
+        "log_residual": 6.587748792696857e-06
+      },
+      {
+        "fraction": 1.0000032938798163e-14,
+        "iteration": 22,
+        "log_residual": 3.293874392795715e-06
+      },
+      {
+        "fraction": 1.0000016469385549e-14,
+        "iteration": 23,
+        "log_residual": 1.646937199950571e-06
+      },
+      {
+        "fraction": 1.0000008234689414e-14,
+        "iteration": 24,
+        "log_residual": 8.234686035279992e-07
+      },
+      {
+        "fraction": 1.0000004117343818e-14,
+        "iteration": 25,
+        "log_residual": 4.1173429821128593e-07
+      },
+      {
+        "fraction": 1.0000002058671654e-14,
+        "iteration": 26,
+        "log_residual": 2.058671455529293e-07
+      },
+      {
+        "fraction": 1.0000001029335804e-14,
+        "iteration": 27,
+        "log_residual": 1.0293357632917832e-07
+      },
+      {
+        "fraction": 1.0000000514667917e-14,
+        "iteration": 28,
+        "log_residual": 5.146679171730284e-08
+      },
+      {
+        "fraction": 1.0000000257333914e-14,
+        "iteration": 29,
+        "log_residual": 2.573339230593774e-08
+      },
+      {
+        "fraction": 1.0000000128666986e-14,
+        "iteration": 30,
+        "log_residual": 1.286669970568255e-08
+      },
+      {
+        "fraction": 1.0000000064333451e-14,
+        "iteration": 31,
+        "log_residual": 6.433346300127596e-09
+      },
+      {
+        "fraction": 1.0000000032166755e-14,
+        "iteration": 32,
+        "log_residual": 3.2166767027774767e-09
+      },
+      {
+        "fraction": 1.0000000016083336e-14,
+        "iteration": 33,
+        "log_residual": 1.6083347986750596e-09
+      },
+      {
+        "fraction": 1.0000000008041697e-14,
+        "iteration": 34,
+        "log_residual": 8.041709520512086e-10
+      },
+      {
+        "fraction": 1.0000000004020878e-14,
+        "iteration": 35,
+        "log_residual": 4.020890287392831e-10
+      },
+      {
+        "fraction": 1.0000000002010469e-14,
+        "iteration": 36,
+        "log_residual": 2.0104806708332035e-10
+      },
+      {
+        "fraction": 1.0000000001005192e-14,
+        "iteration": 37,
+        "log_residual": 1.0052048082798137e-10
+      },
+      {
+        "fraction": 1.0000000000502555e-14,
+        "iteration": 38,
+        "log_residual": 5.0256687700311886e-11
+      }
+    ],
+    "method": "damped_newton_in_log_trace_fraction",
+    "status": "passed",
+    "target_fraction": 1e-14
+  },
+  "unstable_phases": [
+    {
+      "beta": 0.5000000000000001,
+      "charge_residual": 0.0,
+      "id": "alpha",
+      "modified_fraction": 0.2000000000000947,
+      "packing_fraction": 0.5,
+      "relative_pressure_residual": 0.0,
+      "volume": 1.0
+    },
+    {
+      "beta": 0.49999999999999983,
+      "charge_residual": 0.0,
+      "id": "beta",
+      "modified_fraction": 0.7999999999999053,
+      "packing_fraction": 0.5,
+      "relative_pressure_residual": 0.0,
+      "volume": 1.0
+    }
+  ]
+}
