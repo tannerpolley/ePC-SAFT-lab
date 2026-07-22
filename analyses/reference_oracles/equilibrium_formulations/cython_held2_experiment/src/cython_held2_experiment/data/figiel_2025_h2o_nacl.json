@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "model_id": "figiel-2025-h2o-nacl",
+  "provider_subject": {
+    "commit": "97d7b37db601a147a316f3f2e63293d5ea3a95f6",
+    "tree": "66a4031cf9a07c6cc3d1366869bd132e41d6da09",
+    "bundle": "figiel-2025-reference-electrolytes/1",
+    "selected_model_fingerprint": "sha256:7c637771bc9f717b8f47b44bb2a61044c3fe83084dca7c3c16102fba0989912d"
+  },
+  "domain": {
+    "temperature_min_k": 298.15,
+    "temperature_max_k": 298.15,
+    "ion_mole_fraction_max": 0.38
+  },
+  "components": [
+    {
+      "id": "water",
+      "molar_mass_kg_per_mol": 0.0180153,
+      "segment_count": 1.2047,
+      "sigma_constant_angstrom": 2.7927,
+      "sigma_terms": [[10.11, -0.01775], [-1.417, -0.01146]],
+      "dispersion_energy_over_k": 353.95,
+      "charge_number": 0,
+      "born_diameter_angstrom": 0.0,
+      "solvation_factor": 1.5,
+      "relative_permittivity": 78.09
+    },
+    {
+      "id": "sodium-cation",
+      "segment_count": 1.0,
+      "sigma_constant_angstrom": 2.8232,
+      "sigma_terms": [],
+      "dispersion_energy_over_k": 230.0,
+      "charge_number": 1,
+      "born_diameter_angstrom": 3.445,
+      "solvation_factor": 1.0,
+      "relative_permittivity": 8.0
+    },
+    {
+      "id": "chloride-anion",
+      "segment_count": 1.0,
+      "sigma_constant_angstrom": 2.7560,
+      "sigma_terms": [],
+      "dispersion_energy_over_k": 170.0,
+      "charge_number": -1,
+      "born_diameter_angstrom": 4.100,
+      "solvation_factor": 1.0,
+      "relative_permittivity": 8.0
+    }
+  ],
+  "k_ij": [
+    [0.0, -0.3, -0.3],
+    [-0.3, 0.0, 0.8],
+    [-0.3, 0.8, 0.0]
+  ],
+  "diameter_mixing_rule": "lorentz-fixed-no-lij",
+  "association": {
+    "scheme": "2B",
+    "energy_over_k": 2425.7,
+    "volume": 0.04509,
+    "solver_tolerance": 2e-13,
+    "solver_max_iterations": 1000,
+    "jacobian_condition_max": 1e13
+  },
+  "electrolyte": {
+    "ionic_region_relative_permittivity": 8.0,
+    "dielectric_ion_suppression_coefficient": 7.01,
+    "born_model": "figiel-ssm-ds"
+  },
+  "sources": [
+    {
+      "source_id": "figiel-yu-held-2025",
+      "doi": "10.1021/acs.iecr.5c00475",
+      "locators": [
+        "Table 1 water and ionic dielectric constants",
+        "Table 2 water PC-SAFT, 2B association, and solvation records",
+        "Table 3 Na+ and Cl- PC-SAFT and Born diameters",
+        "Table 4 Na+-Cl- k_ij",
+        "Table 5 water-ion k_ij",
+        "Eqs. 7-12 Born SSM+DS and dielectric suppression"
+      ]
+    },
+    {
+      "source_id": "nist-srd-69-water",
+      "locator": "Water molecular weight"
+    },
+    {
+      "source_id": "codata-2018-exact-si",
+      "locator": "e, k_B, N_A and epsilon_0 constants used by Provider"
+    }
+  ]
+}
