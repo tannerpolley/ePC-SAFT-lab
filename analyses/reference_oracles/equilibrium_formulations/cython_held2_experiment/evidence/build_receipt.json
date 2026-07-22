@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "result": "pass",
+  "authority_effect": "none",
+  "implementation_base": "13ce345b6dcc41d399bb2a4c7b9bedb18f74b45b",
+  "platform": {
+    "python": {
+      "version": "3.13.14",
+      "executable": "/home/tnnrpolley21/.local/bin/python3.13",
+      "build_compiler": "Clang 22.1.3"
+    },
+    "extension_compiler": {
+      "cc": "Ubuntu GCC 13.3.0-6ubuntu2~24.04.1",
+      "cxx": "Ubuntu G++ 13.3.0-6ubuntu2~24.04.1"
+    }
+  },
+  "build_dependencies": {
+    "cython": "3.1.8",
+    "setuptools": "80.10.2",
+    "swig": "4.4.1",
+    "wheel": "0.45.1",
+    "numpy": "2.5.1",
+    "scipy": "1.18.0"
+  },
+  "pinned_dependencies": {
+    "cppad_py": {
+      "commit": "76331e8690ae5f3af88a9e3f25971b0f476e4518",
+      "installed_version": "2024.8.15",
+      "source": "https://github.com/bradbell/cppad_py.git",
+      "wheel_sha256": "b74cdaee1f31e2ca6999d2ecf130f5856021e323c034cceeff8705158495c713",
+      "source_modified": false
+    },
+    "cyipopt": {
+      "commit": "86ba79ef5efc59386f4a371924312bc10df54c0c",
+      "installed_version": "1.8.0.dev0",
+      "source": "https://github.com/mechmotum/cyipopt.git",
+      "wheel_sha256": "8b04856b96bd826ff5b0ba99f1fd3ea6dbb24dcfd11fb4f66e1cd4c0611441ad",
+      "source_modified": false
+    }
+  },
+  "system_dependencies": {
+    "cppad": {
+      "package": "libcppad-dev 2024.00.00.4-1build1",
+      "header": "/usr/include/cppad/cppad.hpp",
+      "header_sha256": "74bd1c38cda85b4c92381f88cda02f659071e023cd74ecd137b00e6845fe59e9",
+      "library": "/usr/lib/x86_64-linux-gnu/libcppad_lib.so.1828.4",
+      "library_package": "libcppad-lib1456.0t64 2024.00.00.4-1build1",
+      "library_sha256": "f5e822af87f28732e53335ef2ee46b5757c5f06b829b925c83df3f2207558089"
+    },
+    "ipopt": {
+      "package": "coinor-libipopt-dev 3.11.9-2.3build4",
+      "runtime_package": "coinor-libipopt1v5 3.11.9-2.3build4",
+      "pkg_config_version": "3.11.9",
+      "linked_library": "/lib/libipopt.so.1"
+    }
+  },
+  "artifact": {
+    "filename": "cython_held2_experiment-0.0.1-cp313-cp313-linux_x86_64.whl",
+    "sha256": "d487a090d02a8f803592f90b45a3eb54809c1b50bb8cffb54b583c73959762ad",
+    "installation_mode": "wheel",
+    "editable": false
+  },
+  "smoke": {
+    "command": ".venv/bin/python -m pytest -q tests/test_build_smoke.py",
+    "result": "1 passed",
+    "cppad_value": 9.0,
+    "cppad_jacobian": 6.0,
+    "cyipopt_module": "cyipopt"
+  },
+  "linkage": {
+    "cppad_py": "libcppad_lib.so.1828.4 => /lib/x86_64-linux-gnu/libcppad_lib.so.1828.4",
+    "cyipopt": "libipopt.so.1 => /lib/libipopt.so.1"
+  },
+  "provenance": {
+    "dependency_install": "immutable Git commits",
+    "mutable_local_dependency_checkout": false,
+    "dependency_patch_or_fork": false,
+    "substitute_backend": false,
+    "interpreter_change": false
+  }
+}
