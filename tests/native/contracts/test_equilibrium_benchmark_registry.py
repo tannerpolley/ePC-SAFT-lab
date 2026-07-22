@@ -28,7 +28,7 @@ ALGORITHM_REGISTRY_PATH = (
     / "equilibrium-algorithm-admission-registry.yaml"
 )
 CPE_INTERFACE_SPEC_PATH = (
-    REPO_ROOT / "docs" / "superpowers" / "specs" / "2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md"
+    REPO_ROOT / "docs" / "contracts" / "cpe-interface.md"
 )
 PEREIRA_SOURCE_AUDIT_PATH = (
     REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "ethane_carbon_dioxide"
@@ -442,9 +442,7 @@ def test_cpe_interface_contract_names_variables_constraints_and_blockers() -> No
     ]
     contract = cpe["interface_contract"]
 
-    assert contract["spec_path"] == (
-        "docs/superpowers/specs/2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md"
-    )
+    assert contract["spec_path"] == "docs/contracts/cpe-interface.md"
     assert CPE_INTERFACE_SPEC_PATH.exists()
     assert contract["status"] == "blocked_future_interface"
     assert contract["must_solve_simultaneously"] is True

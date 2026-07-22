@@ -282,7 +282,7 @@ family_evidence:
   reference_cases:
   - case_label: Simultaneous phase-chemistry interface contract
     evidence_tier: T0
-    source: docs/superpowers/specs/2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md
+    source: docs/contracts/cpe-interface.md
     fixture_status: source_data_needed
     acceptance_checks:
     - phase_species_amounts
