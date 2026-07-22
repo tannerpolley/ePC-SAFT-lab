@@ -1,7 +1,7 @@
 schema_version: 1
 package: epcsaft-equilibrium
 milestone: M4 - Equilibrium
-ownership_schema_basis: docs/superpowers/specs/2026-07-10-m0-characterized-ownership-and-maintainability-ratchets.md#ownership-records
+ownership_schema_basis: docs/contracts/ownership-and-maintainability.md#ownership-records
 ownership_source: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/capability_evidence.py
 activation_authority: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h
 preservation_decisions:

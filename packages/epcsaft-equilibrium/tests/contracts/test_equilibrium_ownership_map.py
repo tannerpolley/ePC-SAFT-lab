@@ -172,8 +172,8 @@ def test_preservation_manifest_classifies_every_record_and_keeps_failed_outputs_
     assert payload["schema_version"] == 1
     assert payload["package"] == "epcsaft-equilibrium"
     assert payload["milestone"] == "M4 - Equilibrium"
-    assert payload["ownership_schema_basis"].endswith(
-        "2026-07-10-m0-characterized-ownership-and-maintainability-ratchets.md#ownership-records"
+    assert payload["ownership_schema_basis"] == (
+        "docs/contracts/ownership-and-maintainability.md#ownership-records"
     )
     assert set(payload["preservation_decisions"]) == PRESERVATION_DECISIONS
     assert set(record["decision"] for record in preservation_records) == PRESERVATION_DECISIONS

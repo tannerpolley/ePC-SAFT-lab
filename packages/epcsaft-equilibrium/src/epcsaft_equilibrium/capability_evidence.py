@@ -684,8 +684,7 @@ EQUILIBRIUM_OWNERSHIP_BY_ID: Final[dict[str, dict[str, object]]] = {
 EQUILIBRIUM_CHARACTERIZATION_RECEIPT: Final[dict[str, object]] = {
     "schema_version": 1,
     "ownership_schema_basis": (
-        "docs/superpowers/specs/"
-        "2026-07-10-m0-characterized-ownership-and-maintainability-ratchets.md#ownership-records"
+        "docs/contracts/ownership-and-maintainability.md#ownership-records"
     ),
     "preservation_manifest": (
         "docs/superpowers/milestones/M4-equilibrium/equilibrium-preservation-manifest.yaml"

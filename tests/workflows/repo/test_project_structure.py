@@ -224,21 +224,7 @@ SUPERPOWERS_TEMPLATE_FILES = {
     "_templates/plan.md",
     "_templates/issue-mirror.md",
 }
-SUPERPOWERS_SPEC_FILES = {
-    "PROJECT_CONTEXT.md",
-    "specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md",
-    "specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md",
-    "specs/2026-05-27-m4-equilibrium-gfpe-package-cleanup-plan.md",
-    "specs/2026-05-29-m5-regression-regression-production-backlog.md",
-    "specs/2026-05-29-m6-validation-validation-benchmark-backlog.md",
-    "specs/2026-05-29-m7-release-release-downstream-backlog.md",
-    "specs/2026-06-01-m4-equilibrium-move-equilibrium-objective-assembly-to-extension.md",
-}
-SUPERPOWERS_SPEC_FILENAME_PATTERN = re.compile(r"^20\d\d-\d\d-\d\d-m[0-8]-[a-z0-9-]+\.md$")
 SUPERPOWERS_ISSUE_FILENAME_PATTERN = re.compile(r"^20\d\d-\d\d-\d\d-m[0-8]-[a-z0-9-]+-issue-\d{4}-[a-z0-9-]+\.md$")
-SUPERPOWERS_PLAN_FILENAME_PATTERN = re.compile(
-    r"^20\d\d-\d\d-\d\d-m[0-8]-[a-z0-9-]+-(?:issue-\d{4}-)?[a-z0-9-]+-plan\.md$"
-)
 DATA_REFERENCE_FORBIDDEN_PATH_PATTERN = re.compile(
     r"(^|[/_.-])("
     r"19\d\d|20\d\d|nist|held|gross|matsuda|pereira|hubach|khudaida|"
@@ -1926,8 +1912,6 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
     assert not (REPO_ROOT / "docs" / "roadmaps").exists()
     assert not (REPO_ROOT / "docs" / "plans").exists()
     assert (project_root / "PROJECT_CONTEXT.md").is_file()
-    assert (project_root / "specs").is_dir()
-    assert (project_root / "plans").is_dir()
     assert (project_root / "issues").is_dir()
 
     actual_folders = {path.name for path in milestone_root.iterdir() if path.is_dir()}
@@ -1938,15 +1922,6 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
     issue_template_fields = _markdown_front_matter(project_root / "_templates" / "issue-mirror.md")
     assert set(issue_template_fields) == MILESTONE_FRONT_MATTER_FIELDS
 
-    missing_specs = sorted(path for path in SUPERPOWERS_SPEC_FILES if not (project_root / path).is_file())
-    assert missing_specs == []
-    spec_files = sorted(path.name for path in (project_root / "specs").glob("*.md") if path.name != "README.md")
-    bad_spec_names = sorted(name for name in spec_files if not SUPERPOWERS_SPEC_FILENAME_PATTERN.fullmatch(name))
-    assert bad_spec_names == []
-    assert (project_root / "plans" / "README.md").is_file()
-    plan_files = sorted(path.name for path in (project_root / "plans").glob("*.md") if path.name != "README.md")
-    bad_plan_names = sorted(name for name in plan_files if not SUPERPOWERS_PLAN_FILENAME_PATTERN.fullmatch(name))
-    assert bad_plan_names == []
     missing_registries = sorted(path for path in SUPERPOWERS_REGISTRY_FILES if not (project_root / path).is_file())
     assert missing_registries == []
 
@@ -1987,6 +1962,20 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
             required_tokens.append("**Mirror Retention:** Keep")
         for token in required_tokens:
             assert token in text, f"{_workspace_rel(path)} missing {token}"
+
+
+def test_project_truss_working_directories_are_retired() -> None:
+    project_root = REPO_ROOT / "docs" / "superpowers"
+    assert not (project_root / "specs").exists()
+    assert not (project_root / "plans").exists()
+
+    promoted_contracts = {
+        "cpe-interface.md",
+        "explicit-association-closure.md",
+        "ownership-and-maintainability.md",
+    }
+    contracts_root = REPO_ROOT / "docs" / "contracts"
+    assert sorted(name for name in promoted_contracts if not (contracts_root / name).is_file()) == []
 
 
 def test_archived_lab_has_no_active_issue_intake_authority() -> None:
@@ -2054,8 +2043,6 @@ def test_lab_planning_surfaces_are_archival_not_execution_authority() -> None:
     assert "docs/superpowers/specs/2026-07-14-clean-ecosystem-cutover-design.md" not in context
 
     archive_indexes = {
-        "docs/superpowers/plans/README.md": "Historical Plans",
-        "docs/superpowers/specs/README.md": "Historical Specs",
         "docs/superpowers/milestones/M3-eos/README.md": "Historical M3",
         "docs/superpowers/milestones/M4-equilibrium/README.md": "Historical M4",
         "docs/superpowers/milestones/M6-validation/README.md": "Historical M6",

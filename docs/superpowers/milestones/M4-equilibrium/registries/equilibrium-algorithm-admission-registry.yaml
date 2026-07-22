@@ -284,7 +284,7 @@ family_rows:
     - ce_validation_ladder
   interface_contract:
     status: blocked_future_interface
-    spec_path: docs/superpowers/specs/2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md
+    spec_path: docs/contracts/cpe-interface.md
     must_solve_simultaneously: true
     variables:
     - phase_species_amounts
