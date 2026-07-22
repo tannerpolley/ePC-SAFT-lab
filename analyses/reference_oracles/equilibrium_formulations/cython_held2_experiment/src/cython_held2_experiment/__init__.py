@@ -1,11 +1,14 @@
 from ._held2 import (
     manufactured_reference_demo,
     manufactured_stage1_demo,
+    manufactured_stage2_demo,
     modified_fraction,
     modified_potentials,
     recover_explicit_composition,
     solve_stage1,
+    solve_stage2,
     stage1_tpd_callback,
+    stage2_lower_callback,
 )
 from ._smoke import dependency_probe
 from ._thermo import derivative_bundle, evaluate_state, source_identity
@@ -16,10 +19,13 @@ __all__ = [
     "evaluate_state",
     "manufactured_reference_demo",
     "manufactured_stage1_demo",
+    "manufactured_stage2_demo",
     "modified_fraction",
     "modified_potentials",
     "recover_explicit_composition",
     "solve_stage1",
+    "solve_stage2",
     "source_identity",
     "stage1_tpd_callback",
+    "stage2_lower_callback",
 ]

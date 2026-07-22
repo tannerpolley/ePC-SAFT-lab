@@ -61,6 +61,30 @@ over an incomplete sibling start. Conversely, a completed finite multistart
 search with no negative witness reports only `no_negative_witness_detected`.
 No globality field or global-stability claim is emitted.
 
+## Stage-II experiment
+
+The same private controller module now exercises Perdomo Stage II without
+adding another thermodynamic model. `solve_stage2(...)` alternates a SciPy
+HiGHS upper linear program with deterministic and warm-started local `cyipopt`
+lower searches over the modified ion fraction and log-volume. Every major
+iteration preserves the upper solution before the lower searches, admits only
+distinct certified physical improving cuts, and then evaluates Eq. 66 using
+that same upper objective and multiplier.
+
+The Step-6 selector uses fixed-volume composition gradients, relative
+multiplier scaling, log-volume stationarity, dual tightness, and pairwise
+modified-composition-or-packing distinctness. Solver termination, projected
+KKT, complementarity, coordinate/domain, charge, pressure, and final tape
+evaluation remain separate fields for every lower attempt. Resource exhaustion,
+an empty candidate set, or the absence of a certified improving cut leaves
+Stage III `not_run` and physical equilibrium `not_adjudicated`.
+
+The enumerable manufactured double-well case produces cuts in the order
+`feed`, `witness`, `C1` and recovers the expected two-point candidate set at
+modified fractions 0.2 and 0.8. The real tape smoke completes one upper/lower
+major at a known pressure root. Both are finite controller-conformance checks;
+neither claims that the nonconvex lower problem was solved globally.
+
 ## Bounded comparison evidence
 
 [`evidence/provider_comparison.csv`](evidence/provider_comparison.csv) compares
@@ -84,6 +108,10 @@ unstable case retains a `-0.015625` negative witness despite one deliberately
 failed start. A real-tape smoke selects the known 0.08 m3/mol pressure root and
 completes two certified local searches. These are controller-conformance facts,
 not electrolyte-LLE prediction evidence.
+
+[`evidence/stage2_receipt.json`](evidence/stage2_receipt.json) binds the
+Stage-II source, focused tests, installed wheel, ordered cut ledger,
+manufactured `M*` set, incomplete-search cases, and real-tape one-major smoke.
 
 ## Rebuild and test
 

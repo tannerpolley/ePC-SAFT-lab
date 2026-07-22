@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "result": "pass",
+  "authority_effect": "none",
+  "issue": 474,
+  "implementation_base": "cfba742b8574c865a348b04484bcfe2ebdfd343c",
+  "experiment": {
+    "source": "src/cython_held2_experiment/_held2.pyx",
+    "source_sha256": "a3880154da1e3ba3c658b35e59917c7121a7b6f77e5c9a91e4945bbc1b723e4c",
+    "test": "tests/test_stage2.py",
+    "test_sha256": "147ec210591cfb27989d36f1ee8219c5a737d85a2d22acd83a2009879d059ffb",
+    "upper_solver": "scipy_highs_linear_program",
+    "lower_solver": "cyipopt_local_multistart_exact_gradient_and_hessian",
+    "lower_coordinates": [
+      "modified_ion_fraction",
+      "log_volume"
+    ],
+    "constraint_jacobian_nonzeros": 0,
+    "lagrangian_hessian_lower_nonzeros": 3,
+    "step6_ordering": "same_step4_upper_objective_and_lagrange_after_cut_insertion"
+  },
+  "manufactured_evidence": {
+    "phase_model": "enumerable_double_well_common_tangent",
+    "major_iterations": 2,
+    "ordered_cut_ids": [
+      "feed",
+      "witness",
+      "C1"
+    ],
+    "mstar_ids": [
+      "witness",
+      "C1"
+    ],
+    "mstar_modified_fractions": [
+      0.2,
+      0.8000000013888415
+    ],
+    "upper_primal_feasibility": "passed",
+    "upper_duality": "passed",
+    "resource_limited_outcome": "resource_limited",
+    "failed_lower_search_outcome": "no_certified_improving_cut",
+    "empty_candidate_outcome": "mstar_empty",
+    "incomplete_stage3_status": "not_run",
+    "incomplete_physical_status": "not_adjudicated"
+  },
+  "real_tape_smoke": {
+    "temperature_k": 298.15,
+    "pressure_pa": 30223.300708045346,
+    "feed_modified_ion_fraction": 0.036,
+    "reference_volume_m3_per_mol": 0.08,
+    "reference_fixed_volume_gradient": -145.75651274245604,
+    "major_iterations": 1,
+    "attempts": 2,
+    "solver_passed": 2,
+    "numerical_passed": 2,
+    "physical_passed": 2,
+    "max_relative_pressure_residual": 2.1952960838653878e-11,
+    "outcome": "mstar_empty"
+  },
+  "artifact": {
+    "filename": "cython_held2_experiment-0.0.1-cp313-cp313-linux_x86_64.whl",
+    "sha256": "309e1c99e4020bc01049e375c25e0d8c00de4904808b688553d84e647bc1dee8",
+    "installation_mode": "wheel",
+    "editable": false
+  },
+  "verification": {
+    "command": ".venv/bin/python -m pytest -q",
+    "result": "19 passed",
+    "import_origin": "isolated installed wheel"
+  },
+  "claim_boundary": {
+    "production_authority": false,
+    "stage3_implemented": false,
+    "electrolyte_lle_prediction": false,
+    "finite_local_lower_search": true,
+    "global_lower_minimum_proven": false,
+    "globality_field_emitted": false
+  }
+}
