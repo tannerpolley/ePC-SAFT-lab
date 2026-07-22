@@ -1,0 +1,51 @@
+{
+  "artifact": {
+    "editable": false,
+    "filename": "cython_held2_experiment-0.0.1-cp313-cp313-linux_x86_64.whl",
+    "import_origin": {
+      "kind": "installed_site_packages",
+      "relative_path": "site-packages/cython_held2_experiment/__init__.py",
+      "site_packages": true
+    },
+    "sha256": "4563b4ee4e712d43a65c8c1455be2b8ab673f1515851ab362509d0174bb6e832"
+  },
+  "authority_effect": "none",
+  "comparison_scope": "cross_EOS_controller_challenge_not_source_model_reproduction",
+  "experiment_eos": "ePC-SAFT_Figiel_2025_bounded_H2O_Na_Cl",
+  "feed_amounts": [
+    55.508435061791985,
+    5.6,
+    5.6
+  ],
+  "feed_modified_ion_fraction": 0.1678948095488291,
+  "interpretation": "The installed ePC-SAFT experiment stopped fail-closed in Stage I after all four local solvers returned but only two attempts passed numerical certification and no trial passed physical certification. This is not a reproduction failure of Perdomo's SAFT-gamma-Mie result.",
+  "numerical_status": "failed",
+  "parameter_tuning": false,
+  "physical_status": "not_adjudicated",
+  "pressure_pa": 2508.0,
+  "result": "recorded",
+  "schema_version": 1,
+  "solver_status": "passed",
+  "source_case": "Perdomo_2025_Table_3_NaCl_water_5.6_molal",
+  "source_eos": "SAFT-gamma-Mie_GC",
+  "stage1": {
+    "attempt_count": 4,
+    "attempt_objectives": [
+      3.552713678800501e-14,
+      -0.4356840294790203,
+      -0.43568402947896345,
+      2.1316282072803006e-14
+    ],
+    "numerical_passed": 2,
+    "outcome": "indeterminate",
+    "physical_passed": 0,
+    "reference_outcome": "selected",
+    "reference_scan_status": "completed_finite",
+    "search_status": "partial",
+    "solver_passed": 4
+  },
+  "stage2_outcome": null,
+  "stage3_outcome": null,
+  "temperature_k": 298.15,
+  "terminal": "stage1_indeterminate"
+}

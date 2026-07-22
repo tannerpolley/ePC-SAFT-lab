@@ -11,4 +11,7 @@ outputs:
   thermodynamic_receipt: evidence/thermo_receipt.json
   stage1_receipt: evidence/stage1_receipt.json
   stage2_receipt: evidence/stage2_receipt.json
+  stage3_receipt: evidence/stage3_receipt.json
+  stage3_manufactured: evidence/stage3_manufactured.json
+  perdomo_table3_cross_eos: evidence/perdomo_table3_cross_eos.json
   provider_comparison: evidence/provider_comparison.csv
