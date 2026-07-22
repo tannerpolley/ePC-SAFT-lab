@@ -175,6 +175,11 @@ Heavy native, package, release, and installed-provider lanes are manual-only
 unless a PR explicitly claims release readiness, capability support, or
 production native behavior.
 
+The automatic provider install smoke constructs its methane state through the
+strict schema-3 ``ParameterSet.from_schema3_records`` and explicit
+``ModelOptions`` public contracts. It must not restore the retired flat
+``MW``/``m``/``s``/``e`` parameter payload as a compatibility shortcut.
+
 CI lane names still separate different claims:
 
 ``native production Ipopt``
