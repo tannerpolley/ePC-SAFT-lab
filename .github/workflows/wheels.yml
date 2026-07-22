@@ -16,6 +16,30 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  PROVIDER_SMOKE_PYTHON: >-
+    import math; import epcsaft as e; import numpy as np;
+    source=e.ScientificSource(kind="literature", locator="Gross and Sadowski 2001 Table 2");
+    domain=e.TemperatureDomain(minimum_K=100.0, maximum_K=400.0,
+    evidence=e.DomainEvidence(kind="source_validity", source="CI methane smoke interval"));
+    dependency=e.DependencySignature(variables=());
+    values={"molar_mass_kg_per_mol": (0.016043, "kg/mol"),
+    "segment_count": (1.0, "dimensionless"), "sigma_angstrom": (3.7039, "angstrom"),
+    "epsilon_k_K": (150.03, "K"), "charge_number": (0.0, "dimensionless"),
+    "association_energy_K": (0.0, "K"), "association_volume": (0.0, "dimensionless")};
+    records=tuple(e.ScientificRecord(record_id=f"methane-{field}", component="Methane",
+    field=field, units=units, source=source, dependency_signature=dependency,
+    temperature_domain=domain, definition=e.ConstantCorrelation(value=value))
+    for field, (value, units) in values.items());
+    parameters=e.ParameterSet.from_schema3_records(components=("Methane",), pure_records=records);
+    options=e.ModelOptions.from_user_options({"schema": "epcsaft.model-configuration",
+    "schema_version": 1, "selection_origin": "explicit_configuration",
+    "formulation": {name: {"enabled": False} for name in ("electrostatics",
+    "relative_permittivity", "debye_huckel", "born", "solvated_ion_diameter",
+    "ion_dispersion")}});
+    state=e.State(e.Mixture(parameters, model_options=options), T=300.0,
+    x=np.asarray([1.0]), rho=100.0); z=state.z(); assert math.isfinite(z); print(z)
+
 jobs:
   fast-pr-smoke:
     name: fast workflow smoke
@@ -202,7 +226,7 @@ jobs:
           cd "$downstream"
           export UV_CACHE_DIR="${RUNNER_TEMP}/uv-cache"
           export EPCSAFT_PEP517_BUILD_DIR="${RUNNER_TEMP}/epcsaft-pep517-build"
-          uv run --no-sync python -c "import numpy as np; from epcsaft import Mixture, ParameterSet, State; p = ParameterSet.from_dict({'MW': np.asarray([16.043e-3]), 'm': np.asarray([1.0]), 's': np.asarray([3.7039]), 'e': np.asarray([150.03])}, species=['Methane']); s = State(Mixture(p), T=300.0, x=np.asarray([1.0]), rho=100.0); print(s.z())"
+          uv run --no-sync python -c "$PROVIDER_SMOKE_PYTHON"
 
   build:
     name: build Linux wheel
@@ -235,7 +259,8 @@ jobs:
           CIBW_ARCHS_LINUX: "x86_64"
           CIBW_SKIP: "*-musllinux*"
           CIBW_TEST_REQUIRES: "numpy"
-          CIBW_TEST_COMMAND: "python -c \"import numpy as np; from epcsaft import Mixture, ParameterSet, State; p=ParameterSet.from_dict({'MW': np.asarray([16.043e-3]), 'm': np.asarray([1.0]), 's': np.asarray([3.7039]), 'e': np.asarray([150.03])}, species=['Methane']); s=State(Mixture(p), T=300.0, x=np.asarray([1.0]), rho=100.0); print(s.z())\""
+          CIBW_ENVIRONMENT_PASS_LINUX: "PROVIDER_SMOKE_PYTHON"
+          CIBW_TEST_COMMAND: 'python -c "$PROVIDER_SMOKE_PYTHON"'
 
       - name: Upload wheels
         uses: actions/upload-artifact@v7.0.1
